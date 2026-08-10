@@ -4,7 +4,10 @@ from pathlib import Path
 
 from arancel_mx.pipeline import official_sources
 from arancel_mx.pipeline.official_dataset import OfficialDatasetConfig
-from arancel_mx.pipeline.official_sources import capture_official_inputs
+from arancel_mx.pipeline.official_sources import (
+    capture_official_inputs,
+    write_release_sources,
+)
 
 
 DIPUTADOS_LEDGER = (
@@ -12,6 +15,8 @@ DIPUTADOS_LEDGER = (
 ).read_text(encoding="utf-8")
 DIPUTADOS_URL = "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm"
 DIPUTADOS_PDF = "https://www.diputados.gob.mx/LeyesBiblio/pdf/LIGIE_2022.pdf"
+LAW_REFORM_URL = "https://www.diputados.gob.mx/LeyesBiblio/ref/reforma02.pdf"
+TARIFF_DECREE_URL = "https://www.diputados.gob.mx/LeyesBiblio/ref/tarifa15.pdf"
 LIGIE_INDEX = "https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html"
 NICO_INDEX = "https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html"
 LIGIE_URL = "https://www.snice.gob.mx/files/FRACCIONESARANCELARIAS_20260810.XLSX"
@@ -62,6 +67,12 @@ def fake_session():
             DIPUTADOS_LEDGER,
         ),
         DIPUTADOS_PDF: Response(DIPUTADOS_PDF, b"%PDF-1.7\nfixture", "application/pdf"),
+        LAW_REFORM_URL: Response(
+            LAW_REFORM_URL, b"%PDF-1.7\nlaw-reform", "application/pdf"
+        ),
+        TARIFF_DECREE_URL: Response(
+            TARIFF_DECREE_URL, b"%PDF-1.7\ntariff-decree", "application/pdf"
+        ),
         LIGIE_INDEX: Response(
             LIGIE_INDEX, ligie_html.encode("utf-8"), "text/html", ligie_html
         ),
@@ -85,7 +96,7 @@ def config(tmp_path, *, timeout_s=60.0):
     )
 
 
-def test_capture_official_inputs_returns_registered_base_roles(tmp_path):
+def test_capture_official_inputs_returns_registered_and_required_legal_roles(tmp_path):
     snapshot = capture_official_inputs(config(tmp_path), session=fake_session())
 
     assert {
@@ -94,11 +105,47 @@ def test_capture_official_inputs_returns_registered_base_roles(tmp_path):
         ("ligie", "ligie_snapshot"),
         ("nico", "nico_snapshot"),
         ("diputados_ligie", "consolidated_text"),
+        ("dof_law_reform", "law_reform"),
+        ("dof_tariff_decree", "tariff_decree"),
     }
     assert snapshot.registry_version == "2026-08-10"
     assert len(snapshot.registry_sha256) == 64
-    assert len(snapshot.identities) == 3
+    assert len(snapshot.identities) == 5
     assert all(identity.registry_version == "2026-08-10" for identity in snapshot.identities)
+
+    by_key = {source.dataset_key: source for source in snapshot.sources}
+    assert by_key["dof_law_reform"].source_document["published_at"] == date(
+        2025, 12, 29
+    )
+    assert by_key["dof_tariff_decree"].source_document["published_at"] == date(
+        2026, 4, 23
+    )
+
+
+def test_capture_fetches_only_ledger_linked_required_dof_urls(tmp_path):
+    session = fake_session()
+
+    capture_official_inputs(config(tmp_path), session=session)
+
+    requested_urls = {url for url, _timeout in session.requested}
+    assert LAW_REFORM_URL in requested_urls
+    assert TARIFF_DECREE_URL in requested_urls
+
+
+def test_release_sources_preserve_required_dof_evidence(tmp_path):
+    build_config = config(tmp_path)
+    snapshot = capture_official_inputs(build_config, session=fake_session())
+
+    source_dir = write_release_sources(build_config, snapshot.sources)
+
+    assert sorted(path.name for path in source_dir.iterdir()) == [
+        "dof-law-reform.pdf",
+        "dof-tariff-decree.pdf",
+        "ligie-consolidated.pdf",
+        "ligie.xlsx",
+        "nico.xlsx",
+        "source_capture.json",
+    ]
 
 
 def test_capture_official_inputs_uses_one_configured_timeout_for_every_request(tmp_path):
