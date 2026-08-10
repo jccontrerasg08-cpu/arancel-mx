@@ -32,13 +32,17 @@ from arancel_mx.release.package import (
     verify_sources,
 )
 from arancel_mx.sources.capture import CaptureManifest, capture_document
-from arancel_mx.sources.diputados import LedgerDocument, LedgerLink, parse_ligie_ledger
+from arancel_mx.sources.diputados import parse_ligie_ledger
 from arancel_mx.sources.http import (
     FetchedDocument,
     decode_fetched_text,
     fetch_official_document,
 )
-from arancel_mx.sources.registry import RegistryEntry, load_source_registry
+from arancel_mx.sources.registry import (
+    RegistryEntry,
+    load_source_registry,
+    registered_direct_document,
+)
 from arancel_mx.storage.duckdb import connect, init_tariff_db
 
 
@@ -135,22 +139,6 @@ def _capture_source(
         "retrieved_at": generated_at,
     }
     return _CapturedSource(dataset_key, title, fetched, capture, source_document)
-
-
-def _consolidated_pdf(ledger) -> tuple[LedgerDocument, LedgerLink]:
-    candidates: list[tuple[LedgerDocument, LedgerLink]] = []
-    for document in ledger.documents:
-        if document.category != "consolidated_text":
-            continue
-        for link in document.links:
-            suffix = Path(urlparse(link.url).path).suffix.lower()
-            if link.media_type == "application/pdf" or suffix == ".pdf":
-                candidates.append((document, link))
-    if len(candidates) != 1:
-        raise ValueError(
-            f"expected exactly one consolidated LIGIE PDF; found {len(candidates)}"
-        )
-    return candidates[0]
 
 
 def _fraction_and_rate_rows(staging_rows, source_id: str, config: OfficialDatasetConfig):
@@ -285,8 +273,10 @@ def build_official_dataset(
         timeout_s=config.timeout_s,
     )
     ledger_html = decode_fetched_text(ledger_fetch)
-    ledger = parse_ligie_ledger(ledger_html, ledger_fetch.final_url)
-    consolidated_document, consolidated_link = _consolidated_pdf(ledger)
+    parse_ligie_ledger(ledger_html, ledger_fetch.final_url)
+    consolidated_url = registered_direct_document(
+        diputados_entry, "consolidated_text"
+    )
 
     discovery_registry = {key: registry[key] for key in ("ligie", "nico")}
     discovered = discover_registered_sources(discovery_registry, client)
@@ -314,8 +304,8 @@ def build_official_dataset(
     diputados_source = _capture_source(
         dataset_key="diputados_ligie",
         document_role="consolidated_text",
-        title=consolidated_document.title,
-        url=consolidated_link.url,
+        title=f"Texto vigente {config.ligie_version.replace('-', ' ')}",
+        url=consolidated_url,
         entry=diputados_entry,
         config=config,
         session=client,
