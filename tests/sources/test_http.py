@@ -14,21 +14,37 @@ class Response:
         content_length=None,
     ):
         self.url = url
-        self.content = content
+        self._content = content
         self.headers = {"Content-Type": content_type}
         self.headers["Content-Length"] = str(
             len(content) if content_length is None else content_length
         )
 
+    @property
+    def content(self):
+        return self._content
+
+    def iter_content(self, chunk_size=1024 * 1024):
+        for start in range(0, len(self._content), chunk_size):
+            yield self._content[start : start + chunk_size]
+
     def raise_for_status(self):
         return None
+
+
+class NoBufferedContentResponse(Response):
+    @property
+    def content(self):
+        raise AssertionError("streaming fetch must not read response.content")
 
 
 class Session:
     def __init__(self, response):
         self.response = response
+        self.stream = None
 
-    def get(self, url, timeout):
+    def get(self, url, timeout, stream=False):
+        self.stream = stream
         return self.response
 
 
@@ -124,6 +140,26 @@ def test_actual_size_over_limit_is_rejected_even_when_header_is_small():
             ("application/pdf",),
             max_bytes=3,
         )
+
+
+def test_size_limit_is_enforced_while_streaming_without_content_length():
+    response = NoBufferedContentResponse(
+        "https://www.snice.gob.mx/file.pdf",
+        content=b"abcd",
+    )
+    response.headers.pop("Content-Length")
+    session = Session(response)
+
+    with pytest.raises(ValueError, match="size"):
+        fetch_official_document(
+            session,
+            "https://www.snice.gob.mx/file.pdf",
+            ("www.snice.gob.mx", "snice.gob.mx"),
+            ("application/pdf",),
+            max_bytes=3,
+        )
+
+    assert session.stream is True
 
 
 def test_octet_stream_is_accepted_only_for_registered_file_extension():
