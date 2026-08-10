@@ -45,9 +45,7 @@ def _require_core_objects(connection) -> None:
     if "arancel_mx" not in views:
         missing.append("arancel_mx (view)")
     if missing:
-        raise ValueError(
-            "missing core DuckDB objects: " + ", ".join(missing)
-        )
+        raise ValueError("missing core DuckDB objects: " + ", ".join(missing))
 
 
 def _require_public_columns(connection) -> None:
@@ -80,7 +78,6 @@ def _require_release_metadata(connection, manifest: Mapping[str, object]) -> int
         "schema_version": str(row[1]),
         "ligie_version": str(row[2]),
         "effective_as_of": str(row[3]),
-        "row_count": int(row[4]),
         "validation_status": str(row[5]),
     }
     expected = {
@@ -88,7 +85,6 @@ def _require_release_metadata(connection, manifest: Mapping[str, object]) -> int
         "schema_version": str(manifest.get("schema_version")),
         "ligie_version": str(manifest.get("ligie_version")),
         "effective_as_of": str(manifest.get("effective_as_of")),
-        "row_count": manifest.get("row_count"),
         "validation_status": str(manifest.get("validation_status")),
     }
     if actual["validation_status"] != "passed":
@@ -97,7 +93,7 @@ def _require_release_metadata(connection, manifest: Mapping[str, object]) -> int
         raise ValueError(
             f"public DuckDB release metadata mismatch: actual={actual!r} expected={expected!r}"
         )
-    return actual["row_count"]
+    return int(row[4])
 
 
 def _require_row_count(connection, manifest: Mapping[str, object], release_count: int) -> None:
