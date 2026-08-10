@@ -93,7 +93,7 @@ def select_current_document(
         dates = _snapshot_dates(document)
         if dates:
             dated.append((max(dates), document))
-    if not dated:
+    if len(dated) != len(candidates):
         raise ValueError(f"ambiguous official snapshot: {dataset_key}:{document_role}")
 
     latest_date = max(item[0] for item in dated)
