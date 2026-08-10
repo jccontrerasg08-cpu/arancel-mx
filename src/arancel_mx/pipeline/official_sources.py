@@ -178,7 +178,11 @@ def capture_official_inputs(
     )
 
     discovery_registry = {key: registry[key] for key in ("ligie", "nico")}
-    discovered = discover_registered_sources(discovery_registry, client)
+    discovered = discover_registered_sources(
+        discovery_registry,
+        client,
+        timeout_s=config.timeout_s,
+    )
     ligie_document = select_current_document(discovered, "ligie", "ligie_snapshot")
     nico_document = select_current_document(discovered, "nico", "nico_snapshot")
 
