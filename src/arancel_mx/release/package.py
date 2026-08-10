@@ -12,7 +12,6 @@ import tarfile
 import tempfile
 from typing import Any
 
-from arancel_mx.pipeline.build import export_arancel_release
 from arancel_mx.release.metadata import source_identity_from_manifest
 
 
@@ -200,6 +199,8 @@ def _add_deterministic_file(
 
 def build_release(database_path: Path, output_dir: Path) -> dict[str, object]:
     """Create deterministic public artifacts from a validated tariff database."""
+    from arancel_mx.pipeline.build import export_arancel_release
+
     return export_arancel_release(Path(database_path), Path(output_dir))
 
 
