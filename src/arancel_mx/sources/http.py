@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import codecs
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import PurePosixPath
+import re
 from urllib.parse import urlparse
 
 
@@ -18,6 +20,11 @@ _EXTENSION_MEDIA_TYPES = {
     ".htm": "text/html",
 }
 
+_CHARSET_PARAMETER = re.compile(
+    r"(?:^|;)\s*charset\s*=\s*(?:\"([^\"]+)\"|'([^']+)'|([^;\s]+))",
+    re.IGNORECASE,
+)
+
 
 @dataclass(frozen=True)
 class FetchedDocument:
@@ -26,6 +33,7 @@ class FetchedDocument:
     media_type: str
     content: bytes
     retrieved_at: datetime
+    charset: str | None = None
 
 
 def _host_allowed(url: str, allowed_hosts: tuple[str, ...]) -> bool:
@@ -37,9 +45,45 @@ def _normalized_media_type(value: object) -> str:
     return str(value or "").split(";", 1)[0].strip().lower()
 
 
+def _declared_charset(value: object) -> str | None:
+    match = _CHARSET_PARAMETER.search(str(value or ""))
+    if match is None:
+        return None
+    charset = next((part for part in match.groups() if part), "").strip().lower()
+    return charset or None
+
+
 def _media_type_from_extension(url: str) -> str | None:
     suffix = PurePosixPath(urlparse(url).path).suffix.lower()
     return _EXTENSION_MEDIA_TYPES.get(suffix)
+
+
+def decode_fetched_text(document: FetchedDocument) -> str:
+    """Decode registered text content without silently replacing invalid bytes."""
+    if not document.media_type.startswith("text/"):
+        raise ValueError(f"official document is not text: {document.media_type}")
+
+    if document.charset:
+        try:
+            codecs.lookup(document.charset)
+        except LookupError as exc:
+            raise ValueError(
+                f"official document declares unsupported charset: {document.charset}"
+            ) from exc
+        try:
+            return document.content.decode(document.charset, errors="strict")
+        except UnicodeDecodeError as exc:
+            raise ValueError(
+                f"official document does not match declared charset: {document.charset}"
+            ) from exc
+
+    try:
+        return document.content.decode("utf-8", errors="strict")
+    except UnicodeDecodeError:
+        try:
+            return document.content.decode("cp1252", errors="strict")
+        except UnicodeDecodeError as exc:
+            raise ValueError("official text document encoding is unsupported") from exc
 
 
 def fetch_official_document(
@@ -62,8 +106,9 @@ def fetch_official_document(
     if not _host_allowed(final_url, allowed_hosts):
         raise ValueError(f"redirected host is not allowed: {final_url}")
 
+    content_type = response.headers.get("Content-Type")
     allowed_media_types = {value.lower() for value in media_types}
-    media_type = _normalized_media_type(response.headers.get("Content-Type"))
+    media_type = _normalized_media_type(content_type)
     if media_type == "application/octet-stream":
         inferred = _media_type_from_extension(final_url)
         if inferred is None or inferred.lower() not in allowed_media_types:
@@ -91,4 +136,5 @@ def fetch_official_document(
         media_type=media_type,
         content=content,
         retrieved_at=datetime.now(timezone.utc),
+        charset=_declared_charset(content_type),
     )
