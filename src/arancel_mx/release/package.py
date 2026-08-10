@@ -6,16 +6,29 @@ import hashlib
 import gzip
 import json
 from pathlib import Path
+import re
 import shutil
 import tarfile
 import tempfile
 from typing import Any
 
 from arancel_mx.pipeline.build import export_arancel_release
+from arancel_mx.release.metadata import source_identity_from_manifest
 
 
 RELEASE_ARTIFACTS = ("arancel_mx.csv", "arancel_mx.json", "arancel_mx.duckdb")
 SOURCE_ARCHIVE = "official-sources.tar.gz"
+RELEASE_LEVELS = {"hs2", "hs4", "hs6", "fraccion8", "nico10"}
+PROVENANCE_FIELDS = (
+    "registry_version",
+    "registry_sha256",
+    "git_commit_sha",
+    "github_run_id",
+    "github_run_attempt",
+    "github_workflow_ref",
+    "github_artifact_name",
+)
+_SHA256 = re.compile(r"^[0-9a-fA-F]{64}$")
 
 
 def sha256(path: Path) -> str:
@@ -36,21 +49,79 @@ def _checksum_lines(path: Path) -> dict[str, str]:
     return declared
 
 
+def _nonblank_string(manifest: dict[str, Any], field: str) -> str:
+    value = manifest.get(field)
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"Release manifest missing or invalid {field}")
+    return value
+
+
+def _validate_schema_v2_manifest(manifest: dict[str, Any]) -> None:
+    if manifest.get("schema_version") != "2":
+        raise ValueError("Release manifest schema_version must be 2")
+    _nonblank_string(manifest, "dataset_version")
+    for field in PROVENANCE_FIELDS:
+        _nonblank_string(manifest, field)
+    if not _SHA256.fullmatch(str(manifest["registry_sha256"])):
+        raise ValueError("Release manifest registry_sha256 is invalid")
+
+    row_count = manifest.get("row_count")
+    if not isinstance(row_count, int) or isinstance(row_count, bool) or row_count <= 0:
+        raise ValueError("Release manifest row_count must be a positive integer")
+    level_counts = manifest.get("level_counts")
+    if not isinstance(level_counts, dict) or set(level_counts) != RELEASE_LEVELS:
+        raise ValueError("Release manifest level_counts is not canonical")
+    if any(
+        not isinstance(value, int) or isinstance(value, bool) or value < 0
+        for value in level_counts.values()
+    ):
+        raise ValueError("Release manifest level_counts contains invalid values")
+    if sum(level_counts.values()) != row_count:
+        raise ValueError("Release manifest level_counts does not match row_count")
+
+    reconciliation = manifest.get("reconciliation")
+    if not isinstance(reconciliation, dict) or reconciliation.get("publishable") is not True:
+        raise ValueError("Release manifest reconciliation is not publishable")
+    for field in ("error_codes", "discrepancies"):
+        value = reconciliation.get(field)
+        if not isinstance(value, list) or value:
+            raise ValueError(f"Release manifest reconciliation.{field} must be empty")
+    for field in (
+        "legal_document_ids",
+        "proposal_document_ids",
+        "indicator_document_ids",
+    ):
+        value = reconciliation.get(field)
+        if value is not None and not isinstance(value, list):
+            raise ValueError(f"Release manifest reconciliation.{field} must be a list")
+
+    identities = source_identity_from_manifest(manifest)
+    if not identities:
+        raise ValueError("Release manifest source_identity must not be empty")
+
+
 def verify_release(release_dir: Path) -> dict[str, Any]:
     release_dir = Path(release_dir).resolve()
     manifest_path = release_dir / "manifest.json"
     checksums_path = release_dir / "SHA256SUMS"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if not isinstance(manifest, dict):
+        raise ValueError("Release manifest must be a JSON object")
     if manifest.get("validation_status") != "passed":
         raise ValueError("Release validation status is not passed")
+    _validate_schema_v2_manifest(manifest)
     artifact_hashes = manifest.get("artifact_sha256")
     if not isinstance(artifact_hashes, dict) or set(artifact_hashes) != set(RELEASE_ARTIFACTS):
         raise ValueError("Release manifest artifact set is not canonical")
     for name, expected in artifact_hashes.items():
+        if not isinstance(expected, str) or not _SHA256.fullmatch(expected):
+            raise ValueError(f"Release artifact checksum is invalid: {name}")
         path = release_dir / name
         if not path.is_file() or sha256(path) != expected:
             raise ValueError(f"Release artifact checksum mismatch: {name}")
     for name, expected in _checksum_lines(checksums_path).items():
+        if not _SHA256.fullmatch(expected):
+            raise ValueError(f"SHA256SUMS checksum is invalid: {name}")
         path = release_dir / name
         if not path.is_file() or sha256(path) != expected:
             raise ValueError(f"SHA256SUMS checksum mismatch: {name}")
