@@ -113,6 +113,20 @@ def test_snapshot_selection_rejects_multiple_undated_candidates():
         select_current_document((first, second), "ligie", "ligie_snapshot")
 
 
+def test_snapshot_selection_rejects_dated_candidate_when_competing_url_is_undated():
+    dated = discovered(
+        "https://www.snice.gob.mx/FRACCIONESARANCELARIAS_20260810.XLSX",
+        "Fracciones 20260810",
+    )
+    undated = discovered(
+        "https://www.snice.gob.mx/FRACCIONESARANCELARIAS_VIGENTE.XLSX",
+        "Fracciones vigentes",
+    )
+
+    with pytest.raises(ValueError, match="ambiguous official snapshot"):
+        select_current_document((dated, undated), "ligie", "ligie_snapshot")
+
+
 def test_snapshot_selection_rejects_missing_candidate():
     with pytest.raises(ValueError, match="missing official snapshot"):
         select_current_document((), "ligie", "ligie_snapshot")
