@@ -11,8 +11,10 @@ from pathlib import Path
 import sys
 import tempfile
 from typing import Any, Callable
+from zipfile import BadZipFile
 
 import requests
+from xlrd.biffh import XLRDError
 
 from arancel_mx.pipeline.official_dataset import (
     OfficialDatasetConfig,
@@ -52,6 +54,8 @@ def classify_failure(error: BaseException) -> str:
         return "checksum"
     if "profile" in message:
         return "parser_profile"
+    if isinstance(error, (BadZipFile, XLRDError)):
+        return "parser"
     if any(word in message for word in ("workbook", "parser", "parse ", "pdf")):
         return "parser"
     if any(

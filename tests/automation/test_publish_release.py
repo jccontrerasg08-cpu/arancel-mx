@@ -140,6 +140,21 @@ class FakeGitHub:
         raise AssertionError(f"unexpected byte request: {method} {path} {kwargs}")
 
 
+class WrongDigestGitHub(FakeGitHub):
+    def _asset(self, name, content):
+        value = super()._asset(name, content)
+        value["digest"] = "sha256:" + ("0" * 64)
+        return value
+
+
+class CleanupFailureGitHub(FakeGitHub):
+    def request_bytes(self, method, path, **kwargs):
+        if method == "DELETE" and path == "/releases/10":
+            self.events.append("delete_draft_failed")
+            raise RuntimeError("simulated draft cleanup failure")
+        return super().request_bytes(method, path, **kwargs)
+
+
 def patch_local_verifier(monkeypatch, events, value=None):
     def verify(path):
         events.append("local_verify")
@@ -248,3 +263,36 @@ def test_duplicate_remote_asset_blocks_publication_and_deletes_draft(tmp_path, m
     assert raised.value.category == "remote_asset_verification"
     assert "publish_draft" not in client.events
     assert client.events[-1] == "delete_draft"
+
+
+def test_remote_digest_mismatch_blocks_publication_and_deletes_draft(tmp_path, monkeypatch):
+    client = WrongDigestGitHub()
+    patch_local_verifier(monkeypatch, client.events)
+
+    with pytest.raises(PublicationError) as raised:
+        publish_release(client, bundle(tmp_path), COMMIT)
+
+    assert raised.value.category == "remote_asset_verification"
+    assert "remote asset digest mismatch" in str(raised.value)
+    assert "publish_draft" not in client.events
+    assert client.events[-1] == "delete_draft"
+    assert client.release is None
+
+
+def test_cleanup_failure_preserves_original_publication_category_and_context(
+    tmp_path, monkeypatch
+):
+    client = CleanupFailureGitHub(duplicate_remote_asset=True)
+    patch_local_verifier(monkeypatch, client.events)
+
+    with pytest.raises(PublicationError) as raised:
+        publish_release(client, bundle(tmp_path), COMMIT)
+
+    assert raised.value.category == "remote_asset_verification"
+    assert raised.value.release_id == 10
+    message = str(raised.value)
+    assert "duplicate asset" in message
+    assert "draft cleanup also failed" in message
+    assert "simulated draft cleanup failure" in message
+    assert "publish_draft" not in client.events
+    assert client.events[-1] == "delete_draft_failed"
