@@ -7,7 +7,7 @@ from arancel_mx.cli import build_parser, main
 def test_parser_exposes_tariff_command_families():
     help_text = build_parser().format_help()
 
-    for command in ("build", "update", "reconcile", "release"):
+    for command in ("build", "check-updates", "update", "reconcile", "release"):
         assert command in help_text
 
 
@@ -27,8 +27,12 @@ def test_build_delegates_once_and_prints_json(tmp_path, monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {"status": "passed"}
 
 
-def test_update_delegates_once_with_typed_config(tmp_path, monkeypatch, capsys):
+def test_check_updates_delegates_once_with_typed_config_and_is_read_only(
+    tmp_path, monkeypatch, capsys
+):
     calls = []
+    state = tmp_path / "state.json"
+    state.write_text('{"accepted":"old"}\n', encoding="utf-8")
 
     class Plan:
         def to_dict(self):
@@ -36,9 +40,31 @@ def test_update_delegates_once_with_typed_config(tmp_path, monkeypatch, capsys):
 
     monkeypatch.setattr(cli, "check_for_updates", lambda config: calls.append(config) or Plan())
 
-    assert main(["update", "--state-path", str(tmp_path / "state.json")]) == 0
-    assert calls[0].state_path == tmp_path / "state.json"
-    assert json.loads(capsys.readouterr().out) == {"status": "no_change"}
+    assert main(["check-updates", "--state-path", str(state)]) == 0
+    assert calls[0].state_path == state
+    captured = capsys.readouterr()
+    assert json.loads(captured.out) == {"status": "no_change"}
+    assert captured.err == ""
+    assert state.read_text(encoding="utf-8") == '{"accepted":"old"}\n'
+
+
+def test_update_is_deprecated_read_only_alias(tmp_path, monkeypatch, capsys):
+    calls = []
+    state = tmp_path / "state.json"
+    state.write_text('{"accepted":"old"}\n', encoding="utf-8")
+
+    class Plan:
+        def to_dict(self):
+            return {"status": "no_change"}
+
+    monkeypatch.setattr(cli, "check_for_updates", lambda config: calls.append(config) or Plan())
+
+    assert main(["update", "--state-path", str(state)]) == 0
+    assert calls[0].state_path == state
+    captured = capsys.readouterr()
+    assert json.loads(captured.out) == {"status": "no_change"}
+    assert "use check-updates" in captured.err.lower()
+    assert state.read_text(encoding="utf-8") == '{"accepted":"old"}\n'
 
 
 def test_reconcile_reads_json_and_delegates_once(tmp_path, monkeypatch, capsys):
