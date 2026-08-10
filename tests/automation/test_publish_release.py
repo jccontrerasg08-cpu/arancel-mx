@@ -104,16 +104,6 @@ class FakeGitHub:
                 "assets": [],
             }
             return dict(self.release)
-        if method == "POST" and path.startswith("https://uploads.github.com/"):
-            query = parse_qs(urlparse(path).query)
-            name = query["name"][0]
-            content = bytes(kwargs["data"])
-            self.events.append(f"upload:{name}")
-            self.mutations.append((method, path, kwargs))
-            self.upload_calls.append((name, kwargs))
-            asset = self._asset(name, content)
-            self.uploaded[name] = asset
-            return asset
         if method == "GET" and path == "/releases/10":
             self.events.append("refetch_draft")
             return self._release_value()
@@ -124,6 +114,17 @@ class FakeGitHub:
             self.release["draft"] = False
             return self._release_value()
         raise AssertionError(f"unexpected JSON request: {method} {path} {kwargs}")
+
+    def request_upload_json(self, upload_url, data, **kwargs):
+        query = parse_qs(urlparse(upload_url).query)
+        name = query["name"][0]
+        content = bytes(data)
+        self.events.append(f"upload:{name}")
+        self.mutations.append(("UPLOAD", upload_url, {"data": content, **kwargs}))
+        self.upload_calls.append((name, upload_url, content))
+        asset = self._asset(name, content)
+        self.uploaded[name] = asset
+        return asset
 
     def request_bytes(self, method, path, **kwargs):
         if method == "GET" and path.startswith("/releases/assets/"):
@@ -183,7 +184,7 @@ def test_same_date_second_change_never_overwrites_existing_release(tmp_path, mon
         publish_release(client, bundle(tmp_path), COMMIT)
 
     assert raised.value.category == "release_tag_collision"
-    assert all(method not in {"POST", "PATCH", "DELETE"} for method, _path, _kwargs in client.mutations)
+    assert all(method not in {"POST", "PATCH", "DELETE", "UPLOAD"} for method, _path, _kwargs in client.mutations)
 
 
 def test_success_is_verify_then_draft_upload_remote_verify_and_publish(tmp_path, monkeypatch):
@@ -215,12 +216,8 @@ def test_success_is_verify_then_draft_upload_remote_verify_and_publish(tmp_path,
     assert create_payload["target_commitish"] == COMMIT
     assert create_payload["draft"] is True
     assert create_payload["prerelease"] is False
-    assert [name for name, _kwargs in client.upload_calls] == list(PUBLIC_RELEASE_ASSETS)
-    assert all(
-        kwargs["content_type"] == "application/octet-stream"
-        for _name, kwargs in client.upload_calls
-    )
-    assert all(kwargs["accept"] == "application/vnd.github+json" for _name, kwargs in client.upload_calls)
+    assert [name for name, _url, _content in client.upload_calls] == list(PUBLIC_RELEASE_ASSETS)
+    assert all(content == (release_dir / name).read_bytes() for name, _url, content in client.upload_calls)
     assert client.download_calls == []
     assert client.release["draft"] is False
 
