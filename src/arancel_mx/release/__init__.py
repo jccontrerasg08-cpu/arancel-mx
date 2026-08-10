@@ -13,13 +13,16 @@ from .metadata import (
 )
 
 _PACKAGE_EXPORTS = {
+    "PUBLIC_RELEASE_ASSETS",
     "build_release",
     "prepare_release_archive",
+    "verify_publication_bundle",
     "verify_release",
     "verify_sources",
 }
 
 __all__ = [
+    "PUBLIC_RELEASE_ASSETS",
     "ReleaseProvenance",
     "SourceIdentity",
     "build_release",
@@ -27,6 +30,7 @@ __all__ = [
     "source_identity_changed",
     "source_identity_digest",
     "source_identity_from_manifest",
+    "verify_publication_bundle",
     "verify_release",
     "verify_sources",
 ]
