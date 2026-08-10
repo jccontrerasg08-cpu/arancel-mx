@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path
 import sys
+import tempfile
 from urllib.parse import quote, urlencode
 
 from arancel_mx.release.package import (
@@ -17,6 +18,10 @@ from arancel_mx.release.package import (
     verify_publication_bundle,
 )
 from scripts.github_api import GitHubApi, GitHubApiError, GitHubNotFound
+
+
+MAX_DIAGNOSTIC_LENGTH = 1200
+_SECRET_KEY_MARKERS = ("TOKEN", "SECRET", "PASSWORD", "PRIVATE_KEY", "API_KEY")
 
 
 class PublicationError(RuntimeError):
@@ -30,6 +35,53 @@ def _nonblank(value: str, label: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise PublicationError("publisher_configuration", f"{label} must be a non-blank string")
     return value.strip()
+
+
+def _sanitize_message(message: object, *extra_secrets: object) -> str:
+    text = " ".join(str(message).split())
+    secret_values = {
+        value
+        for key, value in os.environ.items()
+        if value and any(marker in key.upper() for marker in _SECRET_KEY_MARKERS)
+    }
+    secret_values.update(
+        str(value) for value in extra_secrets if isinstance(value, str) and value
+    )
+    for value in sorted(secret_values, key=len, reverse=True):
+        text = text.replace(value, "[REDACTED]")
+    if len(text) > MAX_DIAGNOSTIC_LENGTH:
+        text = text[: MAX_DIAGNOSTIC_LENGTH - 3] + "..."
+    return text or "publisher failed without an error message"
+
+
+def _atomic_write_json(path: Path, value: Mapping[str, object]) -> None:
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = json.dumps(
+        value,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ) + "\n"
+    handle = tempfile.NamedTemporaryFile(
+        mode="w",
+        encoding="utf-8",
+        newline="",
+        dir=path.parent,
+        prefix=f".{path.name}.",
+        suffix=".tmp",
+        delete=False,
+    )
+    temporary = Path(handle.name)
+    try:
+        with handle:
+            handle.write(payload)
+            handle.flush()
+            os.fsync(handle.fileno())
+        temporary.replace(path)
+    except Exception:
+        temporary.unlink(missing_ok=True)
+        raise
 
 
 def _release_id(value: Mapping[str, object]) -> int:
@@ -251,6 +303,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--repository", default=os.getenv("GITHUB_REPOSITORY"))
     parser.add_argument("--token", default=os.getenv("GITHUB_TOKEN"))
     parser.add_argument("--api-url", default=os.getenv("GITHUB_API_URL", "https://api.github.com"))
+    parser.add_argument(
+        "--result-path",
+        type=Path,
+        default=Path("out/publisher-result.json"),
+    )
     return parser
 
 
@@ -258,20 +315,35 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(list(argv) if argv is not None else None)
     try:
         client = GitHubApi(args.repository, args.token, api_url=args.api_url)
-        result = publish_release(client, args.release_dir, args.commit_sha)
+        result: dict[str, object] = publish_release(
+            client, args.release_dir, args.commit_sha
+        )
+        exit_code = 0
     except (PublicationError, GitHubApiError, ValueError, OSError) as error:
         category = error.category if isinstance(error, PublicationError) else "release_publication"
+        result = {
+            "status": "failed",
+            "stage": "publish",
+            "failure_category": category,
+            "message": _sanitize_message(error, args.token),
+        }
+        exit_code = 2
+
+    try:
+        _atomic_write_json(args.result_path, result)
+    except Exception as write_error:  # noqa: BLE001 - preserve a bounded stderr diagnostic
         print(
-            json.dumps(
-                {"status": "failed", "stage": "publish", "failure_category": category, "message": str(error)},
-                ensure_ascii=False,
-                sort_keys=True,
-            ),
+            f"error: unable to write publisher diagnostics: "
+            f"{_sanitize_message(write_error, args.token)}",
             file=sys.stderr,
         )
         return 2
-    print(json.dumps(result, ensure_ascii=False, sort_keys=True))
-    return 0
+
+    print(
+        json.dumps(result, ensure_ascii=False, sort_keys=True),
+        file=sys.stderr if exit_code else sys.stdout,
+    )
+    return exit_code
 
 
 if __name__ == "__main__":
