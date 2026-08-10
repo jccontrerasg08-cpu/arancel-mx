@@ -89,7 +89,7 @@ def main(argv: list[str] | None = None) -> int:
     if not distribution.is_file():
         raise SystemExit(f"distribution does not exist: {distribution}")
 
-    checkout = Path.cwd().resolve()
+    checkout = Path(__file__).resolve().parents[1]
     with tempfile.TemporaryDirectory(prefix="arancel-mx-install-") as temp_dir:
         temp_root = Path(temp_dir).resolve()
         external_cwd = temp_root / "consumer"
