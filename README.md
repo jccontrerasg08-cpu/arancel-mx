@@ -8,136 +8,125 @@ Herramientas abiertas en Python para capturar, normalizar, reconciliar y publica
 
 ---
 
-## Demo & animaciones
+<!-- demo -->
+<p align="center">
+  <img alt="arancel-mx demo" src="docs/demo.gif" style="max-width:100%; border-radius:8px; box-shadow:0 8px 30px rgba(2,6,23,0.6)" />
+</p>
 
-Se puede mejorar la portada con una pequeña animación o GIF que muestre el uso de la CLI (ej.: un corto GIF que muestre `python -m arancel_mx build ...`) y badges animados. Para mantener el repositorio ligero y reproducible, aquí hay pasos recomendados y un marcador de posición:
+Resumen rápido
 
-- Generar una grabación de terminal con asciinema y convertirla en GIF:
+- Audita y materializa la LIGIE / NICO en una base DuckDB reproducible
+- Normaliza códigos HS y tasas, conserva procedencia legal y evidencia
+- Exporta artefactos deterministas: CSV, JSON, DuckDB y manifiesto con SHA256
 
-```bash
-# grabar terminal (requiere asciinema)
-asciinema rec demo.cast --command "python -m arancel_mx build --database data/arancel.duckdb --output-dir out/release"
-# convertir a GIF (requiere asciinema2gif / ffmpeg / imagemagick)
-asciinema2gif demo.cast docs/demo.gif
-```
+Por qué es diferente
 
-- Alternativa: usar terminalizer para grabar y exportar GIF.
+- Procedencia: cada fila conserva la evidencia documental y el origen (DOF / SNICE / Diputados)
+- Determinismo: exportaciones reproducibles con manifiestos y sumas de verificación
+- Auditable: flujos de descubrimiento, captura, reconciliación y validación
 
-- Subir el GIF a `docs/demo.gif` y reemplazar la referencia siguiente por la ruta local:
+Características principales
 
-```markdown
-![Demo de arancel-mx](docs/demo.gif)
-```
+- Parsers offline de XLS/XLSX/PDF para LIGIE y NICO
+- Normalización canónica de códigos y tarifas
+- Consolidación y versionado determinista de registros
+- Flujos para capturar fuentes, verificar DOF y construir releases verificables
 
-Si prefieres, puedo generar y añadir un GIF de ejemplo automáticamente y/o configurar una GitHub Action que convierta grabaciones `.cast` a GIF en cada release. Indica si quieres que lo añada.
-
----
-
-## Propósito
-
-El proyecto convierte documentos oficiales de la LIGIE y NICO en registros normalizados, una base DuckDB consultable y artefactos deterministas con manifiestos y sumas SHA-256.
-
-## Alcance
-
-`arancel-mx` se limita al dominio arancelario: jerarquía HS, fracciones de ocho dígitos, NICO, tasas de importación y exportación, vigencia, evidencia legal y procedencia. No pretende cubrir toda la operación de comercio exterior.
-
-## Estado del proyecto
-
-El paquete está en desarrollo inicial (`0.x`). Las interfaces, el esquema y los artefactos pueden cambiar hasta una versión estable. Los cambios se revisan mediante issues y pull requests públicos.
-
-## Fuentes oficiales y aviso sobre los datos
-
-La Cámara de Diputados, el Diario Oficial de la Federación y la Secretaría de Economía/SNICE son las fuentes oficiales principales. El registro versionado está incluido en `src/arancel_mx/sources/source_registry.json`.
-
-Fuentes registradas (URLs)
-
-- diputados_ligie — Cámara de Diputados (registro LIGIE): https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm
-- ligie — SNICE (índice LIGIE / publicaciones oficiales): https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html
-- nico — SNICE (NICO / identificaciones comerciales): https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html
-- nico_proposals — SNICE (propuestas y solicitudes NICO): https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html
-- national_notes — SNICE (Notas nacionales y contexto): https://www.snice.gob.mx/cs/avi/snice/ligie.notasnac22.html
-- weighted_tariff_indicators — SNICE (indicadores ponderados y metodologías): https://www.snice.gob.mx/cs/avi/snice/ligie.indicaranc22.html
-
-Puedes consultar `src/arancel_mx/sources/source_registry.json` para ver el registro completo, las familias de archivos esperadas y las reglas de clasificación por nombre de fichero.
-
-Este proyecto es independiente y no está afiliado ni respaldado por una autoridad mexicana. Los datos generados pueden contener errores o quedar desactualizados. Su contenido es informativo y no constituye asesoría legal, aduanera, fiscal ni profesional. Verifica siempre la publicación oficial aplicable.
-
-## Instalación
-
-Requiere Python 3.11 o posterior.
+Instalación rápida
 
 ```bash
 python -m venv .venv
+# PowerShell: .\.venv\Scripts\Activate.ps1
+# macOS/Linux: source .venv/bin/activate
 python -m pip install -e ".[dev]"
 ```
 
-En PowerShell puedes activar el entorno con `.\.venv\Scripts\Activate.ps1`; en Linux o macOS, con `source .venv/bin/activate`.
-
-## Inicio rápido de la CLI
+Uso rápido (CLI)
 
 ```bash
+# ver ayuda
 python -m arancel_mx --help
 
-# Exportar una base DuckDB ya validada
+# exportar artefactos desde una base DuckDB ya validada
 python -m arancel_mx build --database data/arancel.duckdb --output-dir out/release
 
-# Comparar el ledger oficial con el último estado local
+# actualizar estado desde el ledger oficial (requiere red)
 python -m arancel_mx update --state-path data/update_state/ligie.json --report-path out/update.json
 
-# Reconciliar tres conjuntos de evidencia JSON
+# reconciliar evidencia
 python -m arancel_mx reconcile --ledger-json ledger.json --dof-json dof.json --snice-json snice.json
 
-# Verificar y preparar artefactos locales de publicación
+# preparar artefactos locales para publicación
 python -m arancel_mx release --release-dir out/release --source-dir data/raw/release --latest-dir out/latest
 ```
 
-La comprobación `update` consulta una página oficial. Las pruebas y la construcción del paquete no requieren red.
+Documentación y ejemplos
 
-## Uso desde Python
+- docs/: modelo de datos, proceso de publicación y guías de fuentes
+- tests/: fixtures y casos de prueba que aseguran reproducibilidad
 
-```python
-from arancel_mx.sources import load_source_registry
+Fuentes oficiales y URLs registradas
 
-registry = load_source_registry()
-for entry in registry:
-    print(entry.dataset_key, entry.canonical_page)
-```
+El registro versionado de fuentes está en `src/arancel_mx/sources/source_registry.json`. Fuentes principales:
 
-Las APIs de normalización están en `arancel_mx.domain`; las de captura y descubrimiento en `arancel_mx.sources`; y los flujos de materialización en `arancel_mx.pipeline`.
+- Diputados — LIGIE (registro y texto vigente): https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm
+- SNICE — índice LIGIE / publicaciones oficiales: https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html
+- SNICE — NICO / identificaciones comerciales: https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html
+- SNICE — Propuestas NICO (envíos y solicitudes): https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html
+- SNICE — Notas nacionales: https://www.snice.gob.mx/cs/avi/snice/ligie.notasnac22.html
+- SNICE — Indicadores ponderados: https://www.snice.gob.mx/cs/avi/snice/ligie.indicaranc22.html
+- Diario Oficial de la Federación (DOF) — nota relacionada (publicación NICO 2022): https://www.dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022
 
-## Estructura del repositorio
+Proceso y calendario (visual)
 
-```text
-src/arancel_mx/domain/    Modelo y normalización canónica
-src/arancel_mx/sources/   Registro, captura y adaptadores oficiales
-src/arancel_mx/parsers/   Lectores offline de XLS/XLSX/PDF
-src/arancel_mx/storage/   Esquema DuckDB arancelario
-src/arancel_mx/pipeline/  Construcción, conciliación y actualización
-src/arancel_mx/release/   Verificación y empaquetado local
-tests/                    Pruebas y fixtures deterministas
-docs/                     Modelo, fuentes y proceso de publicación
-```
+Las autoridades publican cronogramas y procedimientos asociados a la recepción, evaluación y publicación de solicitudes (NICO / reformas). A continuación se incluyen ilustraciones oficializadas que muestran el calendario de recepción/publicación y el flujo de envío y publicación de NICO/DOF.
 
-## Pruebas
+<p align="center">
+  <img alt="Calendario de publicaciones DOF y plazos" src="docs/dof_timeline.png" style="max-width:85%; border-radius:6px; box-shadow:0 6px 20px rgba(0,0,0,0.25)" />
+</p>
+
+<p align="center">
+  <em>Fuente: Diario Oficial de la Federación / SNICE — ver la nota oficial en DOF para detalles y fechas exactas.</em>
+</p>
+
+<p align="center">
+  <img alt="Flujo de publicación NICO y DOF" src="docs/nico_flow.png" style="max-width:85%; border-radius:6px; box-shadow:0 6px 20px rgba(0,0,0,0.25)" />
+</p>
+
+Ver también `src/arancel_mx/sources/source_registry.json` para patrones de fichero y reglas de clasificación.
+
+Buenas prácticas para contribuciones
+
+1. Abrir un issue describiendo el cambio o el bug
+2. Crear una rama con nombre descriptivo (ej.: `feat/add-source-dof`) 
+3. Añadir tests y fixtures offline cuando el cambio afecta parsers o transformaciones
+4. Mantener trazabilidad de las fuentes (capture manifests y hashes)
+
+Ejecuta las pruebas antes de proponer PRs
 
 ```bash
 python -m pytest -q
 python -m build
-git diff --check
 ```
 
-## Seguridad
+Inspiración y estilo de README
 
-No publiques credenciales, datos personales ni documentos privados. Reporta vulnerabilidades según [SECURITY.md](SECURITY.md).
+Este README se ha inspirado en prácticas comunes en proyectos de datos y bibliotecas maduras. Repos inspiradores (para estilo y apartados):
 
-## Contribuir
+- duckdb/duckdb — motor embebido analítico (https://github.com/duckdb/duckdb)
+- pandas-dev/pandas — librería de análisis de datos (https://github.com/pandas-dev/pandas)
+- owid/owid-datasets — conjuntos de datos reproducibles y documentación (https://github.com/owid/owid-datasets)
+- open-contracting/open-contracting — prácticas de datos abiertos y metadata (https://github.com/open-contracting/open-contracting)
 
-Se aceptan issues, forks y pull requests. Lee [CONTRIBUTING.md](CONTRIBUTING.md) y conserva procedencia, hashes y fixtures offline al modificar fuentes o parsers.
+Contribución / contacto
 
-## Licencia
+- Lee CONTRIBUTING.md y SECURITY.md antes de enviar PRs
+- Usa issues para discutir cambios grandes o nuevos orígenes
 
-El código original se distribuye bajo [Apache-2.0](LICENSE). Consulta [NOTICE](NOTICE) para atribución y avisos sobre fuentes.
+Licencia
 
-## Atribución
+Este proyecto se distribuye bajo la licencia Apache‑2.0. Consulta LICENSE y NOTICE para atribuciones.
 
-Los documentos y datos oficiales pertenecen a sus autoridades de origen y conservan sus condiciones aplicables. Su referencia no implica respaldo de ninguna autoridad.
+Agradecimientos
+
+Gracias a los equipos que publican y mantienen las fuentes oficiales (Diputados, SNICE, DOF) y a la comunidad de código abierto por sus plantillas y prácticas de documentación.
