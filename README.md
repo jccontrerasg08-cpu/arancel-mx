@@ -82,10 +82,10 @@ Proceso y calendario (visual)
 Las autoridades publican cronogramas y procedimientos asociados a la recepción, evaluación y publicación de solicitudes (NICO / reformas). A continuación se incluyen ilustraciones oficializadas que muestran el calendario de recepción/publicación y el flujo de envío y publicación de NICO/DOF.
 
 <p align="center">
-  <img alt="Calendario de publicaciones DOF y plazos" src="docs/dof_timeline.png" style="max-width:85%; border-radius:6px; box-shadow:0 6px 20px rgba(0,0,0,0.25)" />
+  <img alt="Calendario de publicaciones DOF y plazos" src="docs/dof_timeline2.png" style="max-width:85%; border-radius:6px; box-shadow:0 6px 20px rgba(0,0,0,0.25)" />
 </p>
 <p align="center">
-  <img alt="Calendario de publicaciones DOF y plazos" src="docs/dof_timeline2.png" style="max-width:85%; border-radius:6px; box-shadow:0 6px 20px rgba(0,0,0,0.25)" />
+  <img alt="Calendario de publicaciones DOF y plazos" src="docs/dof_timeline.png" style="max-width:85%; border-radius:6px; box-shadow:0 6px 20px rgba(0,0,0,0.25)" />
 </p>
 
 <p align="center">
