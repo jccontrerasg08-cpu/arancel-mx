@@ -107,7 +107,7 @@ def test_identical_source_identity_skips_parsing_and_creates_no_release(
     assert result == {
         "status": "no_change",
         "dataset_version": "2026.08.10",
-        "schema_version": "1",
+        "schema_version": "2",
         "row_count": 123,
         "validation_status": "passed",
         "source_count": 5,
