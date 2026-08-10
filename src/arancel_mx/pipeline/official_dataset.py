@@ -1,11 +1,12 @@
-"""End-to-end construction of the first canonical dataset from official sources."""
+"""End-to-end construction of the canonical dataset from official sources."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import asdict, dataclass
 from datetime import date, datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from arancel_mx.parsers.documents import parse_ligie_pdf_hierarchy
 from arancel_mx.parsers.profiles import resolve_workbook_profile
@@ -19,6 +20,10 @@ from arancel_mx.pipeline.hierarchy import assemble_classifications
 from arancel_mx.pipeline.official_sources import (
     capture_official_inputs,
     write_release_sources,
+)
+from arancel_mx.release.metadata import (
+    source_identity_changed,
+    source_identity_from_manifest,
 )
 from arancel_mx.release.package import (
     prepare_release_archive,
@@ -38,6 +43,20 @@ class OfficialDatasetConfig:
     schema_version: str = "1"
     ligie_version: str = "LIGIE-2022"
     timeout_s: float = 60.0
+
+
+@dataclass(frozen=True)
+class OfficialBuildResult:
+    status: Literal["no_change", "built"]
+    dataset_version: str
+    schema_version: str
+    row_count: int
+    validation_status: str
+    source_count: int
+    output_dir: str | None
+
+    def to_dict(self) -> dict[str, object]:
+        return asdict(self)
 
 
 def _build_timestamp(value: datetime) -> datetime:
@@ -103,11 +122,34 @@ def _nico_rows(staging_rows, source_id: str, config: OfficialDatasetConfig):
     ]
 
 
+def _no_change_result(
+    config: OfficialDatasetConfig,
+    previous_manifest: Mapping[str, object],
+    source_count: int,
+) -> dict[str, object]:
+    validation_status = str(previous_manifest.get("validation_status", ""))
+    if validation_status != "passed":
+        raise ValueError("previous manifest must describe a passed release")
+    row_count = int(previous_manifest.get("row_count", 0))
+    if row_count <= 0:
+        raise ValueError("previous manifest must contain a positive row_count")
+    return OfficialBuildResult(
+        status="no_change",
+        dataset_version=config.dataset_version,
+        schema_version=config.schema_version,
+        row_count=row_count,
+        validation_status=validation_status,
+        source_count=source_count,
+        output_dir=None,
+    ).to_dict()
+
+
 def build_official_dataset(
     config: OfficialDatasetConfig,
     session: Any | None = None,
+    previous_manifest: Mapping[str, object] | None = None,
 ) -> dict[str, object]:
-    """Build one verified release from current registered official sources."""
+    """Build one verified release, or stop after a reconciled no-change check."""
     if config.timeout_s <= 0:
         raise ValueError("timeout_s must be positive")
     generated_at = _build_timestamp(config.generated_at)
@@ -117,7 +159,18 @@ def build_official_dataset(
         raise FileExistsError(f"Output directory already exists: {config.output_dir}")
     config.work_dir.mkdir(parents=True, exist_ok=True)
 
+    # capture_official_inputs() includes the mandatory legal reconciliation gate.
+    # Only a successfully reconciled current snapshot is eligible for no-change.
     snapshot = capture_official_inputs(config, session=session)
+    if previous_manifest is not None:
+        previous_identity = source_identity_from_manifest(previous_manifest)
+        if not source_identity_changed(snapshot.identities, previous_identity):
+            return _no_change_result(
+                config,
+                previous_manifest,
+                source_count=len(snapshot.identities),
+            )
+
     sources_by_key = {source.dataset_key: source for source in snapshot.sources}
     ligie_source = sources_by_key["ligie"]
     nico_source = sources_by_key["nico"]
@@ -225,11 +278,12 @@ def build_official_dataset(
     )
     verified = verify_release(config.output_dir)
 
-    return {
-        "dataset_version": str(verified["dataset_version"]),
-        "schema_version": str(verified["schema_version"]),
-        "row_count": int(verified["row_count"]),
-        "validation_status": str(verified["validation_status"]),
-        "source_count": len(source_rows),
-        "output_dir": str(config.output_dir),
-    }
+    return OfficialBuildResult(
+        status="built",
+        dataset_version=str(verified["dataset_version"]),
+        schema_version=str(verified["schema_version"]),
+        row_count=int(verified["row_count"]),
+        validation_status=str(verified["validation_status"]),
+        source_count=len(source_rows),
+        output_dir=str(config.output_dir),
+    ).to_dict()
