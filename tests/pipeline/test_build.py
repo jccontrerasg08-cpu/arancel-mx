@@ -81,7 +81,13 @@ def test_build_materializes_a_valid_public_record(tmp_path):
     assert row == ("01", "hs2", True)
     assert stored_metadata["registry_version"] == "test-registry-v1"
     assert stored_metadata["registry_sha256"] == "b" * 64
-    assert stored_metadata["level_counts"] == {"hs2": 1}
+    assert stored_metadata["level_counts"] == {
+        "hs2": 1,
+        "hs4": 0,
+        "hs6": 0,
+        "fraccion8": 0,
+        "nico10": 0,
+    }
     assert stored_metadata["reconciliation"]["publishable"] is True
     assert stored_metadata["source_identity"][0]["dataset_key"] == "ligie"
 
