@@ -75,6 +75,18 @@ def test_snapshot_selection_uses_unique_latest_valid_date():
     assert selected == latest
 
 
+def test_snapshot_selection_collapses_duplicate_occurrences_of_same_url():
+    url = "https://www.snice.gob.mx/FRACCIONESARANCELARIAS-LIGIE_20260420-20260420.xlsx"
+    first = discovered(url, "Fracciones arancelarias")
+    repeated = discovered(url, "Descarga las fracciones arancelarias")
+
+    selected = select_current_document(
+        (first, repeated), "ligie", "ligie_snapshot"
+    )
+
+    assert selected.source_url == url
+
+
 def test_snapshot_selection_rejects_latest_date_tie():
     first = discovered(
         "https://www.snice.gob.mx/FRACCIONESARANCELARIAS_A_20260810.XLSX",
