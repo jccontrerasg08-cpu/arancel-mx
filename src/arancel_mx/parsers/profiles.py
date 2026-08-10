@@ -87,7 +87,7 @@ def resolve_workbook_profile(
                 columns = _logical_columns(row, required, optional, family)
             except ValueError as exc:
                 raise ValueError(
-                    f"{exc}; sheet={sheet!r}; header_row={row_number}; row={row!r}"
+                    f"{exc}; location={sheet}!{row_number}; row={row!r}"
                 ) from exc
             if columns is not None:
                 candidates.append(
@@ -101,15 +101,11 @@ def resolve_workbook_profile(
     if not candidates:
         raise ValueError(f"unknown workbook profile: {family}")
     if len(candidates) != 1:
-        details = [
-            {
-                "sheet": candidate.sheet,
-                "header_row": candidate.header_row,
-                "columns": dict(candidate.columns),
-            }
+        details = ", ".join(
+            f"{candidate.sheet}!{candidate.header_row} columns={dict(candidate.columns)!r}"
             for candidate in candidates
-        ]
-        raise ValueError(f"ambiguous workbook profile: {family}; candidates={details!r}")
+        )
+        raise ValueError(f"ambiguous workbook profile: {family}; candidates=[{details}]")
     return ResolvedWorkbookProfile(
         family=family,
         parser_version=str(definition["parser_version"]),
