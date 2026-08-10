@@ -196,6 +196,14 @@ def config(tmp_path, name):
     )
 
 
+def checksum_map(release_dir):
+    result = {}
+    for line in (release_dir / "SHA256SUMS").read_text(encoding="ascii").splitlines():
+        digest, name = line.split("  ", maxsplit=1)
+        result[name] = digest
+    return result
+
+
 def test_offline_build_produces_verified_release(tmp_path):
     build_config = config(tmp_path, "first")
     session = fake_session()
@@ -342,12 +350,18 @@ def test_identical_inputs_produce_logically_deterministic_release(
     build_official_dataset(first, session=fake_session())
     build_official_dataset(second, session=fake_session())
 
-    for name in (
+    deterministic_assets = (
         "arancel_mx.csv",
         "arancel_mx.json",
         "official-sources.tar.gz",
-    ):
+    )
+    for name in deterministic_assets:
         assert (first.output_dir / name).read_bytes() == (second.output_dir / name).read_bytes()
+
+    first_checksums = checksum_map(first.output_dir)
+    second_checksums = checksum_map(second.output_dir)
+    for name in deterministic_assets:
+        assert first_checksums[name] == second_checksums[name]
 
     first_manifest = json.loads(
         (first.output_dir / "manifest.json").read_text(encoding="utf-8")
@@ -358,6 +372,8 @@ def test_identical_inputs_produce_logically_deterministic_release(
     first_db_hash = first_manifest["artifact_sha256"].pop("arancel_mx.duckdb")
     second_db_hash = second_manifest["artifact_sha256"].pop("arancel_mx.duckdb")
     assert first_manifest == second_manifest
+    assert first_db_hash == first_checksums["arancel_mx.duckdb"]
+    assert second_db_hash == second_checksums["arancel_mx.duckdb"]
     assert first_db_hash == hashlib.sha256(
         (first.output_dir / "arancel_mx.duckdb").read_bytes()
     ).hexdigest()
@@ -374,3 +390,32 @@ def test_identical_inputs_produce_logically_deterministic_release(
         with duckdb.connect(str(second.output_dir / "arancel_mx.duckdb"), read_only=True) as right:
             for query in queries.values():
                 assert left.execute(query).fetchall() == right.execute(query).fetchall()
+
+
+def test_schema_v2_manifest_replay_returns_no_change_without_candidate(tmp_path):
+    first = config(tmp_path, "first-published")
+    first_summary = build_official_dataset(first, session=fake_session())
+    previous_manifest = json.loads(
+        (first.output_dir / "manifest.json").read_text(encoding="utf-8")
+    )
+    second = config(tmp_path, "second-evaluation")
+
+    result = build_official_dataset(
+        second,
+        session=fake_session(),
+        previous_manifest=previous_manifest,
+    )
+
+    assert first_summary["status"] == "built"
+    assert previous_manifest["schema_version"] == "2"
+    assert result == {
+        "status": "no_change",
+        "dataset_version": "2026.08.10",
+        "schema_version": "2",
+        "row_count": 5,
+        "validation_status": "passed",
+        "source_count": 5,
+        "output_dir": None,
+    }
+    assert not second.output_dir.exists()
+    assert not (second.work_dir / "candidate" / "arancel_mx.duckdb").exists()
