@@ -100,6 +100,15 @@ def resolve_workbook_profile(
 
     if not candidates:
         raise ValueError(f"unknown workbook profile: {family}")
+    if len(candidates) > 1:
+        max_specificity = max(len(candidate.columns) for candidate in candidates)
+        most_specific = [
+            candidate
+            for candidate in candidates
+            if len(candidate.columns) == max_specificity
+        ]
+        if len(most_specific) == 1:
+            candidates = most_specific
     if len(candidates) != 1:
         details = [
             {
