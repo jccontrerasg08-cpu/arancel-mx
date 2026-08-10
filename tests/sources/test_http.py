@@ -2,7 +2,7 @@ from datetime import timezone
 
 import pytest
 
-from arancel_mx.sources.http import fetch_official_document
+from arancel_mx.sources.http import decode_fetched_text, fetch_official_document
 
 
 class Response:
@@ -58,6 +58,44 @@ def test_registered_content_type_with_charset_is_accepted():
     assert fetched.content == b"abc"
     assert fetched.media_type == "application/pdf"
     assert fetched.retrieved_at.tzinfo is timezone.utc
+
+
+def test_text_decoder_honors_declared_legacy_charset():
+    text = "Última reforma publicada"
+    fetched = fetch_official_document(
+        Session(
+            Response(
+                "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm",
+                content=text.encode("iso-8859-1"),
+                content_type="text/html; charset=iso-8859-1",
+            )
+        ),
+        "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm",
+        ("www.diputados.gob.mx", "diputados.gob.mx"),
+        ("text/html",),
+    )
+
+    assert fetched.charset == "iso-8859-1"
+    assert decode_fetched_text(fetched) == text
+
+
+def test_text_decoder_falls_back_to_windows_1252_for_legacy_html_without_charset():
+    text = "Reforma – vigente"
+    fetched = fetch_official_document(
+        Session(
+            Response(
+                "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm",
+                content=text.encode("cp1252"),
+                content_type="text/html",
+            )
+        ),
+        "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm",
+        ("www.diputados.gob.mx", "diputados.gob.mx"),
+        ("text/html",),
+    )
+
+    assert fetched.charset is None
+    assert decode_fetched_text(fetched) == text
 
 
 def test_declared_size_over_limit_is_rejected():
