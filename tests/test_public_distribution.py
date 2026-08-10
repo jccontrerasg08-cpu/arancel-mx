@@ -111,6 +111,15 @@ def test_open_source_governance_files_are_present() -> None:
     assert [path for path in required if not (ROOT / path).is_file()] == []
 
 
+def test_official_dataset_build_entrypoints_are_public() -> None:
+    required = (
+        "scripts/build_official_dataset.py",
+        ".github/workflows/build-official-dataset.yml",
+    )
+
+    assert [path for path in required if not (ROOT / path).is_file()] == []
+
+
 def test_readme_describes_the_focused_public_project() -> None:
     readme = " ".join((ROOT / "README.md").read_text(encoding="utf-8").lower().split())
     required = (
