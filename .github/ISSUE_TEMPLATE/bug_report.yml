@@ -1,0 +1,35 @@
+name: Reporte de error
+description: Reporta un comportamiento reproducible sin incluir datos sensibles.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: "No publiques tokens, RFC reales, datos personales ni vulnerabilidades. Para seguridad, usa Security Advisories."
+  - type: textarea
+    id: problem
+    attributes:
+      label: Descripción
+      description: Explica qué ocurrió y qué esperabas.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Pasos para reproducir
+      description: Incluye un ejemplo mínimo y sanitizado.
+    validations:
+      required: true
+  - type: input
+    id: revision
+    attributes:
+      label: Versión o commit
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Entorno
+      description: Sistema operativo y versión de Python.
+    validations:
+      required: true

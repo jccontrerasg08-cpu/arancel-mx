@@ -1,0 +1,24 @@
+name: Propuesta de mejora
+description: Sugiere una mejora concreta para arancel-mx.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: Necesidad
+      description: ¿Qué problema público y verificable resolvería?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Propuesta
+      description: Describe el comportamiento esperado y sus límites.
+    validations:
+      required: true
+  - type: textarea
+    id: provenance
+    attributes:
+      label: Fuentes y procedencia
+      description: Para datos o activos, incluye URL, autoridad, versión y licencia.

@@ -1,0 +1,3 @@
+pais,flujo,tema,requisito_general,datos_para_confirmar
+Estados Unidos,exportacion,documentacion,"Factura comercial, lista de empaque, documento de transporte y validacion de origen cuando aplique","producto, HS, comprador, Incoterm, transporte, origen"
+Mexico,importacion,clasificacion,"Validar fraccion arancelaria, NICO, regulaciones no arancelarias y contribuciones antes del despacho","descripcion tecnica, material, uso, origen, regimen, fecha"
