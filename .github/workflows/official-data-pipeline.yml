@@ -357,7 +357,8 @@ jobs:
           github.ref == 'refs/heads/main' &&
           (github.event_name == 'schedule' || inputs.publish == true) &&
           needs.build-and-verify.result == 'success' &&
-          (needs.build-and-verify.outputs.status == 'no_change' || needs.publish.result == 'success')
+          ((needs.build-and-verify.outputs.status == 'no_change' && needs.publish.result == 'skipped') ||
+           needs.publish.result == 'success')
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: python scripts/data_alert.py recovery
