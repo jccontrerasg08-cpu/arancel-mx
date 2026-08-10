@@ -101,11 +101,15 @@ def resolve_workbook_profile(
     if not candidates:
         raise ValueError(f"unknown workbook profile: {family}")
     if len(candidates) != 1:
-        details = ", ".join(
-            f"{candidate.sheet}!{candidate.header_row} columns={dict(candidate.columns)!r}"
+        details = [
+            {
+                "sheet": candidate.sheet,
+                "header_row": candidate.header_row,
+                "columns": dict(candidate.columns),
+            }
             for candidate in candidates
-        )
-        raise ValueError(f"ambiguous workbook profile: {family}; candidates=[{details}]")
+        ]
+        raise ValueError(f"ambiguous workbook profile: {family}; candidates={details!r}")
     return ResolvedWorkbookProfile(
         family=family,
         parser_version=str(definition["parser_version"]),
