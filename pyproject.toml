@@ -20,7 +20,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["build>=1.2", "pytest>=8.3"]
+dev = [
+    "build>=1.2",
+    "pytest>=8.3",
+    "reportlab>=4.2",
+]
 
 [project.scripts]
 arancel-mx = "arancel_mx.cli:entrypoint"
