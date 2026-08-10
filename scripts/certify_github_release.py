@@ -200,7 +200,7 @@ def certify_release_boundary(
 
     proof = _proof_bytes(repository, str(run_id), commit_sha, tag)
     mutation_started = False
-    primary_error: BaseException | None = None
+    primary_error: Exception | None = None
     asset_sha256: str | None = None
 
     try:
@@ -236,15 +236,15 @@ def certify_release_boundary(
             content_type="application/json",
         )
         asset_sha256 = _verify_draft(client, release_id, tag, proof)
-    except BaseException as error:  # noqa: BLE001 - preserve failure through cleanup
+    except Exception as error:  # noqa: BLE001 - preserve failure through cleanup
         primary_error = error
 
     cleanup_result: dict[str, bool] | None = None
-    cleanup_error: BaseException | None = None
+    cleanup_error: Exception | None = None
     if mutation_started:
         try:
             cleanup_result = cleanup_certification_resources(client, tag)
-        except BaseException as error:  # noqa: BLE001 - report rollback failure too
+        except Exception as error:  # noqa: BLE001 - report rollback failure too
             cleanup_error = error
 
     if primary_error is not None:
@@ -268,7 +268,7 @@ def certify_release_boundary(
     }
 
 
-def _atomic_write_json(path: Path, result: dict[str, object]) -> None:
+def _write_json(path: Path, result: dict[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         json.dumps(result, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
@@ -313,7 +313,7 @@ def main(argv: list[str] | None = None) -> int:
         result = certify_release_boundary(client, repository, run_id, commit_sha)
 
     if args.result_path is not None:
-        _atomic_write_json(args.result_path, result)
+        _write_json(args.result_path, result)
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     return 0
 
