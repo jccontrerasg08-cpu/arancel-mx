@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 import subprocess
 
 
@@ -58,25 +59,56 @@ def test_local_tooling_directories_are_ignored() -> None:
         assert result.returncode == 0, path
 
 
-def test_environment_example_contains_placeholders_only() -> None:
-    values = {}
-    for raw_line in (ROOT / ".env.example").read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, value = line.split("=", 1)
-        values[key] = value
+def test_only_tariff_source_package_is_distributed() -> None:
+    python_roots = {
+        path.relative_to(ROOT / "src").parts[0]
+        for path in (ROOT / "src").rglob("*.py")
+    }
 
-    assert values["BANXICO_TOKEN"] == "PASTE_YOUR_BANXICO_TOKEN_HERE"
-    assert values["GROQ_API_KEY"] == "PASTE_YOUR_GROQ_API_KEY_HERE"
+    assert python_roots == {"arancel_mx"}
 
 
-def test_uncertain_country_geojson_is_not_referenced() -> None:
-    javascript = (ROOT / "assets" / "maplibre_dashboard.js").read_text(
-        encoding="utf-8"
+def test_legacy_product_paths_are_absent() -> None:
+    legacy_paths = {
+        "app.py",
+        "banxico_directorio.py",
+        "banxico_sie.py",
+        "comex.py",
+    }
+    legacy_prefixes = ("assets/", "data/legal_corpus/", "src/comex/")
+    tracked = subprocess.check_output(
+        ["git", "ls-files"], cwd=ROOT, text=True
+    ).splitlines()
+    existing = [
+        path
+        for path in tracked
+        if (path in legacy_paths or path.startswith(legacy_prefixes))
+        and (ROOT / path).is_file()
+    ]
+
+    assert existing == []
+
+
+def test_tracked_text_contains_no_credentials_or_private_absolute_paths() -> None:
+    patterns = (
+        re.compile(r"AKIA[0-9A-Z]{16}"),
+        re.compile(r"gh[pousr]_[A-Za-z0-9]{36,}"),
+        re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
+        re.compile(r"[A-Za-z]:\\Users\\[^\\\s]+", re.IGNORECASE),
     )
+    findings = []
+    for relative in subprocess.check_output(
+        ["git", "ls-files"], cwd=ROOT, text=True
+    ).splitlines():
+        path = ROOT / relative
+        if not path.is_file():
+            continue
+        text = path.read_bytes().decode("utf-8", errors="ignore")
+        for pattern in patterns:
+            if pattern.search(text):
+                findings.append((relative, pattern.pattern))
 
-    assert "world-countries-simplified.geojson" not in javascript
+    assert findings == []
 
 
 def test_open_source_governance_files_are_present() -> None:
@@ -86,7 +118,6 @@ def test_open_source_governance_files_are_present() -> None:
         "CONTRIBUTING.md",
         "SECURITY.md",
         "CODE_OF_CONDUCT.md",
-        "THIRD_PARTY_LICENSES/MapLibre-GL-JS.txt",
         ".github/ISSUE_TEMPLATE/bug_report.yml",
         ".github/ISSUE_TEMPLATE/feature_request.yml",
         ".github/pull_request_template.md",
