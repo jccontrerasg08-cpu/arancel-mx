@@ -1,4 +1,5 @@
 from datetime import date, datetime, timezone
+from functools import lru_cache
 from io import BytesIO
 import json
 from pathlib import Path
@@ -58,6 +59,23 @@ def hierarchy_pdf_bytes():
     return stream.getvalue()
 
 
+@lru_cache(maxsize=1)
+def fixture_bytes():
+    ligie_bytes = workbook_bytes(
+        [
+            ["Fracción", "Descripción", "Unidad", "IGI", "IGE"],
+            ["01012101", "Reproductores de raza pura.", "Cabeza", "10", "Ex."],
+        ]
+    )
+    nico_bytes = workbook_bytes(
+        [
+            ["Fracción Arancelaria", "NICO", "Descripción NICO"],
+            ["01012101", "00", "Reproductores de raza pura."],
+        ]
+    )
+    return ligie_bytes, nico_bytes, hierarchy_pdf_bytes()
+
+
 class Response:
     def __init__(self, url, content, content_type, text=None):
         self.url = url
@@ -93,19 +111,7 @@ class FakeSession:
 def fake_session():
     ligie_html = f'<a href="{LIGIE_URL}">Fracciones 20260810</a>'
     nico_html = f'<a href="{NICO_URL}">NICO 20260810</a>'
-    ligie_bytes = workbook_bytes(
-        [
-            ["Fracción", "Descripción", "Unidad", "IGI", "IGE"],
-            ["01012101", "Reproductores de raza pura.", "Cabeza", "10", "Ex."],
-        ]
-    )
-    nico_bytes = workbook_bytes(
-        [
-            ["Fracción Arancelaria", "NICO", "Descripción NICO"],
-            ["01012101", "00", "Reproductores de raza pura."],
-        ]
-    )
-    pdf_bytes = hierarchy_pdf_bytes()
+    ligie_bytes, nico_bytes, pdf_bytes = fixture_bytes()
     responses = {
         DIPUTADOS_URL: Response(
             DIPUTADOS_URL,
