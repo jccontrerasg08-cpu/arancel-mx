@@ -90,7 +90,7 @@ Si ocurre un segundo cambio válido el mismo día y ya existe `data-YYYY.MM.DD`,
 
 ## 9. Fallos, GitHub Issue y recovery
 
-Los pasos principales escriben JSON de diagnóstico antes de devolver un código distinto de cero. El workflow extrae mensajes acotados y sin secretos, y luego falla explícitamente el job.
+**Cualquier falla bloquea la publicación.** Los pasos principales escriben JSON de diagnóstico antes de devolver un código distinto de cero. El workflow extrae mensajes acotados y sin secretos, y luego falla explícitamente el job.
 
 El job `notify` es el único con `issues: write`:
 
@@ -107,6 +107,6 @@ El workflow tiene `contents: read` globalmente. El job de build permanece read-o
 
 Los binarios, bases DuckDB, snapshots oficiales y bundles de release no se escriben al historial Git.
 
-## Compatibilidad y workflow retirado
+## Compatibilidad del entrypoint
 
-`scripts/build_official_dataset.py` permanece como entrypoint público de construcción. El workflow anterior `.github/workflows/build-official-dataset.yml` está retirado y fue reemplazado por `.github/workflows/official-data-pipeline.yml`; no debe volver a programarse en paralelo.
+`scripts/build_official_dataset.py` permanece como entrypoint público de construcción. La automatización de producción vive únicamente en `.github/workflows/official-data-pipeline.yml`, por lo que no hay dos schedules de dataset ejecutándose en paralelo.
