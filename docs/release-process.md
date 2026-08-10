@@ -1,34 +1,59 @@
 # Proceso de publicación
 
-## 1. Captura y construcción
+`arancel-mx` usa un pipeline autónomo y fail-closed para construir y publicar snapshots oficiales. El workflow de producción es **Official data pipeline**, definido en [`.github/workflows/official-data-pipeline.yml`](../.github/workflows/official-data-pipeline.yml), y corre diariamente con cron `17 11 * * *` además de admitir `workflow_dispatch`.
 
-Captura documentos permitidos, verifica su identidad y ejecuta parsers offline. Materializa el candidato en una base DuckDB separada; no modifiques una versión publicada durante la construcción.
+> La publicación automatizada sólo debe activarse en producción después de habilitar release immutability y las protecciones de `main`. El modo manual `workflow_dispatch` usa `publish=false` por defecto para permitir un dry-run sin mutaciones.
 
-La construcción end-to-end desde las fuentes registradas se ejecuta con:
+## 1. Tests y entorno reproducible
 
-```bash
-python scripts/build_official_dataset.py \
-  --work-dir data/embedded/official-build \
-  --output-dir out/release \
-  --effective-as-of 2026-08-10 \
-  --dataset-version 2026.08.10
-```
+Antes de acceder a fuentes externas, el job `build-and-verify` instala el entorno con `requirements/production-build.txt` y ejecuta `python -m pytest -q`. El check estable para merges es `CI / test`.
 
-El orquestador descubre los snapshots oficiales vigentes, captura sus bytes con SHA256, resuelve perfiles conocidos, construye la jerarquía HS2 -> HS4 -> HS6 -> fracción8 -> NICO10 y falla si encuentra ambigüedad, procedencia incompleta o un padre faltante.
+La compatibilidad pública del paquete sigue declarada en `pyproject.toml`; el build oficial, en cambio, usa versiones exactas para que una ejecución programada no cambie silenciosamente de dependencias.
 
-## 2. Conciliación
+## 2. Captura de fuentes oficiales
 
-Compara el ledger de la Cámara de Diputados con evidencia del DOF y documentos operativos de SNICE. Las propuestas, indicadores, documentos faltantes y discrepancias permanecen explícitos.
+La construcción end-to-end de dataset oficial puede ejecutarse con `scripts/build_official_dataset.py`; el workflow de producción usa `scripts/run_official_pipeline.py` para añadir comparación con la release anterior y diagnósticos estructurados.
 
-## 3. Validación
+Cada snapshot registrado se descarga y se conserva con identidad de fuente, SHA256 y `retrieved_at`. **`retrieved_at` significa actual fetch time**, es decir, la hora real de la captura HTTP. No se sustituye por `generated_at`.
 
-La construcción rechaza duplicados, jerarquías inválidas, intervalos invertidos o superpuestos, procedencia incompleta, tasas incompatibles, padres faltantes y metadatos públicos incompletos.
+`generated_at` identifica cuándo se generó el candidato/release. Ambos tiempos se conservan por separado para evitar atribuir al documento una hora de recuperación que no tuvo.
 
-El candidato no se exporta si la vista canónica no supera sus validaciones. La release pública requiere `validation_status == "passed"`, conteo positivo y presencia de fracciones arancelarias y NICO.
+## 3. Reconciliación legal como gate
 
-## 4. Contrato de artefactos
+El ledger registrado de la Cámara de Diputados se reconcilia contra evidencia DOF y las fuentes operativas registradas de SNICE antes de publicar. Una discrepancia legal, evidencia DOF faltante, ambigüedad de snapshot, fallo de parser, checksum inconsistente o validación inválida bloquea el pipeline.
 
-Una construcción oficial verificada produce exactamente:
+La reconciliación no convierte una observación técnica en una opinión jurídica. El proyecto conserva evidencia y detecta inconsistencias; **no constituye asesoría legal**.
+
+## 4. Parseo, normalización y validación
+
+Los bytes capturados se procesan con parsers offline. El candidato se materializa en DuckDB y se valida antes de exportar. Entre los gates se encuentran:
+
+- jerarquía HS2 → HS4 → HS6 → fracción8 → NICO10;
+- ausencia de duplicados y padres faltantes;
+- intervalos temporales coherentes;
+- tarifas y metadatos públicos válidos;
+- procedencia completa;
+- reconciliación legal publicable.
+
+Si cualquiera de estos gates falla, no existe camino hacia el job publisher.
+
+## 5. `no_change` y detección de cambios
+
+El pipeline descarga el `manifest.json` de la última release válida y compara la identidad registrada de las fuentes.
+
+- Si la identidad no cambió, el resultado es `no_change`: la ejecución termina en verde, el publisher queda `skipped` y no se crea tag ni release.
+- Si hubo un cambio y todos los gates pasan, el resultado es `built`: se genera el bundle verificado y puede continuar a publicación.
+- Si falla cualquier gate, el resultado es `failed`: publicación bloqueada y diagnóstico disponible para el notifier.
+
+## 6. Manifest schema v2 y procedencia
+
+`manifest.json` usa `schema_version: "2"`, también referido como **schema v2**. Además de versión, conteos, hashes y fuentes, el manifest conserva procedencia de la ejecución, incluyendo commit, registry y GitHub Actions.
+
+Campos relevantes incluyen `generated_at`, `registry_version`, `registry_sha256`, `git_commit_sha`, `github_run_id`, `github_run_attempt`, `github_workflow_ref` y `github_artifact_name`.
+
+## 7. Contrato exacto de publicación
+
+Una construcción válida produce exactamente **six assets** públicos:
 
 ```text
 release/
@@ -40,28 +65,48 @@ release/
 └── official-sources.tar.gz
 ```
 
-`arancel_mx.csv`, `arancel_mx.json` y la vista `arancel_mx` dentro de `arancel_mx.duckdb` comparten el contrato canónico. El archivo `manifest.json` conserva versión, esquema, fecha efectiva, conteo, resultado de validación, documentos fuente y SHA256 de los artefactos.
+Los cinco archivos distintos de `SHA256SUMS` deben estar cubiertos por checksums. `official-sources.tar.gz` conserva los snapshots capturados y `source_capture.json` necesarios para auditar el build.
 
-## 5. Checksums y archivo de fuentes
+Antes de cualquier mutación de GitHub Release, `verify_publication_bundle()` exige que el directorio contenga exactamente los six assets, valida manifest/schema/procedencia y vuelve a comprobar hashes.
 
-`python -m arancel_mx release` verifica `manifest.json` y `SHA256SUMS`, vuelve a calcular cada hash y crea `official-sources.tar.gz`. El archivo sólo admite nombres simples declarados en `source_capture.json`; rutas absolutas, duplicadas o con traversal son rechazadas.
+## 8. Publicación automática e immutable release
 
-Cada archivo DuckDB se verifica contra el SHA256 declarado para esa construcción. La reproducibilidad lógica se valida mediante el contenido canónico y sus hashes de registro, sin asumir que dos archivos físicos DuckDB creados en ejecuciones separadas sean byte a byte idénticos.
+El job `publish` sólo puede ejecutarse cuando:
 
-## 6. Build official dataset en GitHub Actions
+1. `build-and-verify` terminó con éxito;
+2. su output es exactamente `built`;
+3. el ref es `refs/heads/main`;
+4. la ejecución es programada o un `workflow_dispatch` confiable usa `publish=true`.
 
-El workflow **Build official dataset** está definido en [`.github/workflows/build-official-dataset.yml`](../.github/workflows/build-official-dataset.yml).
+El publisher descarga por nombre exacto el artifact `arancel-mx-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}`, ejecuta de nuevo `verify_publication_bundle()` y crea una GitHub Release en estado **draft** para el tag `data-YYYY.MM.DD`.
 
-El workflow puede ejecutarse mediante `workflow_dispatch` y también tiene una ejecución semanal. Usa permisos `contents: read`, ejecuta primero `python -m pytest -q`, construye el dataset con `scripts/build_official_dataset.py`, valida el `manifest.json` y sólo después sube `out/release/` como artifact de GitHub Actions.
+Los six assets se suben al draft y se verifican remotamente por tamaño y digest cuando GitHub provee digest; si no, se descargan de nuevo y se recalcula SHA256. Sólo entonces el draft se hace público. Después de publicar, la release se vuelve a consultar y verificar.
 
-Los artefactos generados, bases DuckDB y documentos oficiales descargados permanecen fuera del historial Git. Las rutas de trabajo y salida están cubiertas por las reglas del repositorio para datos generados.
+La política es **immutable**: nunca se sobrescribe un tag o release existente.
 
-## 7. Puntero ligero
+### Same-date second change
 
-El comando de preparación de release puede producir un directorio `latest` con manifiesto, checksums e instrucciones de descarga. Los binarios, bases y documentos originales permanecen fuera del historial Git.
+Si ocurre un segundo cambio válido el mismo día y ya existe `data-YYYY.MM.DD`, el sistema no sobreescribe esa identidad. Falla con categoría `release_tag_collision`. Este **same-date** collision bloquea publicación y se trata como alerta operativa.
 
-## 8. Aprobación manual de publicación
+## 9. Fallos, GitHub Issue y recovery
 
-Ni el script ni el workflow crean tags, hacen push o publican GitHub Releases. Después de pruebas, revisión de procedencia y verificación independiente, una persona autorizada decide manualmente si crea un tag como `data-YYYY.MM.DD` y adjunta los seis artefactos verificados.
+Los pasos principales escriben JSON de diagnóstico antes de devolver un código distinto de cero. El workflow extrae mensajes acotados y sin secretos, y luego falla explícitamente el job.
 
-La publicación es supervisada y una versión existente nunca se sobrescribe silenciosamente. La automatización actual termina en un artifact verificado de GitHub Actions; la promoción a GitHub Releases sigue siendo un paso manual.
+El job `notify` es el único con `issues: write`:
+
+- build fallido: crea o actualiza un **GitHub Issue** determinista por stage + failure category;
+- publish fallido: crea o actualiza el GitHub Issue correspondiente;
+- ejecución posterior saludable: ejecuta **recovery**, comenta y cierra las alertas generadas por la automatización;
+- `no_change` + publisher `skipped` cuenta explícitamente como recovery saludable.
+
+Los Issues del usuario sin el marcador oculto de automatización nunca se cierran mediante recovery.
+
+## 10. Límites de permisos
+
+El workflow tiene `contents: read` globalmente. El job de build permanece read-only; sólo `publish` recibe `contents: write`; sólo `notify` recibe `issues: write`. No se usa PAT, `write-all` ni `pull_request_target`.
+
+Los binarios, bases DuckDB, snapshots oficiales y bundles de release no se escriben al historial Git.
+
+## Compatibilidad y workflow retirado
+
+`scripts/build_official_dataset.py` permanece como entrypoint público de construcción. El workflow anterior `.github/workflows/build-official-dataset.yml` está retirado y fue reemplazado por `.github/workflows/official-data-pipeline.yml`; no debe volver a programarse en paralelo.
