@@ -326,6 +326,8 @@ git diff --check
 - Releases use the repository `GITHUB_TOKEN`, not a PAT.
 - Demo-generation automation opens a PR rather than pushing generated assets directly to `main`.
 
+The production repository-settings runbook is [`docs/operations/github-settings.md`](docs/operations/github-settings.md). It defines the release-immutability, `main` ruleset, `CI / test`, Actions-permission, merge, and Advanced Security settings that maintainers must verify in the GitHub UI.
+
 See [`SECURITY.md`](SECURITY.md), [`CONTRIBUTING.md`](CONTRIBUTING.md), and [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
 
 ## Project status
