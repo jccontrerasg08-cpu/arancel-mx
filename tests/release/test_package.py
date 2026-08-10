@@ -75,6 +75,29 @@ def test_prepares_allowlisted_source_archive_and_latest_pointer(tmp_path):
     ]
 
 
+def test_source_archive_is_byte_deterministic(tmp_path, monkeypatch):
+    first_root = tmp_path / "first"
+    second_root = tmp_path / "second"
+    first_root.mkdir()
+    second_root.mkdir()
+    first_release, first_sources = _fixture(first_root)
+    second_release, second_sources = _fixture(second_root)
+
+    monkeypatch.setattr("gzip.time.time", lambda: 1)
+    first = prepare_release_archive(
+        first_release, first_sources, tmp_path / "first-latest"
+    )
+    monkeypatch.setattr("gzip.time.time", lambda: 2)
+    second = prepare_release_archive(
+        second_release, second_sources, tmp_path / "second-latest"
+    )
+
+    assert first["source_archive_sha256"] == second["source_archive_sha256"]
+    assert (first_release / "official-sources.tar.gz").read_bytes() == (
+        second_release / "official-sources.tar.gz"
+    ).read_bytes()
+
+
 def test_corrupt_source_creates_no_archive_or_latest_pointer(tmp_path):
     release, sources = _fixture(tmp_path)
     (sources / "ligie.xlsx").write_bytes(b"corrupt")
@@ -85,4 +108,3 @@ def test_corrupt_source_creates_no_archive_or_latest_pointer(tmp_path):
 
     assert not (release / "official-sources.tar.gz").exists()
     assert not latest.exists()
-

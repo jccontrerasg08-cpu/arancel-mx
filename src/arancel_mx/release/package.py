@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import gzip
 import json
 from pathlib import Path
 import shutil
@@ -74,6 +75,21 @@ def verify_sources(source_dir: Path) -> list[dict[str, Any]]:
     return captured
 
 
+def _add_deterministic_file(
+    archive: tarfile.TarFile, path: Path, arcname: str
+) -> None:
+    info = tarfile.TarInfo(arcname)
+    info.size = path.stat().st_size
+    info.mode = 0o644
+    info.mtime = 0
+    info.uid = 0
+    info.gid = 0
+    info.uname = ""
+    info.gname = ""
+    with path.open("rb") as stream:
+        archive.addfile(info, stream)
+
+
 def build_release(database_path: Path, output_dir: Path) -> dict[str, object]:
     """Create deterministic public artifacts from a validated tariff database."""
     return export_arancel_release(Path(database_path), Path(output_dir))
@@ -95,13 +111,24 @@ def prepare_release_archive(
     captured = verify_sources(source_dir)
     archive_tmp = archive_path.with_suffix(".tmp")
     try:
-        with tarfile.open(archive_tmp, "w:gz") as archive:
-            for filename in sorted(row["filename"] for row in captured):
-                archive.add(source_dir / filename, arcname=f"official-sources/{filename}")
-            archive.add(
-                source_dir / "source_capture.json",
-                arcname="official-sources/source_capture.json",
-            )
+        with archive_tmp.open("wb") as raw_archive:
+            with gzip.GzipFile(
+                filename="", mode="wb", fileobj=raw_archive, mtime=0
+            ) as compressed:
+                with tarfile.open(
+                    fileobj=compressed, mode="w", format=tarfile.PAX_FORMAT
+                ) as archive:
+                    for filename in sorted(row["filename"] for row in captured):
+                        _add_deterministic_file(
+                            archive,
+                            source_dir / filename,
+                            f"official-sources/{filename}",
+                        )
+                    _add_deterministic_file(
+                        archive,
+                        source_dir / "source_capture.json",
+                        "official-sources/source_capture.json",
+                    )
         archive_tmp.replace(archive_path)
 
         checksums_path = release_dir / "SHA256SUMS"
