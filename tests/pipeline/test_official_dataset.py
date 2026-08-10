@@ -193,9 +193,10 @@ def test_offline_build_produces_verified_release(tmp_path):
 def test_build_accepts_declared_legacy_charset_for_diputados_ledger(tmp_path):
     build_config = config(tmp_path, "legacy-ledger")
     session = fake_session()
+    legacy_ledger = "<!-- Reforma – vigente -->\n" + DIPUTADOS_LEDGER
     session.responses[DIPUTADOS_URL] = Response(
         DIPUTADOS_URL,
-        DIPUTADOS_LEDGER.encode("cp1252"),
+        legacy_ledger.encode("cp1252"),
         "text/html; charset=windows-1252",
     )
 
