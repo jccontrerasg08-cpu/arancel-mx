@@ -330,6 +330,8 @@ git diff --check
 - No usa PAT para releases.
 - La automatización de demos abre PR en vez de empujar a `main`.
 
+El runbook de configuración de producción está en [`docs/operations/github-settings.md`](docs/operations/github-settings.md). Ahí se documentan release immutability, el ruleset de `main`, `CI / test`, permisos de Actions y controles de Advanced Security que deben verificarse en la UI.
+
 Ver [`SECURITY.md`](SECURITY.md) y [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Estado del proyecto
