@@ -18,6 +18,14 @@ from arancel_mx.release.metadata import source_identity_from_manifest
 
 RELEASE_ARTIFACTS = ("arancel_mx.csv", "arancel_mx.json", "arancel_mx.duckdb")
 SOURCE_ARCHIVE = "official-sources.tar.gz"
+PUBLIC_RELEASE_ASSETS = (
+    "arancel_mx.duckdb",
+    "arancel_mx.csv",
+    "arancel_mx.json",
+    "manifest.json",
+    "SHA256SUMS",
+    SOURCE_ARCHIVE,
+)
 RELEASE_LEVELS = {"hs2", "hs4", "hs6", "fraccion8", "nico10"}
 PROVENANCE_FIELDS = (
     "registry_version",
@@ -45,6 +53,8 @@ def _checksum_lines(path: Path) -> dict[str, str]:
         parts = line.split()
         if len(parts) != 2 or Path(parts[1]).name != parts[1]:
             raise ValueError(f"Invalid checksum line: {line}")
+        if parts[1] in declared:
+            raise ValueError(f"Duplicate checksum entry: {parts[1]}")
         declared[parts[1]] = parts[0]
     return declared
 
@@ -125,6 +135,33 @@ def verify_release(release_dir: Path) -> dict[str, Any]:
         path = release_dir / name
         if not path.is_file() or sha256(path) != expected:
             raise ValueError(f"SHA256SUMS checksum mismatch: {name}")
+    return manifest
+
+
+def verify_publication_bundle(release_dir: Path) -> dict[str, Any]:
+    """Require the exact immutable six-file GitHub Release publication contract."""
+    release_dir = Path(release_dir).resolve()
+    if not release_dir.is_dir():
+        raise ValueError(f"Publication bundle directory does not exist: {release_dir}")
+    entries = {path.name: path for path in release_dir.iterdir()}
+    if set(entries) != set(PUBLIC_RELEASE_ASSETS) or any(
+        not path.is_file() for path in entries.values()
+    ):
+        raise ValueError("Publication bundle must contain exactly the six public assets")
+
+    manifest = verify_release(release_dir)
+    declared = _checksum_lines(release_dir / "SHA256SUMS")
+    required = set(PUBLIC_RELEASE_ASSETS) - {"SHA256SUMS"}
+    if set(declared) != required:
+        raise ValueError(
+            "Publication bundle checksum coverage must include exactly the five hashed assets"
+        )
+    for name in sorted(required):
+        expected = declared[name]
+        if not _SHA256.fullmatch(expected):
+            raise ValueError(f"Publication bundle checksum is invalid: {name}")
+        if sha256(release_dir / name) != expected:
+            raise ValueError(f"Publication bundle checksum mismatch: {name}")
     return manifest
 
 
