@@ -27,6 +27,10 @@ from arancel_mx.sources.http import (
     decode_fetched_text,
     fetch_official_document,
 )
+from arancel_mx.sources.legal_evidence import (
+    RequiredDofEvidence,
+    required_dof_evidence,
+)
 from arancel_mx.sources.registry import (
     RegistryEntry,
     load_source_registry,
@@ -42,6 +46,17 @@ SOURCE_AUTHORITY = {
     "nico": ("Secretaría de Economía / SNICE", "SNICE"),
     "diputados_ligie": ("Cámara de Diputados", "Cámara de Diputados"),
 }
+LEGAL_EVIDENCE_HOSTS = (
+    "dof.gob.mx",
+    "www.dof.gob.mx",
+    "diputados.gob.mx",
+    "www.diputados.gob.mx",
+)
+LEGAL_FALLBACK_MEDIA_TYPES = (
+    "application/pdf",
+    "text/html",
+    "application/msword",
+)
 
 
 @dataclass(frozen=True)
@@ -64,8 +79,8 @@ class OfficialInputSnapshot:
     reconciliation: ReconciliationReport
 
 
-def _source_document_id(dataset_key: str, final_url: str, source_sha256: str) -> str:
-    payload = f"{dataset_key}\0{final_url}\0{source_sha256}".encode("utf-8")
+def _source_document_id(identity_key: str, final_url: str, source_sha256: str) -> str:
+    payload = f"{identity_key}\0{final_url}\0{source_sha256}".encode("utf-8")
     return "source-" + hashlib.sha256(payload).hexdigest()
 
 
@@ -139,6 +154,69 @@ def _capture_source(
     )
 
 
+def _legal_media_types(evidence: RequiredDofEvidence) -> tuple[str, ...]:
+    media_types: list[str] = []
+    if evidence.media_type != "application/octet-stream":
+        media_types.append(evidence.media_type)
+    for media_type in LEGAL_FALLBACK_MEDIA_TYPES:
+        if media_type not in media_types:
+            media_types.append(media_type)
+    return tuple(media_types)
+
+
+def _capture_legal_evidence(
+    evidence: RequiredDofEvidence,
+    config: OfficialDatasetConfig,
+    session: Any,
+) -> CapturedOfficialSource:
+    dataset_key = f"dof_{evidence.role}"
+    title = f"DOF evidence {evidence.role} {evidence.published_at.isoformat()}"
+    fetched = fetch_official_document(
+        session,
+        evidence.url,
+        LEGAL_EVIDENCE_HOSTS,
+        _legal_media_types(evidence),
+        timeout_s=config.timeout_s,
+    )
+    retrieved_at = _retrieval_timestamp(fetched)
+    metadata = {
+        "source_id": dataset_key,
+        "kind": evidence.role,
+        "observed_at": config.effective_as_of.isoformat(),
+        "retrieved_at": retrieved_at.isoformat().replace("+00:00", "Z"),
+        "source_url": fetched.final_url,
+        "filename": _filename(fetched.final_url),
+        "media_type": fetched.media_type,
+        "title": title,
+        "published_at": evidence.published_at.isoformat(),
+    }
+    capture = capture_document(fetched.content, metadata, config.work_dir / "raw")
+    source_id = _source_document_id(evidence.role, fetched.final_url, capture.sha256)
+    source_document: dict[str, object] = {
+        "source_document_id": source_id,
+        "authority": "Diario Oficial de la Federación",
+        "publication_venue": "Diario Oficial de la Federación",
+        "title": title,
+        "source_url": fetched.final_url,
+        "media_type": fetched.media_type,
+        "sha256": capture.sha256,
+        "local_path": str(capture.path),
+        "published_at": evidence.published_at,
+        "effective_from": None,
+        "effective_to": None,
+        "observed_at": config.effective_as_of,
+        "retrieved_at": retrieved_at,
+    }
+    return CapturedOfficialSource(
+        dataset_key=dataset_key,
+        document_role=evidence.role,
+        title=title,
+        fetched=fetched,
+        capture=capture,
+        source_document=source_document,
+    )
+
+
 def _registry_metadata(registry: dict[str, RegistryEntry]) -> tuple[str, str]:
     versions = {entry.registry_version for entry in registry.values()}
     if len(versions) != 1:
@@ -153,7 +231,7 @@ def capture_official_inputs(
     config: OfficialDatasetConfig,
     session: Any | None = None,
 ) -> OfficialInputSnapshot:
-    """Discover and capture the registered base inputs before parsing them."""
+    """Discover and capture registered inputs and ledger-linked legal evidence."""
     if config.timeout_s <= 0:
         raise ValueError("timeout_s must be positive")
 
@@ -172,6 +250,11 @@ def capture_official_inputs(
     ledger = parse_ligie_ledger(
         decode_fetched_text(ledger_fetch),
         ledger_fetch.final_url,
+    )
+    legal_requirements = required_dof_evidence(ledger)
+    legal_sources = tuple(
+        _capture_legal_evidence(evidence, config, client)
+        for evidence in legal_requirements
     )
     consolidated_url = registered_direct_document(
         diputados_entry,
@@ -215,6 +298,7 @@ def capture_official_inputs(
             config=config,
             session=client,
         ),
+        *legal_sources,
     )
     identities = tuple(
         SourceIdentity(
@@ -248,7 +332,7 @@ def write_release_sources(
     config: OfficialDatasetConfig,
     captured: Sequence[CapturedOfficialSource],
 ) -> Path:
-    """Copy captured base evidence into the verified release-source directory."""
+    """Copy captured evidence into the verified release-source directory."""
     source_dir = config.work_dir / "release-sources"
     if source_dir.exists():
         raise FileExistsError(f"Release source directory already exists: {source_dir}")
@@ -263,6 +347,10 @@ def write_release_sources(
             names[item.dataset_key] = f"nico{suffix}"
         elif item.dataset_key == "diputados_ligie":
             names[item.dataset_key] = "ligie-consolidated.pdf"
+        elif item.dataset_key == "dof_law_reform":
+            names[item.dataset_key] = f"dof-law-reform{suffix}"
+        elif item.dataset_key == "dof_tariff_decree":
+            names[item.dataset_key] = f"dof-tariff-decree{suffix}"
         else:
             raise ValueError(f"unexpected release source: {item.dataset_key}")
 
@@ -275,11 +363,17 @@ def write_release_sources(
         rows.append(
             {
                 "dataset_key": item.dataset_key,
+                "document_role": item.document_role,
                 "filename": filename,
                 "media_type": item.fetched.media_type,
                 "sha256": item.capture.sha256,
                 "source_document_id": source_document["source_document_id"],
                 "source_url": source_document["source_url"],
+                "published_at": (
+                    source_document["published_at"].isoformat()
+                    if source_document.get("published_at")
+                    else None
+                ),
             }
         )
     (source_dir / "source_capture.json").write_text(
