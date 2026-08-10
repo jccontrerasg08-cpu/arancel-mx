@@ -168,11 +168,16 @@ class _LinkParser(HTMLParser):
 
 
 def discover_registered_sources(
-    registry: Mapping[str, RegistryEntry], client: Any
+    registry: Mapping[str, RegistryEntry],
+    client: Any,
+    timeout_s: float = 30.0,
 ) -> tuple[DiscoveredDocument, ...]:
+    if timeout_s <= 0:
+        raise ValueError("timeout_s must be positive")
+
     found: list[DiscoveredDocument] = []
     for key, entry in sorted(registry.items()):
-        response = client.get(entry.canonical_page)
+        response = client.get(entry.canonical_page, timeout=timeout_s)
         if hasattr(response, "raise_for_status"):
             response.raise_for_status()
         parser = _LinkParser()
