@@ -2,12 +2,15 @@ from dataclasses import replace
 from datetime import date, datetime, timezone
 from pathlib import Path
 
+import pytest
+
 from arancel_mx.pipeline import official_sources
 from arancel_mx.pipeline.official_dataset import OfficialDatasetConfig
 from arancel_mx.pipeline.official_sources import (
     capture_official_inputs,
     write_release_sources,
 )
+from arancel_mx.sources.legal_evidence import RequiredDofEvidence
 
 
 DIPUTADOS_LEDGER = (
@@ -112,6 +115,8 @@ def test_capture_official_inputs_returns_registered_and_required_legal_roles(tmp
     assert len(snapshot.registry_sha256) == 64
     assert len(snapshot.identities) == 5
     assert all(identity.registry_version == "2026-08-10" for identity in snapshot.identities)
+    assert snapshot.reconciliation.publishable is True
+    assert snapshot.reconciliation.discrepancies == ()
 
     by_key = {source.dataset_key: source for source in snapshot.sources}
     assert by_key["dof_law_reform"].source_document["published_at"] == date(
@@ -120,6 +125,27 @@ def test_capture_official_inputs_returns_registered_and_required_legal_roles(tmp
     assert by_key["dof_tariff_decree"].source_document["published_at"] == date(
         2026, 4, 23
     )
+
+
+def test_missing_captured_required_dof_role_blocks_reconciliation(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        official_sources,
+        "required_dof_evidence",
+        lambda _ledger: (
+            RequiredDofEvidence(
+                role="law_reform",
+                published_at=date(2025, 12, 29),
+                url=LAW_REFORM_URL,
+                media_type="application/pdf",
+            ),
+        ),
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=r"legal reconciliation failed: .*missing_dof_evidence:tariff_decree",
+    ):
+        capture_official_inputs(config(tmp_path), session=fake_session())
 
 
 def test_capture_fetches_only_ledger_linked_required_dof_urls(tmp_path):
