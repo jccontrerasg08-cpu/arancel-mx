@@ -12,7 +12,7 @@ Make `arancel-mx` operate autonomously in production while remaining fail-closed
 2. **No silent fallback**: unexpected source/schema changes are surfaced, not guessed through.
 3. **Minimum permissions**: repository default `GITHUB_TOKEN` remains read-only; write permissions are granted only to the exact jobs that need them.
 4. **Immutable published data**: published dataset releases are immutable and versioned as `data-YYYY.MM.DD`.
-5. **Traceable chain of custody**: every release records the source bytes, source hashes, Git commit, workflow run, artifact identity, validation results, and release asset hashes.
+5. **Traceable chain of custody**: every release records the source bytes, source hashes, Git commit, workflow run, deterministic artifact name, validation results, and release asset hashes.
 6. **Deterministic logical output**: equal source bytes and equal build inputs produce the same canonical logical dataset and deterministic text/archive artifacts.
 7. **No generated datasets in Git history**: release assets remain in GitHub Actions artifacts and GitHub Releases, not committed to `main`.
 
@@ -220,7 +220,7 @@ The manifest is extended to include:
 - `github_run_id`
 - `github_run_attempt`
 - `github_workflow_ref`
-- artifact identity when available before final packaging
+- deterministic `github_artifact_name`
 - row count
 - level counts
 - reconciliation status/results
@@ -228,7 +228,9 @@ The manifest is extended to include:
 - complete source-document metadata and SHA-256 values
 - artifact SHA-256 map
 
-Release publication must be derivable and auditable from this manifest without reconstructing provenance manually from the GitHub UI.
+GitHub assigns the numeric Actions artifact ID only after artifact upload. That numeric ID is therefore not written back into the already-validated manifest. The workflow run ID plus deterministic artifact name identifies the Actions artifact without mutating the release package after validation; the GitHub release metadata provides the final published release/asset IDs.
+
+Release publication must be derivable and auditable from this manifest plus GitHub's immutable release metadata without reconstructing source identity manually.
 
 ## Release publication sequence
 
@@ -248,7 +250,7 @@ To support immutable GitHub Releases safely:
 6. publish the draft
 7. verify the resulting release is complete
 
-No existing data release is overwritten. Tag reuse is forbidden.
+No existing data release is overwritten. Tag reuse is forbidden. If a second meaningful official-source change occurs on the same UTC date after a release already exists, publication is blocked and a data alert is opened rather than silently replacing that date's release.
 
 ## GitHub repository settings
 
