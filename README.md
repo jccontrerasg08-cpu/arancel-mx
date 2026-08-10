@@ -36,6 +36,8 @@ Herramientas abiertas en Python para capturar, normalizar, reconciliar y publica
 
 `arancel-mx` es un proyecto público enfocado en construir una capa de datos abierta, reproducible y auditable para la LIGIE, NICO y sus fuentes oficiales. El núcleo público prioriza datos, procedencia documental, validación, DuckDB y artefactos reproducibles; no pretende reemplazar un sistema comercial completo de comercio exterior.
 
+Licencia del proyecto: **Apache-2.0**.
+
 > [!IMPORTANT]
 > `arancel-mx` es una herramienta técnica y de datos. **No constituye asesoría legal.** Para decisiones de clasificación arancelaria, cumplimiento regulatorio, importación o exportación deben consultarse las fuentes oficiales aplicables y, cuando corresponda, profesionales especializados.
 
