@@ -5,31 +5,36 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   generate:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
-      - name: Install dependencies
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "22"
+          package-manager-cache: false
+
+      - name: Install pinned demo dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y imagemagick curl
-          # Install Node.js (LTS 18) and svg-term-cli
-          curl -sL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-          sudo apt-get install -y nodejs
-          npm install -g svg-term-cli
+          sudo apt-get install -y imagemagick
+          npm install -g svg-term-cli@2.1.1
 
-      - name: Generate SVG/GIF from .cast recordings
+      - name: Generate SVG and GIF assets
+        shell: bash
         run: |
-          set -e
+          set -euo pipefail
           mkdir -p docs
           CASTS=(docs/*.cast)
-          # If no .cast files found, exit without error
           if [ ! -e "${CASTS[0]}" ]; then
-            echo "No .cast recordings found in docs/ — nothing to generate."
+            echo "No .cast recordings found in docs; nothing to generate."
             exit 0
           fi
           for f in docs/*.cast; do
@@ -37,21 +42,27 @@ jobs:
             svg="docs/${base}.svg"
             gif="docs/${base}.gif"
             echo "Converting $f -> $svg"
-            svg-term --in "$f" --out "$svg" --window --preserve || (echo "svg-term failed" && exit 1)
+            svg-term --in "$f" --out "$svg" --window --preserve
             echo "Converting $svg -> $gif"
             convert -background white -flatten "$svg" "$gif"
           done
 
-      - name: Commit generated assets
+      - name: Commit changes and open pull request
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/*.svg docs/*.gif || true
-          if git diff --staged --quiet; then
-            echo "No generated assets to commit"
-            exit 0
-          fi
-          git commit -m "Add generated demo animations" || true
-          git push || true
+          branch="automation/demo-${GITHUB_RUN_ID}"
+          git switch -c "$branch"
+          git add docs/*.svg docs/*.gif
+          git diff --cached --quiet && exit 0
+          git commit -m "docs: refresh terminal demo"
+          git push origin "$branch"
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "docs: refresh terminal demo" \
+            --body "Automated demo refresh from workflow run ${GITHUB_RUN_ID}."
