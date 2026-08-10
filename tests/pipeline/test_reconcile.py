@@ -1,6 +1,12 @@
 from pathlib import Path
 
-from arancel_mx.pipeline.reconcile import reconcile_legal_instruments
+import pytest
+
+from arancel_mx.pipeline.reconcile import (
+    DiscoveredDocument,
+    reconcile_legal_instruments,
+    select_current_document,
+)
 from arancel_mx.sources.diputados import parse_ligie_ledger
 
 
@@ -21,6 +27,17 @@ SNICE = (
 )
 
 
+def discovered(url, title):
+    return DiscoveredDocument(
+        dataset_key="ligie",
+        document_role="ligie_snapshot",
+        discovery_url="https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html",
+        source_url=url,
+        title=title,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+
+
 def test_missing_dof_evidence_blocks_publication():
     report = reconcile_legal_instruments(ledger(), (), SNICE)
 
@@ -39,3 +56,51 @@ def test_proposals_and_indicators_do_not_enter_legal_ids():
     assert report.publishable
     assert not set(report.legal_document_ids) & set(report.proposal_document_ids)
     assert not set(report.legal_document_ids) & set(report.indicator_document_ids)
+
+
+def test_snapshot_selection_uses_unique_latest_valid_date():
+    older = discovered(
+        "https://www.snice.gob.mx/FRACCIONESARANCELARIAS_20260101.XLSX",
+        "Fracciones 20260101",
+    )
+    latest = discovered(
+        "https://www.snice.gob.mx/FRACCIONESARANCELARIAS_20260810.XLSX",
+        "Fracciones vigentes",
+    )
+
+    selected = select_current_document(
+        (older, latest), "ligie", "ligie_snapshot"
+    )
+
+    assert selected == latest
+
+
+def test_snapshot_selection_rejects_latest_date_tie():
+    first = discovered(
+        "https://www.snice.gob.mx/FRACCIONESARANCELARIAS_A_20260810.XLSX",
+        "Fracciones A",
+    )
+    second = discovered(
+        "https://www.snice.gob.mx/FRACCIONESARANCELARIAS_B_20260810.XLSX",
+        "Fracciones B",
+    )
+
+    with pytest.raises(ValueError, match="ambiguous official snapshot"):
+        select_current_document((first, second), "ligie", "ligie_snapshot")
+
+
+def test_snapshot_selection_rejects_multiple_undated_candidates():
+    first = discovered(
+        "https://www.snice.gob.mx/FRACCIONESARANCELARIAS_A.XLSX", "Fracciones A"
+    )
+    second = discovered(
+        "https://www.snice.gob.mx/FRACCIONESARANCELARIAS_B.XLSX", "Fracciones B"
+    )
+
+    with pytest.raises(ValueError, match="ambiguous official snapshot"):
+        select_current_document((first, second), "ligie", "ligie_snapshot")
+
+
+def test_snapshot_selection_rejects_missing_candidate():
+    with pytest.raises(ValueError, match="missing official snapshot"):
+        select_current_document((), "ligie", "ligie_snapshot")
