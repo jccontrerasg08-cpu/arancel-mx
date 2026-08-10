@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="430" viewBox="0 0 1200 430" role="img" aria-labelledby="title desc">
+  <title id="title">arancel-mx capability status</title>
+  <desc id="desc">Current public capabilities are shown as available, while search API and PyPI publication are identified as roadmap or planned.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#09131f"/>
+      <stop offset="1" stop-color="#102938"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="430" rx="24" fill="url(#bg)"/>
+  <text x="600" y="48" text-anchor="middle" fill="#ffffff" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="24" font-weight="800">Estado del núcleo público</text>
+  <text x="600" y="76" text-anchor="middle" fill="#91aabb" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="14">Capacidades documentadas frente a trabajo todavía en evolución.</text>
+
+  <g font-family="Inter,Segoe UI,Arial,sans-serif" font-size="15">
+    <g transform="translate(86 115)">
+      <rect width="480" height="240" rx="20" fill="#0d2826" stroke="#00c389" stroke-opacity="0.48"/>
+      <text x="28" y="38" fill="#8df0ce" font-size="17" font-weight="800">DISPONIBLE</text>
+      <g fill="#d7e9e2">
+        <circle cx="30" cy="72" r="5" fill="#00c389"/><text x="48" y="77">Parsers XLS / XLSX / PDF</text>
+        <circle cx="30" cy="106" r="5" fill="#00c389"/><text x="48" y="111">Normalización y reconciliación</text>
+        <circle cx="30" cy="140" r="5" fill="#00c389"/><text x="48" y="145">DuckDB · CSV · JSON</text>
+        <circle cx="30" cy="174" r="5" fill="#00c389"/><text x="48" y="179">Registro de fuentes y procedencia</text>
+        <circle cx="30" cy="208" r="5" fill="#00c389"/><text x="48" y="213">SHA256 · manifests · CI</text>
+      </g>
+    </g>
+
+    <g transform="translate(634 115)">
+      <rect width="480" height="240" rx="20" fill="#2a241d" stroke="#f0b35b" stroke-opacity="0.52"/>
+      <text x="28" y="38" fill="#ffd697" font-size="17" font-weight="800">EN EVOLUCIÓN / PLANEADO</text>
+      <g fill="#e5d7c5">
+        <circle cx="30" cy="82" r="5" fill="#f0b35b"/><text x="48" y="87">API pública de búsqueda HS / MX / NICO</text>
+        <circle cx="30" cy="126" r="5" fill="#f0b35b"/><text x="48" y="131">CLI de búsqueda y navegación jerárquica</text>
+        <circle cx="30" cy="170" r="5" fill="#f0b35b"/><text x="48" y="175">Automatización de releases de dataset</text>
+        <circle cx="30" cy="214" r="5" fill="#f0b35b"/><text x="48" y="219">Publicación en PyPI y docs públicas</text>
+      </g>
+    </g>
+  </g>
+
+  <text x="600" y="394" text-anchor="middle" fill="#7f99aa" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="12">El README distingue explícitamente capacidades actuales de funcionalidades de roadmap.</text>
+</svg>
