@@ -379,12 +379,30 @@ def build_official_dataset(
                 "SELECT level, COUNT(*) FROM arancel_mx GROUP BY level"
             ).fetchall()
         )
+        igi_count, ige_count = connection.execute(
+            """
+            SELECT
+                COUNT(*) FILTER (
+                    WHERE level = 'fraccion8'
+                      AND igi_text IS NOT NULL
+                      AND TRIM(igi_text) <> ''
+                ),
+                COUNT(*) FILTER (
+                    WHERE level = 'fraccion8'
+                      AND ige_text IS NOT NULL
+                      AND TRIM(ige_text) <> ''
+                )
+            FROM arancel_mx
+            """
+        ).fetchone()
     if int(build_summary["row_count"]) <= 0:
         raise ValueError("canonical dataset contains no rows")
     if int(level_counts.get("fraccion8", 0)) <= 0:
         raise ValueError("canonical dataset contains no tariff fractions")
     if int(level_counts.get("nico10", 0)) <= 0:
         raise ValueError("canonical dataset contains no NICO rows")
+    if int(igi_count) <= 0 or int(ige_count) <= 0:
+        raise ValueError("canonical tariff fractions contain no IGI/IGE tariff values")
 
     export_arancel_release(candidate, config.output_dir)
     source_dir = _release_sources(config, captured)
