@@ -52,21 +52,67 @@ def _logical_columns(
     required: dict[str, tuple[str, ...]],
     optional: dict[str, tuple[str, ...]],
     family: str,
-) -> dict[str, str] | None:
-    headers = [(str(value), _header_key(value)) for value in row if _header_key(value)]
+) -> tuple[dict[str, str], dict[str, int]] | None:
+    headers = [
+        (index, str(value), _header_key(value))
+        for index, value in enumerate(row)
+        if _header_key(value)
+    ]
     columns: dict[str, str] = {}
+    indices: dict[str, int] = {}
     for logical, aliases in {**required, **optional}.items():
-        matches = [original for original, normalized in headers if normalized in aliases]
+        matches = [
+            (index, original)
+            for index, original, normalized in headers
+            if normalized in aliases
+        ]
         if len(matches) > 1:
             raise ValueError(
                 f"ambiguous workbook profile: {family}; "
-                f"logical={logical}; matching_headers={matches!r}"
+                f"logical={logical}; matching_headers={[item[1] for item in matches]!r}"
             )
         if matches:
-            columns[logical] = matches[0]
+            index, original = matches[0]
+            columns[logical] = original
+            indices[logical] = index
         elif logical in required:
             return None
-    return columns
+    return columns, indices
+
+
+def _supplement_ligie_tariff_columns(
+    samples: tuple[tuple[object, ...], ...],
+    row_number: int,
+    columns: dict[str, str],
+    indices: dict[str, int],
+    optional: dict[str, tuple[str, ...]],
+    family: str,
+) -> tuple[dict[str, str], dict[str, int], int]:
+    data_row = row_number + 1
+    missing_rates = {"igi", "ige"}.difference(columns)
+    if not missing_rates or row_number >= len(samples):
+        return columns, indices, data_row
+
+    rate_aliases = {
+        logical: aliases
+        for logical, aliases in optional.items()
+        if logical in missing_rates
+    }
+    supplemental = _logical_columns(
+        samples[row_number],
+        {},
+        rate_aliases,
+        family,
+    )
+    if supplemental is None:
+        return columns, indices, data_row
+    supplemental_columns, supplemental_indices = supplemental
+    if not missing_rates.issubset(supplemental_columns):
+        return columns, indices, data_row
+
+    merged_columns = {**columns, **supplemental_columns}
+    merged_indices = {**indices, **supplemental_indices}
+    return merged_columns, merged_indices, row_number + 2
 
 
 def resolve_workbook_profile(
@@ -82,21 +128,36 @@ def resolve_workbook_profile(
     required = definition["required"]
     optional = definition["optional"]
     for sheet in probe.sheet_names:
-        for row_number, row in enumerate(probe.samples.get(sheet, ()), start=1):
+        samples = probe.samples.get(sheet, ())
+        for row_number, row in enumerate(samples, start=1):
             try:
-                columns = _logical_columns(row, required, optional, family)
+                resolved = _logical_columns(row, required, optional, family)
             except ValueError as exc:
                 raise ValueError(
                     f"{exc}; location={sheet}!{row_number}; row={row!r}"
                 ) from exc
-            if columns is not None:
-                candidates.append(
-                    WorkbookProfile(
-                        sheet=sheet,
-                        header_row=row_number,
-                        columns=columns,
-                    )
+            if resolved is None:
+                continue
+            columns, indices = resolved
+            data_row = row_number + 1
+            if family == "ligie_snapshot":
+                columns, indices, data_row = _supplement_ligie_tariff_columns(
+                    samples,
+                    row_number,
+                    columns,
+                    indices,
+                    optional,
+                    family,
                 )
+            candidates.append(
+                WorkbookProfile(
+                    sheet=sheet,
+                    header_row=row_number,
+                    columns=columns,
+                    data_row=data_row,
+                    column_indices=indices,
+                )
+            )
 
     if not candidates:
         raise ValueError(f"unknown workbook profile: {family}")
