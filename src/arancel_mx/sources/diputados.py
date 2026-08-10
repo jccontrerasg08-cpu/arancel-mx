@@ -112,6 +112,12 @@ _MONTHS = {
     "diciembre": 12,
 }
 
+_CORE_LEGAL_LINK_PATTERNS = (
+    ("original", re.compile(r"^ligie_2022_orig(?:_|$)", re.IGNORECASE)),
+    ("law_reform", re.compile(r"^ligie_2022_ref\d+(?:_|$)", re.IGNORECASE)),
+    ("tariff_decree", re.compile(r"^ligie_2022_tarifa\d+(?:_|$)", re.IGNORECASE)),
+)
+
 
 def _fold(value: str) -> str:
     normalized = unicodedata.normalize("NFKD", value)
@@ -157,6 +163,18 @@ def _category_for(section: str, title: str) -> str:
     if "correlacion" in folded:
         return "correlation"
     return "unknown"
+
+
+def _core_legal_category_from_links(raw_links: list[tuple[str, str]]) -> str | None:
+    categories: set[str] = set()
+    for href, _label in raw_links:
+        filename = PurePosixPath(urlparse(href).path).name
+        for category, pattern in _CORE_LEGAL_LINK_PATTERNS:
+            if pattern.match(filename):
+                categories.add(category)
+    if len(categories) > 1:
+        raise ValueError("ambiguous Diputados legal row link families")
+    return next(iter(categories)) if categories else None
 
 
 def parse_ligie_ledger(html: str, base_url: str) -> LedgerSnapshot:
@@ -214,7 +232,7 @@ def parse_ligie_ledger(html: str, base_url: str) -> LedgerSnapshot:
         if not raw_links or not row_text:
             continue
         title = cells[1] if len(cells) > 1 else row_text
-        category = _category_for(section, title)
+        category = _core_legal_category_from_links(raw_links) or _category_for(section, title)
         displayed_date = _numeric_date(row_text)
         links: list[LedgerLink] = []
         for href, label in raw_links:
