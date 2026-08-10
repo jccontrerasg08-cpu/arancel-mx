@@ -1,141 +1,101 @@
 # arancel-mx
 
-Herramientas abiertas para consultar y analizar comercio exterior de México,
-incluyendo LIGIE, fracciones arancelarias, NICO, series del Banco de México y
-fuentes públicas de ANAM, DOF, SNICE y VUCEM.
+Herramientas abiertas en Python para capturar, normalizar, reconciliar y publicar datos arancelarios de México con procedencia verificable.
 
-El repositorio contiene una aplicación Dash, utilidades de línea de comandos,
-validaciones y trazabilidad de fuentes. El código se publica bajo
-[Apache-2.0](LICENSE); los datos y componentes de terceros conservan sus
-propios términos, descritos en [NOTICE](NOTICE).
+## Propósito
 
-> Este proyecto es independiente y no está afiliado ni respaldado por una autoridad mexicana. Su contenido es informativo y no constituye asesoría legal, aduanera, fiscal ni profesional. Confirma siempre los datos contra la publicación oficial aplicable.
+El proyecto convierte documentos oficiales de la LIGIE y NICO en registros normalizados, una base DuckDB consultable y artefactos deterministas con manifiestos y sumas SHA-256.
 
-## Inicio rápido
+## Alcance
 
-Requiere Python 3.12 o posterior.
+`arancel-mx` se limita al dominio arancelario: jerarquía HS, fracciones de ocho dígitos, NICO, tasas de importación y exportación, vigencia, evidencia legal y procedencia. No pretende cubrir toda la operación de comercio exterior.
 
-```powershell
+## Estado del proyecto
+
+El paquete está en desarrollo inicial (`0.x`). Las interfaces, el esquema y los artefactos pueden cambiar hasta una versión estable. Los cambios se revisan mediante issues y pull requests públicos.
+
+## Fuentes oficiales y aviso sobre los datos
+
+La Cámara de Diputados, el Diario Oficial de la Federación y la Secretaría de Economía/SNICE son las fuentes oficiales principales. El registro versionado está incluido en `src/arancel_mx/sources/source_registry.json`.
+
+Este proyecto es independiente y no está afiliado ni respaldado por una autoridad mexicana. Los datos generados pueden contener errores o quedar desactualizados. Su contenido es informativo y no constituye asesoría legal, aduanera, fiscal ni profesional. Verifica siempre la publicación oficial aplicable.
+
+## Instalación
+
+Requiere Python 3.11 o posterior.
+
+```bash
 python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install --requirement requirements.txt
-Copy-Item .env.example .env
-.\.venv\Scripts\python.exe run.py
+python -m pip install -e ".[dev]"
 ```
 
-En Linux o macOS:
+En PowerShell puedes activar el entorno con `.\.venv\Scripts\Activate.ps1`; en Linux o macOS, con `source .venv/bin/activate`.
+
+## Inicio rápido de la CLI
 
 ```bash
-python3 -m venv .venv
-.venv/bin/python -m pip install --requirement requirements.txt
-cp .env.example .env
-.venv/bin/python run.py
+python -m arancel_mx --help
+
+# Exportar una base DuckDB ya validada
+python -m arancel_mx build --database data/arancel.duckdb --output-dir out/release
+
+# Comparar el ledger oficial con el último estado local
+python -m arancel_mx update --state-path data/update_state/ligie.json --report-path out/update.json
+
+# Reconciliar tres conjuntos de evidencia JSON
+python -m arancel_mx reconcile --ledger-json ledger.json --dof-json dof.json --snice-json snice.json
+
+# Verificar y preparar artefactos locales de publicación
+python -m arancel_mx release --release-dir out/release --source-dir data/raw/release --latest-dir out/latest
 ```
 
-Abre `http://localhost:8050`. La copia incluida de
-`data/comercio_exterior.json` permite iniciar sin credenciales. Las funciones
-que consultan APIs externas permanecen opcionales y muestran un estado limitado
-cuando no están configuradas.
+La comprobación `update` consulta una página oficial. Las pruebas y la construcción del paquete no requieren red.
 
-## Credenciales opcionales
+## Uso desde Python
 
-`.env.example` contiene únicamente marcadores. Copia el archivo como `.env` y
-configura tus propias credenciales localmente:
+```python
+from arancel_mx.sources import load_source_registry
 
-```dotenv
-BANXICO_TOKEN=PASTE_YOUR_BANXICO_TOKEN_HERE
-GROQ_API_KEY=PASTE_YOUR_GROQ_API_KEY_HERE
+registry = load_source_registry()
+for entry in registry:
+    print(entry.dataset_key, entry.canonical_page)
 ```
 
-`.env` y `token.txt` están ignorados por Git. No incluyas tokens en commits,
-issues, capturas de pantalla ni argumentos de línea de comandos.
+Las APIs de normalización están en `arancel_mx.domain`; las de captura y descubrimiento en `arancel_mx.sources`; y los flujos de materialización en `arancel_mx.pipeline`.
 
-## Comandos principales
-
-```bash
-# Ejecutar pruebas
-python -m pytest -p no:cacheprovider -q
-
-# Inicializar el warehouse local ignorado por Git
-python comex.py init-db
-python comex.py warehouse-refresh
-python comex.py warehouse-status
-
-# Actualizar el caché público de series de Banxico
-python banxico_sie.py
-
-# Consultar y preparar fuentes públicas
-python comex.py etl run snice-nico
-python comex.py etl run vucem-tigie
-python comex.py etl run dof-comex
-python comex.py etl status
-
-# Consultar el corpus legal incluido
-python comex.py legal-corpus-status
-python comex.py legal-corpus-search "Anexo 22 identificador NOM"
-
-# Health check con la aplicación activa
-curl http://localhost:8050/healthz
-```
-
-## Arancel MX canónico
-
-El pipeline normaliza fuentes oficiales en registros trazables por código HS,
-fracción de ocho dígitos y NICO. Los manifiestos registran autoridad, URL,
-fecha de observación y SHA-256 de cada fuente.
-
-Las bases DuckDB, descargas originales y demás datos generados no se guardan en
-el historial Git. Se crean localmente o se distribuyen como activos versionados
-en GitHub Releases, acompañados por manifiesto y checksums. Esto evita inflar el
-repositorio y permite verificar cada publicación.
-
-Ejemplo de consulta después de instalar una base publicada:
-
-```sql
-SELECT code, description, unit_code, igi_text, ige_text
-FROM arancel_mx
-WHERE code = '84181001';
-```
-
-## Estructura
+## Estructura del repositorio
 
 ```text
-src/comex/          ETL, DuckDB, catálogos, trazabilidad y búsquedas
-src/charts/         Gráficas Plotly
-src/components/     Componentes Dash
-src/data_service.py Acceso SQL, API y caché JSON
-data/legal_corpus/  Guías y referencias públicas
-tests/              Pruebas y fixtures deterministas
+src/arancel_mx/domain/    Modelo y normalización canónica
+src/arancel_mx/sources/   Registro, captura y adaptadores oficiales
+src/arancel_mx/parsers/   Lectores offline de XLS/XLSX/PDF
+src/arancel_mx/storage/   Esquema DuckDB arancelario
+src/arancel_mx/pipeline/  Construcción, conciliación y actualización
+src/arancel_mx/release/   Verificación y empaquetado local
+tests/                    Pruebas y fixtures deterministas
+docs/                     Modelo, fuentes y proceso de publicación
 ```
 
-Los directorios `data/raw/`, `data/state/`, `data/alerts/`, las bases DuckDB y
-los archivos de configuración personal son locales y están ignorados.
+## Pruebas
 
-## Fuentes
+```bash
+python -m pytest -q
+python -m build
+git diff --check
+```
 
-- Banco de México: series del SIE.
-- Cámara de Diputados: texto vigente de la LIGIE.
-- Diario Oficial de la Federación: publicación y efectos jurídicos.
-- SNICE y VUCEM: catálogos operativos LIGIE/NICO.
-- SAT y ANAM: información pública de aduanas y recaudación.
-- World Bank/WITS: contexto HS internacional; no es autoridad jurídica mexicana.
+## Seguridad
 
-La procedencia detallada de las fuentes arancelarias está en
-[`data/arancel_mx/source_registry.json`](data/arancel_mx/source_registry.json) y
-[`docs/arancel-mx.md`](docs/arancel-mx.md).
+No publiques credenciales, datos personales ni documentos privados. Reporta vulnerabilidades según [SECURITY.md](SECURITY.md).
 
-## Contribuir y reportar problemas
+## Contribuir
 
-Lee [CONTRIBUTING.md](CONTRIBUTING.md) antes de abrir un pull request. Los
-cambios de datos o activos deben incluir procedencia y términos de
-redistribución verificables.
-
-Usa los formularios de Issues para errores y propuestas. Para vulnerabilidades,
-sigue [SECURITY.md](SECURITY.md) y no publiques detalles sensibles en un issue.
-
-Este repositorio público acepta forks y pull requests, pero no tiene acceso de
-escritura ni sincronización automática con ningún repositorio privado.
+Se aceptan issues, forks y pull requests. Lee [CONTRIBUTING.md](CONTRIBUTING.md) y conserva procedencia, hashes y fixtures offline al modificar fuentes o parsers.
 
 ## Licencia
 
-Código propio: [Apache-2.0](LICENSE). Consulta [NOTICE](NOTICE) para atribuciones
-y materiales de terceros.
+El código original se distribuye bajo [Apache-2.0](LICENSE). Consulta [NOTICE](NOTICE) para atribución y avisos sobre fuentes.
+
+## Atribución
+
+Los documentos y datos oficiales pertenecen a sus autoridades de origen y conservan sus condiciones aplicables. Su referencia no implica respaldo de ninguna autoridad.

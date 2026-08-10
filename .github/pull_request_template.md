@@ -1,15 +1,25 @@
 ## Resumen
 
-Describe el problema y la solución propuesta.
+Describe el problema, el alcance arancelario y la solución propuesta.
+
+## Tipo de cambio
+
+- [ ] Fuente o captura oficial
+- [ ] Parser o fixture
+- [ ] Modelo, almacenamiento o pipeline
+- [ ] Release o CLI
+- [ ] Documentación, seguridad o mantenimiento
 
 ## Verificación
 
-- [ ] Agregué o actualicé pruebas.
-- [ ] Ejecuté `python -m pytest -p no:cacheprovider -q`.
+- [ ] Agregué o actualicé pruebas que cubren el cambio.
+- [ ] Ejecuté `python -m pytest -q`.
+- [ ] Ejecuté `python -m build`.
 - [ ] Ejecuté `git diff --check`.
 - [ ] No incluí credenciales, datos personales, bases locales ni descargas generadas.
-- [ ] Documenté procedencia y licencia de cualquier dato o activo nuevo.
+- [ ] Documenté autoridad, URL, hash y papel de cualquier fuente nueva.
+- [ ] Conservé compatibilidad del modelo o documenté el cambio de esquema.
 
 ## Evidencia
 
-Incluye resultados de pruebas y, si aplica, capturas sin información sensible.
+Incluye resultados de pruebas, fixtures sanitizados y decisiones de procedencia relevantes.

@@ -1,31 +1,32 @@
 # Contribuir a arancel-mx
 
-Gracias por mejorar el proyecto. Trabaja desde un fork y abre un pull request
-pequeño, enfocado y verificable.
+Gracias por mejorar el proyecto. Trabaja desde un fork y abre un pull request pequeño, enfocado y verificable.
 
 ## Preparación
 
-```powershell
+```bash
 python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install --requirement requirements.txt pytest
-.\.venv\Scripts\python.exe -m pytest -p no:cacheprovider -q
+python -m pip install -e ".[dev]"
+python -m pytest -q
 ```
 
-No incluyas `.env`, tokens, bases locales, descargas originales, RFC reales,
-alertas, historiales de usuario ni otros datos personales u operativos.
+## Tipos de contribución
 
-## Pull requests
+- fuentes oficiales y reglas de descubrimiento;
+- parsers y fixtures offline;
+- modelo, normalización y validaciones arancelarias;
+- almacenamiento, conciliación y artefactos de publicación;
+- documentación, seguridad y experiencia de contribución.
 
-1. Explica el problema y el alcance del cambio.
-2. Agrega o actualiza pruebas que fallen sin el cambio y pasen con él.
-3. Ejecuta la suite completa y `git diff --check`.
-4. Para datos o activos, documenta autoridad/autor, URL exacta, versión o fecha,
-   SHA-256, transformación y términos de redistribución.
-5. Conserva la atribución y las licencias de terceros.
+## Flujo recomendado
 
-Al enviar una contribución aceptas que se publique bajo Apache-2.0, conforme a
-la sección 5 de la licencia. El repositorio público no escribe ni sincroniza
-automáticamente cambios hacia repositorios privados del mantenedor.
+1. Explica el problema y limita el alcance.
+2. Agrega una prueba que falle antes del cambio y pase después.
+3. Para una fuente, documenta autoridad, URL canónica, función documental y prioridad.
+4. Para un fixture, registra el origen y evita incluir información privada.
+5. Ejecuta `python -m pytest -q`, `python -m build` y `git diff --check`.
+6. Actualiza la documentación cuando cambien interfaces, esquema o proceso de publicación.
 
-Para vulnerabilidades, usa el proceso privado de [SECURITY.md](SECURITY.md), no
-un issue público.
+No incluyas credenciales, bases locales, descargas originales no revisadas, datos personales ni rutas absolutas de tu equipo. Los artefactos generados y descargas pertenecen a rutas ignoradas por Git.
+
+Al enviar una contribución aceptas que se publique bajo Apache-2.0 conforme a la sección 5 de la licencia. Para vulnerabilidades, sigue [SECURITY.md](SECURITY.md) y no abras un issue público.

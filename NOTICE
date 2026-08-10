@@ -1,69 +1,11 @@
 arancel-mx
 Copyright 2026 jccontrerasg08-cpu
 
-This product includes software and materials provided by third parties. This
-NOTICE is informational and does not change the Apache License 2.0 that covers
-the project's original source code.
+This product includes references to public tariff information published by the
+Cámara de Diputados del H. Congreso de la Unión, the Diario Oficial de la
+Federación, and the Secretaría de Economía/SNICE. Those documents and data
+retain their own legal status and applicable terms. Attribution does not imply
+endorsement by any authority.
 
-MapLibre GL JS 5.24.0
----------------------
-Source: https://github.com/maplibre/maplibre-gl-js/tree/v5.24.0
-
-Copyright (c) 2023, MapLibre contributors
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without modification,
-are permitted provided that the following conditions are met:
-
-* Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
-* Neither the name of MapLibre GL JS nor the names of its contributors may be
-  used to endorse or promote products derived from this software without
-  specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
-ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-MapLibre GL JS also contains code from Mapbox GL JS v1.13 and earlier under the
-BSD-3-Clause license, glfx.js under the MIT license, and d3-color under the
-BSD-3-Clause license. The complete upstream notice is distributed as
-`THIRD_PARTY_LICENSES/MapLibre-GL-JS.txt`.
-
-Mexico flag SVG
----------------
-The file `assets/bandera.svg` contains embedded metadata identifying the work
-as "mexico", uploaded to Openclipart on 2011-02-16, with source
-http://openclipart.org/detail/119479/mexico-by-anonymous and a public-domain
-dedication. Creator metadata: Anonymous; original uploader: Cezary Biele.
-
-Basemap services
-----------------
-The interactive map requests raster tiles from CARTO and displays attribution
-to OpenStreetMap contributors and CARTO. Use of those hosted services remains
-subject to their respective terms.
-
-Excluded country geometry
--------------------------
-The private source previously contained a file byte-for-byte identical to blob
-`afdfc39993bd6107d26050fe4e8ade36ce08b871` from
-https://github.com/johan/world.geo.json. That upstream README describes the
-dataset's legal status as uncertain, so the file is intentionally excluded from
-this public distribution.
-
-Government and international data
----------------------------------
-The project references public information from Banco de México, Cámara de
-Diputados, Diario Oficial de la Federación, Secretaría de Economía/SNICE,
-VUCEM, SAT, ANAM, and World Bank/WITS. Those sources retain their own legal
-status and terms. Attribution does not imply endorsement by any authority.
+The project's original source code is licensed under the Apache License 2.0.
+Python dependencies are not vendored and retain their respective licenses.

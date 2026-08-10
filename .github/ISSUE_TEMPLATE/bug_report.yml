@@ -1,11 +1,24 @@
 name: Reporte de error
-description: Reporta un comportamiento reproducible sin incluir datos sensibles.
+description: Reporta un problema reproducible del paquete o los datos arancelarios.
 title: "[Bug]: "
 labels: ["bug"]
 body:
   - type: markdown
     attributes:
-      value: "No publiques tokens, RFC reales, datos personales ni vulnerabilidades. Para seguridad, usa Security Advisories."
+      value: "No publiques credenciales, datos personales ni vulnerabilidades. Para seguridad, usa Security Advisories."
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área
+      options:
+        - Fuente o captura
+        - Parser
+        - Modelo o normalización
+        - Almacenamiento o pipeline
+        - Release o CLI
+        - Documentación
+    validations:
+      required: true
   - type: textarea
     id: problem
     attributes:
@@ -17,7 +30,7 @@ body:
     id: reproduce
     attributes:
       label: Pasos para reproducir
-      description: Incluye un ejemplo mínimo y sanitizado.
+      description: Incluye un ejemplo mínimo, fixture sanitizado o comando exacto.
     validations:
       required: true
   - type: input
@@ -27,9 +40,7 @@ body:
     validations:
       required: true
   - type: textarea
-    id: environment
+    id: provenance
     attributes:
-      label: Entorno
-      description: Sistema operativo y versión de Python.
-    validations:
-      required: true
+      label: Evidencia y procedencia
+      description: Para datos, incluye autoridad, URL oficial, fecha y hash si está disponible.

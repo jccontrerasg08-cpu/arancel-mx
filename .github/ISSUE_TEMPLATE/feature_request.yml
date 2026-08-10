@@ -1,8 +1,21 @@
 name: Propuesta de mejora
-description: Sugiere una mejora concreta para arancel-mx.
+description: Sugiere una mejora concreta dentro del alcance arancelario.
 title: "[Feature]: "
 labels: ["enhancement"]
 body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área
+      options:
+        - Fuente oficial
+        - Parser o fixture
+        - Modelo de datos
+        - Validación o conciliación
+        - Release o CLI
+        - Documentación
+    validations:
+      required: true
   - type: textarea
     id: need
     attributes:
@@ -21,4 +34,4 @@ body:
     id: provenance
     attributes:
       label: Fuentes y procedencia
-      description: Para datos o activos, incluye URL, autoridad, versión y licencia.
+      description: Para cambios de datos, incluye autoridad, URL, versión, fecha y términos aplicables.

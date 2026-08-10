@@ -1,16 +1,13 @@
 # Política de seguridad
 
+## Versiones compatibles
+
+Durante la etapa `0.x`, las correcciones de seguridad se aplican a la rama `main`. El paquete requiere Python 3.11 o posterior.
+
 ## Reportar una vulnerabilidad
 
-No abras un issue público con detalles sensibles. En la página de GitHub del
-repositorio, abre **Security → Advisories → Report a vulnerability** para enviar
-un reporte privado al mantenedor.
+No abras un issue público con detalles sensibles. En GitHub, usa **Security → Advisories → Report a vulnerability** para enviar un reporte privado al mantenedor.
 
-Incluye el componente afectado, versión o commit, impacto, pasos mínimos para
-reproducir y cualquier mitigación conocida. No incluyas credenciales reales ni
-datos personales.
+Incluye el componente afectado, versión o commit, impacto, pasos mínimos para reproducir y cualquier mitigación conocida. No adjuntes credenciales reales, datos personales ni fuentes privadas.
 
-El mantenedor confirmará recepción, evaluará alcance y coordinará la publicación
-de una corrección. Los problemas generales de datos o funcionamiento que no
-tengan impacto de seguridad pueden reportarse mediante los formularios de
-Issues.
+Los errores de datos, parsers o documentación sin impacto de seguridad pueden reportarse mediante los formularios públicos de issues.
