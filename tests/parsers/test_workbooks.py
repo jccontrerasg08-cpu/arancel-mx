@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from openpyxl import Workbook
 import pytest
 
@@ -39,11 +41,11 @@ def test_probe_is_bounded_and_reports_sheet_samples(tmp_path):
 
 
 def test_excel_engine_selects_registered_reader_by_suffix():
-    assert workbooks._excel_engine(workbooks.Path("source.xls")) == "xlrd"
-    assert workbooks._excel_engine(workbooks.Path("source.xlsx")) == "openpyxl"
+    assert workbooks._excel_engine(Path("source.xls")) == "xlrd"
+    assert workbooks._excel_engine(Path("source.xlsx")) == "openpyxl"
 
     with pytest.raises(ValueError, match="unsupported workbook format"):
-        workbooks._excel_engine(workbooks.Path("source.csv"))
+        workbooks._excel_engine(Path("source.csv"))
 
 
 def test_nico_parser_preserves_zeroes_in_split_columns(tmp_path):
@@ -91,6 +93,32 @@ def test_ligie_parser_rejects_complete_short_code(tmp_path):
 
     with pytest.raises(ValueError, match="width"):
         parse_ligie_workbook(path, SOURCE, profile)
+
+
+def test_ligie_parser_omits_unregistered_unit_fields(tmp_path):
+    path = make_workbook(
+        tmp_path,
+        "ligie.xlsx",
+        [
+            ["Fracción", "Descripción", "IGI", "IGE"],
+            ["01012101", "Reproductores", "10", "Ex."],
+        ],
+    )
+    profile = WorkbookProfile(
+        sheet="Datos",
+        header_row=1,
+        columns={
+            "code": "Fracción",
+            "description": "Descripción",
+            "igi": "IGI",
+            "ige": "IGE",
+        },
+    )
+
+    row = parse_ligie_workbook(path, SOURCE, profile)[0]
+
+    assert "unit_code" not in row.normalized
+    assert "unit_name" not in row.normalized
 
 
 def test_ligie_parser_preserves_units_and_forward_fills_registered_columns(tmp_path):
