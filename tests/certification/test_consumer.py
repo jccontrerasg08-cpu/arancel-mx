@@ -135,6 +135,11 @@ def _delete_level(database: Path, level: str) -> None:
         connection.execute("DELETE FROM canonical_record WHERE level = ?", [level])
 
 
+def _set_release_row_count(database: Path, row_count: int) -> None:
+    with duckdb.connect(str(database)) as connection:
+        connection.execute("UPDATE dataset_release SET row_count = ?", [row_count])
+
+
 def test_certify_duckdb_accepts_real_exported_public_database(tmp_path: Path):
     database, manifest = _public_release(tmp_path)
     before = hashlib.sha256(database.read_bytes()).hexdigest()
@@ -182,6 +187,7 @@ def test_certify_duckdb_rejects_manifest_row_count_mismatch(tmp_path: Path):
 def test_certify_duckdb_rejects_fraction_without_hs6_parent(tmp_path: Path):
     database, manifest = _public_release(tmp_path)
     _delete_level(database, "hs6")
+    _set_release_row_count(database, 4)
     manifest["row_count"] = 4
 
     with pytest.raises(ValueError, match="hierarchy"):
@@ -191,6 +197,7 @@ def test_certify_duckdb_rejects_fraction_without_hs6_parent(tmp_path: Path):
 def test_certify_duckdb_rejects_nico_without_fraction_parent(tmp_path: Path):
     database, manifest = _public_release(tmp_path)
     _delete_level(database, "fraccion8")
+    _set_release_row_count(database, 4)
     manifest["row_count"] = 4
 
     with pytest.raises(ValueError, match="hierarchy"):
