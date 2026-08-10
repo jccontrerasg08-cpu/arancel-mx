@@ -49,6 +49,17 @@ El paquete está en desarrollo inicial (`0.x`). Las interfaces, el esquema y los
 
 La Cámara de Diputados, el Diario Oficial de la Federación y la Secretaría de Economía/SNICE son las fuentes oficiales principales. El registro versionado está incluido en `src/arancel_mx/sources/source_registry.json`.
 
+Fuentes registradas (URLs)
+
+- diputados_ligie — Cámara de Diputados (registro LIGIE): https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm
+- ligie — SNICE (índice LIGIE / publicaciones oficiales): https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html
+- nico — SNICE (NICO / identificaciones comerciales): https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html
+- nico_proposals — SNICE (propuestas y solicitudes NICO): https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html
+- national_notes — SNICE (Notas nacionales y contexto): https://www.snice.gob.mx/cs/avi/snice/ligie.notasnac22.html
+- weighted_tariff_indicators — SNICE (indicadores ponderados y metodologías): https://www.snice.gob.mx/cs/avi/snice/ligie.indicaranc22.html
+
+Puedes consultar `src/arancel_mx/sources/source_registry.json` para ver el registro completo, las familias de archivos esperadas y las reglas de clasificación por nombre de fichero.
+
 Este proyecto es independiente y no está afiliado ni respaldado por una autoridad mexicana. Los datos generados pueden contener errores o quedar desactualizados. Su contenido es informativo y no constituye asesoría legal, aduanera, fiscal ni profesional. Verifica siempre la publicación oficial aplicable.
 
 ## Instalación
