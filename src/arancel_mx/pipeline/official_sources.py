@@ -17,6 +17,7 @@ import requests
 from arancel_mx.pipeline.reconcile import (
     ReconciliationReport,
     discover_registered_sources,
+    reconcile_legal_instruments,
     select_current_document,
 )
 from arancel_mx.release.metadata import SourceIdentity
@@ -227,11 +228,43 @@ def _registry_metadata(registry: dict[str, RegistryEntry]) -> tuple[str, str]:
     return registry_version, registry_sha256
 
 
+def _reconciliation_record(source: CapturedOfficialSource) -> dict[str, object]:
+    source_document = source.source_document
+    return {
+        "document_id": source_document["source_document_id"],
+        "role": source.document_role,
+        "published_at": source_document.get("published_at"),
+        "source_url": source.fetched.final_url,
+        "sha256": source.capture.sha256,
+    }
+
+
+def _reconcile_snapshot(
+    ledger: LedgerSnapshot,
+    sources: Sequence[CapturedOfficialSource],
+) -> ReconciliationReport:
+    dof_documents = tuple(
+        _reconciliation_record(source)
+        for source in sources
+        if source.dataset_key in {"dof_law_reform", "dof_tariff_decree"}
+    )
+    snice_documents = tuple(
+        _reconciliation_record(source)
+        for source in sources
+        if source.dataset_key in {"ligie", "nico"}
+    )
+    report = reconcile_legal_instruments(ledger, dof_documents, snice_documents)
+    if not report.publishable:
+        details = "; ".join(report.discrepancies)
+        raise ValueError(f"legal reconciliation failed: {details}")
+    return report
+
+
 def capture_official_inputs(
     config: OfficialDatasetConfig,
     session: Any | None = None,
 ) -> OfficialInputSnapshot:
-    """Discover and capture registered inputs and ledger-linked legal evidence."""
+    """Discover, capture, and reconcile official inputs before parsing them."""
     if config.timeout_s <= 0:
         raise ValueError("timeout_s must be positive")
 
@@ -300,6 +333,7 @@ def capture_official_inputs(
         ),
         *legal_sources,
     )
+    reconciliation = _reconcile_snapshot(ledger, sources)
     identities = tuple(
         SourceIdentity(
             dataset_key=source.dataset_key,
@@ -309,14 +343,6 @@ def capture_official_inputs(
             registry_version=registry_version,
         )
         for source in sources
-    )
-    reconciliation = ReconciliationReport(
-        publishable=False,
-        error_codes=("not_evaluated",),
-        discrepancies=("legal reconciliation not yet evaluated",),
-        legal_document_ids=(),
-        proposal_document_ids=(),
-        indicator_document_ids=(),
     )
     return OfficialInputSnapshot(
         ledger=ledger,
