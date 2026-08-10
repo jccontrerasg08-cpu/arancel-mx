@@ -7,6 +7,7 @@ from pathlib import Path
 
 import duckdb
 from openpyxl import Workbook
+import pytest
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Spacer, Table, TableStyle
@@ -40,6 +41,48 @@ def workbook_bytes(rows):
     return stream.getvalue()
 
 
+def ligie_workbook_bytes(*, include_rates=True):
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "FA"
+    for _ in range(6):
+        sheet.append([None])
+    if include_rates:
+        sheet.append(
+            [
+                None,
+                None,
+                "Fracción Arancelaria",
+                "Descripción",
+                "Unidad de Medida",
+                "Arancel %",
+                None,
+            ]
+        )
+        sheet.append([None, None, None, None, None, "IMP.", "EXP."])
+        sheet.append(
+            [
+                None,
+                None,
+                "0101.21.01",
+                "Reproductores de raza pura.",
+                "Cbza",
+                "10",
+                "Ex.",
+            ]
+        )
+    else:
+        sheet.append(
+            [None, None, "Fracción Arancelaria", "Descripción", "Unidad de Medida"]
+        )
+        sheet.append(
+            [None, None, "0101.21.01", "Reproductores de raza pura.", "Cbza"]
+        )
+    stream = BytesIO()
+    workbook.save(stream)
+    return stream.getvalue()
+
+
 def hierarchy_pdf_bytes():
     stream = BytesIO()
     story = [
@@ -62,12 +105,7 @@ def hierarchy_pdf_bytes():
 
 @lru_cache(maxsize=1)
 def fixture_bytes():
-    ligie_bytes = workbook_bytes(
-        [
-            ["Fracción", "Descripción", "Unidad", "IGI", "IGE"],
-            ["01012101", "Reproductores de raza pura.", "Cabeza", "10", "Ex."],
-        ]
-    )
+    ligie_bytes = ligie_workbook_bytes()
     nico_bytes = workbook_bytes(
         [
             ["Fracción Arancelaria", "NICO", "Descripción NICO"],
@@ -177,7 +215,16 @@ def test_offline_build_produces_verified_release(tmp_path):
                 "SELECT level, COUNT(*) FROM arancel_mx GROUP BY level ORDER BY level"
             ).fetchall()
         )
+        fraction_rate = connection.execute(
+            """
+            SELECT unit_name, igi_text, igi_kind, CAST(igi_value AS VARCHAR),
+                   ige_text, ige_kind, CAST(ige_value AS VARCHAR)
+            FROM arancel_mx
+            WHERE level = 'fraccion8' AND code = '01012101'
+            """
+        ).fetchone()
     assert levels == {"fraccion8": 1, "hs2": 1, "hs4": 1, "hs6": 1, "nico10": 1}
+    assert fraction_rate == ("Cbza", "10", "ad_valorem", "10.000000", "Ex.", "exento", "0.000000")
 
     manifest = json.loads(
         (build_config.output_dir / "manifest.json").read_text(encoding="utf-8")
@@ -188,6 +235,19 @@ def test_offline_build_produces_verified_release(tmp_path):
         assert source["source_url"].startswith("https://")
         assert len(source["sha256"]) == 64
         assert "local_path" not in source
+
+
+def test_build_rejects_fraction_dataset_without_tariff_values(tmp_path):
+    build_config = config(tmp_path, "missing-rates")
+    session = fake_session()
+    session.responses[LIGIE_URL] = Response(
+        LIGIE_URL,
+        ligie_workbook_bytes(include_rates=False),
+        XLSX_TYPE,
+    )
+
+    with pytest.raises(ValueError, match="tariff values"):
+        build_official_dataset(build_config, session=session)
 
 
 def test_build_accepts_declared_legacy_charset_for_diputados_ledger(tmp_path):
