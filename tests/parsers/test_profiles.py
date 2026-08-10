@@ -35,6 +35,41 @@ def test_resolves_ligie_profile_from_registered_aliases(tmp_path):
     assert resolved.profile.columns["unit_name"] == "Unidad"
 
 
+def test_resolves_current_ligie_two_row_tariff_header(tmp_path):
+    path = tmp_path / "current-ligie.xlsx"
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "FA"
+    for _ in range(6):
+        sheet.append([None])
+    sheet.append(
+        [None, None, "Fracción Arancelaria", "Descripción", "Unidad de Medida", "Arancel %", None]
+    )
+    sheet.append([None, None, None, None, None, "IMP.", "EXP."])
+    sheet.append([None, None, "0101.21.01", "Reproductores", "Cbza", "10", "Ex."])
+    workbook.save(path)
+
+    resolved = resolve_workbook_profile(probe_workbook(path), "ligie_snapshot")
+
+    assert resolved.profile.sheet == "FA"
+    assert resolved.profile.header_row == 7
+    assert resolved.profile.data_row == 9
+    assert resolved.profile.columns == {
+        "code": "Fracción Arancelaria",
+        "description": "Descripción",
+        "unit_name": "Unidad de Medida",
+        "igi": "IMP.",
+        "ige": "EXP.",
+    }
+    assert resolved.profile.column_indices == {
+        "code": 2,
+        "description": 3,
+        "unit_name": 4,
+        "igi": 5,
+        "ige": 6,
+    }
+
+
 def test_ligie_profile_prefers_unique_more_specific_registered_candidate(tmp_path):
     path = tmp_path / "current-ligie.xlsx"
     workbook = Workbook()
