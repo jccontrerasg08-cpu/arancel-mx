@@ -68,10 +68,20 @@ def select_current_document(
     document_role: str,
 ) -> DiscoveredDocument:
     """Select one current registered snapshot, failing on ambiguity."""
-    candidates = [
+    matching = [
         document
         for document in documents
         if document.dataset_key == dataset_key and document.document_role == document_role
+    ]
+    by_url: dict[str, list[DiscoveredDocument]] = {}
+    for document in matching:
+        by_url.setdefault(document.source_url, []).append(document)
+    candidates = [
+        min(
+            occurrences,
+            key=lambda item: (item.title, item.discovery_url, item.media_type),
+        )
+        for _, occurrences in sorted(by_url.items())
     ]
     if not candidates:
         raise ValueError(f"missing official snapshot: {dataset_key}:{document_role}")
