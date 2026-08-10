@@ -70,10 +70,9 @@ def test_ambiguous_profile_fails_closed_with_candidate_locations(tmp_path):
 
     message = str(error.value)
     assert "ambiguous workbook profile: ligie_snapshot" in message
-    assert "'sheet': 'Datos'" in message
-    assert "'header_row': 1" in message
-    assert "'header_row': 3" in message
-    assert "'columns':" in message
+    assert "Datos!1" in message
+    assert "Datos!3" in message
+    assert "columns=" in message
 
 
 def test_unknown_profile_fails_closed(tmp_path):
