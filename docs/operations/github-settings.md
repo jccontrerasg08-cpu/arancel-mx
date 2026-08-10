@@ -2,7 +2,7 @@
 
 This document is the maintainer checklist for repository settings that cannot be enforced safely from committed source alone. It defines the expected production boundary for `arancel-mx`; it does **not** assert that a setting is enabled until a maintainer verifies it in the GitHub UI.
 
-The repository code is designed around the stable merge check `CI / test`, read-only default workflow permissions, job-scoped production writes, immutable data releases, and protected `main`.
+The repository code is designed around the stable GitHub Actions job check `test`, read-only default workflow permissions, job-scoped production writes, immutable data releases, and protected `main`. The workflow display name is `CI`, but GitHub Rulesets require the emitted check-run context, which is the job name `test`.
 
 ## 1. Actions permissions
 
@@ -22,7 +22,7 @@ Official data pipeline / build-and-verify: contents read
 Official data pipeline / publish: contents write
 Official data pipeline / notify: contents read + issues write
 generate-demo: contents write + pull-requests write
-CI / test: contents read
+CI job test: contents read
 ```
 
 ## 2. Release immutability
@@ -44,15 +44,16 @@ Create or edit the production ruleset with the following values:
 1. **Enforcement: Active**.
 2. **Target: `main`** or the repository default branch when it resolves to `main`.
 3. Turn **Require a pull request before merging** ON.
-4. Add required status check **`CI / test`**.
-5. Turn **Require branches to be up to date before merging** ON for that required check.
-6. Turn **Require conversation resolution before merging** ON.
-7. Turn **Block force pushes** ON.
-8. Turn **Block deletions** ON.
-9. Turn **Require linear history** ON only after the squash-only merge strategy in the next section is active.
-10. Do not grant a workflow a bypass merely to publish tariff data. The production data workflow publishes Releases, not commits to protected `main`.
+4. Add required status check **`test`**.
+5. Source: **GitHub Actions**.
+6. Turn **Require branches to be up to date before merging** ON for that required check.
+7. Turn **Require conversation resolution before merging** ON.
+8. Turn **Block force pushes** ON.
+9. Turn **Block deletions** ON.
+10. Turn **Require linear history** ON only after the squash-only merge strategy in the next section is active.
+11. Do not grant a workflow a bypass merely to publish tariff data. The production data workflow publishes Releases, not commits to protected `main`.
 
-The required check name is intentionally stable: **`CI / test`**. If GitHub asks you to select a check from recent history, first make sure the hardened CI has completed at least once on the repository.
+The exact required status check is **`test`**. GitHub Actions emits this context from the `test` job in `.github/workflows/ci.yml`; the workflow itself is displayed as `CI`. If GitHub asks you to select a check from recent history, select `test` with GitHub Actions as its source.
 
 ## 4. Pull request and merge behavior
 
@@ -65,7 +66,7 @@ Configure:
 - **Rebase merging: OFF**.
 - **Automatically delete head branches: ON**.
 - **Always suggest updating pull request branches: ON**.
-- Auto-merge is optional. If enabled, use it only after `CI / test` is required and only for already-reviewed maintenance PRs that satisfy the ruleset.
+- Auto-merge is optional. If enabled, use it only after `test` is required and only for already-reviewed maintenance PRs that satisfy the ruleset.
 
 Using squash-only merging keeps `main` compatible with the linear-history requirement and avoids automation branches becoming permanent history noise.
 
@@ -88,11 +89,11 @@ Dependabot configuration is committed in `.github/dependabot.yml`; the repositor
 
 Use this order before allowing scheduled publication to mutate GitHub Releases:
 
-1. Confirm `CI / test` has passed on the hardened implementation.
+1. Confirm `test` has passed on the hardened implementation.
 2. Set default Actions permissions to read-only.
 3. Enable release immutability.
 4. Enable squash-only merge behavior.
-5. Activate the `main` ruleset and select `CI / test` as required.
+5. Activate the `main` ruleset and select `test` from GitHub Actions as required.
 6. Enable the available Advanced Security controls.
 7. Manually dispatch **Official data pipeline** with `publish=false` and inspect the build result, `pipeline-result.json`, manifest provenance, and any generated artifact.
 8. Only after the dry-run is healthy, permit a trusted `main` execution with `publish=true` or allow the next scheduled production run.
@@ -106,7 +107,8 @@ Record these after checking the live repository UI. Leave an item unchecked unti
 - [ ] Settings → General → Releases has **Enable release immutability** ON.
 - [ ] Settings → Rules → Rulesets has an Active ruleset targeting `main`.
 - [ ] The `main` ruleset requires a pull request before merging.
-- [ ] The exact required status check is **`CI / test`**.
+- [ ] The exact required status check is **`test`**.
+- [ ] The required check source is **GitHub Actions**.
 - [ ] Required branches must be up to date before merging.
 - [ ] Conversation resolution is required.
 - [ ] Force pushes and branch deletions are blocked.
