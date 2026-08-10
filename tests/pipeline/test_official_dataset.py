@@ -1,5 +1,6 @@
 from datetime import date, datetime, timezone
 from functools import lru_cache
+import hashlib
 from io import BytesIO
 import json
 from pathlib import Path
@@ -199,10 +200,25 @@ def test_identical_inputs_produce_logically_deterministic_release(tmp_path):
     for name in (
         "arancel_mx.csv",
         "arancel_mx.json",
-        "manifest.json",
         "official-sources.tar.gz",
     ):
         assert (first.output_dir / name).read_bytes() == (second.output_dir / name).read_bytes()
+
+    first_manifest = json.loads(
+        (first.output_dir / "manifest.json").read_text(encoding="utf-8")
+    )
+    second_manifest = json.loads(
+        (second.output_dir / "manifest.json").read_text(encoding="utf-8")
+    )
+    first_db_hash = first_manifest["artifact_sha256"].pop("arancel_mx.duckdb")
+    second_db_hash = second_manifest["artifact_sha256"].pop("arancel_mx.duckdb")
+    assert first_manifest == second_manifest
+    assert first_db_hash == hashlib.sha256(
+        (first.output_dir / "arancel_mx.duckdb").read_bytes()
+    ).hexdigest()
+    assert second_db_hash == hashlib.sha256(
+        (second.output_dir / "arancel_mx.duckdb").read_bytes()
+    ).hexdigest()
 
     queries = {
         "ids": "SELECT record_id FROM arancel_mx ORDER BY level, code",
