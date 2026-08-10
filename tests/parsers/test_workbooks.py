@@ -4,6 +4,7 @@ from openpyxl import Workbook
 import pytest
 
 from arancel_mx.parsers import workbooks
+from arancel_mx.parsers.profiles import resolve_workbook_profile
 from arancel_mx.parsers.workbooks import (
     WorkbookProfile,
     parse_indicator_workbook,
@@ -119,6 +120,34 @@ def test_ligie_parser_omits_unregistered_unit_fields(tmp_path):
 
     assert "unit_code" not in row.normalized
     assert "unit_name" not in row.normalized
+
+
+def test_ligie_parser_reads_two_row_tariff_header_from_resolved_profile(tmp_path):
+    path = tmp_path / "current-ligie.xlsx"
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "FA"
+    for _ in range(6):
+        sheet.append([None])
+    sheet.append(
+        [None, None, "Fracción Arancelaria", "Descripción", "Unidad de Medida", "Arancel %", None]
+    )
+    sheet.append([None, None, None, None, None, "IMP.", "EXP."])
+    sheet.append([None, None, "0101.21.01", "Reproductores", "Cbza", "10", "Ex."])
+    workbook.save(path)
+
+    profile = resolve_workbook_profile(probe_workbook(path), "ligie_snapshot").profile
+    row = parse_ligie_workbook(path, SOURCE, profile)[0]
+
+    assert (row.sheet, row.row_number) == ("FA", 9)
+    assert row.normalized["code"] == "01012101"
+    assert row.normalized["unit_name"] == "Cbza"
+    assert row.normalized["igi_text"] == "10"
+    assert row.normalized["igi_kind"] == "ad_valorem"
+    assert str(row.normalized["igi_value"]) == "10"
+    assert row.normalized["ige_text"] == "Ex."
+    assert row.normalized["ige_kind"] == "exento"
+    assert str(row.normalized["ige_value"]) == "0"
 
 
 def test_ligie_parser_preserves_units_and_forward_fills_registered_columns(tmp_path):
