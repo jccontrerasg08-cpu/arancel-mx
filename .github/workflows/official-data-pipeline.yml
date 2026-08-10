@@ -71,7 +71,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           mkdir -p out
-          python scripts/fetch_previous_release.py --output out/previous-manifest.json
+          python -m scripts.fetch_previous_release --output out/previous-manifest.json
 
       - name: Record previous-release lookup failure
         if: steps.previous.outcome == 'failure'
@@ -221,7 +221,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           mkdir -p out
-          python scripts/publish_release.py \
+          python -m scripts.publish_release \
             --release-dir out/release \
             --commit-sha "$GITHUB_SHA" \
             --result-path out/publisher-result.json
@@ -319,7 +319,7 @@ jobs:
           Path("out").mkdir(exist_ok=True)
           Path("out/alert-result.json").write_text(json.dumps(payload) + "\n", encoding="utf-8")
           PY
-          python scripts/data_alert.py failure --result out/alert-result.json
+          python -m scripts.data_alert failure --result out/alert-result.json
 
       - name: Upsert publication failure alert
         if: >-
@@ -350,7 +350,7 @@ jobs:
           Path("out").mkdir(exist_ok=True)
           Path("out/alert-result.json").write_text(json.dumps(payload) + "\n", encoding="utf-8")
           PY
-          python scripts/data_alert.py failure --result out/alert-result.json
+          python -m scripts.data_alert failure --result out/alert-result.json
 
       - name: Close recovered automation alerts
         if: >-
@@ -361,4 +361,4 @@ jobs:
            needs.publish.result == 'success')
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: python scripts/data_alert.py recovery
+        run: python -m scripts.data_alert recovery
