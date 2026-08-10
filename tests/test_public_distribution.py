@@ -131,6 +131,54 @@ def test_readme_describes_the_focused_public_project() -> None:
     assert [phrase for phrase in required if phrase not in readme] == []
 
 
+def test_readme_preserves_existing_public_information() -> None:
+    readme = (ROOT / "README.md").read_text(encoding="utf-8").lower()
+    required = (
+        "docs/demo.gif",
+        "docs/dof_timeline.png",
+        "docs/dof_timeline2.png",
+        "docs/nico_flow.png",
+        "src/arancel_mx/sources/source_registry.json",
+        "docs/",
+        "tests/",
+        "license",
+        "notice",
+        "propuestas nico",
+        "capture manifests y hashes",
+        "https://www.diputados.gob.mx/leyesbiblio/ref/ligie_2022.htm",
+        "https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html",
+        "https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html",
+        "https://www.snice.gob.mx/cs/avi/snice/ligie.notasnac22.html",
+        "https://www.snice.gob.mx/cs/avi/snice/ligie.indicaranc22.html",
+        "https://www.dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022",
+        "python -m arancel_mx --help",
+        "python -m arancel_mx build --database data/arancel.duckdb --output-dir out/release",
+        "python -m arancel_mx update --state-path data/update_state/ligie.json --report-path out/update.json",
+        "python -m arancel_mx reconcile --ledger-json ledger.json --dof-json dof.json --snice-json snice.json",
+        "python -m arancel_mx release --release-dir out/release --source-dir data/raw/release --latest-dir out/latest",
+        "python -m pytest -q",
+        "python -m build",
+        "diputados",
+        "snice",
+        "diario oficial de la federación",
+        "comunidad de código abierto",
+    )
+
+    assert [value for value in required if value not in readme] == []
+
+
+def test_bilingual_readmes_stay_linked() -> None:
+    spanish = (ROOT / "README.md").read_text(encoding="utf-8").lower()
+    english_path = ROOT / "README.en.md"
+    assert english_path.is_file()
+    english = english_path.read_text(encoding="utf-8").lower()
+
+    assert "readme.en.md" in spanish
+    assert "readme.md" in english
+    assert "english" in spanish
+    assert "español" in english
+
+
 def test_focused_documentation_exists_and_has_no_legacy_instructions() -> None:
     required = (
         "docs/data-model.md",
