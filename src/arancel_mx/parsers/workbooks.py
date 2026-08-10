@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
 
 import pandas as pd
-from openpyxl import load_workbook
 
 from arancel_mx.domain.normalization import normalize_code, parse_duty
 
@@ -36,21 +35,35 @@ class StagingRow:
     normalized: Mapping[str, Any]
 
 
+def _excel_engine(path: Path) -> str:
+    suffix = path.suffix.lower()
+    if suffix == ".xls":
+        return "xlrd"
+    if suffix == ".xlsx":
+        return "openpyxl"
+    raise ValueError(f"unsupported workbook format: {path.suffix}")
+
+
 def probe_workbook(path: Path, sample_rows: int = 20, sample_columns: int = 30) -> WorkbookProbe:
     if sample_rows < 1 or sample_columns < 1:
         raise ValueError("workbook probe bounds must be positive")
-    workbook = load_workbook(path, read_only=True, data_only=True)
-    try:
-        samples = {
-            sheet.title: tuple(
-                tuple(row[:sample_columns])
-                for row in sheet.iter_rows(max_row=sample_rows, values_only=True)
+    engine = _excel_engine(path)
+    with pd.ExcelFile(path, engine=engine) as workbook:
+        samples = {}
+        for sheet in workbook.sheet_names:
+            frame = pd.read_excel(
+                workbook,
+                sheet_name=sheet,
+                header=None,
+                nrows=sample_rows,
+                dtype=object,
+                keep_default_na=False,
             )
-            for sheet in workbook.worksheets
-        }
-        return WorkbookProbe(tuple(workbook.sheetnames), samples)
-    finally:
-        workbook.close()
+            samples[sheet] = tuple(
+                tuple(row[:sample_columns])
+                for row in frame.itertuples(index=False, name=None)
+            )
+        return WorkbookProbe(tuple(workbook.sheet_names), samples)
 
 
 def _read_profile(path: Path, profile: WorkbookProfile) -> pd.DataFrame:
@@ -64,11 +77,16 @@ def _read_profile(path: Path, profile: WorkbookProfile) -> pd.DataFrame:
         usecols=headers,
         dtype=str,
         keep_default_na=False,
-        engine="openpyxl",
+        engine=_excel_engine(path),
     )
     missing = set(headers).difference(frame.columns)
     if missing:
         raise ValueError(f"missing registered workbook columns: {sorted(missing)}")
+    for logical in profile.forward_fill:
+        if logical not in profile.columns:
+            raise ValueError(f"forward_fill column is not registered: {logical}")
+        header = profile.columns[logical]
+        frame[header] = frame[header].replace("", pd.NA).ffill().fillna("")
     return frame
 
 
@@ -100,6 +118,8 @@ def parse_ligie_workbook(
         normalized = {
             "code": code,
             "description": str(raw.get("description", "")).strip(),
+            "unit_code": str(raw.get("unit_code", "")).strip() or None,
+            "unit_name": str(raw.get("unit_name", "")).strip() or None,
             "igi_kind": igi[0], "igi_value": igi[1], "igi_text": igi[2],
             "ige_kind": ige[0], "ige_value": ige[1], "ige_text": ige[2],
         }
