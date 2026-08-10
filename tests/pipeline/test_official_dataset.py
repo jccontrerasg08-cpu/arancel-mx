@@ -136,6 +136,10 @@ class Response:
             return self._text
         return self.content.decode("utf-8", errors="replace")
 
+    def iter_content(self, chunk_size=1024 * 1024):
+        for start in range(0, len(self.content), chunk_size):
+            yield self.content[start : start + chunk_size]
+
     def raise_for_status(self):
         return None
 
@@ -145,7 +149,7 @@ class FakeSession:
         self.responses = responses
         self.requested = []
 
-    def get(self, url, timeout=None):
+    def get(self, url, timeout=None, stream=False):
         self.requested.append(url)
         if url not in self.responses:
             raise AssertionError(f"unexpected network URL: {url}")
