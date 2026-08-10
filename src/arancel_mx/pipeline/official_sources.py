@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import timezone
 import hashlib
 from importlib.resources import files
 import json
@@ -64,12 +64,6 @@ class OfficialInputSnapshot:
     reconciliation: ReconciliationReport
 
 
-def _build_timestamp(value: datetime) -> datetime:
-    if value.tzinfo is None or value.utcoffset() is None:
-        raise ValueError("generated_at must be timezone-aware")
-    return value.astimezone(timezone.utc).replace(microsecond=0)
-
-
 def _source_document_id(dataset_key: str, final_url: str, source_sha256: str) -> str:
     payload = f"{dataset_key}\0{final_url}\0{source_sha256}".encode("utf-8")
     return "source-" + hashlib.sha256(payload).hexdigest()
@@ -80,6 +74,13 @@ def _filename(url: str) -> str:
     if not name:
         raise ValueError(f"official source URL has no filename: {url}")
     return name
+
+
+def _retrieval_timestamp(fetched: FetchedDocument):
+    value = fetched.retrieved_at
+    if value.tzinfo is None or value.utcoffset() is None:
+        raise ValueError("fetched.retrieved_at must be timezone-aware")
+    return value.astimezone(timezone.utc).replace(microsecond=0)
 
 
 def _capture_source(
@@ -99,12 +100,12 @@ def _capture_source(
         entry.media_types,
         timeout_s=config.timeout_s,
     )
-    generated_at = _build_timestamp(config.generated_at)
+    retrieved_at = _retrieval_timestamp(fetched)
     metadata = {
         "source_id": dataset_key,
         "kind": document_role,
         "observed_at": config.effective_as_of.isoformat(),
-        "retrieved_at": generated_at.isoformat().replace("+00:00", "Z"),
+        "retrieved_at": retrieved_at.isoformat().replace("+00:00", "Z"),
         "source_url": fetched.final_url,
         "filename": _filename(fetched.final_url),
         "media_type": fetched.media_type,
@@ -126,7 +127,7 @@ def _capture_source(
         "effective_from": None,
         "effective_to": None,
         "observed_at": config.effective_as_of,
-        "retrieved_at": generated_at,
+        "retrieved_at": retrieved_at,
     }
     return CapturedOfficialSource(
         dataset_key=dataset_key,
