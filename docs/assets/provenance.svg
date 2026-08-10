@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="380" viewBox="0 0 1200 380" role="img" aria-labelledby="title desc">
+  <title id="title">arancel-mx provenance principles</title>
+  <desc id="desc">Three project principles: traceability, reproducibility, and auditability.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#08131f"/>
+      <stop offset="1" stop-color="#11293a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="380" rx="24" fill="url(#bg)"/>
+  <text x="600" y="50" text-anchor="middle" fill="#ffffff" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="24" font-weight="800">Tres propiedades del núcleo público</text>
+  <text x="600" y="78" text-anchor="middle" fill="#91aabb" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="14">Cada una corresponde a mecanismos verificables dentro del repositorio.</text>
+
+  <g font-family="Inter,Segoe UI,Arial,sans-serif">
+    <g transform="translate(70 118)">
+      <rect width="320" height="210" rx="22" fill="#0e2b29" stroke="#00c389" stroke-opacity="0.55"/>
+      <circle cx="52" cy="52" r="22" fill="#00c389" fill-opacity="0.15" stroke="#00c389"/>
+      <path d="M43 52h18M52 43v18" stroke="#79ebc6" stroke-width="2" stroke-linecap="round"/>
+      <text x="88" y="58" fill="#ffffff" font-size="23" font-weight="800">Trazabilidad</text>
+      <text x="32" y="104" fill="#b9d6cc" font-size="15">DOF · SNICE · Diputados</text>
+      <text x="32" y="136" fill="#8fb5aa" font-size="14">URL · documento · fecha · evidencia</text>
+      <text x="32" y="168" fill="#8fb5aa" font-size="14">El origen acompaña al dato.</text>
+    </g>
+
+    <g transform="translate(440 118)">
+      <rect width="320" height="210" rx="22" fill="#17233d" stroke="#5f8cff" stroke-opacity="0.55"/>
+      <circle cx="52" cy="52" r="22" fill="#5f8cff" fill-opacity="0.15" stroke="#5f8cff"/>
+      <path d="M42 54c7-15 22-15 28 0M69 48l2 8-8 1" fill="none" stroke="#bdc9ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="88" y="58" fill="#ffffff" font-size="23" font-weight="800">Reproducibilidad</text>
+      <text x="32" y="104" fill="#c8d0f1" font-size="15">DuckDB · CSV · JSON</text>
+      <text x="32" y="136" fill="#a9b5d8" font-size="14">Transformaciones deterministas</text>
+      <text x="32" y="168" fill="#a9b5d8" font-size="14">Misma evidencia, mismo resultado.</text>
+    </g>
+
+    <g transform="translate(810 118)">
+      <rect width="320" height="210" rx="22" fill="#30251f" stroke="#ff8b72" stroke-opacity="0.55"/>
+      <circle cx="52" cy="52" r="22" fill="#ff8b72" fill-opacity="0.13" stroke="#ff8b72"/>
+      <path d="M42 53l7 7 14-17" fill="none" stroke="#ffc0b0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="88" y="58" fill="#ffffff" font-size="23" font-weight="800">Auditabilidad</text>
+      <text x="32" y="104" fill="#e2c7bd" font-size="15">SHA256 · manifests · tests</text>
+      <text x="32" y="136" fill="#c7a79c" font-size="14">La evidencia y los artefactos se verifican.</text>
+      <text x="32" y="168" fill="#c7a79c" font-size="14">Los cambios dejan rastro.</text>
+    </g>
+  </g>
+</svg>
