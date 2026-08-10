@@ -70,6 +70,16 @@ def test_ci_uses_exact_pip_and_constraints_file():
     assert "python -m pip install --upgrade pip" not in workflow
 
 
+def test_ci_probes_declared_duckdb_floor_in_isolated_environment():
+    workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    payload = tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))
+
+    assert "duckdb>=1.1" in payload["project"]["dependencies"]
+    assert "python -m venv /tmp/arancel-duckdb-1.1.0" in workflow
+    assert "/tmp/arancel-duckdb-1.1.0/bin/python -m pip install duckdb==1.1.0" in workflow
+    assert "/tmp/arancel-duckdb-1.1.0/bin/python scripts/check_duckdb_compat.py" in workflow
+
+
 def test_dependabot_updates_python_and_actions_weekly_without_credentials():
     assert DEPENDABOT.is_file()
     config = DEPENDABOT.read_text(encoding="utf-8")
