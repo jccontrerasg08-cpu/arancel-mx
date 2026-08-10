@@ -1,6 +1,7 @@
 from openpyxl import Workbook
 import pytest
 
+from arancel_mx.parsers import workbooks
 from arancel_mx.parsers.workbooks import (
     WorkbookProfile,
     parse_indicator_workbook,
@@ -35,6 +36,14 @@ def test_probe_is_bounded_and_reports_sheet_samples(tmp_path):
 
     assert probe.sheet_names == ("Datos",)
     assert len(probe.samples["Datos"]) == 2
+
+
+def test_excel_engine_selects_registered_reader_by_suffix():
+    assert workbooks._excel_engine(workbooks.Path("source.xls")) == "xlrd"
+    assert workbooks._excel_engine(workbooks.Path("source.xlsx")) == "openpyxl"
+
+    with pytest.raises(ValueError, match="unsupported workbook format"):
+        workbooks._excel_engine(workbooks.Path("source.csv"))
 
 
 def test_nico_parser_preserves_zeroes_in_split_columns(tmp_path):
@@ -82,6 +91,38 @@ def test_ligie_parser_rejects_complete_short_code(tmp_path):
 
     with pytest.raises(ValueError, match="width"):
         parse_ligie_workbook(path, SOURCE, profile)
+
+
+def test_ligie_parser_preserves_units_and_forward_fills_registered_columns(tmp_path):
+    path = make_workbook(
+        tmp_path,
+        "ligie.xlsx",
+        [
+            ["Fracción", "Descripción", "Clave unidad", "Unidad", "IGI", "IGE"],
+            ["01012101", "Primera", "01", "Cabeza", "10", "Ex."],
+            ["01012102", "Segunda", "02", None, "10", "Ex."],
+        ],
+    )
+    profile = WorkbookProfile(
+        sheet="Datos",
+        header_row=1,
+        columns={
+            "code": "Fracción",
+            "description": "Descripción",
+            "unit_code": "Clave unidad",
+            "unit_name": "Unidad",
+            "igi": "IGI",
+            "ige": "IGE",
+        },
+        forward_fill=("unit_name",),
+    )
+
+    rows = parse_ligie_workbook(path, SOURCE, profile)
+
+    assert rows[0].normalized["unit_code"] == "01"
+    assert rows[0].normalized["unit_name"] == "Cabeza"
+    assert rows[1].normalized["unit_code"] == "02"
+    assert rows[1].normalized["unit_name"] == "Cabeza"
 
 
 def test_indicator_rows_remain_analytical(tmp_path):
