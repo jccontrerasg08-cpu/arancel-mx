@@ -1,5 +1,10 @@
 """Offline parsers for official tariff workbooks and documents."""
 
+from arancel_mx.parsers.documents import parse_ligie_pdf_hierarchy
+from arancel_mx.parsers.profiles import (
+    ResolvedWorkbookProfile,
+    resolve_workbook_profile,
+)
 from arancel_mx.parsers.workbooks import (
     StagingRow,
     WorkbookProbe,
@@ -9,9 +14,9 @@ from arancel_mx.parsers.workbooks import (
     parse_nico_workbook,
     probe_workbook,
 )
-from arancel_mx.parsers.documents import parse_ligie_pdf_hierarchy
 
 __all__ = [
+    "ResolvedWorkbookProfile",
     "StagingRow",
     "WorkbookProbe",
     "WorkbookProfile",
@@ -20,4 +25,5 @@ __all__ = [
     "parse_ligie_workbook",
     "parse_nico_workbook",
     "probe_workbook",
+    "resolve_workbook_profile",
 ]

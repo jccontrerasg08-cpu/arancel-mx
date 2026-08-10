@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/assets/arancel-mx-banner.svg" alt="arancel-mx — datos arancelarios de México reproducibles, auditables y trazables" width="100%" />
+<img src="docs/assets/arancel-mx-banner.svg" alt="arancel-mx - datos arancelarios de México reproducibles, auditables y trazables" width="100%" />
 
 # arancel-mx
 
@@ -214,17 +214,35 @@ Consulta [`docs/data-model.md`](docs/data-model.md) para el modelo documentado d
 
 ## Artefactos y reproducibilidad
 
-El pipeline está diseñado para producir artefactos deterministas como CSV, JSON, DuckDB y manifiestos con SHA256.
+La construcción oficial produce este contrato exacto:
 
 ```text
 release/
-├── arancel.csv
-├── arancel.json
-├── arancel.duckdb
-└── manifest.json
+├── arancel_mx.duckdb
+├── arancel_mx.csv
+├── arancel_mx.json
+├── manifest.json
+├── SHA256SUMS
+└── official-sources.tar.gz
 ```
 
-Los nombres concretos de artefactos pueden depender del proceso de release, pero la idea central es conservar tanto los datos materializados como la metadata necesaria para comprobar integridad y procedencia. Consulta [`docs/release-process.md`](docs/release-process.md).
+`manifest.json` registra versión, validación, fuentes y SHA256 de los artefactos. `SHA256SUMS` permite verificar los archivos descargados y `official-sources.tar.gz` conserva la evidencia oficial capturada utilizada por la construcción. La representación lógica se mantiene reproducible; el archivo físico DuckDB se verifica por su propio SHA256 en cada build.
+
+### Construcción end-to-end de dataset oficial
+
+El orquestador público puede construir el dataset directamente desde las fuentes registradas:
+
+```bash
+python scripts/build_official_dataset.py \
+  --work-dir data/embedded/official-build \
+  --output-dir out/release \
+  --effective-as-of 2026-08-10 \
+  --dataset-version 2026.08.10
+```
+
+El workflow **Build official dataset**, definido en [`.github/workflows/build-official-dataset.yml`](.github/workflows/build-official-dataset.yml), ejecuta primero la suite offline y después puede consultar las fuentes oficiales para producir y verificar un artifact de GitHub Actions. Se ejecuta manualmente mediante `workflow_dispatch` o por calendario semanal.
+
+El workflow **no crea tags ni GitHub Releases**. La publicación de un tag y la promoción de los artefactos a GitHub Releases siguen siendo decisiones manuales y supervisadas. Consulta [`docs/release-process.md`](docs/release-process.md) para el proceso completo.
 
 ## Documentación y ejemplos
 
@@ -248,13 +266,13 @@ Documentación principal:
 
 El registro versionado de fuentes está en `src/arancel_mx/sources/source_registry.json`. Fuentes principales:
 
-- Diputados — LIGIE (registro y texto vigente): https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm
-- SNICE — índice LIGIE / publicaciones oficiales: https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html
-- SNICE — NICO / identificaciones comerciales: https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html
-- SNICE — Propuestas NICO (envíos y solicitudes): https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html
-- SNICE — Notas nacionales: https://www.snice.gob.mx/cs/avi/snice/ligie.notasnac22.html
-- SNICE — Indicadores ponderados: https://www.snice.gob.mx/cs/avi/snice/ligie.indicaranc22.html
-- Diario Oficial de la Federación (DOF) — nota relacionada (publicación NICO 2022): https://www.dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022
+- Diputados - LIGIE (registro y texto vigente): https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm
+- SNICE - índice LIGIE / publicaciones oficiales: https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html
+- SNICE - NICO / identificaciones comerciales: https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html
+- SNICE - Propuestas NICO (envíos y solicitudes): https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html
+- SNICE - Notas nacionales: https://www.snice.gob.mx/cs/avi/snice/ligie.notasnac22.html
+- SNICE - Indicadores ponderados: https://www.snice.gob.mx/cs/avi/snice/ligie.indicaranc22.html
+- Diario Oficial de la Federación (DOF) - nota relacionada (publicación NICO 2022): https://www.dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022
 
 | Fuente | Uso principal dentro del contexto del proyecto |
 |---|---|
@@ -281,7 +299,7 @@ Las autoridades publican cronogramas y procedimientos asociados a la recepción,
 </p>
 
 <p align="center">
-  <em>Fuente: Diario Oficial de la Federación / SNICE — ver la nota oficial en DOF para detalles y fechas exactas.</em>
+  <em>Fuente: Diario Oficial de la Federación / SNICE - ver la nota oficial en DOF para detalles y fechas exactas.</em>
 </p>
 
 ### Flujo de publicación NICO / DOF
@@ -310,6 +328,8 @@ Estas imágenes sirven como contexto documental del proceso oficial. No deben in
 | Registro de fuentes | Disponible |
 | Manifiestos SHA256 | Disponible |
 | CLI `build`, `update`, `reconcile`, `release` | Disponible |
+| Construcción end-to-end de dataset oficial | Disponible |
+| Artifact verificado de GitHub Actions | Disponible |
 | CI | Disponible |
 | API pública de búsqueda HS / MX / NICO | En evolución / roadmap |
 | Publicación PyPI | Planeada |
@@ -324,7 +344,7 @@ Dirección prevista del núcleo público:
 - navegación NICO10 → fracción MX8 → HS6
 - CLI de búsqueda
 - detección automatizada de cambios oficiales
-- releases de dataset automatizados
+- publicación automática supervisada a GitHub Releases
 - publicación del paquete en PyPI
 - documentación pública navegable
 - interfaces adicionales de consulta, incluida la posibilidad futura de API o MCP
@@ -337,6 +357,8 @@ Las funcionalidades del roadmap no deben considerarse parte de la API estable ha
 arancel-mx/
 ├── .github/
 │   └── workflows/
+│       ├── ci.yml
+│       └── build-official-dataset.yml
 ├── docs/
 │   ├── data-model.md
 │   ├── sources.md
@@ -345,6 +367,8 @@ arancel-mx/
 │   ├── dof_timeline.png
 │   ├── dof_timeline2.png
 │   └── nico_flow.png
+├── scripts/
+│   └── build_official_dataset.py
 ├── src/
 │   └── arancel_mx/
 │       ├── domain/
@@ -370,6 +394,7 @@ arancel-mx/
 - `sources/`: registro y lógica asociada a fuentes oficiales.
 - `storage/`: persistencia y estructuras asociadas a DuckDB.
 - `release/`: construcción y validación de artefactos publicables.
+- `scripts/`: entradas reproducibles para construir datasets verificables.
 - `tests/`: fixtures y casos de prueba que aseguran reproducibilidad y el contrato de distribución pública.
 
 ## Pruebas

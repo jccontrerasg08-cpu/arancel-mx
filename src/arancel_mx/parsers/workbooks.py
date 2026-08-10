@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Any, Mapping
 
 import pandas as pd
-from openpyxl import load_workbook
 
 from arancel_mx.domain.normalization import normalize_code, parse_duty
 
@@ -18,6 +17,8 @@ class WorkbookProfile:
     forward_fill: tuple[str, ...] = ()
     section_column: str | None = None
     allowed_sections: tuple[str, ...] = ()
+    data_row: int | None = None
+    column_indices: Mapping[str, int] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -36,26 +37,77 @@ class StagingRow:
     normalized: Mapping[str, Any]
 
 
+def _excel_engine(path: Path) -> str:
+    suffix = path.suffix.lower()
+    if suffix == ".xls":
+        return "xlrd"
+    if suffix == ".xlsx":
+        return "openpyxl"
+    raise ValueError(f"unsupported workbook format: {path.suffix}")
+
+
 def probe_workbook(path: Path, sample_rows: int = 20, sample_columns: int = 30) -> WorkbookProbe:
     if sample_rows < 1 or sample_columns < 1:
         raise ValueError("workbook probe bounds must be positive")
-    workbook = load_workbook(path, read_only=True, data_only=True)
-    try:
-        samples = {
-            sheet.title: tuple(
-                tuple(row[:sample_columns])
-                for row in sheet.iter_rows(max_row=sample_rows, values_only=True)
+    engine = _excel_engine(path)
+    with pd.ExcelFile(path, engine=engine) as workbook:
+        samples = {}
+        for sheet in workbook.sheet_names:
+            frame = pd.read_excel(
+                workbook,
+                sheet_name=sheet,
+                header=None,
+                nrows=sample_rows,
+                dtype=object,
+                keep_default_na=False,
             )
-            for sheet in workbook.worksheets
-        }
-        return WorkbookProbe(tuple(workbook.sheetnames), samples)
-    finally:
-        workbook.close()
+            samples[sheet] = tuple(
+                tuple(row[:sample_columns])
+                for row in frame.itertuples(index=False, name=None)
+            )
+        return WorkbookProbe(tuple(workbook.sheet_names), samples)
+
+
+def _apply_forward_fill(frame: pd.DataFrame, profile: WorkbookProfile) -> pd.DataFrame:
+    for logical in profile.forward_fill:
+        if logical not in profile.columns:
+            raise ValueError(f"forward_fill column is not registered: {logical}")
+        column = logical if profile.column_indices else profile.columns[logical]
+        frame[column] = frame[column].replace("", pd.NA).ffill().fillna("")
+    return frame
 
 
 def _read_profile(path: Path, profile: WorkbookProfile) -> pd.DataFrame:
     if profile.header_row < 1:
         raise ValueError("header_row is one-based")
+
+    if profile.column_indices:
+        if set(profile.column_indices) != set(profile.columns):
+            raise ValueError("column_indices must cover every registered logical column")
+        if any(index < 0 for index in profile.column_indices.values()):
+            raise ValueError("column_indices must be zero-based non-negative positions")
+        data_row = profile.data_row or profile.header_row + 1
+        if data_row <= profile.header_row:
+            raise ValueError("data_row must follow header_row")
+        source = pd.read_excel(
+            path,
+            sheet_name=profile.sheet,
+            header=None,
+            skiprows=data_row - 1,
+            dtype=str,
+            keep_default_na=False,
+            engine=_excel_engine(path),
+        )
+        if profile.column_indices and max(profile.column_indices.values()) >= len(source.columns):
+            raise ValueError("registered workbook column position is out of bounds")
+        frame = pd.DataFrame(
+            {
+                logical: source.iloc[:, index]
+                for logical, index in profile.column_indices.items()
+            }
+        )
+        return _apply_forward_fill(frame, profile)
+
     headers = list(dict.fromkeys(profile.columns.values()))
     frame = pd.read_excel(
         path,
@@ -64,12 +116,12 @@ def _read_profile(path: Path, profile: WorkbookProfile) -> pd.DataFrame:
         usecols=headers,
         dtype=str,
         keep_default_na=False,
-        engine="openpyxl",
+        engine=_excel_engine(path),
     )
     missing = set(headers).difference(frame.columns)
     if missing:
         raise ValueError(f"missing registered workbook columns: {sorted(missing)}")
-    return frame
+    return _apply_forward_fill(frame, profile)
 
 
 def _rows(path: Path, source: Mapping[str, Any], profile: WorkbookProfile):
@@ -77,11 +129,15 @@ def _rows(path: Path, source: Mapping[str, Any], profile: WorkbookProfile):
     if not source_document_id:
         raise ValueError("source_document_id is required")
     frame = _read_profile(path, profile)
-    for offset, values in enumerate(frame.to_dict(orient="records"), start=1):
-        raw = {logical: values[header] for logical, header in profile.columns.items()}
+    first_data_row = profile.data_row or profile.header_row + 1
+    for offset, values in enumerate(frame.to_dict(orient="records")):
+        if profile.column_indices:
+            raw = {logical: values[logical] for logical in profile.columns}
+        else:
+            raw = {logical: values[header] for logical, header in profile.columns.items()}
         if not any(str(value).strip() for value in raw.values()):
             continue
-        yield source_document_id, profile.header_row + offset, raw
+        yield source_document_id, first_data_row + offset, raw
 
 
 def parse_ligie_workbook(
@@ -103,6 +159,10 @@ def parse_ligie_workbook(
             "igi_kind": igi[0], "igi_value": igi[1], "igi_text": igi[2],
             "ige_kind": ige[0], "ige_value": ige[1], "ige_text": ige[2],
         }
+        if "unit_code" in raw:
+            normalized["unit_code"] = str(raw["unit_code"]).strip() or None
+        if "unit_name" in raw:
+            normalized["unit_name"] = str(raw["unit_name"]).strip() or None
         result.append(StagingRow("legal", source_id, profile.sheet, row_number, raw, normalized))
     return result
 

@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/assets/arancel-mx-banner.svg" alt="arancel-mx — reproducible, auditable, traceable Mexican tariff data" width="100%" />
+<img src="docs/assets/arancel-mx-banner.svg" alt="arancel-mx - reproducible, auditable, traceable Mexican tariff data" width="100%" />
 
 # arancel-mx
 
@@ -211,17 +211,35 @@ See [`docs/data-model.md`](docs/data-model.md) for the documented project model.
 
 ## Artifacts and reproducibility
 
-The pipeline is designed to produce deterministic artifacts such as CSV, JSON, DuckDB, and SHA256 manifests.
+The official builder produces this exact contract:
 
 ```text
 release/
-├── arancel.csv
-├── arancel.json
-├── arancel.duckdb
-└── manifest.json
+├── arancel_mx.duckdb
+├── arancel_mx.csv
+├── arancel_mx.json
+├── manifest.json
+├── SHA256SUMS
+└── official-sources.tar.gz
 ```
 
-Concrete artifact names may depend on the release process, but the central goal is to preserve both materialized data and metadata required to verify integrity and provenance. See [`docs/release-process.md`](docs/release-process.md).
+`manifest.json` records the dataset version, validation result, source documents, and artifact SHA256 values. `SHA256SUMS` verifies downloaded files, while `official-sources.tar.gz` preserves the captured official evidence used by the build. Logical data is reproducible; each physical DuckDB file is verified against its own SHA256 for that build.
+
+### End-to-end official dataset build
+
+The public orchestrator can build the dataset directly from registered sources:
+
+```bash
+python scripts/build_official_dataset.py \
+  --work-dir data/embedded/official-build \
+  --output-dir out/release \
+  --effective-as-of 2026-08-10 \
+  --dataset-version 2026.08.10
+```
+
+The **Build official dataset** workflow, defined in [`.github/workflows/build-official-dataset.yml`](.github/workflows/build-official-dataset.yml), runs the offline suite first and can then retrieve the registered official sources to produce and verify a GitHub Actions artifact. It supports manual `workflow_dispatch` runs and a weekly schedule.
+
+The workflow **does not create tags or GitHub Releases**. Promoting verified artifacts into a tag and GitHub Release remains a manual, supervised publication decision. See [`docs/release-process.md`](docs/release-process.md) for the complete publication contract.
 
 ## Documentation and examples
 
@@ -241,13 +259,13 @@ Concrete artifact names may depend on the release process, but the central goal 
 
 The versioned source registry lives in `src/arancel_mx/sources/source_registry.json`. Primary sources:
 
-- Chamber of Deputies — LIGIE reference and current text: https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm
-- SNICE — LIGIE index / official publications: https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html
-- SNICE — NICO / commercial identifications: https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html
-- SNICE — NICO proposals / submissions and requests: https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html
-- SNICE — National Notes: https://www.snice.gob.mx/cs/avi/snice/ligie.notasnac22.html
-- SNICE — Weighted Indicators: https://www.snice.gob.mx/cs/avi/snice/ligie.indicaranc22.html
-- Diario Oficial de la Federación (DOF) — related NICO 2022 publication: https://www.dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022
+- Chamber of Deputies - LIGIE reference and current text: https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm
+- SNICE - LIGIE index / official publications: https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html
+- SNICE - NICO / commercial identifications: https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html
+- SNICE - NICO proposals / submissions and requests: https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html
+- SNICE - National Notes: https://www.snice.gob.mx/cs/avi/snice/ligie.notasnac22.html
+- SNICE - Weighted Indicators: https://www.snice.gob.mx/cs/avi/snice/ligie.indicaranc22.html
+- Diario Oficial de la Federación (DOF) - related NICO 2022 publication: https://www.dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022
 
 | Source | Main role in the project context |
 |---|---|
@@ -274,7 +292,7 @@ Authorities publish schedules and procedures related to the receipt, evaluation,
 </p>
 
 <p align="center">
-  <em>Source: Diario Oficial de la Federación / SNICE — see the official DOF publication for exact details and dates.</em>
+  <em>Source: Diario Oficial de la Federación / SNICE - see the official DOF publication for exact details and dates.</em>
 </p>
 
 ### NICO / DOF publication flow
@@ -301,6 +319,8 @@ See `src/arancel_mx/sources/source_registry.json` for file patterns and classifi
 | Source registry | Available |
 | SHA256 manifests | Available |
 | `build`, `update`, `reconcile`, `release` CLI | Available |
+| End-to-end official dataset build | Available |
+| Verified GitHub Actions artifact | Available |
 | CI | Available |
 | Public HS / MX / NICO search API | Evolving / roadmap |
 | PyPI publication | Planned |
@@ -315,7 +335,7 @@ Planned direction of the public core:
 - NICO10 → MX8 tariff fraction → HS6 navigation
 - search CLI
 - automated detection of official-source changes
-- automated dataset releases
+- supervised automatic publication to GitHub Releases
 - PyPI package publication
 - navigable public documentation
 - additional query interfaces, potentially including API or MCP access
@@ -328,6 +348,8 @@ Roadmap functionality should not be considered part of the stable API until it i
 arancel-mx/
 ├── .github/
 │   └── workflows/
+│       ├── ci.yml
+│       └── build-official-dataset.yml
 ├── docs/
 │   ├── data-model.md
 │   ├── sources.md
@@ -336,6 +358,8 @@ arancel-mx/
 │   ├── dof_timeline.png
 │   ├── dof_timeline2.png
 │   └── nico_flow.png
+├── scripts/
+│   └── build_official_dataset.py
 ├── src/
 │   └── arancel_mx/
 │       ├── domain/
@@ -361,6 +385,7 @@ arancel-mx/
 - `sources/`: registry and official-source logic.
 - `storage/`: DuckDB persistence and related structures.
 - `release/`: construction and verification of publishable artifacts.
+- `scripts/`: reproducible entrypoints for building verified datasets.
 - `tests/`: fixtures and test cases protecting reproducibility and public-distribution rules.
 
 ## Tests

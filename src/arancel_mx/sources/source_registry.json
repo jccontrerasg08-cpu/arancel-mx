@@ -1,11 +1,14 @@
 {
-  "registry_version": "2026-08-09",
+  "registry_version": "2026-08-10",
   "sources": {
     "diputados_ligie": {
       "canonical_page": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm",
       "allowed_hosts": ["www.diputados.gob.mx", "diputados.gob.mx"],
       "media_types": ["text/html", "application/pdf", "application/msword"],
       "families": {"legal_ledger": [".*"]},
+      "direct_documents": {
+        "consolidated_text": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LIGIE_2022.pdf"
+      },
       "source_role": "official_legislative_compilation",
       "authoritative_for_tariff": false,
       "authoritative_for_discovery": true,
