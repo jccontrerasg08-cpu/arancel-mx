@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from arancel_mx.sources.diputados import parse_ligie_ledger
 
 
@@ -21,3 +23,62 @@ def test_parser_keeps_law_tariff_dates_and_document_families_distinct():
         "national_notes",
         "correlation",
     }
+
+
+def test_official_ref_url_identifies_law_reform_when_visual_section_heading_is_missing():
+    html = """
+    <html><body>
+      <p>Última reforma publicada en el Diario Oficial de la Federación el 29 de diciembre de 2025</p>
+      <p>Fracciones arancelarias de la Tarifa de la Ley modificadas por Decreto DOF 23-04-2026</p>
+      <table>
+        <tr><th>Publicación Original</th></tr>
+        <tr>
+          <td>02</td>
+          <td>DECRETO por el que se reforman diversas fracciones arancelarias</td>
+          <td><a href="ligie_2022/LIGIE_2022_ref02_29dic25.pdf">DOF 29-12-2025</a></td>
+          <td><a href="ligie_2022/LIGIE_2022_ref02_29dic25.doc">Word</a></td>
+        </tr>
+        <tr><th>Decretos que modifican la Tarifa de la Ley</th></tr>
+        <tr>
+          <td>15</td>
+          <td>DECRETO por el que se modifica la Tarifa</td>
+          <td><a href="ligie_2022/LIGIE_2022_tarifa15_23abr26.pdf">DOF 23-04-2026</a></td>
+        </tr>
+      </table>
+    </body></html>
+    """
+
+    snapshot = parse_ligie_ledger(html, BASE_URL)
+    reform = next(document for document in snapshot.documents if document.ordinal == "02")
+
+    assert reform.category == "law_reform"
+    assert reform.displayed_date.isoformat() == "2025-12-29"
+    assert reform.links[0].role == "dof"
+    assert reform.links[0].displayed_date.isoformat() == "2025-12-29"
+
+
+def test_conflicting_core_legal_link_families_fail_closed():
+    html = """
+    <html><body>
+      <p>Última reforma publicada en el Diario Oficial de la Federación el 29 de diciembre de 2025</p>
+      <p>Fracciones arancelarias de la Tarifa de la Ley modificadas por Decreto DOF 23-04-2026</p>
+      <table>
+        <tr><th>Publicación Original</th></tr>
+        <tr>
+          <td>02</td>
+          <td>Ambiguous legal row</td>
+          <td><a href="ligie_2022/LIGIE_2022_orig_07jun22.pdf">DOF 07-06-2022</a></td>
+          <td><a href="ligie_2022/LIGIE_2022_ref02_29dic25.pdf">DOF 29-12-2025</a></td>
+        </tr>
+        <tr><th>Decretos que modifican la Tarifa de la Ley</th></tr>
+        <tr>
+          <td>15</td>
+          <td>DECRETO por el que se modifica la Tarifa</td>
+          <td><a href="ligie_2022/LIGIE_2022_tarifa15_23abr26.pdf">DOF 23-04-2026</a></td>
+        </tr>
+      </table>
+    </body></html>
+    """
+
+    with pytest.raises(ValueError, match="ambiguous Diputados legal row link families"):
+        parse_ligie_ledger(html, BASE_URL)
