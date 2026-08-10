@@ -241,24 +241,30 @@ def test_focused_documentation_exists_and_has_no_legacy_instructions() -> None:
 def test_ci_workflow_builds_package_without_secrets_or_network_updates() -> None:
     workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
     required = (
+        "name: CI",
         "pull_request:",
         "push:",
         "contents: read",
+        "test:",
         "actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
         "actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
         'python-version: "3.11"',
-        "python -m pip install --upgrade pip",
-        'python -m pip install -e ".[dev]"',
+        "python -m pip install pip==26.2.1",
+        'python -m pip install -c requirements/production-build.txt -e ".[dev]"',
         "python -m pytest -q",
         "python -m build",
         "git diff --check",
     )
     forbidden = (
         "contents: write",
+        "issues: write",
+        "pull-requests: write",
         "pull_request_target:",
         "secrets.",
         "git push",
+        "python -m pip install --upgrade pip",
         "python -m arancel_mx update",
+        "scripts/publish_release.py",
     )
 
     assert [value for value in required if value not in workflow] == []
