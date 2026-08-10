@@ -4,7 +4,7 @@
 
 # arancel-mx
 
-### Reproducible, auditable, traceable Mexican tariff data.
+### Reproducible, auditable, traceable Mexican tariff data
 
 Open Python tools to capture, normalize, reconcile, and publish Mexican tariff data with verifiable provenance.
 
@@ -18,7 +18,7 @@ Open Python tools to capture, normalize, reconcile, and publish Mexican tariff d
 [![DuckDB](https://img.shields.io/badge/DuckDB-embedded-FFF000?logo=duckdb&logoColor=000)](https://duckdb.org/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-**[Quick start](#installation)** · **[CLI](#quick-cli-usage)** · **[Python](#python-usage)** · **[Data](#data-model)** · **[Sources](#official-sources-and-registered-urls)** · **[Architecture](#architecture)** · **[Contributing](#contributing)**
+**[Installation](#installation)** · **[CLI](#quick-cli-usage)** · **[Python](#python-usage)** · **[Data](#data-model)** · **[Sources](#official-sources)** · **[Automation](#official-data-pipeline)** · **[Contributing](#contributing)**
 
 </div>
 
@@ -28,106 +28,98 @@ Open Python tools to capture, normalize, reconcile, and publish Mexican tariff d
   <img alt="arancel-mx terminal demo" src="docs/demo.gif" style="max-width:100%; border-radius:8px; box-shadow:0 8px 30px rgba(2,6,23,0.6)" />
 </p>
 
-<p align="center"><strong>Capture · Normalize · Reconcile · Validate · Publish</strong></p>
+<p align="center"><strong>Capture · Reconcile · Normalize · Validate · Publish</strong></p>
 
 ---
 
 ## Scope
 
-`arancel-mx` is a public project focused on building an open, reproducible, auditable data layer for Mexican tariff information with traceability back to official sources.
-
-The public core is centered on reusable data and tooling: LIGIE, NICO, HS code normalization, tariff rates, documentary provenance, DuckDB, and reproducible artifacts. It is not intended to replace a complete commercial foreign-trade system.
+`arancel-mx` is a public project focused on an open, reproducible, auditable data layer for LIGIE, NICO, and their official Mexican sources. The public core prioritizes data, documentary provenance, validation, DuckDB, and reproducible artifacts rather than trying to replace a complete commercial foreign-trade platform.
 
 > [!IMPORTANT]
-> `arancel-mx` is a technical data tool. **It does not constitute legal advice.** For tariff-classification, regulatory-compliance, import, or export decisions, consult the applicable official sources and qualified professionals when appropriate.
+> `arancel-mx` is a technical data tool. **It does not constitute legal advice.** For tariff-classification, regulatory-compliance, import, or export decisions, consult the applicable official publications and qualified professionals when appropriate.
 
 ## Quick summary
 
-- Audits and materializes LIGIE / NICO into a reproducible DuckDB database
-- Normalizes HS codes and rates while preserving legal provenance and evidence
-- Exports deterministic artifacts: CSV, JSON, DuckDB, and a SHA256 manifest
-
-| Capability | What it provides |
-|---|---|
-| Capture | Evidence from official publications |
-| Normalization | Canonical code and rate representations |
-| Traceability | Documentary provenance and record origin |
-| Reconciliation | Comparison across official evidence |
-| Storage | Reproducible DuckDB analytical database |
-| Publication | CSV, JSON, DuckDB, and SHA256 manifests |
+- Captures registered Diputados, DOF, and SNICE snapshots with SHA256 and real `retrieved_at` timestamps.
+- Reconciles legal evidence before a candidate can be publishable.
+- Normalizes HS2, HS4, HS6, Mexican 8-digit tariff fractions, and 10-digit NICO identifiers.
+- Materializes DuckDB and exports CSV, JSON, and a schema v2 manifest.
+- Detects `no_change` without creating redundant releases.
+- Runs a **daily automated check** and performs **automatic publication** only for a changed dataset that passes every gate.
+- Creates or updates a **GitHub Issue** when a production stage fails.
+- Publishes verified immutable releases named `data-YYYY.MM.DD` with an exact six-asset contract.
 
 ## What makes it different
 
-- Provenance: each row can retain documentary evidence and source origin (DOF / SNICE / Chamber of Deputies)
-- Determinism: reproducible exports with manifests and checksums
-- Auditability: discovery, capture, reconciliation, and validation flows remain inspectable
+| Property | Implementation |
+|---|---|
+| Provenance | Each source keeps authority, URL, identity, hash, and capture time |
+| Legal evidence | The registered Diputados ledger is reconciled against DOF and registered sources |
+| Fail-closed | Discrepancies, parser ambiguity, checksum errors, or invalid data block publication |
+| Reproducibility | Exact production constraints and manifest schema v2 |
+| Determinism | Canonical exports, checksums, and a captured-source archive |
+| Auditability | Releases identify the registry, commit, GitHub run, and exact Actions artifact |
+| Recovery | Deterministic automation alerts close only after a later healthy production run |
 
-<p align="center">
-  <img src="docs/assets/provenance.svg" alt="Traceability, reproducibility, and auditability in arancel-mx" width="900" />
-</p>
-
-## From HS to Mexican tariff fraction and NICO
-
-One direction of the public core is to keep a coherent representation of the classification levels used for goods while preserving the evidence supporting each relationship.
-
-<p align="center">
-  <img src="docs/assets/hs-mx-nico-flow.svg" alt="Conceptual flow from HS 6 digits to Mexican 8-digit tariff fraction and 10-digit NICO identifier" width="900" />
-</p>
-
-Conceptually:
+## HS to Mexican tariff fraction and NICO
 
 ```text
-HS 6 digits
-     ↓
-Mexican tariff fraction 8 digits
-     ↓
-NICO 2 additional digits
-     ↓
-Mexican 10-digit identifier
+HS 2
+  ↓
+HS 4
+  ↓
+HS 6
+  ↓
+Mexican tariff fraction, 8 digits
+  ↓
+NICO, 10 digits
 ```
 
-Public HS6 ↔ MX8 ↔ NICO10 search and navigation functions remain roadmap items until they are implemented, documented, and tested as a stable API.
+<p align="center">
+  <img src="docs/assets/hs-mx-nico-flow.svg" alt="Conceptual flow from HS to Mexican tariff fraction and NICO" width="900" />
+</p>
 
-## Main features
-
-- Offline XLS/XLSX/PDF parsers for LIGIE and NICO
-- Canonical normalization of codes and tariff rates
-- Deterministic consolidation and versioning of records
-- Flows to capture sources, verify DOF publications, and build verifiable releases
-
-The repository also organizes the public core around parsers, pipelines, sources, storage, and release construction, with automated tests for reproducibility and public distribution.
+The canonical model validates parent-child relationships so a tariff fraction cannot be published without its HS6 parent and a NICO cannot be published without its active tariff fraction.
 
 ## Architecture
 
-The pipeline separates discovery, capture, processing, validation, and publication so each stage can be audited independently.
+```text
+official sources → capture → legal reconciliation → parse → validate
+→ unchanged: stop green
+→ changed + valid: verified immutable release
+→ any failure: block publication + GitHub Issue
+```
 
-<p align="center">
-  <img src="docs/assets/pipeline.svg" alt="Pipeline from official sources to DuckDB, CSV, JSON, manifests, and releases" width="950" />
-</p>
+In component terms:
 
 ```text
-DOF / SNICE / Chamber of Deputies
-              ↓
-          discovery
-              ↓
-           capture
-      URL + evidence + SHA256
-              ↓
-            parser
-       XLS / XLSX / PDF
-              ↓
-        normalization
-              ↓
-          validation
-              ↓
-        reconciliation
-              ↓
-           DuckDB
-        ↙      ↓      ↘
-      CSV     JSON   manifest
-              ↓
-            release
+Diputados / DOF / SNICE
+          ↓
+ source_registry + discovery
+          ↓
+ capture + source_capture.json
+          ↓
+ SHA256 + retrieved_at
+          ↓
+ legal reconciliation
+          ↓
+ offline XLS/XLSX/PDF parsers
+          ↓
+ normalization + validation
+          ↓
+ canonical DuckDB
+    ↙       ↓       ↘
+  CSV      JSON    manifest.json
+          ↓
+ verified six-asset bundle
+          ↓
+ GitHub Release data-YYYY.MM.DD
 ```
+
+<p align="center">
+  <img src="docs/assets/pipeline.svg" alt="Pipeline from official sources to DuckDB, CSV, JSON, manifest, and release" width="950" />
+</p>
 
 ## Installation
 
@@ -138,43 +130,50 @@ python -m venv .venv
 python -m pip install -e ".[dev]"
 ```
 
-Python 3.11 or newer is required. After activating the environment, verify the CLI with:
+Python 3.11 or newer is required. Verify the CLI with:
 
 ```bash
 python -m arancel_mx --help
 ```
 
-## Quick CLI usage
-
-The current public commands are `build`, `update`, `reconcile`, and `release`.
+Official builds and CI use the reproducible environment constrained by `requirements/production-build.txt`:
 
 ```bash
-# show help
+python -m pip install pip==26.2.1
+python -m pip install -c requirements/production-build.txt -e ".[dev]"
+```
+
+## Quick CLI usage
+
+The preferred public commands are `build`, `check-updates`, `reconcile`, and `release`.
+
+```bash
+# help
 python -m arancel_mx --help
 
 # export artifacts from an already validated DuckDB database
 python -m arancel_mx build --database data/arancel.duckdb --output-dir out/release
 
-# update state from the official ledger (requires network access)
-python -m arancel_mx update --state-path data/update_state/ligie.json --report-path out/update.json
+# check registered official-source state and write a change report
+python -m arancel_mx check-updates --state-path data/update_state/ligie.json --report-path out/update.json
 
-# reconcile evidence
+# reconcile legal evidence
 python -m arancel_mx reconcile --ledger-json ledger.json --dof-json dof.json --snice-json snice.json
 
-# prepare local artifacts for publication
+# verify and prepare a local publication bundle
 python -m arancel_mx release --release-dir out/release --source-dir data/raw/release --latest-dir out/latest
 ```
 
+During the 0.x series, `update` remains a compatibility alias for `check-updates`; new documentation uses `check-updates` as the preferred command name.
+
 | Command | Purpose |
 |---|---|
-| `build` | Export a validated tariff database |
-| `update` | Check the official LIGIE ledger; may require network access |
-| `reconcile` | Reconcile tariff legal evidence |
-| `release` | Verify and prepare publication artifacts |
+| `build` | Export an already validated tariff database |
+| `check-updates` | Check registered official-source state |
+| `reconcile` | Reconcile the legal ledger and observed evidence |
+| `release` | Verify hashes and prepare the local release contract |
 
 ## Python usage
-
-The package can also be imported from Python:
 
 ```python
 import arancel_mx
@@ -182,36 +181,19 @@ import arancel_mx
 print(arancel_mx.__version__)
 ```
 
-The public query API will grow as search, classification, and HS / fraction / NICO relationships stabilize. Roadmap functionality is not documented here as already implemented.
+The public query API will grow as search and HS6 ↔ MX8 ↔ NICO10 navigation interfaces stabilize. Unimplemented roadmap capabilities are not presented as stable API.
 
 ## Data model
 
-DuckDB acts as the reproducible analytical representation of the dataset. The model separates classification, description, and provenance so the origin of the data can be reconstructed.
+DuckDB separates classification, tariff rates, legal intervals, and provenance. Main tables include `source_registry`, `source_document`, `hs_code`, `tariff_fraction`, `nico`, `tariff_rate`, `canonical_record`, `record_provenance`, and `dataset_release`.
 
-```text
-classification
-├── HS
-├── MX tariff fraction
-└── NICO
+The release manifest uses schema v2 and records fields such as `registry_sha256`, `git_commit_sha`, `github_run_id`, `github_run_attempt`, `github_workflow_ref`, and `github_artifact_name`.
 
-description
-├── text
-├── unit
-└── rate
-
-provenance
-├── authority
-├── document
-├── URL
-├── date
-└── hash
-```
-
-See [`docs/data-model.md`](docs/data-model.md) for the documented project model.
+See [`docs/data-model.md`](docs/data-model.md) for the semantics of `retrieved_at`, `generated_at`, and `dataset_release.release_metadata_json`.
 
 ## Artifacts and reproducibility
 
-The official builder produces this exact contract:
+A valid public release contains exactly:
 
 ```text
 release/
@@ -223,11 +205,13 @@ release/
 └── official-sources.tar.gz
 ```
 
-`manifest.json` records the dataset version, validation result, source documents, and artifact SHA256 values. `SHA256SUMS` verifies downloaded files, while `official-sources.tar.gz` preserves the captured official evidence used by the build. Logical data is reproducible; each physical DuckDB file is verified against its own SHA256 for that build.
+`manifest.json` records version, provenance, reconciliation, counts, and hashes. `SHA256SUMS` covers the other five assets. `official-sources.tar.gz` preserves the captured official bytes and their `source_capture.json`.
 
-### End-to-end official dataset build
+Logical data is reproducible. A physical DuckDB file is verified by SHA256 for that specific build without assuming that two independently created DuckDB files must be byte-for-byte identical.
 
-The public orchestrator can build the dataset directly from registered sources:
+## End-to-end official dataset build
+
+The public builder remains available:
 
 ```bash
 python scripts/build_official_dataset.py \
@@ -237,167 +221,93 @@ python scripts/build_official_dataset.py \
   --dataset-version 2026.08.10
 ```
 
-The **Build official dataset** workflow, defined in [`.github/workflows/build-official-dataset.yml`](.github/workflows/build-official-dataset.yml), runs the offline suite first and can then retrieve the registered official sources to produce and verify a GitHub Actions artifact. It supports manual `workflow_dispatch` runs and a weekly schedule.
+For production, `scripts/run_official_pipeline.py` adds comparison against the previous published manifest, structured diagnostics, and `no_change` semantics.
 
-The workflow **does not create tags or GitHub Releases**. Promoting verified artifacts into a tag and GitHub Release remains a manual, supervised publication decision. See [`docs/release-process.md`](docs/release-process.md) for the complete publication contract.
+## Official data pipeline
 
-## Documentation and examples
+The **Official data pipeline** workflow is defined in [`.github/workflows/official-data-pipeline.yml`](.github/workflows/official-data-pipeline.yml).
 
-- docs/: data model, publication process, and source guides
-- tests/: fixtures and test cases that protect reproducibility
+- Schedule: `17 11 * * *`, a **daily automated check** in UTC.
+- `workflow_dispatch`: available for trusted manual dry-runs; `publish=false` is the default manual value.
+- Build: global/read-only `contents: read` with offline tests before source access.
+- Publish: `contents: write` only when trusted `main` produced `built` and mutation is authorized.
+- Notify: `issues: write` only for the automation-alert lifecycle.
 
-| Document | Content |
-|---|---|
-| [`docs/data-model.md`](docs/data-model.md) | Data model |
-| [`docs/sources.md`](docs/sources.md) | Sources and provenance |
-| [`docs/release-process.md`](docs/release-process.md) | Publication process |
-| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Contribution guide |
-| [`SECURITY.md`](SECURITY.md) | Responsible vulnerability reporting |
-| [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) | Code of conduct |
+**Automatic publication** occurs only for a valid, changed, independently verified candidate. **Any failure blocks publication.** If the registered source identity is unchanged, `no_change` stops green and the publisher remains `skipped`.
 
-## Official sources and registered URLs
+Before publication, the bundle is verified locally, verified again after downloading the exact Actions artifact, uploaded to a draft release, and remotely verified before the draft becomes public. An existing `data-YYYY.MM.DD` tag or release is never overwritten.
 
-The versioned source registry lives in `src/arancel_mx/sources/source_registry.json`. Primary sources:
+See [`docs/release-process.md`](docs/release-process.md) for the exact transaction and failure model.
 
-- Chamber of Deputies - LIGIE reference and current text: https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm
-- SNICE - LIGIE index / official publications: https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html
-- SNICE - NICO / commercial identifications: https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html
-- SNICE - NICO proposals / submissions and requests: https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html
-- SNICE - National Notes: https://www.snice.gob.mx/cs/avi/snice/ligie.notasnac22.html
-- SNICE - Weighted Indicators: https://www.snice.gob.mx/cs/avi/snice/ligie.indicaranc22.html
-- Diario Oficial de la Federación (DOF) - related NICO 2022 publication: https://www.dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022
+## Official sources
 
-| Source | Main role in the project context |
-|---|---|
-| Chamber of Deputies | LIGIE reference and text |
-| SNICE | LIGIE, NICO, National Notes, indicators, and related publications |
-| Diario Oficial de la Federación | Official publications and amendments |
+The versioned registry lives at `src/arancel_mx/sources/source_registry.json`.
 
-[`src/arancel_mx/sources/source_registry.json`](src/arancel_mx/sources/source_registry.json) is the versioned technical reference for file patterns, URLs, and classification rules. See also [`docs/sources.md`](docs/sources.md).
+Primary registered URLs include:
 
-## Official process and schedule visuals
+- Chamber of Deputies, LIGIE: https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm
+- SNICE, LIGIE: https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html
+- SNICE, NICO and NICO proposals: https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html
+- SNICE, National Notes: https://www.snice.gob.mx/cs/avi/snice/ligie.notasnac22.html
+- SNICE, indicators: https://www.snice.gob.mx/cs/avi/snice/ligie.indicaranc22.html
+- Diario Oficial de la Federación, related publication: https://www.dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022
 
-Authorities publish schedules and procedures related to the receipt, evaluation, and publication of NICO requests and reforms. The following existing images provide documentary context for the publication process.
+[`docs/sources.md`](docs/sources.md) explains how the registered Diputados ledger anchors reconciliation and how DOF evidence acts as a blocking publication gate.
 
-### Schedule and process, part 1
+## Official process visuals
+
+### DOF schedule, part 1
 
 <p align="center">
-  <img alt="DOF publication schedule and deadlines, part 1" src="docs/dof_timeline.png" style="max-width:85%; border-radius:6px; box-shadow:0 6px 20px rgba(0,0,0,0.25)" />
+  <img alt="DOF publication schedule and deadlines, part 1" src="docs/dof_timeline.png" style="max-width:85%" />
 </p>
 
-### Schedule and process, part 2
+### DOF schedule, part 2
 
 <p align="center">
-  <img alt="DOF publication schedule and deadlines, part 2" src="docs/dof_timeline2.png" style="max-width:85%; border-radius:6px; box-shadow:0 6px 20px rgba(0,0,0,0.25)" />
+  <img alt="DOF publication schedule and deadlines, part 2" src="docs/dof_timeline2.png" style="max-width:85%" />
 </p>
+
+### NICO / DOF flow
 
 <p align="center">
-  <em>Source: Diario Oficial de la Federación / SNICE - see the official DOF publication for exact details and dates.</em>
+  <img alt="NICO and DOF publication flow" src="docs/nico_flow.png" style="max-width:85%" />
 </p>
 
-### NICO / DOF publication flow
-
-<p align="center">
-  <img alt="NICO and DOF publication flow" src="docs/nico_flow.png" style="max-width:85%; border-radius:6px; box-shadow:0 6px 20px rgba(0,0,0,0.25)" />
-</p>
-
-See `src/arancel_mx/sources/source_registry.json` for file patterns and classification rules. These images provide official-process context and should not be interpreted as a live technical status indicator for the dataset.
-
-## Project status
-
-<p align="center">
-  <img src="docs/assets/dataset-status.svg" alt="Public capability status for arancel-mx" width="900" />
-</p>
-
-| Component | Documented status |
-|---|---|
-| XLS / XLSX / PDF parsers | Available |
-| Normalization | Available |
-| DuckDB | Available |
-| CSV / JSON | Available |
-| Reconciliation | Available |
-| Source registry | Available |
-| SHA256 manifests | Available |
-| `build`, `update`, `reconcile`, `release` CLI | Available |
-| End-to-end official dataset build | Available |
-| Verified GitHub Actions artifact | Available |
-| CI | Available |
-| Public HS / MX / NICO search API | Evolving / roadmap |
-| PyPI publication | Planned |
-
-## Roadmap
-
-Planned direction of the public core:
-
-- description search
-- code lookup
-- HS6 → MX8 tariff fraction → NICO10 navigation
-- NICO10 → MX8 tariff fraction → HS6 navigation
-- search CLI
-- automated detection of official-source changes
-- supervised automatic publication to GitHub Releases
-- PyPI package publication
-- navigable public documentation
-- additional query interfaces, potentially including API or MCP access
-
-Roadmap functionality should not be considered part of the stable API until it is implemented, documented, and tested.
+These images are documentary context, not a live technical status indicator for the dataset.
 
 ## Repository structure
 
 ```text
-arancel-mx/
-├── .github/
-│   └── workflows/
-│       ├── ci.yml
-│       └── build-official-dataset.yml
-├── docs/
-│   ├── data-model.md
-│   ├── sources.md
-│   ├── release-process.md
-│   ├── demo.gif
-│   ├── dof_timeline.png
-│   ├── dof_timeline2.png
-│   └── nico_flow.png
-├── scripts/
-│   └── build_official_dataset.py
-├── src/
-│   └── arancel_mx/
-│       ├── domain/
-│       ├── parsers/
-│       ├── pipeline/
-│       ├── release/
-│       ├── sources/
-│       └── storage/
-├── tests/
-├── CONTRIBUTING.md
-├── SECURITY.md
-├── CODE_OF_CONDUCT.md
-├── LICENSE
-├── NOTICE
-├── pyproject.toml
-├── README.en.md
-└── README.md
+.github/
+├── workflows/
+│   ├── ci.yml
+│   ├── official-data-pipeline.yml
+│   └── generate-demo.yml
+└── dependabot.yml
+requirements/
+└── production-build.txt
+src/arancel_mx/
+├── pipeline/
+├── release/
+├── sources/
+│   └── source_registry.json
+└── storage/
+scripts/
+├── build_official_dataset.py
+├── run_official_pipeline.py
+├── fetch_previous_release.py
+├── publish_release.py
+└── data_alert.py
+docs/
+tests/
+LICENSE
+NOTICE
 ```
 
-- `domain/`: tariff-domain models and rules.
-- `parsers/`: XLS, XLSX, and PDF reading/extraction.
-- `pipeline/`: normalization, reconciliation, and update flows.
-- `sources/`: registry and official-source logic.
-- `storage/`: DuckDB persistence and related structures.
-- `release/`: construction and verification of publishable artifacts.
-- `scripts/`: reproducible entrypoints for building verified datasets.
-- `tests/`: fixtures and test cases protecting reproducibility and public-distribution rules.
+Engineering design and implementation plans live under `docs/superpowers/` and are intentionally public. Distribution tests scan tracked text for credential patterns and private machine paths. Generated official data, local DuckDB files, `.env` files, and tokens remain outside Git.
 
 ## Tests
-
-Run the test suite before opening a PR:
-
-```bash
-python -m pytest -q
-python -m build
-```
-
-To reproduce the main CI checks locally:
 
 ```bash
 python -m pytest -q
@@ -405,63 +315,40 @@ python -m build
 git diff --check
 ```
 
-CI uses the same development dependency set installed with:
+`CI / test` is the stable merge-gate contract. Normal pull-request CI does not perform live official-source updates or publish releases.
 
-```bash
-python -m pip install -e ".[dev]"
-```
+## Security and supply chain
 
-## Contribution best practices
+- External GitHub Actions are pinned to full commit SHAs.
+- Official build dependencies are constrained by `requirements/production-build.txt`.
+- Dependabot opens weekly PRs for Python and GitHub Actions updates.
+- Production permissions are job-scoped instead of using `write-all`.
+- Releases use the repository `GITHUB_TOKEN`, not a PAT.
+- Demo-generation automation opens a PR rather than pushing generated assets directly to `main`.
 
-1. Open an issue describing the change or bug.
-2. Create a descriptive branch such as `feat/add-source-dof`.
-3. Add tests and offline fixtures when changing parsers or transformations.
-4. Preserve source traceability through capture manifests and hashes.
+See [`SECURITY.md`](SECURITY.md), [`CONTRIBUTING.md`](CONTRIBUTING.md), and [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
 
-Avoid adding data or evidence whose provenance cannot be identified, and keep public-core changes focused on Mexican tariff data.
+## Project status
 
-## Contribution / contact
-
-- Read CONTRIBUTING.md and SECURITY.md before submitting PRs.
-- Use issues to discuss large changes or new data origins.
+| Capability | Status |
+|---|---|
+| XLS/XLSX/PDF parsers | Available |
+| Normalization and hierarchy | Available |
+| DuckDB + CSV + JSON | Available |
+| Source registry | Available |
+| Blocking legal reconciliation | Available |
+| Manifest schema v2 | Available |
+| End-to-end official build | Available |
+| Automatic source-change detection | Available |
+| Verified automatic publication | Available |
+| GitHub Issue alerts and recovery | Available |
+| Stable public search API | Roadmap |
+| PyPI publication | Roadmap |
 
 ## Contributing
 
-Contributions are welcome. Before opening a Pull Request, read [`CONTRIBUTING.md`](CONTRIBUTING.md), [`SECURITY.md`](SECURITY.md), and [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
+Open-source community contributions are welcome. Review [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md), [`SECURITY.md`](SECURITY.md), `LICENSE`, and `NOTICE` before submitting changes.
 
-For significant changes, open an issue first and use a descriptive branch such as:
-
-```text
-feat/add-source-dof
-```
-
-## Security
-
-See [`SECURITY.md`](SECURITY.md) for responsible vulnerability reporting.
-
-Do not publish tokens, API keys, session cookies, credentials, secrets, `.env` files, or private keys in commits, fixtures, issues, or Pull Requests.
-
-## License
-
-`arancel-mx` is distributed under the **Apache-2.0** license. See LICENSE and NOTICE for attribution and terms.
-
-- [`LICENSE`](LICENSE)
-- [`NOTICE`](NOTICE)
-
-Documents and data obtained from official agencies may be subject to their own applicable provisions and conditions.
-
-## Acknowledgements
-
-Thanks to the teams that publish and maintain the official sources used by this project, including the Chamber of Deputies, SNICE, and Diario Oficial de la Federación, and to the open-source and open-data community for the practices and tooling that make reproducible public-data projects possible.
-
----
-
-<div align="center">
-
-### arancel-mx
-
-**Open data · verifiable provenance · reproducible releases**
+Source, parser, reconciliation, and release-contract changes should add offline fixtures or tests for the expected behavior. Changes to the official build dependency environment should update `requirements/production-build.txt` in the same PR when appropriate.
 
 [Español](README.md) · [Documentation](docs/) · [Sources](docs/sources.md) · [Contribute](CONTRIBUTING.md) · [Security](SECURITY.md)
-
-</div>
