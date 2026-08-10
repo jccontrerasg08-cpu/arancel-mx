@@ -1,6 +1,37 @@
 # arancel-mx
 
+[![CI](https://github.com/jccontrerasg08-cpu/arancel-mx/actions/workflows/ci.yml/badge.svg)](https://github.com/jccontrerasg08-cpu/arancel-mx/actions)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue?logo=python&style=flat-square)](https://www.python.org)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+
 Herramientas abiertas en Python para capturar, normalizar, reconciliar y publicar datos arancelarios de México con procedencia verificable.
+
+---
+
+## Demo & animaciones
+
+Se puede mejorar la portada con una pequeña animación o GIF que muestre el uso de la CLI (ej.: un corto GIF que muestre `python -m arancel_mx build ...`) y badges animados. Para mantener el repositorio ligero y reproducible, aquí hay pasos recomendados y un marcador de posición:
+
+- Generar una grabación de terminal con asciinema y convertirla en GIF:
+
+```bash
+# grabar terminal (requiere asciinema)
+asciinema rec demo.cast --command "python -m arancel_mx build --database data/arancel.duckdb --output-dir out/release"
+# convertir a GIF (requiere asciinema2gif / ffmpeg / imagemagick)
+asciinema2gif demo.cast docs/demo.gif
+```
+
+- Alternativa: usar terminalizer para grabar y exportar GIF.
+
+- Subir el GIF a `docs/demo.gif` y reemplazar la referencia siguiente por la ruta local:
+
+```markdown
+![Demo de arancel-mx](docs/demo.gif)
+```
+
+Si prefieres, puedo generar y añadir un GIF de ejemplo automáticamente y/o configurar una GitHub Action que convierta grabaciones `.cast` a GIF en cada release. Indica si quieres que lo añada.
+
+---
 
 ## Propósito
 

@@ -1,0 +1,57 @@
+name: Generate demo animations
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick curl
+          # Install Node.js (LTS 18) and svg-term-cli
+          curl -sL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+          sudo apt-get install -y nodejs
+          npm install -g svg-term-cli
+
+      - name: Generate SVG/GIF from .cast recordings
+        run: |
+          set -e
+          mkdir -p docs
+          CASTS=(docs/*.cast)
+          # If no .cast files found, exit without error
+          if [ ! -e "${CASTS[0]}" ]; then
+            echo "No .cast recordings found in docs/ — nothing to generate."
+            exit 0
+          fi
+          for f in docs/*.cast; do
+            base=$(basename "$f" .cast)
+            svg="docs/${base}.svg"
+            gif="docs/${base}.gif"
+            echo "Converting $f -> $svg"
+            svg-term --in "$f" --out "$svg" --window --preserve || (echo "svg-term failed" && exit 1)
+            echo "Converting $svg -> $gif"
+            convert -background white -flatten "$svg" "$gif"
+          done
+
+      - name: Commit generated assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/*.svg docs/*.gif || true
+          if git diff --staged --quiet; then
+            echo "No generated assets to commit"
+            exit 0
+          fi
+          git commit -m "Add generated demo animations" || true
+          git push || true
