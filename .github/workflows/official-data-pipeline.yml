@@ -224,7 +224,7 @@ jobs:
           python scripts/publish_release.py \
             --release-dir out/release \
             --commit-sha "$GITHUB_SHA" \
-            > out/publisher-result.json 2>&1
+            --result-path out/publisher-result.json
 
       - name: Extract bounded publisher diagnostics
         id: publisher_result
