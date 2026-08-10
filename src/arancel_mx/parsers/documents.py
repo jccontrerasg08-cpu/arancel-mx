@@ -8,7 +8,7 @@ from pathlib import Path
 import re
 import unicodedata
 
-import fitz
+import pymupdf
 import pandas as pd
 
 from arancel_mx.domain.normalization import canonical_json, code_level, normalize_code
@@ -85,7 +85,7 @@ def parse_ligie_pdf_hierarchy(
     """Extract official HS2/HS4/HS6 labels from the consolidated LIGIE PDF."""
     rows: list[dict] = []
     page_texts: list[str] = []
-    with fitz.open(path) as document:
+    with pymupdf.open(path) as document:
         for page in document:
             page_text = page.get_text() or ""
             page_texts.append(page_text)
