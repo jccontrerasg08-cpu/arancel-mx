@@ -58,7 +58,7 @@ def test_build_job_is_read_only_constrained_tested_and_fail_closed():
         "python -m pip install pip==26.2.1",
         'python -m pip install -c requirements/production-build.txt -e ".[dev]"',
         "python -m pytest -q",
-        "scripts/fetch_previous_release.py",
+        "python -m scripts.fetch_previous_release",
         "scripts/run_official_pipeline.py",
         "out/pipeline-result.json",
         "actions/upload-artifact@",
@@ -69,7 +69,7 @@ def test_build_job_is_read_only_constrained_tested_and_fail_closed():
     assert [value for value in required if value not in build] == []
     assert [value for value in forbidden if value in build] == []
     assert build.index("python -m pytest -q") < build.index(
-        "scripts/fetch_previous_release.py"
+        "python -m scripts.fetch_previous_release"
     ) < build.index("scripts/run_official_pipeline.py")
     assert "status == 'built'" in build or "status == \"built\"" in build
 
@@ -88,7 +88,7 @@ def test_only_publisher_has_contents_write_and_it_requires_built_trusted_main():
     assert "actions/download-artifact@" in publish
     assert "arancel-mx-${{ github.run_id }}-${{ github.run_attempt }}" in publish
     assert "verify_publication_bundle" in publish
-    assert "scripts/publish_release.py" in publish
+    assert "python -m scripts.publish_release" in publish
 
 
 def test_publisher_uses_structured_result_file_instead_of_console_redirection():
@@ -115,7 +115,7 @@ def test_only_notifier_has_issues_write_and_runs_always():
         "build-and-verify" in notify and "publish" in notify
     )
     assert "if: always()" in notify
-    assert "scripts/data_alert.py" in notify
+    assert "python -m scripts.data_alert" in notify
 
 
 def test_no_change_with_skipped_publisher_is_explicitly_healthy_recovery():
@@ -125,7 +125,7 @@ def test_no_change_with_skipped_publisher_is_explicitly_healthy_recovery():
     assert "needs.build-and-verify.outputs.status == 'no_change'" in notify
     assert "needs.publish.result == 'skipped'" in notify
     assert "needs.publish.result == 'success'" in notify
-    assert "python scripts/data_alert.py recovery" in notify
+    assert "python -m scripts.data_alert recovery" in notify
 
 
 def test_failed_build_can_never_satisfy_publisher_condition():
