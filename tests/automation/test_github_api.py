@@ -81,6 +81,47 @@ def test_absolute_api_path_is_allowed_only_under_configured_api_root():
     assert result == {"id": 1}
 
 
+def test_release_asset_upload_uses_release_upload_host_and_raw_binary_body():
+    session = FakeSession(
+        [
+            FakeResponse(
+                status_code=201,
+                json_value={"id": 9, "name": "asset.bin", "size": 3},
+            )
+        ]
+    )
+    upload_url = (
+        "https://uploads.github.com/repos/owner/repo/releases/7/assets?name=asset.bin"
+    )
+
+    result = client(session).request_upload_json(upload_url, b"abc")
+
+    assert result == {"id": 9, "name": "asset.bin", "size": 3}
+    method, url, kwargs = session.calls[0]
+    assert method == "POST"
+    assert url == upload_url
+    assert kwargs["timeout"] == 30.0
+    assert kwargs["data"] == b"abc"
+    assert kwargs["headers"] == {
+        "Authorization": "Bearer secret-token",
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "Content-Type": "application/octet-stream",
+    }
+
+
+def test_release_asset_upload_rejects_wrong_host_or_repository_before_request():
+    session = FakeSession([])
+
+    with pytest.raises(ValueError, match="outside configured GitHub upload API"):
+        client(session).request_upload_json(
+            "https://uploads.github.com/repos/other/repo/releases/7/assets?name=asset.bin",
+            b"abc",
+        )
+
+    assert session.calls == []
+
+
 def test_404_maps_to_not_found_without_leaking_token():
     token = "super-secret-token"
     session = FakeSession(
