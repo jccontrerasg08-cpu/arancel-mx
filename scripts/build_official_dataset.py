@@ -31,6 +31,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--dataset-version", required=True)
     parser.add_argument("--generated-at")
     parser.add_argument("--timeout", type=float, default=60.0)
+    parser.add_argument("--git-commit-sha", default="local")
+    parser.add_argument("--github-run-id", default="local")
+    parser.add_argument("--github-run-attempt", default="local")
+    parser.add_argument("--github-workflow-ref", default="local")
+    parser.add_argument("--github-artifact-name", default="local")
     parser.add_argument(
         "--previous-manifest",
         type=Path,
@@ -69,6 +74,11 @@ def _config_from_args(args: argparse.Namespace) -> OfficialDatasetConfig:
         dataset_version=args.dataset_version,
         generated_at=generated_at,
         timeout_s=args.timeout,
+        git_commit_sha=args.git_commit_sha,
+        github_run_id=args.github_run_id,
+        github_run_attempt=args.github_run_attempt,
+        github_workflow_ref=args.github_workflow_ref,
+        github_artifact_name=args.github_artifact_name,
     )
 
 
