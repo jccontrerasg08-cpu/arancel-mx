@@ -118,11 +118,13 @@ def parse_ligie_workbook(
         normalized = {
             "code": code,
             "description": str(raw.get("description", "")).strip(),
-            "unit_code": str(raw.get("unit_code", "")).strip() or None,
-            "unit_name": str(raw.get("unit_name", "")).strip() or None,
             "igi_kind": igi[0], "igi_value": igi[1], "igi_text": igi[2],
             "ige_kind": ige[0], "ige_value": ige[1], "ige_text": ige[2],
         }
+        if "unit_code" in raw:
+            normalized["unit_code"] = str(raw["unit_code"]).strip() or None
+        if "unit_name" in raw:
+            normalized["unit_name"] = str(raw["unit_name"]).strip() or None
         result.append(StagingRow("legal", source_id, profile.sheet, row_number, raw, normalized))
     return result
 
