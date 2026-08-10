@@ -4,29 +4,26 @@
 
 **Goal:** Execute the approved production-certification and Docusaurus design in small, independently reviewable PRs with an explicit double-check before every PR.
 
-**Architecture:** This index does not add implementation details beyond the component plans. It fixes execution order, PR boundaries, prerequisite relationships, and the pre-PR verification gate so certification, GitHub mutations, supply-chain provenance, and documentation rollout cannot be mixed accidentally.
+**Architecture:** This index fixes execution order, PR boundaries, prerequisite relationships, and the pre-PR verification gate. Core certification comes first, then provenance/timestamp certification, then the documentation site. Live write-boundary tests only run from trusted `main` after their implementation PR is merged.
 
-**Tech Stack:** See the linked plans.
+**Tech Stack:** See the three component implementation plans below.
 
 ## Global Constraints
 
-- Every implementation PR starts from current protected `main`, not from a stale feature branch.
-- Before every PR, compare branch vs `main`, re-read the approved spec and relevant plan, re-check current upstream docs for any unstable dependency/action/settings assumption, run targeted tests plus full tests/build/whitespace, inspect the full diff, and verify no credentials/generated assets are included.
+- Every implementation PR starts from current protected `main`, never from a stale feature branch.
+- Before every PR: compare branch vs `main`, re-read the approved spec and exact task, re-open current repository interfaces, re-check unstable upstream docs/settings/actions, run targeted RED/GREEN tests, full tests, build, whitespace, inspect full diff, and verify no credentials/generated assets/unrelated files are included.
 - Do not open a PR while a known contradiction remains unresolved.
-- Use squash merge only after the required `test` check and any feature-specific checks are green.
-- Run live GitHub write-boundary certification only from trusted `main` after the relevant workflow PR has merged.
-- Docusaurus work begins only after core production certification is green.
+- Use squash merge only after required `test` and feature-specific checks are green.
+- Run live GitHub write-boundary certification only from trusted `main` after the corresponding workflow has merged.
+- Docusaurus work begins only after core Production Certification is green.
 
 ---
 
-## Plans and order
+## Component plans in execution order
 
-1. `2026-08-10-production-certification-suite.md`
-2. `2026-08-10-supply-chain-and-timestamp-certification.md`
-3. `2026-08-10-docusaurus-documentation-site.md`
-4. `2026-08-10-docusaurus-typescript-quality.md`
-
-The TypeScript quality plan is implemented alongside the first Docusaurus PR and enforced in docs CI before Pages deployment.
+1. `docs/superpowers/plans/2026-08-10-production-certification-suite.md`
+2. `docs/superpowers/plans/2026-08-10-supply-chain-and-timestamp-certification.md`
+3. `docs/superpowers/plans/2026-08-10-docusaurus-documentation-site.md`
 
 ## PR sequence
 
@@ -34,97 +31,110 @@ The TypeScript quality plan is implemented alongside the first Docusaurus PR and
 
 Implements Production Certification Task 1 only.
 
-Pre-PR double check:
+Pre-PR evidence:
 
 ```text
-current main SHA
-pyproject console entrypoint
-package data inclusion
-existing CI job name remains test
+current main SHA recorded
+pyproject console entrypoint re-read
+package data inclusion verified
+existing required CI job name remains test
 wheel and sdist both built
 clean-install smoke succeeds outside checkout
 full pytest/build/diff-check green
 ```
 
-### PR A2: Bundle and DuckDB consumer certification
+### PR A2: Bundle certification
 
-Implements Production Certification Tasks 2 and 3 only if the combined diff remains focused; split into A2a/A2b if DuckDB compatibility requires a dependency-floor/storage-format change.
+Implements Production Certification Task 2 only.
 
 Required evidence:
 
 ```text
-six exact assets
-source archive safe paths and hashes
-CSV/JSON equivalence
-DuckDB logical consumer checks
-executed minimum DuckDB compatibility probe
+six exact assets enforced
+SHA256SUMS/manifest verification
+source archive traversal/link safety
+source capture hashes/identities reconstructed
+CSV and JSON logical equivalence
+corruption cases fail closed
 ```
 
-### PR A3: Reproducibility and fault injection
+### PR A3: DuckDB consumer certification
 
-Implements Production Certification Tasks 4 and 5. Split if any fault-injection RED test exposes a production-code change outside release/source boundaries.
+Implements Production Certification Task 3. If executed minimum-version probing proves the current `duckdb>=1.1` promise false, dependency/storage changes remain in this dedicated PR and are documented from executed evidence.
 
-### PR A4: Controlled GitHub release certification
+### PR A4: Reproducibility and no-change replay
 
-Implements Production Certification Task 6. No live mutation occurs on the PR branch. After merge, dispatch from trusted `main` and require complete draft/tag cleanup.
+Implements Production Certification Task 4 only. Production code changes are allowed only when a RED test proves missing behavior.
 
-### PR A5: Controlled GitHub issue certification
+### PR A5: Fault-injection matrix
+
+Implements Production Certification Task 5. Inventory existing tests first and add only missing fail-closed cases. Split into narrower PRs if a new RED case requires touching unrelated production boundaries.
+
+### PR A6: Controlled GitHub draft-release certification
+
+Implements Production Certification Task 6. No live mutation occurs on the PR branch. After merge, dispatch from trusted `main` and require complete certification draft/tag cleanup.
+
+### PR A7: Controlled GitHub Issue certification
 
 Implements Production Certification Task 7. After merge, dispatch from trusted `main`; the certification Issue must end closed and remain isolated from `[DATA ALERT]` identities.
 
-### PR A6: Certification runbook and checklist
+### PR A8: Certification evidence/runbook
 
-Implements Production Certification Task 8 only after A4/A5 live evidence exists.
+Implements Production Certification Task 8 only after A6/A7 live evidence exists. Adds operator docs and the repository PR double-check checklist.
 
-### PR A7: Timestamp semantics
+### PR A9: Timestamp semantics
 
-Implements Supply-Chain Task 1. Prefer documentation/test-only change unless RED evidence proves code contradicts the chosen build-start semantics.
+Implements Supply-Chain Task 1. Prefer docs/test-only changes unless RED evidence proves code contradicts the selected build-start `generated_at` semantics.
 
-### PR A8: Artifact attestations
+### PR A10: Artifact attestations
 
-Implements Supply-Chain Tasks 2 and 3. After merge, execute a new `publish=false` official pipeline run and verify provenance with GitHub CLI.
+Implements Supply-Chain Tasks 2 and 3. After merge, execute a new `publish=false` official pipeline run and verify provenance with `gh attestation verify` using the exact artifact/run.
 
-### PR A9: Immutable release verification docs
+### PR A11: Immutable release verification evidence
 
-Implements Supply-Chain Task 4 only after a new post-hardening automated release actually reports immutable and `gh release verify` / `verify-asset` have succeeded.
+Implements Supply-Chain Task 4 only after a new post-hardening automated release actually reports immutable and GitHub release verification succeeds for all six assets. Then verify the next unchanged run creates no release.
 
-### PR B1: Docusaurus scaffold + TypeScript quality
+### PR B1: Canonical public documentation
 
-Implements Docusaurus Task 1 and Docusaurus TypeScript Quality Task 1.
+Implements Docusaurus Task 1. Creates the exact twelve-topic Spanish docs set and reduces README duplication without making GitHub README unusable.
 
-Before PR, re-verify:
+### PR B2: Typed Docusaurus scaffold
+
+Implements Docusaurus Task 2. Immediately before PR, re-verify stable Docusaurus, Node and TypeScript requirements from official Docusaurus docs and compare dependencies against a disposable official TypeScript scaffold.
+
+Required evidence:
 
 ```text
-Docusaurus stable version
-Node minimum
-TypeScript minimum
-official TypeScript support packages
-npm lockfile clean install
-npm typecheck
-npm build
+all @docusaurus packages same exact version
+package-lock committed
+npm ci green
+npm run typecheck green
+npm run build green
+root ../docs consumed
+superpowers/** excluded
+operations/** excluded
+explicit sidebar only
 ```
 
-### PR B2: Canonical docs source + ES/EN parity
+### PR B3: English i18n parity
 
-Implements Docusaurus Tasks 2 and 3. Must prove `docs/superpowers/**` is absent from generated public output and public sidebar docs have English translations.
+Implements Docusaurus Task 3. All twelve public Spanish docs must have exact English native-i18n counterparts. Both per-locale and all-locale builds must pass.
 
-### PR B3: Docs CI + TypeScript enforcement
+### PR B4: Read-only docs CI
 
-Implements Docusaurus Task 4 and TypeScript Quality Task 2. Read-only workflow only.
+Implements Docusaurus Task 4. Official action tags are resolved to full SHAs before PR. Docs CI has `contents: read` only and runs npm clean install, typecheck and ES/EN builds.
 
-### PR B4: GitHub Pages deployment
+### PR B5: GitHub Pages deployment
 
-Implements Docusaurus Task 5. Before PR, resolve and record full SHAs for official Pages actions. After merge, verify Pages environment and deployment URL.
+Implements Docusaurus Task 5. Before PR, verify Pages source is GitHub Actions and resolve all official Pages actions to full SHAs. After merge, verify `github-pages` environment, public URL and no production-data mutation.
 
-### PR B5: Dependabot + contributor/public links
+### PR B6: Dependabot and contributor workflow
 
-Implements Docusaurus Task 6 after the Pages URL is live.
+Implements Docusaurus Task 6 after the Pages URL is live. Add npm Dependabot for `/website`, contributor commands, and verified site links.
 
 ### Live completion gate
 
-Implements Docusaurus Task 7 and the overall spec completion criteria.
-
-Require all of:
+Implements Docusaurus Task 7 and closes the approved spec only when all of these are true:
 
 ```text
 protected-main CI green
@@ -139,13 +149,14 @@ certification issue closed
 artifact attestation verification green
 new automated release immutable and release verification green
 next unchanged run creates no release
+Docusaurus TypeScript check green
 Docusaurus ES/EN builds green
 GitHub Pages live
-no internal superpowers docs exposed
+no internal superpowers/operations docs exposed
 no docs workflow production-data mutation
 ```
 
-## Double-check template for every PR
+## Double-check template for every implementation PR
 
 Copy this into each implementation PR and fill it with actual evidence:
 
@@ -172,8 +183,8 @@ For Docusaurus PRs append:
 
 ```markdown
 - [ ] `npm ci` passes from committed lockfile.
-- [ ] `npm run typecheck` passes when TypeScript support is present.
+- [ ] `npm run typecheck` passes.
 - [ ] `npm run build` passes.
-- [ ] ES and EN builds pass when i18n is present.
-- [ ] `website/build`, `website/node_modules`, and `.docusaurus` are not committed.
+- [ ] ES and EN builds pass once i18n is present.
+- [ ] `website/build`, `website/node_modules`, and `website/.docusaurus` are not committed.
 ```
