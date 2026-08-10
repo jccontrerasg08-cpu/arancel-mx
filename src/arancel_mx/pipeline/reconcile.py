@@ -3,8 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 from html.parser import HTMLParser
+from pathlib import PurePosixPath
+import re
 from typing import Any, Mapping, Sequence
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 from arancel_mx.sources.registry import RegistryEntry, classify_candidate
 
@@ -46,6 +48,49 @@ def _as_date(value: Any) -> date | None:
         return date.fromisoformat(str(value)[:10])
     except ValueError:
         return None
+
+
+def _snapshot_dates(document: DiscoveredDocument) -> tuple[date, ...]:
+    basename = PurePosixPath(urlparse(document.source_url).path).name
+    tokens = re.findall(r"(?<!\d)(\d{8})(?!\d)", f"{document.title} {basename}")
+    parsed: set[date] = set()
+    for token in tokens:
+        try:
+            parsed.add(date(int(token[:4]), int(token[4:6]), int(token[6:8])))
+        except ValueError:
+            continue
+    return tuple(sorted(parsed))
+
+
+def select_current_document(
+    documents: Sequence[DiscoveredDocument],
+    dataset_key: str,
+    document_role: str,
+) -> DiscoveredDocument:
+    """Select one current registered snapshot, failing on ambiguity."""
+    candidates = [
+        document
+        for document in documents
+        if document.dataset_key == dataset_key and document.document_role == document_role
+    ]
+    if not candidates:
+        raise ValueError(f"missing official snapshot: {dataset_key}:{document_role}")
+    if len(candidates) == 1:
+        return candidates[0]
+
+    dated: list[tuple[date, DiscoveredDocument]] = []
+    for document in candidates:
+        dates = _snapshot_dates(document)
+        if dates:
+            dated.append((max(dates), document))
+    if not dated:
+        raise ValueError(f"ambiguous official snapshot: {dataset_key}:{document_role}")
+
+    latest_date = max(item[0] for item in dated)
+    winners = [document for candidate_date, document in dated if candidate_date == latest_date]
+    if len(winners) != 1:
+        raise ValueError(f"ambiguous official snapshot: {dataset_key}:{document_role}")
+    return winners[0]
 
 
 def reconcile_legal_instruments(
