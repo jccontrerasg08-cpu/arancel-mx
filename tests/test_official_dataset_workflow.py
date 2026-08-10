@@ -91,6 +91,19 @@ def test_only_publisher_has_contents_write_and_it_requires_built_trusted_main():
     assert "scripts/publish_release.py" in publish
 
 
+def test_publisher_uses_structured_result_file_instead_of_console_redirection():
+    workflow = _workflow()
+    publish = _job_block(workflow, "publish", "notify")
+
+    assert "--result-path out/publisher-result.json" in publish
+    assert "> out/publisher-result.json" not in publish
+    assert "2>&1" not in publish
+    assert "id: publisher" in publish
+    assert "continue-on-error: true" in publish
+    assert "id: publisher_result" in publish
+    assert "if: always()" in publish
+
+
 def test_only_notifier_has_issues_write_and_runs_always():
     workflow = _workflow()
     notify = _job_block(workflow, "notify")
