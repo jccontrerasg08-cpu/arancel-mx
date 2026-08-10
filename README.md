@@ -4,7 +4,7 @@
 
 # arancel-mx
 
-### Datos arancelarios de México, reproducibles, auditables y trazables.
+### Datos arancelarios de México, reproducibles, auditables y trazables
 
 Herramientas abiertas en Python para capturar, normalizar, reconciliar y publicar datos arancelarios de México con procedencia verificable.
 
@@ -18,117 +18,108 @@ Herramientas abiertas en Python para capturar, normalizar, reconciliar y publica
 [![DuckDB](https://img.shields.io/badge/DuckDB-embedded-FFF000?logo=duckdb&logoColor=000)](https://duckdb.org/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-**[Inicio rápido](#instalación)** · **[CLI](#uso-rápido-cli)** · **[Python](#uso-desde-python)** · **[Datos](#modelo-de-datos)** · **[Fuentes](#fuentes-oficiales)** · **[Arquitectura](#arquitectura)** · **[Contribuir](#contribución)**
+**[Instalación](#instalación)** · **[CLI](#uso-rápido-cli)** · **[Python](#uso-desde-python)** · **[Datos](#modelo-de-datos)** · **[Fuentes](#fuentes-oficiales)** · **[Automatización](#pipeline-oficial-autónomo)** · **[Contribuir](#contribución)**
 
 </div>
 
 ---
 
-<!-- demo -->
 <p align="center">
   <img alt="arancel-mx demo" src="docs/demo.gif" style="max-width:100%; border-radius:8px; box-shadow:0 8px 30px rgba(2,6,23,0.6)" />
 </p>
 
-<p align="center"><strong>Captura · Normaliza · Reconcilia · Valida · Publica</strong></p>
+<p align="center"><strong>Captura · Reconcilia · Normaliza · Valida · Publica</strong></p>
 
 ---
 
 ## Alcance
 
-`arancel-mx` es un proyecto público enfocado en construir una capa de datos abierta, reproducible y auditable para trabajar con información arancelaria de México, con trazabilidad hacia fuentes oficiales.
-
-El núcleo público está orientado a datos y herramientas reutilizables: LIGIE, NICO, normalización de códigos HS, tarifas, procedencia documental, DuckDB y artefactos reproducibles. No pretende reemplazar sistemas comerciales completos de comercio exterior.
+`arancel-mx` es un proyecto público enfocado en construir una capa de datos abierta, reproducible y auditable para la LIGIE, NICO y sus fuentes oficiales. El núcleo público prioriza datos, procedencia documental, validación, DuckDB y artefactos reproducibles; no pretende reemplazar un sistema comercial completo de comercio exterior.
 
 > [!IMPORTANT]
 > `arancel-mx` es una herramienta técnica y de datos. **No constituye asesoría legal.** Para decisiones de clasificación arancelaria, cumplimiento regulatorio, importación o exportación deben consultarse las fuentes oficiales aplicables y, cuando corresponda, profesionales especializados.
 
 ## Resumen rápido
 
-- Audita y materializa la LIGIE / NICO en una base DuckDB reproducible
-- Normaliza códigos HS y tasas, conserva procedencia legal y evidencia
-- Exporta artefactos deterministas: CSV, JSON, DuckDB y manifiesto con SHA256
-
-| Capacidad | Qué aporta |
-|---|---|
-| Captura | Evidencia proveniente de publicaciones oficiales |
-| Normalización | Códigos y tarifas en representaciones canónicas |
-| Trazabilidad | Procedencia documental y origen por registro |
-| Reconciliación | Comparación entre evidencias oficiales |
-| Persistencia | Base analítica reproducible en DuckDB |
-| Publicación | CSV, JSON, DuckDB y manifiestos con SHA256 |
+- Captura snapshots registrados de Diputados, DOF y SNICE con SHA256 y `retrieved_at` real.
+- Reconcilia evidencia legal antes de permitir que un candidato sea publicable.
+- Normaliza HS2, HS4, HS6, fracción MX de 8 dígitos y NICO de 10 dígitos.
+- Materializa un warehouse DuckDB y exporta CSV, JSON y manifest schema v2.
+- Detecta `no_change` sin crear releases redundantes.
+- Ejecuta una **revisión diaria automatizada** y hace **publicación automática** sólo cuando el dataset cambió y todos los gates pasaron.
+- Abre o actualiza un **GitHub Issue** cuando cualquier stage de producción falla.
+- Usa releases `data-YYYY.MM.DD` y un contrato exacto de seis assets verificables.
 
 ## Por qué es diferente
 
-- Procedencia: cada fila conserva la evidencia documental y el origen (DOF / SNICE / Diputados)
-- Determinismo: exportaciones reproducibles con manifiestos y sumas de verificación
-- Auditable: flujos de descubrimiento, captura, reconciliación y validación
-
-<p align="center">
-  <img src="docs/assets/provenance.svg" alt="Trazabilidad, reproducibilidad y auditabilidad en arancel-mx" width="900" />
-</p>
+| Propiedad | Cómo se implementa |
+|---|---|
+| Procedencia | Cada fuente conserva autoridad, URL, identidad, hash y tiempo de captura |
+| Evidencia legal | El ledger de Diputados se reconcilia contra DOF y fuentes registradas |
+| Fail-closed | Una discrepancia, parser dudoso o validación fallida bloquea publicación |
+| Reproducibilidad | Dependencias de producción exactas y manifest schema v2 |
+| Determinismo | Exportaciones canónicas, checksums y archive de fuentes |
+| Auditabilidad | El release enlaza registry, commit, run de GitHub y artifact exacto |
+| Recuperación | Alertas deterministas se cierran sólo tras una ejecución saludable posterior |
 
 ## De HS a fracción MX y NICO
 
-Una de las direcciones del núcleo público es mantener una representación coherente de los distintos niveles de clasificación utilizados para mercancías, sin perder la evidencia que respalda cada relación.
-
-<p align="center">
-  <img src="docs/assets/hs-mx-nico-flow.svg" alt="Flujo conceptual HS 6 dígitos a fracción mexicana 8 dígitos y NICO de 10 dígitos" width="900" />
-</p>
-
-Conceptualmente:
-
 ```text
-HS 6 dígitos
-      ↓
-Fracción arancelaria mexicana 8 dígitos
-      ↓
-NICO 2 dígitos adicionales
-      ↓
-Identificador mexicano de 10 dígitos
+HS 2
+  ↓
+HS 4
+  ↓
+HS 6
+  ↓
+Fracción MX 8 dígitos
+  ↓
+NICO 10 dígitos
 ```
 
-Las funciones públicas de búsqueda y navegación HS6 ↔ MX8 ↔ NICO10 todavía se consideran parte del roadmap hasta que estén implementadas, documentadas y probadas como API estable.
+<p align="center">
+  <img src="docs/assets/hs-mx-nico-flow.svg" alt="Flujo conceptual HS a fracción mexicana y NICO" width="900" />
+</p>
 
-## Características principales
-
-- Parsers offline de XLS/XLSX/PDF para LIGIE y NICO
-- Normalización canónica de códigos y tarifas
-- Consolidación y versionado determinista de registros
-- Flujos para capturar fuentes, verificar DOF y construir releases verificables
-
-Además, el repositorio ya organiza su núcleo alrededor de parsers, pipeline, fuentes, almacenamiento y construcción de releases, con pruebas automatizadas para reproducibilidad y distribución pública.
+La base valida relaciones padre-hijo para evitar que una fracción quede sin HS6 o que un NICO quede sin su fracción vigente.
 
 ## Arquitectura
 
-El pipeline separa descubrimiento, captura, procesamiento, validación y publicación para que cada etapa pueda auditarse de forma independiente.
+```text
+fuentes oficiales → captura → reconciliación legal → parseo → validación
+→ sin cambios: termina en verde
+→ cambio válido: release inmutable verificado
+→ cualquier fallo: bloquea la publicación + GitHub Issue
+```
+
+En términos de componentes:
+
+```text
+Diputados / DOF / SNICE
+          ↓
+ source_registry + discovery
+          ↓
+ capture + source_capture.json
+          ↓
+ SHA256 + retrieved_at
+          ↓
+ reconciliación legal
+          ↓
+ parsers offline XLS/XLSX/PDF
+          ↓
+ normalización + validación
+          ↓
+ DuckDB canónico
+    ↙       ↓       ↘
+  CSV      JSON    manifest.json
+          ↓
+ six-asset verified bundle
+          ↓
+ GitHub Release data-YYYY.MM.DD
+```
 
 <p align="center">
   <img src="docs/assets/pipeline.svg" alt="Pipeline de fuentes oficiales a DuckDB, CSV, JSON y release" width="950" />
 </p>
-
-```text
-DOF / SNICE / Diputados
-          ↓
-      discovery
-          ↓
-       capture
-    URL + evidencia + SHA256
-          ↓
-        parser
-   XLS / XLSX / PDF
-          ↓
-    normalización
-          ↓
-      validación
-          ↓
-   reconciliación
-          ↓
-       DuckDB
-    ↙      ↓      ↘
-  CSV     JSON   manifest
-          ↓
-        release
-```
 
 ## Instalación
 
@@ -139,45 +130,52 @@ python -m venv .venv
 python -m pip install -e ".[dev]"
 ```
 
-Requiere Python 3.11 o superior. Después de activar el entorno, puedes comprobar el CLI con:
+Requiere Python 3.11 o superior. Comprueba el CLI con:
 
 ```bash
 python -m arancel_mx --help
 ```
 
-## Uso rápido (CLI)
-
-Los comandos públicos actuales son `build`, `update`, `reconcile` y `release`.
+Los builds oficiales y CI usan el entorno reproducible definido por `requirements/production-build.txt`:
 
 ```bash
-# ver ayuda
+python -m pip install pip==26.2.1
+python -m pip install -c requirements/production-build.txt -e ".[dev]"
+```
+
+## Uso rápido CLI
+
+Los comandos públicos principales son `build`, `check-updates`, `reconcile` y `release`.
+
+```bash
+# ayuda
 python -m arancel_mx --help
 
-# exportar artefactos desde una base DuckDB ya validada
+# exportar artefactos desde una base DuckDB validada
 python -m arancel_mx build --database data/arancel.duckdb --output-dir out/release
 
-# actualizar estado desde el ledger oficial (requiere red)
-python -m arancel_mx update --state-path data/update_state/ligie.json --report-path out/update.json
+# revisar el ledger oficial y escribir un reporte de cambios
+python -m arancel_mx check-updates --state-path data/update_state/ligie.json --report-path out/update.json
 
 # reconciliar evidencia
 python -m arancel_mx reconcile --ledger-json ledger.json --dof-json dof.json --snice-json snice.json
 
-# preparar artefactos locales para publicación
+# verificar y preparar un bundle local
 python -m arancel_mx release --release-dir out/release --source-dir data/raw/release --latest-dir out/latest
 ```
+
+Durante la serie 0.x, `update` permanece como alias de compatibilidad para `check-updates`; la documentación nueva usa `check-updates` como nombre preferido.
 
 ### Qué hace cada comando
 
 | Comando | Uso |
 |---|---|
-| `build` | Exporta una base arancelaria validada |
-| `update` | Comprueba el ledger oficial de la LIGIE; puede requerir red |
-| `reconcile` | Reconcilia evidencia legal arancelaria |
-| `release` | Verifica y prepara artefactos de publicación |
+| `build` | Exporta una base arancelaria ya validada |
+| `check-updates` | Comprueba el estado registrado de fuentes oficiales |
+| `reconcile` | Reconcilia ledger legal y evidencia observada |
+| `release` | Verifica hashes y prepara el contrato local de publicación |
 
 ## Uso desde Python
-
-El paquete también puede importarse desde Python:
 
 ```python
 import arancel_mx
@@ -185,36 +183,19 @@ import arancel_mx
 print(arancel_mx.__version__)
 ```
 
-La API pública de consulta irá creciendo conforme se estabilicen las interfaces de búsqueda, clasificación y relaciones HS / fracción / NICO. Las funciones que aún están en roadmap no se documentan aquí como API implementada.
+La API pública seguirá creciendo conforme se estabilicen interfaces de búsqueda y navegación HS6 ↔ MX8 ↔ NICO10. Las capacidades no implementadas no se presentan como API estable.
 
 ## Modelo de datos
 
-La base DuckDB funciona como representación analítica reproducible del dataset. El modelo busca separar clasificación, descripción y procedencia para poder reconstruir el origen de los datos.
+DuckDB separa clasificación, tasas, vigencia y procedencia. Las tablas principales incluyen `source_registry`, `source_document`, `hs_code`, `tariff_fraction`, `nico`, `tariff_rate`, `canonical_record`, `record_provenance` y `dataset_release`.
 
-```text
-clasificación
-├── HS
-├── fracción MX
-└── NICO
+El manifest de release usa schema v2 y conserva, entre otros, `registry_sha256`, `git_commit_sha`, `github_run_id`, `github_run_attempt`, `github_workflow_ref` y `github_artifact_name`.
 
-descripción
-├── texto
-├── unidad
-└── tasa
-
-procedencia
-├── autoridad
-├── documento
-├── URL
-├── fecha
-└── hash
-```
-
-Consulta [`docs/data-model.md`](docs/data-model.md) para el modelo documentado del proyecto.
+Consulta [`docs/data-model.md`](docs/data-model.md) para la semántica de `retrieved_at`, `generated_at` y `dataset_release.release_metadata_json`.
 
 ## Artefactos y reproducibilidad
 
-La construcción oficial produce este contrato exacto:
+Una release pública válida contiene exactamente:
 
 ```text
 release/
@@ -226,11 +207,13 @@ release/
 └── official-sources.tar.gz
 ```
 
-`manifest.json` registra versión, validación, fuentes y SHA256 de los artefactos. `SHA256SUMS` permite verificar los archivos descargados y `official-sources.tar.gz` conserva la evidencia oficial capturada utilizada por la construcción. La representación lógica se mantiene reproducible; el archivo físico DuckDB se verifica por su propio SHA256 en cada build.
+`manifest.json` conserva versión, procedencia, reconciliación, conteos y hashes. `SHA256SUMS` cubre los otros cinco assets. `official-sources.tar.gz` conserva los bytes oficiales capturados y su `source_capture.json`.
 
-### Construcción end-to-end de dataset oficial
+La representación lógica es reproducible. El archivo físico DuckDB se verifica por SHA256 para esa construcción concreta, sin asumir que dos archivos DuckDB creados por procesos distintos sean byte a byte idénticos.
 
-El orquestador público puede construir el dataset directamente desde las fuentes registradas:
+## Construcción end-to-end de dataset oficial
+
+El entrypoint público sigue disponible:
 
 ```bash
 python scripts/build_official_dataset.py \
@@ -240,173 +223,93 @@ python scripts/build_official_dataset.py \
   --dataset-version 2026.08.10
 ```
 
-El workflow **Build official dataset**, definido en [`.github/workflows/build-official-dataset.yml`](.github/workflows/build-official-dataset.yml), ejecuta primero la suite offline y después puede consultar las fuentes oficiales para producir y verificar un artifact de GitHub Actions. Se ejecuta manualmente mediante `workflow_dispatch` o por calendario semanal.
+Para producción, `scripts/run_official_pipeline.py` añade comparación contra el manifest anterior, diagnóstico estructurado y semántica `no_change`.
 
-El workflow **no crea tags ni GitHub Releases**. La publicación de un tag y la promoción de los artefactos a GitHub Releases siguen siendo decisiones manuales y supervisadas. Consulta [`docs/release-process.md`](docs/release-process.md) para el proceso completo.
+## Pipeline oficial autónomo
 
-## Documentación y ejemplos
+El workflow **Official data pipeline** está definido en [`.github/workflows/official-data-pipeline.yml`](.github/workflows/official-data-pipeline.yml).
 
-- docs/: modelo de datos, proceso de publicación y guías de fuentes
-- tests/: fixtures y casos de prueba que aseguran reproducibilidad
+- Schedule: `17 11 * * *`, una **revisión diaria automatizada** en UTC.
+- `workflow_dispatch`: disponible para dry-run y ejecución mantenida; `publish=false` es el valor manual por defecto.
+- Build: `contents: read` y tests offline antes de tocar la red.
+- Publish: `contents: write` sólo si `main` produjo `built` y la ejecución está autorizada para mutar.
+- Notify: `issues: write` únicamente para el lifecycle de alertas.
 
-Documentación principal:
+La **publicación automática** ocurre sólo para un cambio válido y verificado. **Cualquier falla bloquea la publicación**. Si no hubo cambios, `no_change` termina en verde y el publisher queda `skipped`.
 
-| Documento | Contenido |
-|---|---|
-| [`docs/data-model.md`](docs/data-model.md) | Modelo de datos |
-| [`docs/sources.md`](docs/sources.md) | Fuentes, procedencia y registro |
-| [`docs/release-process.md`](docs/release-process.md) | Proceso de publicación |
-| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Guía para contribuir |
-| [`SECURITY.md`](SECURITY.md) | Reporte responsable de vulnerabilidades |
-| [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) | Código de conducta |
+Antes de publicar, el bundle se verifica localmente, se vuelve a verificar después de descargar el artifact y se sube a una release draft. Los seis assets remotos se comprueban antes de hacer pública la release. Un tag `data-YYYY.MM.DD` existente nunca se sobrescribe.
 
-## Fuentes oficiales y URLs registradas
+Consulta [`docs/release-process.md`](docs/release-process.md) para el contrato exacto.
 
-### Fuentes oficiales
+## Fuentes oficiales
 
-El registro versionado de fuentes está en `src/arancel_mx/sources/source_registry.json`. Fuentes principales:
+El registro versionado vive en `src/arancel_mx/sources/source_registry.json`.
 
-- Diputados - LIGIE (registro y texto vigente): https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm
-- SNICE - índice LIGIE / publicaciones oficiales: https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html
-- SNICE - NICO / identificaciones comerciales: https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html
-- SNICE - Propuestas NICO (envíos y solicitudes): https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html
-- SNICE - Notas nacionales: https://www.snice.gob.mx/cs/avi/snice/ligie.notasnac22.html
-- SNICE - Indicadores ponderados: https://www.snice.gob.mx/cs/avi/snice/ligie.indicaranc22.html
-- Diario Oficial de la Federación (DOF) - nota relacionada (publicación NICO 2022): https://www.dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022
+Fuentes principales:
 
-| Fuente | Uso principal dentro del contexto del proyecto |
-|---|---|
-| Cámara de Diputados | Referencia y texto de la LIGIE |
-| SNICE | LIGIE, NICO, notas nacionales, indicadores y publicaciones relacionadas |
-| Diario Oficial de la Federación | Publicaciones y modificaciones oficiales |
+- Diputados, LIGIE: https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm
+- SNICE, LIGIE: https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html
+- SNICE, NICO y propuestas NICO: https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html
+- SNICE, notas nacionales: https://www.snice.gob.mx/cs/avi/snice/ligie.notasnac22.html
+- SNICE, indicadores: https://www.snice.gob.mx/cs/avi/snice/ligie.indicaranc22.html
+- Diario Oficial de la Federación, publicación relacionada: https://www.dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022
 
-El archivo [`src/arancel_mx/sources/source_registry.json`](src/arancel_mx/sources/source_registry.json) es la referencia técnica versionada para patrones de fichero, URLs y reglas de clasificación. También puedes consultar [`docs/sources.md`](docs/sources.md).
+`docs/sources.md` explica cómo el ledger registrado de Diputados se usa como ancla y cómo la evidencia DOF participa como gate antes de publicar.
 
-## Proceso y calendario (visual)
+## Proceso y calendario visual
 
-Las autoridades publican cronogramas y procedimientos asociados a la recepción, evaluación y publicación de solicitudes (NICO / reformas). A continuación se incluyen ilustraciones oficializadas que muestran el calendario de recepción/publicación y el flujo de envío y publicación de NICO/DOF.
-
-### Calendario y proceso, parte 1
+### Calendario DOF, parte 1
 
 <p align="center">
-  <img alt="Calendario de publicaciones DOF y plazos, parte 1" src="docs/dof_timeline.png" style="max-width:85%; border-radius:6px; box-shadow:0 6px 20px rgba(0,0,0,0.25)" />
+  <img alt="Calendario de publicaciones DOF y plazos, parte 1" src="docs/dof_timeline.png" style="max-width:85%" />
 </p>
 
-### Calendario y proceso, parte 2
+### Calendario DOF, parte 2
 
 <p align="center">
-  <img alt="Calendario de publicaciones DOF y plazos, parte 2" src="docs/dof_timeline2.png" style="max-width:85%; border-radius:6px; box-shadow:0 6px 20px rgba(0,0,0,0.25)" />
+  <img alt="Calendario de publicaciones DOF y plazos, parte 2" src="docs/dof_timeline2.png" style="max-width:85%" />
 </p>
+
+### Flujo NICO / DOF
 
 <p align="center">
-  <em>Fuente: Diario Oficial de la Federación / SNICE - ver la nota oficial en DOF para detalles y fechas exactas.</em>
+  <img alt="Flujo de publicación NICO y DOF" src="docs/nico_flow.png" style="max-width:85%" />
 </p>
 
-### Flujo de publicación NICO / DOF
-
-<p align="center">
-  <img alt="Flujo de publicación NICO y DOF" src="docs/nico_flow.png" style="max-width:85%; border-radius:6px; box-shadow:0 6px 20px rgba(0,0,0,0.25)" />
-</p>
-
-Ver también `src/arancel_mx/sources/source_registry.json` para patrones de fichero y reglas de clasificación.
-
-Estas imágenes sirven como contexto documental del proceso oficial. No deben interpretarse como un indicador dinámico del estado técnico del dataset.
-
-## Estado del proyecto
-
-<p align="center">
-  <img src="docs/assets/dataset-status.svg" alt="Estado de capacidades públicas de arancel-mx" width="900" />
-</p>
-
-| Componente | Estado documentado |
-|---|---|
-| Parsers XLS / XLSX / PDF | Disponible |
-| Normalización | Disponible |
-| DuckDB | Disponible |
-| CSV / JSON | Disponible |
-| Reconciliación | Disponible |
-| Registro de fuentes | Disponible |
-| Manifiestos SHA256 | Disponible |
-| CLI `build`, `update`, `reconcile`, `release` | Disponible |
-| Construcción end-to-end de dataset oficial | Disponible |
-| Artifact verificado de GitHub Actions | Disponible |
-| CI | Disponible |
-| API pública de búsqueda HS / MX / NICO | En evolución / roadmap |
-| Publicación PyPI | Planeada |
-
-## Roadmap
-
-Dirección prevista del núcleo público:
-
-- búsqueda por descripción
-- consulta por código
-- navegación HS6 → fracción MX8 → NICO10
-- navegación NICO10 → fracción MX8 → HS6
-- CLI de búsqueda
-- detección automatizada de cambios oficiales
-- publicación automática supervisada a GitHub Releases
-- publicación del paquete en PyPI
-- documentación pública navegable
-- interfaces adicionales de consulta, incluida la posibilidad futura de API o MCP
-
-Las funcionalidades del roadmap no deben considerarse parte de la API estable hasta que estén implementadas, documentadas y probadas.
+Estas imágenes son contexto documental y no un indicador dinámico del estado del dataset.
 
 ## Estructura del repositorio
 
 ```text
-arancel-mx/
-├── .github/
-│   └── workflows/
-│       ├── ci.yml
-│       └── build-official-dataset.yml
-├── docs/
-│   ├── data-model.md
-│   ├── sources.md
-│   ├── release-process.md
-│   ├── demo.gif
-│   ├── dof_timeline.png
-│   ├── dof_timeline2.png
-│   └── nico_flow.png
-├── scripts/
-│   └── build_official_dataset.py
-├── src/
-│   └── arancel_mx/
-│       ├── domain/
-│       ├── parsers/
-│       ├── pipeline/
-│       ├── release/
-│       ├── sources/
-│       └── storage/
-├── tests/
-├── CONTRIBUTING.md
-├── SECURITY.md
-├── CODE_OF_CONDUCT.md
-├── LICENSE
-├── NOTICE
-├── pyproject.toml
-├── README.en.md
-└── README.md
+.github/
+├── workflows/
+│   ├── ci.yml
+│   ├── official-data-pipeline.yml
+│   └── generate-demo.yml
+└── dependabot.yml
+requirements/
+└── production-build.txt
+src/arancel_mx/
+├── pipeline/
+├── release/
+├── sources/
+│   └── source_registry.json
+└── storage/
+scripts/
+├── build_official_dataset.py
+├── run_official_pipeline.py
+├── fetch_previous_release.py
+├── publish_release.py
+└── data_alert.py
+docs/
+tests/
+LICENSE
+NOTICE
 ```
 
-- `domain/`: modelos y reglas del dominio arancelario.
-- `parsers/`: lectura y extracción de XLS, XLSX y PDF.
-- `pipeline/`: normalización, reconciliación y flujos de actualización.
-- `sources/`: registro y lógica asociada a fuentes oficiales.
-- `storage/`: persistencia y estructuras asociadas a DuckDB.
-- `release/`: construcción y validación de artefactos publicables.
-- `scripts/`: entradas reproducibles para construir datasets verificables.
-- `tests/`: fixtures y casos de prueba que aseguran reproducibilidad y el contrato de distribución pública.
+El repositorio conserva documentación de ingeniería en `docs/superpowers/` y pruebas de distribución que buscan credenciales y rutas privadas. Los datos generados, snapshots, DuckDB locales y tokens permanecen fuera de Git.
 
 ## Pruebas
-
-Ejecuta las pruebas antes de proponer PRs
-
-```bash
-python -m pytest -q
-python -m build
-```
-
-Para reproducir las comprobaciones principales de CI localmente:
 
 ```bash
 python -m pytest -q
@@ -414,65 +317,42 @@ python -m build
 git diff --check
 ```
 
-CI utiliza el mismo conjunto de dependencias de desarrollo instalado mediante:
+`CI / test` es el contrato estable de merge. No hace live-update de fuentes ni publica releases durante un PR normal.
 
-```bash
-python -m pip install -e ".[dev]"
-```
+## Seguridad y supply chain
 
-## Buenas prácticas para contribuciones
+- Actions externas fijadas por SHA completo.
+- Dependencias de producción restringidas por `requirements/production-build.txt`.
+- Dependabot abre PRs semanales para Python y GitHub Actions.
+- El pipeline de producción usa permisos por job, no `write-all`.
+- No usa PAT para releases.
+- La automatización de demos abre PR en vez de empujar a `main`.
 
-1. Abrir un issue describiendo el cambio o el bug
-2. Crear una rama con nombre descriptivo (ej.: `feat/add-source-dof`)
-3. Añadir tests y fixtures offline cuando el cambio afecta parsers o transformaciones
-4. Mantener trazabilidad de las fuentes (capture manifests y hashes)
+Ver [`SECURITY.md`](SECURITY.md) y [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
-Además, evita introducir datos o evidencia cuya procedencia no pueda identificarse y mantén los cambios del núcleo público enfocados en datos arancelarios mexicanos.
+## Estado del proyecto
 
-## Contribución / contacto
-
-- Lee CONTRIBUTING.md y SECURITY.md antes de enviar PRs
-- Usa issues para discutir cambios grandes o nuevos orígenes
+| Capacidad | Estado |
+|---|---|
+| Parsers XLS/XLSX/PDF | Disponible |
+| Normalización y jerarquía | Disponible |
+| DuckDB + CSV + JSON | Disponible |
+| Source registry | Disponible |
+| Reconciliación legal bloqueante | Disponible |
+| Manifest schema v2 | Disponible |
+| Build oficial end-to-end | Disponible |
+| Detección automática de cambios | Disponible |
+| Publicación automática verificada | Disponible |
+| GitHub Issue alerts y recovery | Disponible |
+| API de búsqueda estable | Roadmap |
+| Publicación en PyPI | Roadmap |
 
 ## Contribución
 
-Las contribuciones son bienvenidas. Antes de abrir un Pull Request, revisa [`CONTRIBUTING.md`](CONTRIBUTING.md), [`SECURITY.md`](SECURITY.md) y [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
+Las contribuciones de la **comunidad de código abierto** son bienvenidas. Consulta [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md), [`SECURITY.md`](SECURITY.md), `LICENSE` y `NOTICE` antes de enviar cambios.
 
-Para cambios significativos, abre un issue primero y utiliza una rama descriptiva como:
+Para cambios de fuentes, parsers, reconciliación o release contract, agrega fixtures/pruebas offline del caso esperado. Para cambios del build oficial, actualiza el lock/constraints en el mismo PR cuando corresponda.
 
-```text
-feat/add-source-dof
-```
+## Notas de procedencia
 
-## Seguridad
-
-Consulta [`SECURITY.md`](SECURITY.md) para el proceso de reporte responsable de vulnerabilidades.
-
-No publiques tokens, API keys, cookies de sesión, credenciales, secretos, archivos `.env` ni claves privadas en commits, fixtures, issues o Pull Requests.
-
-## Licencia
-
-Este proyecto se distribuye bajo la licencia Apache-2.0. Consulta LICENSE y NOTICE para atribuciones.
-
-- [`LICENSE`](LICENSE)
-- [`NOTICE`](NOTICE)
-
-Los documentos y datos obtenidos desde organismos oficiales pueden estar sujetos a sus propias disposiciones y condiciones aplicables.
-
-## Agradecimientos
-
-Gracias a los equipos que publican y mantienen las fuentes oficiales (Diputados, SNICE, DOF) y a la comunidad de código abierto por sus plantillas y prácticas de documentación.
-
-Gracias también a las instituciones responsables de mantener disponible la información pública que hace posible construir herramientas reproducibles y auditables alrededor del comercio exterior mexicano.
-
----
-
-<div align="center">
-
-### arancel-mx
-
-**Datos abiertos · procedencia verificable · releases reproducibles**
-
-[Documentación](docs/) · [Fuentes](docs/sources.md) · [Contribuir](CONTRIBUTING.md) · [Seguridad](SECURITY.md) · [English](README.en.md)
-
-</div>
+El proyecto conserva capture manifests y hashes para que una release pueda relacionarse con los snapshots observados. La presencia de una fuente o registro en el dataset describe evidencia técnica observada; no sustituye la publicación oficial ni una interpretación jurídica especializada.
