@@ -27,4 +27,3 @@ La publicación jurídica y el texto legal tienen prioridad para vigencia; los l
 ## Fixtures offline
 
 Las pruebas usan fragmentos mínimos y sanitizados en `tests/fixtures/`. No hacen solicitudes de red. Cada cambio de parser debe incluir un fixture reproducible o una construcción sintética equivalente.
-

@@ -161,4 +161,3 @@ def prepare_release_archive(
         "source_count": len(captured),
         "source_archive_sha256": sha256(archive_path),
     }
-

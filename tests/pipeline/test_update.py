@@ -50,4 +50,3 @@ def test_no_change_skips_jobs_and_preserves_machine_readable_status(tmp_path):
 
     assert result.to_dict() == {"status": "no_change", "jobs": [], "events": []}
     assert runner.jobs == []
-

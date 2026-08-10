@@ -25,4 +25,3 @@ Cada registro canónico señala una fuente primaria y puede incluir evidencia ad
 Las tablas principales son `source_registry`, `source_document`, `hs_code`, `tariff_fraction`, `nico`, `tariff_rate`, `canonical_record`, `record_provenance` y `dataset_release`. Tablas separadas conservan enmiendas NICO, notas nacionales, indicadores y evidencia de conciliación sin mezclarlas con `arancel_mx`.
 
 La vista pública `arancel_mx` expone códigos, descripción, jerarquía, unidad, tasas, vigencia, versión, estado actual y procedencia verificable.
-

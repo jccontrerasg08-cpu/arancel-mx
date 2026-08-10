@@ -27,4 +27,3 @@ El comando prepara un directorio `latest` con manifiesto, checksums e instruccio
 ## 7. Aprobación de publicación
 
 El paquete no publica en GitHub ni hace push. Después de pruebas, revisión de procedencia y verificación independiente, una persona autorizada decide si crea el tag y adjunta los artefactos. Una versión existente nunca se sobrescribe.
-
