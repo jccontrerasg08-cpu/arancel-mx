@@ -125,7 +125,7 @@ def test_open_source_governance_files_are_present() -> None:
 def test_official_dataset_build_entrypoints_are_public() -> None:
     required = (
         "scripts/build_official_dataset.py",
-        ".github/workflows/build-official-dataset.yml",
+        ".github/workflows/official-data-pipeline.yml",
     )
 
     assert [path for path in required if not (ROOT / path).is_file()] == []
