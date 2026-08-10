@@ -173,7 +173,7 @@ def test_readme_preserves_existing_public_information() -> None:
         "https://www.dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022",
         "python -m arancel_mx --help",
         "python -m arancel_mx build --database data/arancel.duckdb --output-dir out/release",
-        "python -m arancel_mx update --state-path data/update_state/ligie.json --report-path out/update.json",
+        "python -m arancel_mx check-updates --state-path data/update_state/ligie.json --report-path out/update.json",
         "python -m arancel_mx reconcile --ledger-json ledger.json --dof-json dof.json --snice-json snice.json",
         "python -m arancel_mx release --release-dir out/release --source-dir data/raw/release --latest-dir out/latest",
         "python -m pytest -q",
@@ -187,27 +187,36 @@ def test_readme_preserves_existing_public_information() -> None:
     assert [value for value in required if value not in readme] == []
 
 
-def test_readmes_document_verified_official_dataset_build() -> None:
+def test_readmes_document_autonomous_verified_official_dataset_releases() -> None:
     spanish = (ROOT / "README.md").read_text(encoding="utf-8").lower()
     english = (ROOT / "README.en.md").read_text(encoding="utf-8").lower()
     release_process = (ROOT / "docs" / "release-process.md").read_text(encoding="utf-8").lower()
-    required = (
+    common = (
         "scripts/build_official_dataset.py",
-        ".github/workflows/build-official-dataset.yml",
-        "build official dataset",
+        ".github/workflows/official-data-pipeline.yml",
+        "official data pipeline",
         "arancel_mx.duckdb",
         "arancel_mx.csv",
         "arancel_mx.json",
         "manifest.json",
         "sha256sums",
         "official-sources.tar.gz",
+        "github issue",
     )
 
     for document in (spanish, english, release_process):
-        assert [value for value in required if value not in document] == []
-    assert "construcción end-to-end de dataset oficial" in spanish
-    assert "end-to-end official dataset build" in english
-    assert "manual" in release_process
+        assert [value for value in common if value not in document] == []
+        assert "build-official-dataset.yml" not in document
+
+    assert "revisión diaria automatizada" in spanish
+    assert "publicación automática" in spanish
+    assert "cualquier falla bloquea la publicación" in spanish
+    assert "daily automated check" in english
+    assert "automatic publication" in english
+    assert "any failure blocks publication" in english
+    assert "17 11 * * *" in release_process
+    assert "publicación automática" in release_process
+    assert "cualquier falla bloquea la publicación" in release_process
 
 
 def test_bilingual_readmes_stay_linked() -> None:
