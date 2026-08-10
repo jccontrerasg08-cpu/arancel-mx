@@ -1,4 +1,4 @@
-"""Fetch the latest published schema-v2 dataset manifest from GitHub Releases."""
+"""Fetch the latest published dataset manifest from GitHub Releases."""
 
 from __future__ import annotations
 
@@ -18,6 +18,9 @@ from scripts.github_api import GitHubApi
 
 
 _DATA_TAG = re.compile(r"^data-(\d{4})\.(\d{2})\.(\d{2})$")
+_SHA256 = re.compile(r"^[0-9a-fA-F]{64}$")
+_LEGACY_BASELINE_VERSION = "2026.08.10"
+_RELEASE_ARTIFACTS = {"arancel_mx.csv", "arancel_mx.json", "arancel_mx.duckdb"}
 
 
 def _tag_date(tag: object) -> date | None:
@@ -71,6 +74,30 @@ def _asset_api_path(asset: Mapping[str, object]) -> str:
     raise ValueError("manifest.json asset is missing a GitHub asset URL or id")
 
 
+def _mark_known_legacy_baseline(
+    value: Mapping[str, object], expected_version: str
+) -> dict[str, object] | None:
+    """Validate and mark only the known pre-schema-v2 release baseline."""
+    if expected_version != _LEGACY_BASELINE_VERSION or value.get("schema_version") != "1":
+        return None
+    if value.get("validation_status") != "passed":
+        raise ValueError("legacy baseline manifest validation_status must be passed")
+    row_count = value.get("row_count")
+    if not isinstance(row_count, int) or isinstance(row_count, bool) or row_count <= 0:
+        raise ValueError("legacy baseline manifest row_count must be a positive integer")
+    artifact_hashes = value.get("artifact_sha256")
+    if not isinstance(artifact_hashes, Mapping) or set(artifact_hashes) != _RELEASE_ARTIFACTS:
+        raise ValueError("legacy baseline manifest artifact set is not canonical")
+    if any(
+        not isinstance(digest, str) or _SHA256.fullmatch(digest) is None
+        for digest in artifact_hashes.values()
+    ):
+        raise ValueError("legacy baseline manifest contains an invalid artifact checksum")
+    marked = dict(value)
+    marked["baseline_status"] = "legacy_baseline"
+    return marked
+
+
 def _parse_manifest(raw: bytes, expected_version: str) -> dict[str, object]:
     try:
         value = json.loads(raw.decode("utf-8"))
@@ -80,6 +107,13 @@ def _parse_manifest(raw: bytes, expected_version: str) -> dict[str, object]:
         raise ValueError("downloaded manifest.json must contain a JSON object")
     if value.get("dataset_version") != expected_version:
         raise ValueError("downloaded manifest dataset_version does not match release tag")
+
+    legacy = _mark_known_legacy_baseline(value, expected_version)
+    if legacy is not None:
+        return legacy
+
+    # Schema-v2 and any future baseline remain strict: complete source identity is
+    # required before a previous release can participate in no-change decisions.
     source_identity_from_manifest(value)
     return value
 
@@ -164,6 +198,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "status": "found",
                 "tag": f"data-{manifest['dataset_version']}",
                 "path": str(args.output),
+                "baseline_status": manifest.get("baseline_status", "schema_v2"),
             },
             sort_keys=True,
         )
