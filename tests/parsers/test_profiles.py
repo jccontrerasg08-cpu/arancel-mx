@@ -54,7 +54,7 @@ def test_resolves_nico_profile_from_registered_aliases(tmp_path):
     }
 
 
-def test_ambiguous_profile_fails_closed(tmp_path):
+def test_ambiguous_profile_fails_closed_with_candidate_locations(tmp_path):
     path = make_workbook(
         tmp_path,
         "ambiguous.xlsx",
@@ -65,8 +65,13 @@ def test_ambiguous_profile_fails_closed(tmp_path):
         ],
     )
 
-    with pytest.raises(ValueError, match="ambiguous workbook profile"):
+    with pytest.raises(ValueError) as error:
         resolve_workbook_profile(probe_workbook(path), "ligie_snapshot")
+
+    message = str(error.value)
+    assert "ambiguous workbook profile: ligie_snapshot" in message
+    assert "Datos!1" in message
+    assert "Datos!3" in message
 
 
 def test_unknown_profile_fails_closed(tmp_path):
