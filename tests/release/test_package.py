@@ -5,15 +5,58 @@ import tarfile
 import pytest
 
 from arancel_mx.release.package import (
+    PUBLIC_RELEASE_ASSETS,
     RELEASE_ARTIFACTS,
     build_release,
     prepare_release_archive,
+    verify_publication_bundle,
     verify_release,
 )
 
 
 def _sha256(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _manifest(hashes):
+    return {
+        "dataset_version": "2026.08.09",
+        "schema_version": "2",
+        "validation_status": "passed",
+        "row_count": 1,
+        "registry_version": "2026-08-10",
+        "registry_sha256": "b" * 64,
+        "git_commit_sha": "local",
+        "github_run_id": "local",
+        "github_run_attempt": "local",
+        "github_workflow_ref": "local",
+        "github_artifact_name": "local",
+        "level_counts": {
+            "hs2": 1,
+            "hs4": 0,
+            "hs6": 0,
+            "fraccion8": 0,
+            "nico10": 0,
+        },
+        "reconciliation": {
+            "publishable": True,
+            "error_codes": [],
+            "discrepancies": [],
+            "legal_document_ids": ["doc-1"],
+            "proposal_document_ids": [],
+            "indicator_document_ids": [],
+        },
+        "source_identity": [
+            {
+                "dataset_key": "ligie",
+                "document_role": "ligie_snapshot",
+                "source_url": "https://www.snice.gob.mx/ligie.xlsx",
+                "sha256": "a" * 64,
+                "registry_version": "2026-08-10",
+            }
+        ],
+        "artifact_sha256": hashes,
+    }
 
 
 def _fixture(tmp_path):
@@ -26,14 +69,14 @@ def _fixture(tmp_path):
         path = release / name
         path.write_bytes(f"artifact:{name}".encode())
         hashes[name] = _sha256(path)
-    manifest = {
-        "dataset_version": "2026.08.09",
-        "validation_status": "passed",
-        "artifact_sha256": hashes,
-    }
-    (release / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    manifest = _manifest(hashes)
+    manifest_path = release / "manifest.json"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    checksum_hashes = {**hashes, "manifest.json": _sha256(manifest_path)}
     (release / "SHA256SUMS").write_text(
-        "".join(f"{digest}  {name}\n" for name, digest in sorted(hashes.items())),
+        "".join(
+            f"{digest}  {name}\n" for name, digest in sorted(checksum_hashes.items())
+        ),
         encoding="ascii",
     )
     source = sources / "ligie.xlsx"
@@ -41,6 +84,12 @@ def _fixture(tmp_path):
     capture = [{"filename": source.name, "sha256": _sha256(source)}]
     (sources / "source_capture.json").write_text(json.dumps(capture), encoding="utf-8")
     return release, sources
+
+
+def _publication_bundle(tmp_path):
+    release, sources = _fixture(tmp_path)
+    prepare_release_archive(release, sources, tmp_path / "latest")
+    return release
 
 
 def test_build_release_delegates_to_deterministic_database_export(tmp_path, monkeypatch):
@@ -53,6 +102,28 @@ def test_build_release_delegates_to_deterministic_database_export(tmp_path, monk
     )
 
     assert build_release(database, tmp_path / "out") == expected
+
+
+def test_verify_release_requires_complete_schema_v2_provenance(tmp_path):
+    release, _sources = _fixture(tmp_path)
+    manifest_path = release / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    del manifest["registry_sha256"]
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="registry_sha256"):
+        verify_release(release)
+
+
+def test_verify_release_rejects_non_publishable_reconciliation(tmp_path):
+    release, _sources = _fixture(tmp_path)
+    manifest_path = release / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["reconciliation"]["publishable"] = False
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="reconciliation"):
+        verify_release(release)
 
 
 def test_prepares_allowlisted_source_archive_and_latest_pointer(tmp_path):
@@ -108,3 +179,67 @@ def test_corrupt_source_creates_no_archive_or_latest_pointer(tmp_path):
 
     assert not (release / "official-sources.tar.gz").exists()
     assert not latest.exists()
+
+
+def test_verify_publication_bundle_accepts_exact_six_verified_assets(tmp_path):
+    release = _publication_bundle(tmp_path)
+
+    manifest = verify_publication_bundle(release)
+
+    assert manifest["validation_status"] == "passed"
+    assert tuple(path.name for path in sorted(release.iterdir())) == tuple(
+        sorted(PUBLIC_RELEASE_ASSETS)
+    )
+
+
+def test_verify_publication_bundle_rejects_missing_asset(tmp_path):
+    release = _publication_bundle(tmp_path)
+    (release / "arancel_mx.csv").unlink()
+
+    with pytest.raises(ValueError, match="exactly the six public assets"):
+        verify_publication_bundle(release)
+
+
+def test_verify_publication_bundle_rejects_extra_asset(tmp_path):
+    release = _publication_bundle(tmp_path)
+    (release / "debug.txt").write_text("not public", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="exactly the six public assets"):
+        verify_publication_bundle(release)
+
+
+def test_verify_publication_bundle_rejects_corrupted_source_archive(tmp_path):
+    release = _publication_bundle(tmp_path)
+    with (release / "official-sources.tar.gz").open("ab") as stream:
+        stream.write(b"corrupt")
+
+    with pytest.raises(ValueError, match="checksum mismatch"):
+        verify_publication_bundle(release)
+
+
+def test_verify_publication_bundle_rejects_invalid_reconciliation_metadata(tmp_path):
+    release = _publication_bundle(tmp_path)
+    manifest_path = release / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["reconciliation"]["publishable"] = False
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="reconciliation"):
+        verify_publication_bundle(release)
+
+
+@pytest.mark.parametrize("missing_name", ["manifest.json", "official-sources.tar.gz"])
+def test_publication_bundle_requires_checksum_coverage_for_manifest_and_sources(
+    tmp_path, missing_name
+):
+    release = _publication_bundle(tmp_path)
+    checksums_path = release / "SHA256SUMS"
+    lines = [
+        line
+        for line in checksums_path.read_text(encoding="ascii").splitlines()
+        if not line.endswith(f"  {missing_name}")
+    ]
+    checksums_path.write_text("\n".join(lines) + "\n", encoding="ascii")
+
+    with pytest.raises(ValueError, match="checksum coverage"):
+        verify_publication_bundle(release)

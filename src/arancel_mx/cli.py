@@ -18,7 +18,13 @@ from arancel_mx.pipeline.update import UpdateConfig, check_for_updates
 from arancel_mx.release.package import build_release, prepare_release_archive
 
 
-COMMANDS = ("build", "update", "reconcile", "release")
+COMMANDS = ("build", "check-updates", "update", "reconcile", "release")
+
+
+def _add_update_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--state-path", default="data/update_state/ligie_ledger.json")
+    parser.add_argument("--report-path")
+    parser.add_argument("--ledger-url")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -32,10 +38,17 @@ def build_parser() -> argparse.ArgumentParser:
     build.add_argument("--database", required=True)
     build.add_argument("--output-dir", required=True)
 
-    update = subparsers.add_parser("update", help="Comprueba el ledger oficial de la LIGIE")
-    update.add_argument("--state-path", default="data/update_state/ligie_ledger.json")
-    update.add_argument("--report-path")
-    update.add_argument("--ledger-url")
+    check_updates = subparsers.add_parser(
+        "check-updates",
+        help="Comprueba cambios del ledger oficial sin modificar el estado aceptado",
+    )
+    _add_update_arguments(check_updates)
+
+    update = subparsers.add_parser(
+        "update",
+        help="Alias obsoleto y de solo lectura para check-updates",
+    )
+    _add_update_arguments(update)
 
     reconcile = subparsers.add_parser("reconcile", help="Reconcilia evidencia legal arancelaria")
     reconcile.add_argument("--ledger-json", required=True)
@@ -69,17 +82,21 @@ def _read_json(path: str) -> Any:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
+def _update_config(namespace: argparse.Namespace) -> UpdateConfig:
+    options: dict[str, object] = {
+        "state_path": Path(namespace.state_path),
+        "report_path": Path(namespace.report_path) if namespace.report_path else None,
+    }
+    if namespace.ledger_url:
+        options["ledger_url"] = namespace.ledger_url
+    return UpdateConfig(**options)
+
+
 def _dispatch(namespace: argparse.Namespace) -> object:
     if namespace.command == "build":
         return build_release(Path(namespace.database), Path(namespace.output_dir))
-    if namespace.command == "update":
-        options: dict[str, object] = {
-            "state_path": Path(namespace.state_path),
-            "report_path": Path(namespace.report_path) if namespace.report_path else None,
-        }
-        if namespace.ledger_url:
-            options["ledger_url"] = namespace.ledger_url
-        return check_for_updates(UpdateConfig(**options))
+    if namespace.command in {"check-updates", "update"}:
+        return check_for_updates(_update_config(namespace))
     if namespace.command == "reconcile":
         return reconcile_legal_instruments(
             _read_json(namespace.ledger_json),
@@ -106,6 +123,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     if namespace.command is None:
         parser.print_help()
         return 0
+    if namespace.command == "update":
+        print(
+            "warning: 'update' is a deprecated read-only alias; use check-updates",
+            file=sys.stderr,
+        )
     try:
         _print_json(_dispatch(namespace))
     except (ValueError, FileNotFoundError, json.JSONDecodeError, requests.RequestException) as error:

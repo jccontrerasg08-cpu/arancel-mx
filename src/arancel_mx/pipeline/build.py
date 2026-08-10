@@ -40,6 +40,19 @@ PUBLIC_INTERNAL_TABLES = (
     "weighted_tariff_indicator",
 )
 
+RELEASE_LEVELS = ("hs2", "hs4", "hs6", "fraccion8", "nico10")
+RELEASE_METADATA_FIELDS = (
+    "registry_version",
+    "registry_sha256",
+    "git_commit_sha",
+    "github_run_id",
+    "github_run_attempt",
+    "github_workflow_ref",
+    "github_artifact_name",
+    "reconciliation",
+    "source_identity",
+)
+
 
 def _identifier(prefix: str, row: Mapping[str, object]) -> str:
     supplied = row.get(f"{prefix}_revision_id") or row.get("classification_id")
@@ -54,23 +67,57 @@ def _required(value: object, label: str) -> object:
     return value
 
 
+def _validated_release_metadata(release: Mapping[str, object]) -> dict[str, object]:
+    raw = _required(release.get("release_metadata"), "release.release_metadata")
+    if not isinstance(raw, Mapping):
+        raise ValueError("release.release_metadata must be an object")
+    metadata = dict(raw)
+    for field in RELEASE_METADATA_FIELDS:
+        _required(metadata.get(field), f"release.release_metadata.{field}")
+    reconciliation = metadata["reconciliation"]
+    if not isinstance(reconciliation, Mapping):
+        raise ValueError("release.release_metadata.reconciliation must be an object")
+    if reconciliation.get("publishable") is not True:
+        raise ValueError("release.release_metadata.reconciliation must be publishable")
+    source_identity = metadata["source_identity"]
+    if not isinstance(source_identity, Sequence) or isinstance(source_identity, (str, bytes)):
+        raise ValueError("release.release_metadata.source_identity must be a list")
+    canonical_json(metadata)
+    return metadata
+
+
 def _validate_inputs(
     source_documents: Sequence[Mapping[str, object]],
     classifications: Sequence[Mapping[str, object]],
     rates: Sequence[Mapping[str, object]],
     release: Mapping[str, object],
-) -> dict[str, Mapping[str, object]]:
-    for field in ("dataset_version", "schema_version", "ligie_version", "effective_as_of", "generated_at"):
+) -> tuple[dict[str, Mapping[str, object]], dict[str, object]]:
+    for field in (
+        "dataset_version",
+        "schema_version",
+        "ligie_version",
+        "effective_as_of",
+        "generated_at",
+    ):
         _required(release.get(field), f"release.{field}")
     if not isinstance(release["effective_as_of"], date):
         raise ValueError("release.effective_as_of must be a date")
+    release_metadata = _validated_release_metadata(release)
 
     by_id: dict[str, Mapping[str, object]] = {}
     for document in source_documents:
         source_id = str(_required(document.get("source_document_id"), "source_document_id"))
         if source_id in by_id:
             raise ValueError(f"Duplicate source document: {source_id}")
-        for field in ("authority", "publication_venue", "title", "source_url", "sha256", "observed_at", "retrieved_at"):
+        for field in (
+            "authority",
+            "publication_venue",
+            "title",
+            "source_url",
+            "sha256",
+            "observed_at",
+            "retrieved_at",
+        ):
             _required(document.get(field), f"source_document.{field}")
         by_id[source_id] = document
 
@@ -78,23 +125,34 @@ def _validate_inputs(
         source_id = str(_required(row.get("source_document_id"), "row.source_document_id"))
         if source_id not in by_id:
             raise ValueError(f"Unknown source document: {source_id}")
-    return by_id
+    return by_id, release_metadata
 
 
 def _insert_sources(
     conn: duckdb.DuckDBPyConnection,
     documents: Sequence[Mapping[str, object]],
 ) -> None:
+    if not documents:
+        return
     conn.executemany(
         """
         INSERT INTO source_document VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         [
             [
-                row["source_document_id"], row["authority"], row["publication_venue"],
-                row["title"], row["source_url"], row.get("media_type"), row["sha256"],
-                row.get("local_path"), row.get("published_at"), row.get("effective_from"),
-                row.get("effective_to"), row["observed_at"], row["retrieved_at"],
+                row["source_document_id"],
+                row["authority"],
+                row["publication_venue"],
+                row["title"],
+                row["source_url"],
+                row.get("media_type"),
+                row["sha256"],
+                row.get("local_path"),
+                row.get("published_at"),
+                row.get("effective_from"),
+                row.get("effective_to"),
+                row["observed_at"],
+                row["retrieved_at"],
             ]
             for row in documents
         ],
@@ -112,32 +170,61 @@ def _insert_classifications(
         level = row["level"]
         code = str(row["code"])
         common = [
-            row["description"], row["ligie_version"], row["validity_basis"],
-            row.get("updated_at"), row.get("published_at"),
+            row["description"],
+            row["ligie_version"],
+            row["validity_basis"],
+            row.get("updated_at"),
+            row.get("published_at"),
             row.get("classification_effective_from"),
-            row.get("classification_effective_to"), row["source_document_id"],
+            row.get("classification_effective_to"),
+            row["source_document_id"],
         ]
         if level in {"hs2", "hs4", "hs6"}:
-            hs_rows.append([
-                _identifier("classification", row), code, level, code[:2],
-                code[:4] if len(code) >= 4 else None,
-                code[:6] if len(code) >= 6 else None, *common,
-            ])
+            hs_rows.append(
+                [
+                    _identifier("classification", row),
+                    code,
+                    level,
+                    code[:2],
+                    code[:4] if len(code) >= 4 else None,
+                    code[:6] if len(code) >= 6 else None,
+                    *common,
+                ]
+            )
         elif level == "fraccion8":
-            fraction_rows.append([
-                _identifier("fraction", row), code, code[:2], code[:4], code[:6], *common,
-            ])
+            fraction_rows.append(
+                [
+                    _identifier("fraction", row),
+                    code,
+                    code[:2],
+                    code[:4],
+                    code[:6],
+                    *common,
+                ]
+            )
         elif level == "nico10":
-            nico_rows.append([
-                _identifier("nico", row), code, code[:8], code[8:], *common,
-            ])
+            nico_rows.append(
+                [
+                    _identifier("nico", row),
+                    code,
+                    code[:8],
+                    code[8:],
+                    *common,
+                ]
+            )
         else:
             raise ValueError(f"Unsupported classification level: {level}")
 
     if hs_rows:
-        conn.executemany("INSERT INTO hs_code VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", hs_rows)
+        conn.executemany(
+            "INSERT INTO hs_code VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            hs_rows,
+        )
     if fraction_rows:
-        conn.executemany("INSERT INTO tariff_fraction VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", fraction_rows)
+        conn.executemany(
+            "INSERT INTO tariff_fraction VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            fraction_rows,
+        )
     if nico_rows:
         conn.executemany(
             "INSERT INTO nico VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -153,14 +240,27 @@ def _insert_rates(
         return
     conn.executemany(
         "INSERT INTO tariff_rate VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [[
-            _identifier("rate", row), row["code"], row.get("unit_code"), row.get("unit_name"),
-            row.get("igi_text"), row.get("igi_kind"), row.get("igi_value"),
-            row.get("ige_text"), row.get("ige_kind"), row.get("ige_value"),
-            row["ligie_version"], row.get("updated_at"), row.get("published_at"),
-            row.get("rate_effective_from"), row.get("rate_effective_to"),
-            row["source_document_id"],
-        ] for row in rates],
+        [
+            [
+                _identifier("rate", row),
+                row["code"],
+                row.get("unit_code"),
+                row.get("unit_name"),
+                row.get("igi_text"),
+                row.get("igi_kind"),
+                row.get("igi_value"),
+                row.get("ige_text"),
+                row.get("ige_kind"),
+                row.get("ige_value"),
+                row["ligie_version"],
+                row.get("updated_at"),
+                row.get("published_at"),
+                row.get("rate_effective_from"),
+                row.get("rate_effective_to"),
+                row["source_document_id"],
+            ]
+            for row in rates
+        ],
     )
 
 
@@ -354,7 +454,17 @@ def _validate_database(conn: duckdb.DuckDBPyConnection) -> dict[str, object]:
     failed = {name: int(count) for name, count in checks.items() if count}
     if failed:
         raise ValueError(f"Canonical database validation failed: {failed}")
-    return {"status": "passed", "checks": {name: int(value) for name, value in checks.items()}}
+    return {
+        "status": "passed",
+        "checks": {name: int(value) for name, value in checks.items()},
+    }
+
+
+def _release_level_counts(conn: duckdb.DuckDBPyConnection) -> dict[str, int]:
+    counts = dict(
+        conn.execute("SELECT level, COUNT(*) FROM arancel_mx GROUP BY level").fetchall()
+    )
+    return {level: int(counts.get(level, 0)) for level in RELEASE_LEVELS}
 
 
 def materialize_arancel(
@@ -365,7 +475,12 @@ def materialize_arancel(
     release: Mapping[str, object],
 ) -> dict[str, object]:
     """Replace canonical data only after the complete candidate validates."""
-    documents_by_id = _validate_inputs(source_documents, classifications, rates, release)
+    documents_by_id, release_metadata = _validate_inputs(
+        source_documents,
+        classifications,
+        rates,
+        release,
+    )
     records = consolidate_records(list(classifications), list(rates), release)
     rate_source_ids = {str(row["source_document_id"]) for row in rates}
     nico_source_ids = {
@@ -379,8 +494,14 @@ def materialize_arancel(
         ensure_tariff_schema(conn)
         conn.execute("DROP VIEW IF EXISTS arancel_mx")
         for table in (
-            "record_provenance", "canonical_record", "dataset_release", "tariff_rate",
-            "nico", "tariff_fraction", "hs_code", "source_document",
+            "record_provenance",
+            "canonical_record",
+            "dataset_release",
+            "tariff_rate",
+            "nico",
+            "tariff_fraction",
+            "hs_code",
+            "source_document",
         ):
             conn.execute(f"DELETE FROM {table}")
         _insert_sources(conn, source_documents)
@@ -403,25 +524,40 @@ def materialize_arancel(
                     role = "rate"
                 else:
                     role = "base"
-                provenance_rows.append([
-                    row["record_id"], source_id, role, source_id == primary_id,
-                ])
+                provenance_rows.append(
+                    [row["record_id"], source_id, role, source_id == primary_id]
+                )
 
         if canonical_rows:
             placeholders = ", ".join("?" for _ in PUBLIC_COLUMNS[:40])
-            conn.executemany(f"INSERT INTO canonical_record VALUES ({placeholders})", canonical_rows)
+            conn.executemany(
+                f"INSERT INTO canonical_record VALUES ({placeholders})",
+                canonical_rows,
+            )
         if provenance_rows:
-            conn.executemany("INSERT INTO record_provenance VALUES (?, ?, ?, ?)", provenance_rows)
+            conn.executemany(
+                "INSERT INTO record_provenance VALUES (?, ?, ?, ?)",
+                provenance_rows,
+            )
         _build_view(conn)
         validation = _validate_database(conn)
         row_count = int(conn.execute("SELECT COUNT(*) FROM arancel_mx").fetchone()[0])
         source_ids_json = canonical_json(sorted(documents_by_id))
+        stored_metadata = dict(release_metadata)
+        stored_metadata["level_counts"] = _release_level_counts(conn)
         conn.execute(
-            "INSERT INTO dataset_release VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO dataset_release VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [
-                release["dataset_version"], release["schema_version"], release["ligie_version"],
-                release["effective_as_of"], release["generated_at"], row_count, "passed",
-                canonical_json(validation), source_ids_json,
+                release["dataset_version"],
+                release["schema_version"],
+                release["ligie_version"],
+                release["effective_as_of"],
+                release["generated_at"],
+                row_count,
+                "passed",
+                canonical_json(validation),
+                source_ids_json,
+                canonical_json(stored_metadata),
             ],
         )
         conn.execute("COMMIT")
@@ -434,6 +570,7 @@ def materialize_arancel(
         "row_count": row_count,
         "validation_status": "passed",
         "validation_results": validation,
+        "release_metadata": stored_metadata,
     }
 
 
@@ -445,7 +582,12 @@ def _decimal_text(value: Decimal) -> str:
 def _timestamp_text(value: datetime) -> str:
     if value.tzinfo is None:
         value = value.replace(tzinfo=timezone.utc)
-    return value.astimezone(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return (
+        value.astimezone(timezone.utc)
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
 
 
 def _json_text(value: object) -> str:
@@ -544,7 +686,10 @@ def _create_public_database(source_path: Path, target_path: Path) -> None:
         )
 
 
-def _export_arancel_release(database_path: Path | str, output_dir: Path | str) -> dict[str, object]:
+def _export_arancel_release(
+    database_path: Path | str,
+    output_dir: Path | str,
+) -> dict[str, object]:
     """Export one immutable, cross-format-equivalent canonical release."""
     database_path = Path(database_path).resolve()
     output_dir = Path(output_dir).resolve()
@@ -565,13 +710,19 @@ def _export_arancel_release(database_path: Path | str, output_dir: Path | str) -
         release_row = conn.execute(
             """
             SELECT dataset_version, schema_version, ligie_version, effective_as_of,
-                   generated_at, row_count, validation_status, validation_results_json
+                   generated_at, row_count, validation_status, validation_results_json,
+                   release_metadata_json
             FROM dataset_release ORDER BY generated_at DESC LIMIT 1
             """
         ).fetchone()
         if release_row is None or release_row[6] != "passed":
             raise ValueError("Only a validated dataset release can be exported")
-        source_columns = [row[0] for row in conn.execute("DESCRIBE source_document").fetchall()]
+        release_metadata = json.loads(release_row[8])
+        if not isinstance(release_metadata, dict):
+            raise ValueError("Release metadata is not a JSON object")
+        source_columns = [
+            row[0] for row in conn.execute("DESCRIBE source_document").fetchall()
+        ]
         source_rows = conn.execute(
             "SELECT * FROM source_document ORDER BY source_document_id"
         ).fetchall()
@@ -600,7 +751,11 @@ def _export_arancel_release(database_path: Path | str, output_dir: Path | str) -
     with csv_path.open("r", encoding="utf-8", newline="") as stream:
         csv_rows = list(csv.reader(stream))
     json_rows = json.loads(json_path.read_text(encoding="utf-8"), parse_float=Decimal)
-    if csv_rows[0] != columns or len(csv_rows) - 1 != len(rows) or len(json_rows) != len(rows):
+    if (
+        csv_rows[0] != columns
+        or len(csv_rows) - 1 != len(rows)
+        or len(json_rows) != len(rows)
+    ):
         raise ValueError("Exported formats differ in columns or row count")
     expected_csv = [[_csv_text(row[column]) for column in columns] for row in rows]
     if csv_rows[1:] != expected_csv:
@@ -627,15 +782,42 @@ def _export_arancel_release(database_path: Path | str, output_dir: Path | str) -
         "source_documents": sources,
         "artifact_sha256": artifact_hashes,
     }
+    for field in (
+        "registry_version",
+        "registry_sha256",
+        "git_commit_sha",
+        "github_run_id",
+        "github_run_attempt",
+        "github_workflow_ref",
+        "github_artifact_name",
+        "level_counts",
+        "reconciliation",
+        "source_identity",
+    ):
+        if field not in release_metadata:
+            raise ValueError(f"Release metadata missing {field}")
+        manifest[field] = release_metadata[field]
+
     manifest_path = output_dir / "manifest.json"
-    manifest_path.write_text(_json_text(manifest) + "\n", encoding="utf-8", newline="")
+    manifest_path.write_text(
+        _json_text(manifest) + "\n",
+        encoding="utf-8",
+        newline="",
+    )
     checksum_paths = [duckdb_path, csv_path, json_path, manifest_path]
     checksum_lines = [f"{_sha256(path)}  {path.name}\r\n" for path in checksum_paths]
-    (output_dir / "SHA256SUMS").write_text("".join(checksum_lines), encoding="ascii", newline="")
+    (output_dir / "SHA256SUMS").write_text(
+        "".join(checksum_lines),
+        encoding="ascii",
+        newline="",
+    )
     return manifest
 
 
-def export_arancel_release(database_path: Path | str, output_dir: Path | str) -> dict[str, object]:
+def export_arancel_release(
+    database_path: Path | str,
+    output_dir: Path | str,
+) -> dict[str, object]:
     """Stage a complete release, then publish its directory atomically."""
     final_dir = Path(output_dir).resolve()
     if final_dir.exists():

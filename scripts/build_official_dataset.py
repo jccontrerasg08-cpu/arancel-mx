@@ -31,6 +31,16 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--dataset-version", required=True)
     parser.add_argument("--generated-at")
     parser.add_argument("--timeout", type=float, default=60.0)
+    parser.add_argument("--git-commit-sha", default="local")
+    parser.add_argument("--github-run-id", default="local")
+    parser.add_argument("--github-run-attempt", default="local")
+    parser.add_argument("--github-workflow-ref", default="local")
+    parser.add_argument("--github-artifact-name", default="local")
+    parser.add_argument(
+        "--previous-manifest",
+        type=Path,
+        help="Previous verified schema-v2 manifest used for source-identity comparison.",
+    )
     return parser
 
 
@@ -64,7 +74,21 @@ def _config_from_args(args: argparse.Namespace) -> OfficialDatasetConfig:
         dataset_version=args.dataset_version,
         generated_at=generated_at,
         timeout_s=args.timeout,
+        git_commit_sha=args.git_commit_sha,
+        github_run_id=args.github_run_id,
+        github_run_attempt=args.github_run_attempt,
+        github_workflow_ref=args.github_workflow_ref,
+        github_artifact_name=args.github_artifact_name,
     )
+
+
+def _load_previous_manifest(path: Path | None) -> dict[str, object] | None:
+    if path is None:
+        return None
+    value = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(value, dict):
+        raise ValueError("previous-manifest must contain a JSON object")
+    return value
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -72,7 +96,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         config = _config_from_args(args)
-        summary = build_official_dataset(config)
+        previous_manifest = _load_previous_manifest(args.previous_manifest)
+        if previous_manifest is None:
+            summary = build_official_dataset(config)
+        else:
+            summary = build_official_dataset(
+                config,
+                previous_manifest=previous_manifest,
+            )
     except (ValueError, OSError, requests.RequestException) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2

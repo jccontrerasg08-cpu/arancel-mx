@@ -1,3 +1,4 @@
+from dataclasses import replace
 from datetime import date, datetime, timezone
 from functools import lru_cache
 import hashlib
@@ -12,10 +13,12 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Spacer, Table, TableStyle
 
+from arancel_mx.pipeline import official_sources
 from arancel_mx.pipeline.official_dataset import (
     OfficialDatasetConfig,
     build_official_dataset,
 )
+from arancel_mx.sources.legal_evidence import RequiredDofEvidence
 
 
 DIPUTADOS_LEDGER = (
@@ -23,6 +26,8 @@ DIPUTADOS_LEDGER = (
 ).read_text(encoding="utf-8")
 DIPUTADOS_URL = "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm"
 DIPUTADOS_PDF = "https://www.diputados.gob.mx/LeyesBiblio/pdf/LIGIE_2022.pdf"
+LAW_REFORM_URL = "https://www.diputados.gob.mx/LeyesBiblio/ref/reforma02.pdf"
+TARIFF_DECREE_URL = "https://www.diputados.gob.mx/LeyesBiblio/ref/tarifa15.pdf"
 LIGIE_INDEX = "https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html"
 NICO_INDEX = "https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html"
 LIGIE_URL = "https://www.snice.gob.mx/files/FRACCIONESARANCELARIAS_20260810.XLSX"
@@ -131,6 +136,10 @@ class Response:
             return self._text
         return self.content.decode("utf-8", errors="replace")
 
+    def iter_content(self, chunk_size=1024 * 1024):
+        for start in range(0, len(self.content), chunk_size):
+            yield self.content[start : start + chunk_size]
+
     def raise_for_status(self):
         return None
 
@@ -140,7 +149,7 @@ class FakeSession:
         self.responses = responses
         self.requested = []
 
-    def get(self, url, timeout=None):
+    def get(self, url, timeout=None, stream=False):
         self.requested.append(url)
         if url not in self.responses:
             raise AssertionError(f"unexpected network URL: {url}")
@@ -159,6 +168,12 @@ def fake_session():
             DIPUTADOS_LEDGER,
         ),
         DIPUTADOS_PDF: Response(DIPUTADOS_PDF, pdf_bytes, "application/pdf"),
+        LAW_REFORM_URL: Response(
+            LAW_REFORM_URL, b"%PDF-1.7\nlaw-reform", "application/pdf"
+        ),
+        TARIFF_DECREE_URL: Response(
+            TARIFF_DECREE_URL, b"%PDF-1.7\ntariff-decree", "application/pdf"
+        ),
         LIGIE_INDEX: Response(
             LIGIE_INDEX, ligie_html.encode("utf-8"), "text/html", ligie_html
         ),
@@ -189,7 +204,7 @@ def test_offline_build_produces_verified_release(tmp_path):
 
     assert summary["validation_status"] == "passed"
     assert summary["row_count"] == 5
-    assert summary["source_count"] == 3
+    assert summary["source_count"] == 5
     assert sorted(path.name for path in build_config.output_dir.iterdir()) == [
         "SHA256SUMS",
         "arancel_mx.csv",
@@ -201,6 +216,8 @@ def test_offline_build_produces_verified_release(tmp_path):
     assert set(session.requested) == {
         DIPUTADOS_URL,
         DIPUTADOS_PDF,
+        LAW_REFORM_URL,
+        TARIFF_DECREE_URL,
         LIGIE_INDEX,
         NICO_INDEX,
         LIGIE_URL,
@@ -224,13 +241,21 @@ def test_offline_build_produces_verified_release(tmp_path):
             """
         ).fetchone()
     assert levels == {"fraccion8": 1, "hs2": 1, "hs4": 1, "hs6": 1, "nico10": 1}
-    assert fraction_rate == ("Cbza", "10", "ad_valorem", "10.000000", "Ex.", "exento", "0.000000")
+    assert fraction_rate == (
+        "Cbza",
+        "10",
+        "ad_valorem",
+        "10.000000",
+        "Ex.",
+        "exento",
+        "0.000000",
+    )
 
     manifest = json.loads(
         (build_config.output_dir / "manifest.json").read_text(encoding="utf-8")
     )
     assert manifest["validation_status"] == "passed"
-    assert len(manifest["source_documents"]) == 3
+    assert len(manifest["source_documents"]) == 5
     for source in manifest["source_documents"]:
         assert source["source_url"].startswith("https://")
         assert len(source["sha256"]) == 64
@@ -266,7 +291,51 @@ def test_build_accepts_declared_legacy_charset_for_diputados_ledger(tmp_path):
     assert summary["row_count"] == 5
 
 
-def test_identical_inputs_produce_logically_deterministic_release(tmp_path):
+def test_build_blocks_mismatched_legal_evidence_before_output(tmp_path, monkeypatch):
+    build_config = config(tmp_path, "legal-mismatch")
+    monkeypatch.setattr(
+        official_sources,
+        "required_dof_evidence",
+        lambda _ledger: (
+            RequiredDofEvidence(
+                role="law_reform",
+                published_at=date(2025, 12, 28),
+                url=LAW_REFORM_URL,
+                media_type="application/pdf",
+            ),
+            RequiredDofEvidence(
+                role="tariff_decree",
+                published_at=date(2026, 4, 23),
+                url=TARIFF_DECREE_URL,
+                media_type="application/pdf",
+            ),
+        ),
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=r"legal reconciliation failed: .*missing_dof_evidence:law_reform",
+    ):
+        build_official_dataset(build_config, session=fake_session())
+
+    assert not build_config.output_dir.exists()
+    assert not (build_config.work_dir / "candidate" / "arancel_mx.duckdb").exists()
+
+
+def test_identical_inputs_produce_logically_deterministic_release(
+    tmp_path, monkeypatch
+):
+    fixed_retrieved_at = datetime(2026, 8, 10, 7, 59, 31, tzinfo=timezone.utc)
+    real_fetch = official_sources.fetch_official_document
+
+    def fetch_with_fixed_timestamp(*args, **kwargs):
+        return replace(real_fetch(*args, **kwargs), retrieved_at=fixed_retrieved_at)
+
+    monkeypatch.setattr(
+        official_sources,
+        "fetch_official_document",
+        fetch_with_fixed_timestamp,
+    )
     first = config(tmp_path, "first")
     second = config(tmp_path, "second")
 

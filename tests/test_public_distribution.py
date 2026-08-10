@@ -18,12 +18,23 @@ def test_private_paths_are_not_distributed() -> None:
     private_paths = (
         ".env",
         "token.txt",
-        "docs/superpowers",
         "PIPELINE.md",
         "integrar_recaudacion_anam.py",
     )
 
     assert [path for path in private_paths if (ROOT / path).exists()] == []
+
+
+def test_public_engineering_specs_are_distributed() -> None:
+    required = (
+        "docs/superpowers/specs/2026-08-10-production-hardening-automation-design.md",
+        "docs/superpowers/plans/2026-08-10-production-hardening-index.md",
+        "docs/superpowers/plans/2026-08-10-core-data-correctness.md",
+        "docs/superpowers/plans/2026-08-10-autonomous-release-alerts.md",
+        "docs/superpowers/plans/2026-08-10-repository-supply-chain-hardening.md",
+    )
+
+    assert [path for path in required if not (ROOT / path).is_file()] == []
 
 
 def test_generated_and_local_paths_are_ignored() -> None:
@@ -114,7 +125,7 @@ def test_open_source_governance_files_are_present() -> None:
 def test_official_dataset_build_entrypoints_are_public() -> None:
     required = (
         "scripts/build_official_dataset.py",
-        ".github/workflows/build-official-dataset.yml",
+        ".github/workflows/official-data-pipeline.yml",
     )
 
     assert [path for path in required if not (ROOT / path).is_file()] == []
@@ -162,7 +173,7 @@ def test_readme_preserves_existing_public_information() -> None:
         "https://www.dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022",
         "python -m arancel_mx --help",
         "python -m arancel_mx build --database data/arancel.duckdb --output-dir out/release",
-        "python -m arancel_mx update --state-path data/update_state/ligie.json --report-path out/update.json",
+        "python -m arancel_mx check-updates --state-path data/update_state/ligie.json --report-path out/update.json",
         "python -m arancel_mx reconcile --ledger-json ledger.json --dof-json dof.json --snice-json snice.json",
         "python -m arancel_mx release --release-dir out/release --source-dir data/raw/release --latest-dir out/latest",
         "python -m pytest -q",
@@ -176,27 +187,36 @@ def test_readme_preserves_existing_public_information() -> None:
     assert [value for value in required if value not in readme] == []
 
 
-def test_readmes_document_verified_official_dataset_build() -> None:
+def test_readmes_document_autonomous_verified_official_dataset_releases() -> None:
     spanish = (ROOT / "README.md").read_text(encoding="utf-8").lower()
     english = (ROOT / "README.en.md").read_text(encoding="utf-8").lower()
     release_process = (ROOT / "docs" / "release-process.md").read_text(encoding="utf-8").lower()
-    required = (
+    common = (
         "scripts/build_official_dataset.py",
-        ".github/workflows/build-official-dataset.yml",
-        "build official dataset",
+        ".github/workflows/official-data-pipeline.yml",
+        "official data pipeline",
         "arancel_mx.duckdb",
         "arancel_mx.csv",
         "arancel_mx.json",
         "manifest.json",
         "sha256sums",
         "official-sources.tar.gz",
+        "github issue",
     )
 
     for document in (spanish, english, release_process):
-        assert [value for value in required if value not in document] == []
-    assert "construcción end-to-end de dataset oficial" in spanish
-    assert "end-to-end official dataset build" in english
-    assert "manual" in release_process
+        assert [value for value in common if value not in document] == []
+        assert "build-official-dataset.yml" not in document
+
+    assert "revisión diaria automatizada" in spanish
+    assert "publicación automática" in spanish
+    assert "cualquier falla bloquea la publicación" in spanish
+    assert "daily automated check" in english
+    assert "automatic publication" in english
+    assert "any failure blocks publication" in english
+    assert "17 11 * * *" in release_process
+    assert "publicación automática" in release_process
+    assert "cualquier falla bloquea la publicación" in release_process
 
 
 def test_bilingual_readmes_stay_linked() -> None:
@@ -230,24 +250,30 @@ def test_focused_documentation_exists_and_has_no_legacy_instructions() -> None:
 def test_ci_workflow_builds_package_without_secrets_or_network_updates() -> None:
     workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
     required = (
+        "name: CI",
         "pull_request:",
         "push:",
         "contents: read",
+        "test:",
         "actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
         "actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
         'python-version: "3.11"',
-        "python -m pip install --upgrade pip",
-        'python -m pip install -e ".[dev]"',
+        "python -m pip install pip==26.2.1",
+        'python -m pip install -c requirements/production-build.txt -e ".[dev]"',
         "python -m pytest -q",
         "python -m build",
         "git diff --check",
     )
     forbidden = (
         "contents: write",
+        "issues: write",
+        "pull-requests: write",
         "pull_request_target:",
         "secrets.",
         "git push",
+        "python -m pip install --upgrade pip",
         "python -m arancel_mx update",
+        "scripts/publish_release.py",
     )
 
     assert [value for value in required if value not in workflow] == []

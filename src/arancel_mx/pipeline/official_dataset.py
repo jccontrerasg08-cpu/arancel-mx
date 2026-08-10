@@ -1,17 +1,13 @@
-"""End-to-end construction of the first canonical dataset from official sources."""
+"""End-to-end construction of the canonical dataset from official sources."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from collections import Counter
+from collections.abc import Mapping
+from dataclasses import asdict, dataclass
 from datetime import date, datetime, timezone
-import hashlib
-import json
 from pathlib import Path
-import shutil
-from typing import Any
-from urllib.parse import urlparse
-
-import requests
+from typing import Any, Literal
 
 from arancel_mx.parsers.documents import parse_ligie_pdf_hierarchy
 from arancel_mx.parsers.profiles import resolve_workbook_profile
@@ -22,35 +18,26 @@ from arancel_mx.parsers.workbooks import (
 )
 from arancel_mx.pipeline.build import export_arancel_release, materialize_arancel
 from arancel_mx.pipeline.hierarchy import assemble_classifications
-from arancel_mx.pipeline.reconcile import (
-    discover_registered_sources,
-    select_current_document,
+from arancel_mx.pipeline.official_sources import (
+    OfficialInputSnapshot,
+    capture_official_inputs,
+    write_release_sources,
+)
+from arancel_mx.release.metadata import (
+    ReleaseProvenance,
+    source_identity_changed,
+    source_identity_from_manifest,
 )
 from arancel_mx.release.package import (
     prepare_release_archive,
     verify_release,
     verify_sources,
 )
-from arancel_mx.sources.capture import CaptureManifest, capture_document
-from arancel_mx.sources.diputados import parse_ligie_ledger
-from arancel_mx.sources.http import (
-    FetchedDocument,
-    decode_fetched_text,
-    fetch_official_document,
-)
-from arancel_mx.sources.registry import (
-    RegistryEntry,
-    load_source_registry,
-    registered_direct_document,
-)
 from arancel_mx.storage.duckdb import connect, init_tariff_db
 
 
-SOURCE_IDENTITY = {
-    "ligie": ("Secretaría de Economía / SNICE", "SNICE"),
-    "nico": ("Secretaría de Economía / SNICE", "SNICE"),
-    "diputados_ligie": ("Cámara de Diputados", "Cámara de Diputados"),
-}
+RELEASE_LEVELS = ("hs2", "hs4", "hs6", "fraccion8", "nico10")
+_LEGACY_BASELINE_VERSION = "2026.08.10"
 
 
 @dataclass(frozen=True)
@@ -60,85 +47,43 @@ class OfficialDatasetConfig:
     effective_as_of: date
     dataset_version: str
     generated_at: datetime
-    schema_version: str = "1"
+    schema_version: str = "2"
     ligie_version: str = "LIGIE-2022"
     timeout_s: float = 60.0
+    git_commit_sha: str = "local"
+    github_run_id: str = "local"
+    github_run_attempt: str = "local"
+    github_workflow_ref: str = "local"
+    github_artifact_name: str = "local"
+
+    def provenance(self) -> ReleaseProvenance:
+        return ReleaseProvenance(
+            git_commit_sha=self.git_commit_sha,
+            github_run_id=self.github_run_id,
+            github_run_attempt=self.github_run_attempt,
+            github_workflow_ref=self.github_workflow_ref,
+            github_artifact_name=self.github_artifact_name,
+        )
 
 
 @dataclass(frozen=True)
-class _CapturedSource:
-    dataset_key: str
-    title: str
-    fetched: FetchedDocument
-    capture: CaptureManifest
-    source_document: dict[str, object]
+class OfficialBuildResult:
+    status: Literal["no_change", "built"]
+    dataset_version: str
+    schema_version: str
+    row_count: int
+    validation_status: str
+    source_count: int
+    output_dir: str | None
+
+    def to_dict(self) -> dict[str, object]:
+        return asdict(self)
 
 
 def _build_timestamp(value: datetime) -> datetime:
     if value.tzinfo is None or value.utcoffset() is None:
         raise ValueError("generated_at must be timezone-aware")
     return value.astimezone(timezone.utc).replace(microsecond=0)
-
-
-def _source_document_id(dataset_key: str, final_url: str, source_sha256: str) -> str:
-    payload = f"{dataset_key}\0{final_url}\0{source_sha256}".encode("utf-8")
-    return "source-" + hashlib.sha256(payload).hexdigest()
-
-
-def _filename(url: str) -> str:
-    name = Path(urlparse(url).path).name
-    if not name:
-        raise ValueError(f"official source URL has no filename: {url}")
-    return name
-
-
-def _capture_source(
-    *,
-    dataset_key: str,
-    document_role: str,
-    title: str,
-    url: str,
-    entry: RegistryEntry,
-    config: OfficialDatasetConfig,
-    session: Any,
-) -> _CapturedSource:
-    fetched = fetch_official_document(
-        session,
-        url,
-        entry.allowed_hosts,
-        entry.media_types,
-        timeout_s=config.timeout_s,
-    )
-    generated_at = _build_timestamp(config.generated_at)
-    metadata = {
-        "source_id": dataset_key,
-        "kind": document_role,
-        "observed_at": config.effective_as_of.isoformat(),
-        "retrieved_at": generated_at.isoformat().replace("+00:00", "Z"),
-        "source_url": fetched.final_url,
-        "filename": _filename(fetched.final_url),
-        "media_type": fetched.media_type,
-        "title": title,
-    }
-    capture = capture_document(fetched.content, metadata, config.work_dir / "raw")
-    source_id = _source_document_id(dataset_key, fetched.final_url, capture.sha256)
-    authority, venue = SOURCE_IDENTITY[dataset_key]
-    source_document: dict[str, object] = {
-        "source_document_id": source_id,
-        "authority": authority,
-        "publication_venue": venue,
-        "title": title,
-        "source_url": fetched.final_url,
-        "media_type": fetched.media_type,
-        "sha256": capture.sha256,
-        "local_path": str(capture.path),
-        "published_at": None,
-        "effective_from": None,
-        "effective_to": None,
-        "observed_at": config.effective_as_of,
-        "retrieved_at": generated_at,
-    }
-    return _CapturedSource(dataset_key, title, fetched, capture, source_document)
 
 
 def _fraction_and_rate_rows(staging_rows, source_id: str, config: OfficialDatasetConfig):
@@ -198,61 +143,83 @@ def _nico_rows(staging_rows, source_id: str, config: OfficialDatasetConfig):
     ]
 
 
-def _release_sources(
+def _level_counts(classifications: list[dict[str, object]]) -> dict[str, int]:
+    counts = Counter(str(row["level"]) for row in classifications)
+    return {level: int(counts.get(level, 0)) for level in RELEASE_LEVELS}
+
+
+def _release_metadata(
     config: OfficialDatasetConfig,
-    captured: list[_CapturedSource],
-) -> Path:
-    source_dir = config.work_dir / "release-sources"
-    if source_dir.exists():
-        raise FileExistsError(f"Release source directory already exists: {source_dir}")
-    source_dir.mkdir(parents=True)
+    snapshot: OfficialInputSnapshot,
+    classifications: list[dict[str, object]],
+) -> dict[str, object]:
+    metadata: dict[str, object] = {
+        "registry_version": snapshot.registry_version,
+        "registry_sha256": snapshot.registry_sha256,
+        **config.provenance().to_dict(),
+        "level_counts": _level_counts(classifications),
+        "reconciliation": asdict(snapshot.reconciliation),
+        "source_identity": [
+            identity.to_dict()
+            for identity in sorted(
+                snapshot.identities,
+                key=lambda item: (
+                    item.dataset_key,
+                    item.document_role,
+                    item.source_url,
+                    item.sha256,
+                    item.registry_version,
+                ),
+            )
+        ],
+    }
+    return metadata
 
-    names: dict[str, str] = {}
-    for item in captured:
-        suffix = Path(urlparse(item.fetched.final_url).path).suffix.lower()
-        if item.dataset_key == "ligie":
-            names[item.dataset_key] = f"ligie{suffix}"
-        elif item.dataset_key == "nico":
-            names[item.dataset_key] = f"nico{suffix}"
-        elif item.dataset_key == "diputados_ligie":
-            names[item.dataset_key] = "ligie-consolidated.pdf"
-        else:
-            raise ValueError(f"unexpected release source: {item.dataset_key}")
 
-    rows = []
-    for item in sorted(captured, key=lambda value: value.dataset_key):
-        filename = names[item.dataset_key]
-        target = source_dir / filename
-        shutil.copyfile(item.capture.path, target)
-        source_document = item.source_document
-        rows.append(
-            {
-                "dataset_key": item.dataset_key,
-                "filename": filename,
-                "media_type": item.fetched.media_type,
-                "sha256": item.capture.sha256,
-                "source_document_id": source_document["source_document_id"],
-                "source_url": source_document["source_url"],
-            }
-        )
-    (source_dir / "source_capture.json").write_text(
-        json.dumps(
-            rows,
-            ensure_ascii=False,
-            sort_keys=True,
-            separators=(",", ":"),
-        )
-        + "\n",
-        encoding="utf-8",
-    )
-    return source_dir
+def _no_change_result(
+    config: OfficialDatasetConfig,
+    previous_manifest: Mapping[str, object],
+    source_count: int,
+) -> dict[str, object]:
+    validation_status = str(previous_manifest.get("validation_status", ""))
+    if validation_status != "passed":
+        raise ValueError("previous manifest must describe a passed release")
+    row_count = int(previous_manifest.get("row_count", 0))
+    if row_count <= 0:
+        raise ValueError("previous manifest must contain a positive row_count")
+    return OfficialBuildResult(
+        status="no_change",
+        dataset_version=config.dataset_version,
+        schema_version=config.schema_version,
+        row_count=row_count,
+        validation_status=validation_status,
+        source_count=source_count,
+        output_dir=None,
+    ).to_dict()
+
+
+def _is_legacy_baseline(previous_manifest: Mapping[str, object]) -> bool:
+    status = previous_manifest.get("baseline_status")
+    if status != "legacy_baseline":
+        return False
+    if (
+        previous_manifest.get("dataset_version") != _LEGACY_BASELINE_VERSION
+        or previous_manifest.get("schema_version") != "1"
+        or previous_manifest.get("validation_status") != "passed"
+    ):
+        raise ValueError("invalid legacy_baseline manifest marker")
+    row_count = previous_manifest.get("row_count")
+    if not isinstance(row_count, int) or isinstance(row_count, bool) or row_count <= 0:
+        raise ValueError("invalid legacy_baseline manifest row_count")
+    return True
 
 
 def build_official_dataset(
     config: OfficialDatasetConfig,
     session: Any | None = None,
+    previous_manifest: Mapping[str, object] | None = None,
 ) -> dict[str, object]:
-    """Build one verified release from current registered official sources."""
+    """Build one verified release, or stop after a reconciled no-change check."""
     if config.timeout_s <= 0:
         raise ValueError("timeout_s must be positive")
     generated_at = _build_timestamp(config.generated_at)
@@ -262,55 +229,25 @@ def build_official_dataset(
         raise FileExistsError(f"Output directory already exists: {config.output_dir}")
     config.work_dir.mkdir(parents=True, exist_ok=True)
 
-    client = session or requests.Session()
-    registry = load_source_registry()
-    diputados_entry = registry["diputados_ligie"]
-    ledger_fetch = fetch_official_document(
-        client,
-        diputados_entry.canonical_page,
-        diputados_entry.allowed_hosts,
-        ("text/html",),
-        timeout_s=config.timeout_s,
-    )
-    ledger_html = decode_fetched_text(ledger_fetch)
-    parse_ligie_ledger(ledger_html, ledger_fetch.final_url)
-    consolidated_url = registered_direct_document(
-        diputados_entry, "consolidated_text"
-    )
+    # capture_official_inputs() includes the mandatory legal reconciliation gate.
+    # Only a successfully reconciled current snapshot is eligible for no-change.
+    snapshot = capture_official_inputs(config, session=session)
+    if previous_manifest is not None and not _is_legacy_baseline(previous_manifest):
+        previous_identity = source_identity_from_manifest(previous_manifest)
+        if not source_identity_changed(snapshot.identities, previous_identity):
+            return _no_change_result(
+                config,
+                previous_manifest,
+                source_count=len(snapshot.identities),
+            )
 
-    discovery_registry = {key: registry[key] for key in ("ligie", "nico")}
-    discovered = discover_registered_sources(discovery_registry, client)
-    ligie_document = select_current_document(discovered, "ligie", "ligie_snapshot")
-    nico_document = select_current_document(discovered, "nico", "nico_snapshot")
-
-    ligie_source = _capture_source(
-        dataset_key="ligie",
-        document_role="ligie_snapshot",
-        title=ligie_document.title or _filename(ligie_document.source_url),
-        url=ligie_document.source_url,
-        entry=registry["ligie"],
-        config=config,
-        session=client,
-    )
-    nico_source = _capture_source(
-        dataset_key="nico",
-        document_role="nico_snapshot",
-        title=nico_document.title or _filename(nico_document.source_url),
-        url=nico_document.source_url,
-        entry=registry["nico"],
-        config=config,
-        session=client,
-    )
-    diputados_source = _capture_source(
-        dataset_key="diputados_ligie",
-        document_role="consolidated_text",
-        title=f"Texto vigente {config.ligie_version.replace('-', ' ')}",
-        url=consolidated_url,
-        entry=diputados_entry,
-        config=config,
-        session=client,
-    )
-    captured = [ligie_source, nico_source, diputados_source]
+    # A marked schema-v1 baseline deliberately reaches the full build. The schema
+    # and provenance upgrade itself is a meaningful release change even if tariff
+    # rows would otherwise be logically identical.
+    sources_by_key = {source.dataset_key: source for source in snapshot.sources}
+    ligie_source = sources_by_key["ligie"]
+    nico_source = sources_by_key["nico"]
+    diputados_source = sources_by_key["diputados_ligie"]
 
     ligie_profile = resolve_workbook_profile(
         probe_workbook(ligie_source.capture.path), "ligie_snapshot"
@@ -354,7 +291,7 @@ def build_official_dataset(
     classifications = assemble_classifications(hs_rows, fraction_rows, nico_rows)
 
     source_documents = sorted(
-        (item.source_document for item in captured),
+        (item.source_document for item in snapshot.sources),
         key=lambda row: str(row["source_document_id"]),
     )
     release = {
@@ -363,6 +300,7 @@ def build_official_dataset(
         "ligie_version": config.ligie_version,
         "effective_as_of": config.effective_as_of,
         "generated_at": generated_at,
+        "release_metadata": _release_metadata(config, snapshot, classifications),
     }
     candidate = config.work_dir / "candidate" / "arancel_mx.duckdb"
     init_tariff_db(candidate)
@@ -405,7 +343,7 @@ def build_official_dataset(
         raise ValueError("canonical tariff fractions contain no IGI/IGE tariff values")
 
     export_arancel_release(candidate, config.output_dir)
-    source_dir = _release_sources(config, captured)
+    source_dir = write_release_sources(config, snapshot.sources)
     source_rows = verify_sources(source_dir)
     prepare_release_archive(
         config.output_dir,
@@ -414,11 +352,12 @@ def build_official_dataset(
     )
     verified = verify_release(config.output_dir)
 
-    return {
-        "dataset_version": str(verified["dataset_version"]),
-        "schema_version": str(verified["schema_version"]),
-        "row_count": int(verified["row_count"]),
-        "validation_status": str(verified["validation_status"]),
-        "source_count": len(source_rows),
-        "output_dir": str(config.output_dir),
-    }
+    return OfficialBuildResult(
+        status="built",
+        dataset_version=str(verified["dataset_version"]),
+        schema_version=str(verified["schema_version"]),
+        row_count=int(verified["row_count"]),
+        validation_status=str(verified["validation_status"]),
+        source_count=len(source_rows),
+        output_dir=str(config.output_dir),
+    ).to_dict()

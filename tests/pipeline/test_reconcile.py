@@ -4,10 +4,12 @@ import pytest
 
 from arancel_mx.pipeline.reconcile import (
     DiscoveredDocument,
+    discover_registered_sources,
     reconcile_legal_instruments,
     select_current_document,
 )
 from arancel_mx.sources.diputados import parse_ligie_ledger
+from arancel_mx.sources.registry import load_source_registry
 
 
 FIXTURE = Path(__file__).parents[1] / "fixtures" / "diputados" / "ligie_2022.html"
@@ -36,6 +38,41 @@ def discovered(url, title):
         title=title,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
+
+
+class DiscoveryResponse:
+    text = ""
+
+    def raise_for_status(self):
+        return None
+
+
+class DiscoveryClient:
+    def __init__(self):
+        self.calls = []
+
+    def get(self, url, timeout=None):
+        self.calls.append((url, timeout))
+        return DiscoveryResponse()
+
+
+def test_registered_discovery_uses_configured_timeout():
+    entry = load_source_registry()["ligie"]
+    client = DiscoveryClient()
+
+    discover_registered_sources({"ligie": entry}, client, timeout_s=17.5)
+
+    assert client.calls == [(entry.canonical_page, 17.5)]
+
+
+def test_registered_discovery_rejects_non_positive_timeout_before_network_access():
+    entry = load_source_registry()["ligie"]
+    client = DiscoveryClient()
+
+    with pytest.raises(ValueError, match="timeout_s must be positive"):
+        discover_registered_sources({"ligie": entry}, client, timeout_s=0)
+
+    assert client.calls == []
 
 
 def test_missing_dof_evidence_blocks_publication():
