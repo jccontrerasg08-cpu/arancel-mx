@@ -35,6 +35,58 @@ jobs:
       - name: Build distributions
         run: python -m build
 
+      - name: Build DuckDB compatibility fixture
+        run: |
+          rm -rf /tmp/arancel-duckdb-compat-warehouse.duckdb /tmp/arancel-duckdb-compat-release
+          python - <<'PY'
+          from datetime import date, datetime
+          from pathlib import Path
+
+          from arancel_mx.pipeline.build import export_arancel_release, materialize_arancel
+          from arancel_mx.storage.duckdb import connect, init_tariff_db
+
+          warehouse = init_tariff_db(Path("/tmp/arancel-duckdb-compat-warehouse.duckdb"))
+          release_metadata = {
+              "registry_version": "compatibility-probe",
+              "registry_sha256": "b" * 64,
+              "git_commit_sha": "compatibility-probe",
+              "github_run_id": "compatibility-probe",
+              "github_run_attempt": "1",
+              "github_workflow_ref": "compatibility-probe",
+              "github_artifact_name": "compatibility-probe",
+              "reconciliation": {
+                  "publishable": True,
+                  "error_codes": [],
+                  "discrepancies": [],
+                  "legal_document_ids": [],
+                  "proposal_document_ids": [],
+                  "indicator_document_ids": [],
+              },
+              "source_identity": [],
+          }
+          release = {
+              "dataset_version": "compatibility-probe",
+              "schema_version": "2",
+              "ligie_version": "compatibility-probe",
+              "effective_as_of": date(2026, 1, 1),
+              "generated_at": datetime(2026, 1, 1),
+              "release_metadata": release_metadata,
+          }
+          with connect(warehouse) as connection:
+              materialize_arancel(connection, [], [], [], release)
+          export_arancel_release(warehouse, Path("/tmp/arancel-duckdb-compat-release"))
+          PY
+
+      - name: Verify DuckDB 1.1.0 compatibility
+        run: |
+          rm -rf /tmp/arancel-duckdb-1.1.0
+          python -m venv /tmp/arancel-duckdb-1.1.0
+          /tmp/arancel-duckdb-1.1.0/bin/python -m pip install pip==26.2.1
+          /tmp/arancel-duckdb-1.1.0/bin/python -m pip install duckdb==1.1.0
+          /tmp/arancel-duckdb-1.1.0/bin/python scripts/check_duckdb_compat.py \
+            /tmp/arancel-duckdb-compat-release/arancel_mx.duckdb \
+            --expected-row-count 0
+
       - name: Smoke-test built distributions
         run: |
           python scripts/certify_package_install.py dist/*.whl

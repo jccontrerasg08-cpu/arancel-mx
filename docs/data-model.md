@@ -49,11 +49,35 @@ generated_at
 
 `registry_sha256` fija la identidad del source registry usado. `github_run_id`, `github_run_attempt`, `github_workflow_ref` y `github_artifact_name` permiten relacionar una release con el artifact exacto validado por Actions.
 
-## Tablas DuckDB
+## DuckDB interno y DuckDB distribuible
 
-Las tablas principales son `source_registry`, `source_document`, `hs_code`, `tariff_fraction`, `nico`, `tariff_rate`, `canonical_record`, `record_provenance` y `dataset_release`. Tablas separadas conservan enmiendas NICO, notas nacionales, indicadores y evidencia de conciliación sin mezclarlas con `arancel_mx`.
+El warehouse interno usa un esquema más amplio para captura, staging y construcción reproducible. Ahí existen tablas operativas como `source_registry`, `source_discovery_run`, `source_discovery_item`, `source_capture`, `staging_arancel_row` y `arancel_quarantine`, además de las tablas canónicas.
 
-La vista pública `arancel_mx` expone códigos, descripción, jerarquía, unidad, tasas, vigencia, versión, estado actual y procedencia verificable.
+El archivo público `arancel_mx.duckdb` no es una copia completa de ese warehouse. El exporter crea un DuckDB distribuible nuevo y copia únicamente tablas canónicas o de auditoría pública. El contrato mínimo que la certificación de consumidor exige incluye:
+
+```text
+source_document
+hs_code
+tariff_fraction
+nico
+tariff_rate
+canonical_record
+record_provenance
+dataset_release
+arancel_mx  (vista)
+```
+
+También pueden incluirse tablas y vistas públicas para versiones/enmiendas NICO, notas nacionales e indicadores cuando forman parte del modelo distribuible.
+
+`source_registry` **no se embebe en el DuckDB público**. La identidad exacta del registry usado para construir una release se conserva en `manifest.json` mediante `registry_version` y `registry_sha256`, y también queda disponible dentro del metadata de release correspondiente. Esta separación evita confundir estado operativo del pipeline con el contrato de consumo del dataset.
+
+La vista pública `arancel_mx` expone códigos, descripción, jerarquía, unidad, tasas, vigencia, versión, estado actual y procedencia verificable. Su orden de columnas se valida contra el contrato canónico `PUBLIC_COLUMNS`.
+
+### Compatibilidad mínima de DuckDB
+
+El paquete declara `duckdb>=1.1`. CI protege esa promesa con una prueba ejecutada, no sólo documental: primero genera un `arancel_mx.duckdb` usando el exporter y el entorno productivo actual, y luego abre ese mismo archivo en modo read-only dentro de un entorno aislado con `duckdb==1.1.0`.
+
+La prueba consulta la vista `arancel_mx` y `dataset_release`. Si una futura actualización del DuckDB usado para construir releases deja de producir un archivo consumible por 1.1.0, `CI / test` falla antes de integrar el cambio. El floor sólo debe cambiar mediante un cambio explícito y revisado respaldado por esa evidencia ejecutada.
 
 ## `dataset_release.release_metadata_json`
 
