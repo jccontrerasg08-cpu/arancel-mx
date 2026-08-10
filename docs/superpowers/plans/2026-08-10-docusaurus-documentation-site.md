@@ -4,29 +4,67 @@
 
 **Goal:** Publish a bilingual static documentation site for `arancel-mx` on GitHub Pages without coupling Node.js or Docusaurus to the tariff ETL/runtime and without creating a second manually maintained source of truth for technical documentation.
 
-**Architecture:** Keep the Python/data project at repository root and add an isolated `website/` Docusaurus project. Docusaurus consumes root technical docs through the docs plugin, excludes internal `docs/superpowers/**`, stores English translations through native i18n, and deploys only the generated static site through a dedicated least-privilege GitHub Pages workflow.
+**Architecture:** Keep the Python/data project at repository root and add an isolated `website/` Docusaurus project. Canonical Spanish product documentation remains under root `docs/`; Docusaurus consumes that directory directly, excludes maintainer/internal material, and stores English translations only through native Docusaurus i18n. A read-only docs CI validates TypeScript and both locales, while a separate least-privilege Pages workflow deploys only static output from protected `main`.
 
-**Tech Stack:** Docusaurus 3.10.2 as verified from official docs during planning, Node.js >=20, npm lockfile + `npm ci`, TypeScript Docusaurus config/components, GitHub Actions, GitHub Pages, Docusaurus native i18n.
+**Tech Stack:** Docusaurus 3.10.2 planning baseline, Node.js >=20, TypeScript >=5.1, npm lockfile + `npm ci`, React/classic preset versions validated from a temporary official Docusaurus scaffold at implementation time, GitHub Actions, GitHub Pages, Docusaurus native i18n.
 
 ## Global Constraints
 
-- Re-verify the current stable Docusaurus version from `https://docusaurus.io/docs/installation` immediately before the implementation PR; during planning the stable version is `3.10.2` and the documented requirement is Node.js `20.0` or above.
-- All `@docusaurus/*` packages must use the same exact version.
+- Immediately before the first implementation PR, re-verify the stable Docusaurus release from the official versions/installation pages. During plan self-review on 2026-08-10, the official stable release is `3.10.2` and the documented Node.js floor is `>=20.0`.
+- Re-verify TypeScript support from the official Docusaurus TypeScript page. During plan self-review, the documented TypeScript floor is `>=5.1` and the required support packages are `typescript`, `@docusaurus/module-type-aliases`, `@docusaurus/tsconfig`, and `@docusaurus/types`.
+- All `@docusaurus/*` packages in the site use the same exact Docusaurus version.
+- Before committing `website/package.json`, create a disposable official TypeScript scaffold with the verified Docusaurus version and use its compatible React/MDX/theme dependency versions as evidence. Do not commit the disposable scaffold.
 - Commit `website/package-lock.json`; CI uses `npm ci`, never floating installs.
 - Do not run Node.js tooling inside `.github/workflows/official-data-pipeline.yml`.
-- Do not move Python package files, data parsers, release code, or source registry into `website/`.
+- Do not move Python package files, source capture/parsers, release code, source registry, or generated datasets into `website/`.
 - Default locale is Spanish `es`; secondary locale is English `en`.
-- GitHub Pages is a single deployment; English lives under the localized `/en/` path while Spanish remains the default path.
-- The project-page URL is `https://jccontrerasg08-cpu.github.io/arancel-mx/` unless repository Pages settings are deliberately changed later.
-- Internal implementation specs under `docs/superpowers/` must not be exposed in public navigation or generated public docs.
-- Root `README.md` and `README.en.md` remain concise repository entrypoints; they are not copied wholesale into the site.
-- Public technical docs should be sourced from root `docs/` where practical. English translated Markdown belongs to Docusaurus native `website/i18n/en/docusaurus-plugin-content-docs/current/` rather than a second English root docs tree.
-- Pages deploy job receives only `contents: read`, `pages: write`, `id-token: write`.
-- Pull-request docs CI receives `contents: read` only and never deploys.
-- All GitHub Actions references must be pinned to full commit SHAs. Resolve current official action tags immediately before the PR and record the resolved SHAs in the PR double-check evidence.
-- Every implementation PR must include the same double-check gate required by the approved certification spec.
+- The project-page URL is `https://jccontrerasg08-cpu.github.io/arancel-mx/` unless repository Pages settings are deliberately changed and documented later.
+- Root `README.md` and `README.en.md` remain concise repository entrypoints with installation, quick CLI usage, legal disclaimer, architecture summary, releases, and documentation links.
+- Internal `docs/superpowers/**` and maintainer-only `docs/operations/**` are excluded from public Docusaurus input.
+- Public Spanish documentation has one canonical root file per topic. English translations live only under `website/i18n/en/docusaurus-plugin-content-docs/current/`.
+- Pages deploy receives only `contents: read`, `pages: write`, and `id-token: write`. Pull-request docs CI receives `contents: read` only.
+- All committed GitHub Actions references use full commit SHAs resolved from official action repositories immediately before the corresponding PR.
+- Every implementation PR uses the approved double-check gate from `2026-08-10-production-certification-rollout-index.md`.
 
 ---
+
+## Canonical public documentation set
+
+The public sidebar contains exactly these Spanish source files:
+
+```text
+docs/getting-started.md
+docs/cli.md
+docs/python-api.md
+docs/dataset.md
+docs/hs-mx-nico.md
+docs/data-model.md
+docs/sources.md
+docs/provenance.md
+docs/release-process.md
+docs/reproducibility.md
+docs/verify-release.md
+docs/production-certification.md
+```
+
+The corresponding English translation files are exactly:
+
+```text
+website/i18n/en/docusaurus-plugin-content-docs/current/getting-started.md
+website/i18n/en/docusaurus-plugin-content-docs/current/cli.md
+website/i18n/en/docusaurus-plugin-content-docs/current/python-api.md
+website/i18n/en/docusaurus-plugin-content-docs/current/dataset.md
+website/i18n/en/docusaurus-plugin-content-docs/current/hs-mx-nico.md
+website/i18n/en/docusaurus-plugin-content-docs/current/data-model.md
+website/i18n/en/docusaurus-plugin-content-docs/current/sources.md
+website/i18n/en/docusaurus-plugin-content-docs/current/provenance.md
+website/i18n/en/docusaurus-plugin-content-docs/current/release-process.md
+website/i18n/en/docusaurus-plugin-content-docs/current/reproducibility.md
+website/i18n/en/docusaurus-plugin-content-docs/current/verify-release.md
+website/i18n/en/docusaurus-plugin-content-docs/current/production-certification.md
+```
+
+`CONTRIBUTING.md` remains at repository root and is linked from the navbar/footer rather than duplicated as a Docusaurus doc. `docs/arancel-mx.md` remains available for repository-specific historical/contextual content but is not part of the public sidebar unless a later reviewed PR gives it a distinct non-duplicative role.
 
 ## Planned file structure
 
@@ -50,18 +88,122 @@ website/
         │   └── footer.json
         └── docusaurus-plugin-content-docs/
             └── current/
+                ├── getting-started.md
+                ├── cli.md
+                ├── python-api.md
+                ├── dataset.md
+                ├── hs-mx-nico.md
                 ├── data-model.md
-                ├── production-certification.md
-                └── ...public translated docs
+                ├── sources.md
+                ├── provenance.md
+                ├── release-process.md
+                ├── reproducibility.md
+                ├── verify-release.md
+                └── production-certification.md
 
 .github/workflows/
 ├── docs-ci.yml
 └── docs-pages.yml
 ```
 
-The docs plugin source path is root `../docs`. Public docs are filtered with explicit excludes so `docs/superpowers/**` never enters the site build.
+### Task 1: Create the canonical Spanish public docs set
 
-### Task 1: Scaffold a minimal pinned Docusaurus site
+**Files:**
+- Create: `docs/getting-started.md`
+- Create: `docs/cli.md`
+- Create: `docs/python-api.md`
+- Create: `docs/dataset.md`
+- Create: `docs/hs-mx-nico.md`
+- Modify: `docs/data-model.md`
+- Modify: `docs/sources.md`
+- Create: `docs/provenance.md`
+- Modify: `docs/release-process.md`
+- Create: `docs/reproducibility.md`
+- Create: `docs/verify-release.md`
+- Modify: `docs/production-certification.md`
+- Modify: `README.md`
+- Modify: `README.en.md`
+- Create: `tests/test_public_docs_contract.py`
+
+**Interfaces:**
+- Consumes: current README, data model, source docs, release process, production certification evidence, implemented CLI/package interfaces.
+- Produces: twelve non-overlapping Spanish public docs with stable topic ownership.
+
+- [ ] **Step 1: Write the RED public-doc-set contract test**
+
+```python
+from pathlib import Path
+
+PUBLIC_DOCS = {
+    "getting-started.md",
+    "cli.md",
+    "python-api.md",
+    "dataset.md",
+    "hs-mx-nico.md",
+    "data-model.md",
+    "sources.md",
+    "provenance.md",
+    "release-process.md",
+    "reproducibility.md",
+    "verify-release.md",
+    "production-certification.md",
+}
+
+
+def test_canonical_public_docs_exist():
+    for name in PUBLIC_DOCS:
+        assert (Path("docs") / name).is_file(), name
+```
+
+Add assertions that `README.md` links to `docs/getting-started.md` and `README.en.md` links to the future public site without claiming it is live until Pages deployment has succeeded.
+
+- [ ] **Step 2: Confirm RED**
+
+Run: `python -m pytest tests/test_public_docs_contract.py -q`
+
+Expected: FAIL for the new canonical files that do not yet exist.
+
+- [ ] **Step 3: Write topic-owned docs from implemented behavior only**
+
+Use these exact responsibilities:
+
+```text
+getting-started.md          installation + first verified local commands
+cli.md                      build/check-updates/reconcile/release command contract
+python-api.md               currently supported import surface; explicitly 0.x/limited API
+dataset.md                  six assets, row levels, how to consume CSV/JSON/DuckDB
+hs-mx-nico.md               HS2 -> HS4 -> HS6 -> MX8 -> NICO10 hierarchy
+sources.md                  official authorities, roles, source registry behavior
+provenance.md               source_document/source_capture/record provenance and legal evidence
+release-process.md          automated build/publish/fail-closed lifecycle
+reproducibility.md          locks, hashes, deterministic text/logical output semantics
+verify-release.md           SHA256SUMS, manifest, attestations/release verification when proven
+production-certification.md live certification/runbook evidence
+```
+
+Do not present a search API or legal advisory service as implemented. `python-api.md` must state that the public Python API is intentionally limited during 0.x.
+
+- [ ] **Step 4: Reduce README duplication without removing GitHub usability**
+
+Keep install, short CLI example, legal disclaimer, source/release summary, badges, architecture diagram/summary, and links. Move deep explanations to the canonical docs instead of maintaining two full narratives.
+
+- [ ] **Step 5: Verify**
+
+```bash
+python -m pytest tests/test_public_docs_contract.py -q
+python -m pytest -q
+python -m build
+git diff --check
+```
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add docs/getting-started.md docs/cli.md docs/python-api.md docs/dataset.md docs/hs-mx-nico.md docs/data-model.md docs/sources.md docs/provenance.md docs/release-process.md docs/reproducibility.md docs/verify-release.md docs/production-certification.md README.md README.en.md tests/test_public_docs_contract.py
+git commit -m "docs: define canonical public documentation"
+```
+
+### Task 2: Scaffold pinned Docusaurus with official TypeScript support
 
 **Files:**
 - Create: `website/package.json`
@@ -72,69 +214,67 @@ The docs plugin source path is root `../docs`. Public docs are filtered with exp
 - Create: `website/src/css/custom.css`
 - Create: `website/src/pages/index.tsx`
 - Modify: `.gitignore`
+- Create: `tests/test_docs_site_contract.py`
 
 **Interfaces:**
-- Produces: `cd website && npm run build` static site at `website/build/`.
+- Produces: `npm run typecheck` and `npm run build` from `website/` with Spanish as default locale.
 
-- [ ] **Step 1: Re-verify upstream versions before writing package files**
+- [ ] **Step 1: Re-verify upstream and create a disposable reference scaffold**
 
-Open the official Docusaurus installation page and record in the PR body:
-
-```text
-stable Docusaurus version
-minimum Node.js version
-verification date
-```
-
-During planning the verified values are Docusaurus `3.10.2` and Node.js `>=20.0`. If upstream stable changes before implementation, use the newly verified stable version consistently for all `@docusaurus/*` packages and update this plan's execution note in the PR body; do not mix Docusaurus package versions.
-
-- [ ] **Step 2: Create a minimal package manifest manually rather than committing disposable scaffold content**
-
-Use exact dependencies for the verified stable version. For the planning-time version the dependency core is:
-
-```json
-{
-  "private": true,
-  "scripts": {
-    "start": "docusaurus start",
-    "build": "docusaurus build",
-    "clear": "docusaurus clear",
-    "serve": "docusaurus serve",
-    "write-translations": "docusaurus write-translations"
-  },
-  "dependencies": {
-    "@docusaurus/core": "3.10.2",
-    "@docusaurus/preset-classic": "3.10.2",
-    "@mdx-js/react": "^3.0.0",
-    "clsx": "^2.1.1",
-    "prism-react-renderer": "^2.4.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
-  },
-  "engines": {
-    "node": ">=20.0"
-  }
-}
-```
-
-If the re-verified Docusaurus package metadata requires different React/peer versions, use the exact compatible versions generated/resolved by npm and explain the difference in the PR double check rather than forcing the planning-time values.
-
-- [ ] **Step 3: Generate and commit lockfile**
-
-Run:
+Run outside the repository or under a temporary ignored path:
 
 ```bash
-cd website
-npm install
+npx create-docusaurus@3.10.2 docusaurus-reference classic --typescript
+cd docusaurus-reference
 npm ci
 npx docusaurus --version
 ```
 
-Expected: the reported Docusaurus version exactly matches the pinned version and `npm ci` completes from the clean lockfile.
+If the official stable version is no longer 3.10.2, substitute the newly verified stable version in both commands. Record the generated dependency versions and delete the reference directory after comparison.
 
-- [ ] **Step 4: Configure project-page routing and i18n**
+- [ ] **Step 2: Create `website/package.json` with the verified dependency set**
 
-In `docusaurus.config.ts` configure:
+Required scripts:
+
+```json
+{
+  "start": "docusaurus start",
+  "build": "docusaurus build",
+  "clear": "docusaurus clear",
+  "serve": "docusaurus serve",
+  "write-translations": "docusaurus write-translations",
+  "typecheck": "tsc --noEmit"
+}
+```
+
+Required Docusaurus packages use the same exact verified version:
+
+```text
+@docusaurus/core
+@docusaurus/preset-classic
+@docusaurus/module-type-aliases
+@docusaurus/tsconfig
+@docusaurus/types
+```
+
+Also include `typescript` at a version meeting the verified Docusaurus floor plus the React/ReactDOM/MDX/Prism/clsx versions from the disposable official scaffold. Do not guess peer dependency versions.
+
+- [ ] **Step 3: Use the official TypeScript base config**
+
+`website/tsconfig.json`:
+
+```json
+{
+  "extends": "@docusaurus/tsconfig",
+  "compilerOptions": {
+    "baseUrl": "."
+  }
+}
+```
+
+- [ ] **Step 4: Configure routing, i18n, docs source, and exclusions**
+
+`docusaurus.config.ts` must include:
 
 ```ts
 url: 'https://jccontrerasg08-cpu.github.io',
@@ -149,15 +289,36 @@ i18n: {
 },
 ```
 
-Disable the blog unless there is actual project content for it. Add navbar links for Docs, GitHub Releases, GitHub repository, and the locale dropdown.
+Configure preset docs with `path: '../docs'`, explicit sidebar, and excludes for `superpowers/**` and `operations/**`. Disable the blog. The navbar includes Inicio/Home, Docs, Releases, GitHub, Contribuir/Contributing, and locale dropdown.
 
-- [ ] **Step 5: Add a minimal landing page**
+- [ ] **Step 5: Define explicit sidebar IDs**
 
-The landing page must state only implemented capabilities: LIGIE/NICO source capture, provenance, DuckDB/CSV/JSON, fail-closed reconciliation, six-asset releases, CLI, and automated pipeline. Do not claim search APIs or legal advisory capability that the package does not provide.
+`sidebars.ts` lists only:
 
-- [ ] **Step 6: Ignore generated Node/Docusaurus output**
+```text
+getting-started
+cli
+python-api
+dataset
+hs-mx-nico
+data-model
+sources
+provenance
+release-process
+reproducibility
+verify-release
+production-certification
+```
 
-Add only:
+Do not use auto-generated sidebars for the root docs tree.
+
+- [ ] **Step 6: Add site-contract tests**
+
+Assert the config contains `../docs`, both exclusion patterns, ES/EN locales, the GitHub Pages base URL, and that `website/docs` does not exist. Assert every public sidebar ID belongs to the exact canonical set from `tests/test_public_docs_contract.py`.
+
+- [ ] **Step 7: Ignore generated output only**
+
+Add:
 
 ```text
 website/node_modules/
@@ -165,116 +326,41 @@ website/build/
 website/.docusaurus/
 ```
 
-Do not ignore `website/package-lock.json`.
+Do not ignore `website/package-lock.json` or `website/i18n/`.
 
-- [ ] **Step 7: Verify the initial build**
-
-Run:
+- [ ] **Step 8: Generate lockfile and verify**
 
 ```bash
 cd website
+npm install
 npm ci
+npm run typecheck
 npm run build
-cd ..
-git diff --check
-```
-
-Expected: build succeeds and `website/build/` remains untracked.
-
-- [ ] **Step 8: Commit**
-
-```bash
-git add website .gitignore
-git commit -m "docs: scaffold Docusaurus site"
-```
-
-### Task 2: Consume canonical root docs and exclude internal implementation material
-
-**Files:**
-- Modify: `website/docusaurus.config.ts`
-- Modify: `website/sidebars.ts`
-- Create: `tests/test_docs_site_contract.py`
-- Modify public docs under `docs/` only where front matter or public ordering is required.
-
-**Interfaces:**
-- Consumes: root `docs/` as canonical Spanish technical docs.
-- Produces: public docs routes under `/arancel-mx/docs/...` with `docs/superpowers/**` excluded.
-
-- [ ] **Step 1: Add RED static contract tests before changing Docusaurus docs configuration**
-
-```python
-from pathlib import Path
-
-
-def test_public_docs_site_excludes_internal_superpowers_specs():
-    config = Path("website/docusaurus.config.ts").read_text(encoding="utf-8")
-    assert "../docs" in config
-    assert "superpowers/**" in config
-```
-
-Add another test asserting no `website/docs/` directory exists, so the project cannot silently drift into hand-maintained duplicate Spanish docs.
-
-- [ ] **Step 2: Confirm RED**
-
-Run: `python -m pytest tests/test_docs_site_contract.py -q`
-
-Expected: FAIL until root docs consumption is configured.
-
-- [ ] **Step 3: Point preset-classic docs to `../docs`**
-
-Use the docs plugin option `path: '../docs'`. Configure explicit excludes including at least:
-
-```text
-superpowers/**
-```
-
-If Docusaurus 3.10.2 rejects external docs paths during the proof build, stop this task and use the approved deterministic-copy fallback: create `website/scripts/sync-docs.mjs` that copies only a fixed allowlist into a generated ignored directory and supports `--check`. Do not create hand-maintained duplicates.
-
-- [ ] **Step 4: Define explicit public sidebar**
-
-Do not use auto-generated navigation for the entire root docs tree. `sidebars.ts` lists only public product docs such as data model, source/provenance guidance, release verification, production certification, and contribution guidance. Internal plans/specs remain unreachable because they are excluded from build input.
-
-- [ ] **Step 5: Build and inspect generated routes**
-
-Run:
-
-```bash
-cd website
-npm ci
-npm run build
-find build -type f | grep -E 'superpowers|production-hardening' && exit 1 || true
 cd ..
 python -m pytest tests/test_docs_site_contract.py -q
 git diff --check
 ```
 
-Expected: no public build path contains internal superpowers material.
-
-- [ ] **Step 6: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
-git add website/docusaurus.config.ts website/sidebars.ts tests/test_docs_site_contract.py docs
-git commit -m "docs: publish canonical root documentation"
+git add website .gitignore tests/test_docs_site_contract.py
+git commit -m "docs: scaffold typed Docusaurus site"
 ```
 
-Stage only root docs actually changed for public front matter/navigation.
-
-### Task 3: Add native English i18n with core ES/EN parity
+### Task 3: Add complete English i18n parity
 
 **Files:**
 - Create: `website/i18n/en/code.json`
 - Create: `website/i18n/en/docusaurus-theme-classic/navbar.json`
 - Create: `website/i18n/en/docusaurus-theme-classic/footer.json`
-- Create: `website/i18n/en/docusaurus-plugin-content-docs/current/*.md`
-- Modify: `website/docusaurus.config.ts`
+- Create the twelve exact translation files listed in the canonical translation section above.
 - Modify: `tests/test_docs_site_contract.py`
 
 **Interfaces:**
-- Produces: Spanish default site and English site under `/en/` in one build.
+- Produces: Spanish default routes and English `/en/` routes from one Docusaurus build.
 
-- [ ] **Step 1: Generate Docusaurus translation skeletons**
-
-Run:
+- [ ] **Step 1: Generate the official translation skeleton**
 
 ```bash
 cd website
@@ -282,27 +368,26 @@ npm ci
 npm run write-translations -- --locale en
 ```
 
-Commit only translation files that are used. Remove generated noise for plugins/features that are disabled.
+Keep only translation files for enabled site features.
 
-- [ ] **Step 2: Translate public navigation and landing-page strings**
+- [ ] **Step 2: Translate navigation/site strings**
 
-Translate labels faithfully. Keep technical identifiers such as `LIGIE`, `NICO`, `HS6`, `MX8`, `DuckDB`, `SHA256SUMS`, and GitHub workflow names unchanged where they are identifiers.
+Preserve technical identifiers (`LIGIE`, `NICO`, `HS6`, `MX8`, `DuckDB`, `SHA256SUMS`, workflow names) where they are identifiers rather than prose.
 
-- [ ] **Step 3: Translate the core public docs set**
+- [ ] **Step 3: Translate all twelve public docs**
 
-At minimum include English counterparts for every document present in the public sidebar. Do not translate `docs/superpowers/**` because those files are excluded and internal.
+Translate source-supported content faithfully. Do not add English-only product claims absent from the canonical Spanish source.
 
-- [ ] **Step 4: Add parity test**
+- [ ] **Step 4: Add exact parity test**
 
-The Python static test reads `sidebars.ts` public document IDs and verifies corresponding translated Markdown exists under `website/i18n/en/docusaurus-plugin-content-docs/current/` for every public Spanish doc that requires translation.
+The test declares the same twelve IDs and asserts every English file exists. It also asserts no English file exists under an `operations` or `superpowers` path.
 
-- [ ] **Step 5: Build all locales and each locale separately**
-
-Run:
+- [ ] **Step 5: Verify all builds**
 
 ```bash
 cd website
 npm ci
+npm run typecheck
 npm run build
 npm run build -- --locale es
 npm run build -- --locale en
@@ -311,53 +396,45 @@ python -m pytest tests/test_docs_site_contract.py -q
 git diff --check
 ```
 
-Expected: all builds succeed. For the all-locales build, Spanish is at the base path and English is under `/en/` as documented by Docusaurus.
-
 - [ ] **Step 6: Commit**
 
 ```bash
-git add website/i18n website/docusaurus.config.ts tests/test_docs_site_contract.py
-git commit -m "docs: add English Docusaurus localization"
+git add website/i18n tests/test_docs_site_contract.py
+git commit -m "docs: add complete English documentation parity"
 ```
 
-### Task 4: Add read-only docs CI for pull requests
+### Task 4: Add read-only documentation CI
 
 **Files:**
 - Create: `.github/workflows/docs-ci.yml`
 - Modify: `tests/test_docs_site_contract.py`
 
 **Interfaces:**
-- Produces: a non-required or separately-required `docs` job that validates Docusaurus changes without deployment permissions.
+- Produces: PR/push documentation check with no deployment/write permissions.
 
-- [ ] **Step 1: Resolve official action tags to full SHAs before writing workflow**
+- [ ] **Step 1: Resolve official action tags to full SHAs**
 
-Use GitHub API or `gh api` against the official action repositories to resolve the current tag commits for:
+Resolve current official tags for `actions/checkout` and `actions/setup-node` immediately before the PR. Record tag -> SHA mappings in the PR double-check evidence.
 
-```text
-actions/checkout@v6
-actions/setup-node@v4
-```
-
-Record the tag and resolved full SHA in the PR double-check section. Do not use floating tags in committed YAML.
-
-- [ ] **Step 2: Add RED workflow contract assertions**
+- [ ] **Step 2: Add RED workflow contract test**
 
 Require:
 
 ```text
-contents: read
+permissions contents: read
+npm ci
+npm run typecheck
+npm run build
+npm run build -- --locale es
+npm run build -- --locale en
 no pages: write
 no id-token: write
 no contents: write
-npm ci
-npm run build
---locale es
---locale en
 ```
 
-- [ ] **Step 3: Create docs CI workflow**
+- [ ] **Step 3: Implement docs CI**
 
-Trigger on `pull_request` and pushes to `main` when these paths change:
+Trigger on `pull_request` and pushes to `main` for:
 
 ```text
 website/**
@@ -365,26 +442,31 @@ docs/**
 README.md
 README.en.md
 .github/workflows/docs-ci.yml
+.github/workflows/docs-pages.yml
+.github/dependabot.yml
 ```
 
-Use Node 20 because Docusaurus 3.10.2 officially requires Node >=20; if the implementation-time Docusaurus version raises the requirement, use the newly verified compatible Node LTS and document it.
+Use the Node version supported by the verified Docusaurus stable release; Node 20 satisfies the planning-time 3.10.2 requirement.
 
-- [ ] **Step 4: Run Python contract tests and local docs build**
+- [ ] **Step 4: Verify**
 
 ```bash
 python -m pytest tests/test_docs_site_contract.py -q
 cd website
 npm ci
+npm run typecheck
 npm run build
 npm run build -- --locale es
 npm run build -- --locale en
+cd ..
+git diff --check
 ```
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add .github/workflows/docs-ci.yml tests/test_docs_site_contract.py
-git commit -m "ci: validate Docusaurus documentation"
+git commit -m "ci: validate bilingual Docusaurus docs"
 ```
 
 ### Task 5: Add least-privilege GitHub Pages deployment
@@ -394,29 +476,29 @@ git commit -m "ci: validate Docusaurus documentation"
 - Modify: `tests/test_docs_site_contract.py`
 
 **Interfaces:**
-- Produces: deployment of `website/build/` to the `github-pages` environment from protected `main` only.
+- Produces: deployment of `website/build/` to `github-pages` from protected `main`.
 
-- [ ] **Step 1: Confirm repository Pages source is GitHub Actions before enabling deploy**
+- [ ] **Step 1: Confirm Pages repository setting**
 
-In repository Settings -> Pages, select GitHub Actions as the publishing source. Do not deploy from a `gh-pages` branch because the approved design keeps generated output out of Git history.
+Set Settings -> Pages -> Source to GitHub Actions. Do not create a `gh-pages` branch.
 
-- [ ] **Step 2: Resolve Pages action tags to full SHAs**
+- [ ] **Step 2: Resolve official Pages action tags to full SHAs**
 
 Resolve current official tags for:
 
 ```text
-actions/checkout@v6
-actions/setup-node@v4
-actions/configure-pages@v5
-actions/upload-pages-artifact@v4
-actions/deploy-pages@v4
+actions/checkout
+actions/setup-node
+actions/configure-pages
+actions/upload-pages-artifact
+actions/deploy-pages
 ```
 
-The official GitHub Pages docs currently require the deploy job to have at least `pages: write` and `id-token: write`; keep `contents: read` and no broader permissions.
+Record every mapping in the PR body. GitHub's current official Pages docs require `pages: write` and `id-token: write` for deploy.
 
-- [ ] **Step 3: Add RED static workflow contract**
+- [ ] **Step 3: Add RED Pages workflow contract test**
 
-Assert build and deploy are separate jobs, deploy has `needs: build`, the environment is `github-pages`, PR events cannot execute deploy, and permissions are exactly:
+Assert build and deploy are separate jobs, deploy uses `needs: build`, environment name `github-pages`, and exactly these deploy permissions:
 
 ```yaml
 contents: read
@@ -424,18 +506,19 @@ pages: write
 id-token: write
 ```
 
-No `contents: write`, `issues: write`, `packages: write`, or release scripts are permitted.
+Assert there is no `contents: write`, `issues: write`, schedule trigger, release script, or production data pipeline invocation.
 
 - [ ] **Step 4: Implement Pages workflow**
 
-Trigger on push to `main` for docs/website paths and `workflow_dispatch`. Build job runs `npm ci` and `npm run build` from `website/`, then uploads `website/build` with `upload-pages-artifact`. Deploy job uses `actions/deploy-pages` and the `github-pages` environment.
+Trigger on pushes to `main` affecting website/public docs/READMEs plus `workflow_dispatch`. Build runs `npm ci`, `npm run typecheck`, `npm run build`, then uploads `website/build/`. Deploy uses `actions/deploy-pages` and outputs its page URL.
 
-- [ ] **Step 5: Verify workflow contract and local build**
+- [ ] **Step 5: Verify locally/static contract**
 
 ```bash
 python -m pytest tests/test_docs_site_contract.py -q
 cd website
 npm ci
+npm run typecheck
 npm run build
 cd ..
 git diff --check
@@ -445,25 +528,25 @@ git diff --check
 
 ```bash
 git add .github/workflows/docs-pages.yml tests/test_docs_site_contract.py
-git commit -m "ci: deploy docs to GitHub Pages"
+git commit -m "ci: deploy documentation to GitHub Pages"
 ```
 
-### Task 6: Add npm Dependabot coverage and public documentation links
+### Task 6: Add npm Dependabot and contributor docs workflow
 
 **Files:**
 - Modify: `.github/dependabot.yml`
-- Modify: `README.md`
-- Modify: `README.en.md`
 - Modify: `CONTRIBUTING.md`
 - Create: `docs/documentation-site.md`
+- Modify: `README.md`
+- Modify: `README.en.md`
 - Modify: `tests/test_docs_site_contract.py`
 
 **Interfaces:**
-- Produces: discoverable public docs site and maintainable Node dependency policy.
+- Produces: maintained npm dependencies and contributor instructions for the docs site.
 
-- [ ] **Step 1: Add npm Dependabot configuration**
+- [ ] **Step 1: Extend Dependabot without removing current ecosystems**
 
-Add:
+Add exactly:
 
 ```yaml
 - package-ecosystem: "npm"
@@ -477,36 +560,31 @@ Add:
   open-pull-requests-limit: 5
 ```
 
-Preserve existing pip and GitHub Actions entries.
+Keep the existing pip and GitHub Actions entries unchanged.
 
-- [ ] **Step 2: Add README links without replacing repository quick-start content**
+- [ ] **Step 2: Document local docs workflow**
 
-Add a prominent `Documentation`/`Documentación` link pointing to:
+`docs/documentation-site.md` documents:
 
-```text
-https://jccontrerasg08-cpu.github.io/arancel-mx/
-```
-
-Keep installation, CLI examples, legal disclaimer, release links, and core architecture in the root READMEs so GitHub visitors can still understand the project without leaving the repository.
-
-- [ ] **Step 3: Document contributor workflow**
-
-`docs/documentation-site.md` explains:
-
-```text
+```bash
 cd website
 npm ci
+npm run typecheck
 npm run start
 npm run build
 npm run build -- --locale es
 npm run build -- --locale en
 ```
 
-It also explains that root `docs/` is canonical Spanish technical content, English translations live under native Docusaurus i18n, internal `docs/superpowers/` is excluded, and generated `website/build/` is never committed.
+It also states root `docs/` is canonical Spanish product content, English translations use native i18n, `docs/superpowers/` and `docs/operations/` are excluded, and generated `website/build/` is never committed.
 
-- [ ] **Step 4: Add static contract assertions for Dependabot and README link**
+- [ ] **Step 3: Add public site links only after successful Pages deployment**
 
-Ensure the test catches accidental removal of the `/website` npm Dependabot entry and the public site URL.
+Once the Pages URL is proven live, link `https://jccontrerasg08-cpu.github.io/arancel-mx/` from both READMEs and CONTRIBUTING. Until then, keep repository-local docs links so no dead public URL is presented as operational.
+
+- [ ] **Step 4: Extend static tests**
+
+Require the npm Dependabot entry, docs workflow commands, and after Pages has succeeded, the exact public site URL in both READMEs.
 
 - [ ] **Step 5: Verify**
 
@@ -515,6 +593,7 @@ python -m pytest -q
 python -m build
 cd website
 npm ci
+npm run typecheck
 npm run build
 npm run build -- --locale es
 npm run build -- --locale en
@@ -525,57 +604,47 @@ git diff --check
 - [ ] **Step 6: Commit**
 
 ```bash
-git add .github/dependabot.yml README.md README.en.md CONTRIBUTING.md docs/documentation-site.md tests/test_docs_site_contract.py
-git commit -m "docs: document and maintain public docs site"
+git add .github/dependabot.yml CONTRIBUTING.md docs/documentation-site.md README.md README.en.md tests/test_docs_site_contract.py
+git commit -m "docs: maintain public documentation workflow"
 ```
 
-### Task 7: Live Pages deployment certification
+### Task 7: Certify the live Pages deployment and production isolation
 
 **Files:**
-- No code changes required unless the live deployment exposes a reproducible configuration bug.
-- Update documentation only if actual deployed behavior differs from documented assumptions.
+- No code changes unless the live deployment exposes a reproducible configuration error.
+- Update: `docs/documentation-site.md` only if actual verified deployment behavior requires a correction.
 
 **Interfaces:**
-- Produces: a live ES/EN site and evidence that docs deployment is independent from production data publication.
+- Produces: live ES/EN docs and evidence that docs workflows cannot mutate production data releases.
 
-- [ ] **Step 1: Double-check before merging the Pages PR**
+- [ ] **Step 1: Double-check before Pages merge**
 
-Verify:
+Require current main CI green, Production Certification completed, Docusaurus/Node/TypeScript versions re-verified, official action SHAs recorded, Pages source set to GitHub Actions, no internal docs in `website/build`, and no data-release permissions in docs workflows.
 
-```text
-main CI green
-Production certification complete
-Docusaurus version and Node requirement re-verified from official docs
-Pages workflow action SHAs resolve to official action repositories
-Pages source set to GitHub Actions
-no dataset release permissions in docs workflows
-no internal superpowers docs in website/build
-```
+- [ ] **Step 2: Merge through protected main using squash**
 
-- [ ] **Step 2: Merge through the protected branch ruleset**
+Do not bypass required `test` or docs CI.
 
-Use squash merge only after `test` and docs CI are green.
+- [ ] **Step 3: Verify Pages build/deploy**
 
-- [ ] **Step 3: Verify the Pages workflow**
-
-Require build and deploy success and verify the deployment URL reported by `actions/deploy-pages` is under `https://jccontrerasg08-cpu.github.io/arancel-mx/`.
+Require both jobs success and a deployment URL under `https://jccontrerasg08-cpu.github.io/arancel-mx/`.
 
 - [ ] **Step 4: Smoke-test public routes**
 
-Check at least:
+Verify successful HTTP responses/content for:
 
 ```text
-/
-/docs/
-/en/
-/en/docs/
+https://jccontrerasg08-cpu.github.io/arancel-mx/
+https://jccontrerasg08-cpu.github.io/arancel-mx/docs/getting-started
+https://jccontrerasg08-cpu.github.io/arancel-mx/en/
+https://jccontrerasg08-cpu.github.io/arancel-mx/en/docs/getting-started
 ```
 
-Check links to the repository and Releases. Confirm no `/superpowers/` route is present.
+Verify no public route or generated file exposes `superpowers` or `operations` content.
 
-- [ ] **Step 5: Re-run production isolation checks**
+- [ ] **Step 5: Verify production isolation**
 
-After docs deployment, verify no new `data-*` release/tag and no production data-alert Issue was created by docs workflows.
+Compare releases/tags/issues before and after docs deploy. Require no new `data-*` release/tag and no production `[DATA ALERT]` issue caused by docs workflows.
 
 - [ ] **Step 6: Final repository verification**
 
@@ -584,9 +653,10 @@ python -m pytest -q
 python -m build
 cd website
 npm ci
+npm run typecheck
 npm run build
 cd ..
 git diff --check
 ```
 
-The Docusaurus subproject is complete only after both ES/EN public routes and production-isolation checks pass.
+The Docusaurus subproject is complete only after both locales are live and production-isolation checks pass.
