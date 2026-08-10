@@ -8,6 +8,7 @@ import tomllib
 ROOT = Path(__file__).resolve().parents[1]
 CONSTRAINTS = ROOT / "requirements" / "production-build.txt"
 PYPROJECT = ROOT / "pyproject.toml"
+DEPENDABOT = ROOT / ".github" / "dependabot.yml"
 _EXACT = re.compile(r"^([A-Za-z0-9_.-]+)==([^=<>!~\s]+)$")
 
 
@@ -67,3 +68,30 @@ def test_ci_uses_exact_pip_and_constraints_file():
     assert "python -m pip install pip==26.2.1" in workflow
     assert 'python -m pip install -c requirements/production-build.txt -e ".[dev]"' in workflow
     assert "python -m pip install --upgrade pip" not in workflow
+
+
+def test_dependabot_updates_python_and_actions_weekly_without_credentials():
+    assert DEPENDABOT.is_file()
+    config = DEPENDABOT.read_text(encoding="utf-8")
+
+    assert re.search(r"^version:\s*2\s*$", config, re.MULTILINE)
+    assert config.count('package-ecosystem: "pip"') == 1
+    assert config.count('package-ecosystem: "github-actions"') == 1
+    assert config.count('directory: "/"') == 2
+    assert config.count("interval: weekly") == 2
+    assert config.count("day: monday") == 2
+    assert config.count("open-pull-requests-limit: 5") == 2
+    assert "dependencies" in config
+    assert "python" in config
+    assert "github-actions" in config
+
+    lowered = config.lower()
+    forbidden = (
+        "registries:",
+        "username:",
+        "password:",
+        "token:",
+        "secrets.",
+        "${{ secrets",
+    )
+    assert [value for value in forbidden if value in lowered] == []
