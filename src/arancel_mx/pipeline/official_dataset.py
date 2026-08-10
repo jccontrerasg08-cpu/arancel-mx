@@ -33,7 +33,11 @@ from arancel_mx.release.package import (
 )
 from arancel_mx.sources.capture import CaptureManifest, capture_document
 from arancel_mx.sources.diputados import LedgerDocument, LedgerLink, parse_ligie_ledger
-from arancel_mx.sources.http import FetchedDocument, fetch_official_document
+from arancel_mx.sources.http import (
+    FetchedDocument,
+    decode_fetched_text,
+    fetch_official_document,
+)
 from arancel_mx.sources.registry import RegistryEntry, load_source_registry
 from arancel_mx.storage.duckdb import connect, init_tariff_db
 
@@ -280,10 +284,7 @@ def build_official_dataset(
         ("text/html",),
         timeout_s=config.timeout_s,
     )
-    try:
-        ledger_html = ledger_fetch.content.decode("utf-8")
-    except UnicodeDecodeError as exc:
-        raise ValueError("Diputados LIGIE ledger is not valid UTF-8") from exc
+    ledger_html = decode_fetched_text(ledger_fetch)
     ledger = parse_ligie_ledger(ledger_html, ledger_fetch.final_url)
     consolidated_document, consolidated_link = _consolidated_pdf(ledger)
 
