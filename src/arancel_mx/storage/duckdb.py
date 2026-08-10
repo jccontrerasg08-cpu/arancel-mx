@@ -343,7 +343,8 @@ CREATE TABLE IF NOT EXISTS dataset_release (
     row_count BIGINT NOT NULL DEFAULT 0,
     validation_status VARCHAR NOT NULL,
     validation_results_json VARCHAR,
-    source_documents_json VARCHAR
+    source_documents_json VARCHAR,
+    release_metadata_json VARCHAR NOT NULL
 );
 """
 
