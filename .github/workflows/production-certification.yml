@@ -67,7 +67,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           python scripts/certify_github_release.py \
-            --result-path out/certification-release.json
+            --result-path out/release-boundary.json
 
       - name: Verify cleanup after release-boundary attempt
         if: always()
