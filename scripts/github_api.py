@@ -58,13 +58,34 @@ class GitHubApi:
             if (
                 parsed_path.scheme != parsed_root.scheme
                 or parsed_path.netloc != parsed_root.netloc
-                or not parsed_path.path.startswith("/repos/")
+                or not parsed_path.path.startswith(f"/repos/{self.repository}/")
             ):
                 raise ValueError("absolute URL is outside configured GitHub API")
             return path
         if not path.startswith("/"):
             path = "/" + path
         return f"{self.api_url}/repos/{self.repository}{path}"
+
+    def _upload_url(self, value: str) -> str:
+        value = _nonblank(value, "upload_url")
+        parsed = urlparse(value)
+        root = urlparse(self.api_url)
+        if root.netloc == "api.github.com":
+            allowed_host = "uploads.github.com"
+        else:
+            allowed_host = root.netloc
+        expected_prefix = f"/repos/{self.repository}/releases/"
+        if (
+            parsed.scheme != "https"
+            or parsed.netloc != allowed_host
+            or not parsed.path.startswith(expected_prefix)
+            or not parsed.path.endswith("/assets")
+            or parsed.username is not None
+            or parsed.password is not None
+            or parsed.fragment
+        ):
+            raise ValueError("upload URL is outside configured GitHub upload API")
+        return value
 
     def _headers(self, accept: str) -> dict[str, str]:
         return {
@@ -89,6 +110,13 @@ class GitHubApi:
             message = message[: MAX_ERROR_MESSAGE - 3] + "..."
         return message
 
+    def _raise_for_status(self, response: Any) -> None:
+        status = int(response.status_code)
+        if 200 <= status < 300:
+            return
+        error_type = GitHubNotFound if status == 404 else GitHubApiError
+        raise error_type(status, self._error_message(response))
+
     def _request(
         self,
         method: str,
@@ -110,10 +138,7 @@ class GitHubApi:
             timeout=timeout,
             **kwargs,
         )
-        status = int(response.status_code)
-        if status < 200 or status >= 300:
-            error_type = GitHubNotFound if status == 404 else GitHubApiError
-            raise error_type(status, self._error_message(response))
+        self._raise_for_status(response)
         return response
 
     def request_json(self, method: str, path: str, **kwargs: Any) -> Any:
@@ -131,3 +156,32 @@ class GitHubApi:
         accept = kwargs.pop("accept", "application/octet-stream")
         response = self._request(method, path, accept=accept, **kwargs)
         return bytes(response.content)
+
+    def request_upload_json(
+        self,
+        upload_url: str,
+        data: bytes,
+        *,
+        timeout: float = DEFAULT_TIMEOUT_S,
+    ) -> Any:
+        if timeout <= 0:
+            raise ValueError("timeout must be positive")
+        if not isinstance(data, (bytes, bytearray, memoryview)):
+            raise TypeError("release asset upload data must be bytes-like")
+        headers = self._headers("application/vnd.github+json")
+        headers["Content-Type"] = "application/octet-stream"
+        response = self.session.request(
+            "POST",
+            self._upload_url(upload_url),
+            headers=headers,
+            timeout=timeout,
+            data=bytes(data),
+        )
+        self._raise_for_status(response)
+        try:
+            return response.json()
+        except (ValueError, TypeError) as exc:
+            raise GitHubApiError(
+                int(response.status_code),
+                "successful upload response did not contain valid JSON",
+            ) from exc
