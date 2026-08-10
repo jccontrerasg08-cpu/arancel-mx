@@ -72,11 +72,21 @@ def _csv_value(value: object) -> str:
     return str(value)
 
 
-def _write_checksums(release: Path) -> None:
-    required = sorted(set(PUBLIC_RELEASE_ASSETS) - {"SHA256SUMS"})
+def _write_checksum_set(release: Path, names: list[str]) -> None:
     (release / "SHA256SUMS").write_text(
-        "".join(f"{_sha256(release / name)}  {name}\n" for name in required),
+        "".join(f"{_sha256(release / name)}  {name}\n" for name in sorted(names)),
         encoding="ascii",
+    )
+
+
+def _write_pre_archive_checksums(release: Path) -> None:
+    _write_checksum_set(release, [*RELEASE_ARTIFACTS, "manifest.json"])
+
+
+def _write_publication_checksums(release: Path) -> None:
+    _write_checksum_set(
+        release,
+        list(set(PUBLIC_RELEASE_ASSETS) - {"SHA256SUMS"}),
     )
 
 
@@ -90,7 +100,7 @@ def _refresh_manifest_artifact_hashes(release: Path) -> None:
         json.dumps(manifest, ensure_ascii=False, separators=(",", ":")) + "\n",
         encoding="utf-8",
     )
-    _write_checksums(release)
+    _write_publication_checksums(release)
 
 
 def _manifest(artifact_hashes: dict[str, str]) -> dict[str, object]:
@@ -193,7 +203,7 @@ def _bundle(tmp_path: Path) -> Path:
         + "\n",
         encoding="utf-8",
     )
-    _write_checksums(release)
+    _write_pre_archive_checksums(release)
 
     (sources / SOURCE_FILENAME).write_bytes(SOURCE_BYTES)
     (sources / "source_capture.json").write_text(
@@ -204,13 +214,17 @@ def _bundle(tmp_path: Path) -> Path:
     return release
 
 
-def _replace_archive(release: Path, members: list[tarfile.TarInfo], payloads: list[bytes]) -> None:
+def _replace_archive(
+    release: Path,
+    members: list[tarfile.TarInfo],
+    payloads: list[bytes],
+) -> None:
     archive_path = release / "official-sources.tar.gz"
     with tarfile.open(archive_path, "w:gz") as archive:
         for info, payload in zip(members, payloads, strict=True):
             info.size = len(payload)
             archive.addfile(info, io.BytesIO(payload) if payload else None)
-    _write_checksums(release)
+    _write_publication_checksums(release)
 
 
 def _replace_valid_archive(
