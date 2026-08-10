@@ -1,10 +1,23 @@
 from datetime import date
+from pathlib import Path
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Spacer, Table, TableStyle
 
 from arancel_mx.parsers.documents import parse_ligie_pdf_hierarchy
+
+
+SOURCE = Path(__file__).parents[2] / "src" / "arancel_mx" / "parsers" / "documents.py"
+
+
+def test_pdf_parser_uses_supported_pymupdf_namespace():
+    source = SOURCE.read_text(encoding="utf-8")
+
+    assert "import fitz" not in source
+    assert "fitz.open(" not in source
+    assert "import pymupdf" in source
+    assert "pymupdf.open(" in source
 
 
 def test_pdf_parser_extracts_official_hierarchy(tmp_path):
