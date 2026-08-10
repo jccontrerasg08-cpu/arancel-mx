@@ -109,7 +109,11 @@ def resolve_workbook_profile(
             }
             for candidate in candidates
         ]
-        raise ValueError(f"ambiguous workbook profile: {family}; candidates={details!r}")
+        locations = [f"{candidate.sheet}!{candidate.header_row}" for candidate in candidates]
+        raise ValueError(
+            f"ambiguous workbook profile: {family}; "
+            f"candidates={details!r}; locations={locations!r}"
+        )
     return ResolvedWorkbookProfile(
         family=family,
         parser_version=str(definition["parser_version"]),
