@@ -37,6 +37,7 @@ from arancel_mx.storage.duckdb import connect, init_tariff_db
 
 
 RELEASE_LEVELS = ("hs2", "hs4", "hs6", "fraccion8", "nico10")
+_LEGACY_BASELINE_VERSION = "2026.08.10"
 
 
 @dataclass(frozen=True)
@@ -197,6 +198,22 @@ def _no_change_result(
     ).to_dict()
 
 
+def _is_legacy_baseline(previous_manifest: Mapping[str, object]) -> bool:
+    status = previous_manifest.get("baseline_status")
+    if status != "legacy_baseline":
+        return False
+    if (
+        previous_manifest.get("dataset_version") != _LEGACY_BASELINE_VERSION
+        or previous_manifest.get("schema_version") != "1"
+        or previous_manifest.get("validation_status") != "passed"
+    ):
+        raise ValueError("invalid legacy_baseline manifest marker")
+    row_count = previous_manifest.get("row_count")
+    if not isinstance(row_count, int) or isinstance(row_count, bool) or row_count <= 0:
+        raise ValueError("invalid legacy_baseline manifest row_count")
+    return True
+
+
 def build_official_dataset(
     config: OfficialDatasetConfig,
     session: Any | None = None,
@@ -215,7 +232,7 @@ def build_official_dataset(
     # capture_official_inputs() includes the mandatory legal reconciliation gate.
     # Only a successfully reconciled current snapshot is eligible for no-change.
     snapshot = capture_official_inputs(config, session=session)
-    if previous_manifest is not None:
+    if previous_manifest is not None and not _is_legacy_baseline(previous_manifest):
         previous_identity = source_identity_from_manifest(previous_manifest)
         if not source_identity_changed(snapshot.identities, previous_identity):
             return _no_change_result(
@@ -224,6 +241,9 @@ def build_official_dataset(
                 source_count=len(snapshot.identities),
             )
 
+    # A marked schema-v1 baseline deliberately reaches the full build. The schema
+    # and provenance upgrade itself is a meaningful release change even if tariff
+    # rows would otherwise be logically identical.
     sources_by_key = {source.dataset_key: source for source in snapshot.sources}
     ligie_source = sources_by_key["ligie"]
     nico_source = sources_by_key["nico"]
