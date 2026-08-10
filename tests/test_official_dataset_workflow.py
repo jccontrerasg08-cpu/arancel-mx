@@ -82,8 +82,8 @@ def test_only_publisher_has_contents_write_and_it_requires_built_trusted_main():
     assert "contents: write" in publish
     assert "issues: write" not in publish
     assert "needs: build-and-verify" in publish
-    assert "needs.build-and-verify.outputs.status" in publish
-    assert "built" in publish
+    assert "needs.build-and-verify.result == 'success'" in publish
+    assert "needs.build-and-verify.outputs.status == 'built'" in publish
     assert "github.ref == 'refs/heads/main'" in publish
     assert "actions/download-artifact@" in publish
     assert "arancel-mx-${{ github.run_id }}-${{ github.run_attempt }}" in publish
@@ -116,3 +116,36 @@ def test_only_notifier_has_issues_write_and_runs_always():
     )
     assert "if: always()" in notify
     assert "scripts/data_alert.py" in notify
+
+
+def test_no_change_with_skipped_publisher_is_explicitly_healthy_recovery():
+    workflow = _workflow()
+    notify = _job_block(workflow, "notify")
+
+    assert "needs.build-and-verify.outputs.status == 'no_change'" in notify
+    assert "needs.publish.result == 'skipped'" in notify
+    assert "needs.publish.result == 'success'" in notify
+    assert "python scripts/data_alert.py recovery" in notify
+
+
+def test_failed_build_can_never_satisfy_publisher_condition():
+    workflow = _workflow()
+    publish = _job_block(workflow, "publish", "notify")
+
+    assert "needs.build-and-verify.result == 'success'" in publish
+    assert "needs.build-and-verify.outputs.status == 'built'" in publish
+    assert publish.index("needs.build-and-verify.result == 'success'") < publish.index(
+        "needs.build-and-verify.outputs.status == 'built'"
+    )
+
+
+def test_manual_publish_false_is_a_non_mutating_dry_run():
+    workflow = _workflow()
+    publish = _job_block(workflow, "publish", "notify")
+    notify = _job_block(workflow, "notify")
+
+    assert "type: boolean" in workflow
+    assert "default: false" in workflow
+    assert "github.event_name == 'schedule' || inputs.publish == true" in publish
+    assert "inputs.publish != true" in notify
+    assert "Dry run complete; GitHub issue mutation is disabled." in notify
