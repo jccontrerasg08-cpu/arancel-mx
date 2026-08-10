@@ -35,5 +35,10 @@ jobs:
       - name: Build distributions
         run: python -m build
 
+      - name: Smoke-test built distributions
+        run: |
+          python scripts/certify_package_install.py dist/*.whl
+          python scripts/certify_package_install.py dist/*.tar.gz
+
       - name: Check whitespace
         run: git diff --check
