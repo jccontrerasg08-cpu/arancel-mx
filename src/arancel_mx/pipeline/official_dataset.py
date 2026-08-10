@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import Counter
 from collections.abc import Mapping
 from dataclasses import asdict, dataclass
 from datetime import date, datetime, timezone
@@ -18,10 +19,12 @@ from arancel_mx.parsers.workbooks import (
 from arancel_mx.pipeline.build import export_arancel_release, materialize_arancel
 from arancel_mx.pipeline.hierarchy import assemble_classifications
 from arancel_mx.pipeline.official_sources import (
+    OfficialInputSnapshot,
     capture_official_inputs,
     write_release_sources,
 )
 from arancel_mx.release.metadata import (
+    ReleaseProvenance,
     source_identity_changed,
     source_identity_from_manifest,
 )
@@ -33,6 +36,9 @@ from arancel_mx.release.package import (
 from arancel_mx.storage.duckdb import connect, init_tariff_db
 
 
+RELEASE_LEVELS = ("hs2", "hs4", "hs6", "fraccion8", "nico10")
+
+
 @dataclass(frozen=True)
 class OfficialDatasetConfig:
     work_dir: Path
@@ -40,9 +46,23 @@ class OfficialDatasetConfig:
     effective_as_of: date
     dataset_version: str
     generated_at: datetime
-    schema_version: str = "1"
+    schema_version: str = "2"
     ligie_version: str = "LIGIE-2022"
     timeout_s: float = 60.0
+    git_commit_sha: str = "local"
+    github_run_id: str = "local"
+    github_run_attempt: str = "local"
+    github_workflow_ref: str = "local"
+    github_artifact_name: str = "local"
+
+    def provenance(self) -> ReleaseProvenance:
+        return ReleaseProvenance(
+            git_commit_sha=self.git_commit_sha,
+            github_run_id=self.github_run_id,
+            github_run_attempt=self.github_run_attempt,
+            github_workflow_ref=self.github_workflow_ref,
+            github_artifact_name=self.github_artifact_name,
+        )
 
 
 @dataclass(frozen=True)
@@ -120,6 +140,39 @@ def _nico_rows(staging_rows, source_id: str, config: OfficialDatasetConfig):
         }
         for staging in staging_rows
     ]
+
+
+def _level_counts(classifications: list[dict[str, object]]) -> dict[str, int]:
+    counts = Counter(str(row["level"]) for row in classifications)
+    return {level: int(counts.get(level, 0)) for level in RELEASE_LEVELS}
+
+
+def _release_metadata(
+    config: OfficialDatasetConfig,
+    snapshot: OfficialInputSnapshot,
+    classifications: list[dict[str, object]],
+) -> dict[str, object]:
+    metadata: dict[str, object] = {
+        "registry_version": snapshot.registry_version,
+        "registry_sha256": snapshot.registry_sha256,
+        **config.provenance().to_dict(),
+        "level_counts": _level_counts(classifications),
+        "reconciliation": asdict(snapshot.reconciliation),
+        "source_identity": [
+            identity.to_dict()
+            for identity in sorted(
+                snapshot.identities,
+                key=lambda item: (
+                    item.dataset_key,
+                    item.document_role,
+                    item.source_url,
+                    item.sha256,
+                    item.registry_version,
+                ),
+            )
+        ],
+    }
+    return metadata
 
 
 def _no_change_result(
@@ -227,6 +280,7 @@ def build_official_dataset(
         "ligie_version": config.ligie_version,
         "effective_as_of": config.effective_as_of,
         "generated_at": generated_at,
+        "release_metadata": _release_metadata(config, snapshot, classifications),
     }
     candidate = config.work_dir / "candidate" / "arancel_mx.duckdb"
     init_tariff_db(candidate)
