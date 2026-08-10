@@ -84,6 +84,9 @@ Las autoridades publican cronogramas y procedimientos asociados a la recepción,
 <p align="center">
   <img alt="Calendario de publicaciones DOF y plazos" src="docs/dof_timeline.png" style="max-width:85%; border-radius:6px; box-shadow:0 6px 20px rgba(0,0,0,0.25)" />
 </p>
+<p align="center">
+  <img alt="Calendario de publicaciones DOF y plazos" src="docs/dof_timeline2.png" style="max-width:85%; border-radius:6px; box-shadow:0 6px 20px rgba(0,0,0,0.25)" />
+</p>
 
 <p align="center">
   <em>Fuente: Diario Oficial de la Federación / SNICE — ver la nota oficial en DOF para detalles y fechas exactas.</em>
