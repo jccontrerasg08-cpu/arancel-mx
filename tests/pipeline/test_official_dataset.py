@@ -18,6 +18,7 @@ from arancel_mx.pipeline.official_dataset import (
     OfficialDatasetConfig,
     build_official_dataset,
 )
+from arancel_mx.sources.legal_evidence import RequiredDofEvidence
 
 
 DIPUTADOS_LEDGER = (
@@ -284,6 +285,37 @@ def test_build_accepts_declared_legacy_charset_for_diputados_ledger(tmp_path):
 
     assert summary["validation_status"] == "passed"
     assert summary["row_count"] == 5
+
+
+def test_build_blocks_mismatched_legal_evidence_before_output(tmp_path, monkeypatch):
+    build_config = config(tmp_path, "legal-mismatch")
+    monkeypatch.setattr(
+        official_sources,
+        "required_dof_evidence",
+        lambda _ledger: (
+            RequiredDofEvidence(
+                role="law_reform",
+                published_at=date(2025, 12, 28),
+                url=LAW_REFORM_URL,
+                media_type="application/pdf",
+            ),
+            RequiredDofEvidence(
+                role="tariff_decree",
+                published_at=date(2026, 4, 23),
+                url=TARIFF_DECREE_URL,
+                media_type="application/pdf",
+            ),
+        ),
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=r"legal reconciliation failed: .*missing_dof_evidence:law_reform",
+    ):
+        build_official_dataset(build_config, session=fake_session())
+
+    assert not build_config.output_dir.exists()
+    assert not (build_config.work_dir / "candidate" / "arancel_mx.duckdb").exists()
 
 
 def test_identical_inputs_produce_logically_deterministic_release(
