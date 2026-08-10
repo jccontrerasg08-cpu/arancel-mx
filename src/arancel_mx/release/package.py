@@ -197,10 +197,15 @@ def _add_deterministic_file(
         archive.addfile(info, stream)
 
 
+def export_arancel_release(database_path: Path, output_dir: Path) -> dict[str, object]:
+    """Lazy delegation seam that avoids importing the pipeline during package import."""
+    from arancel_mx.pipeline.build import export_arancel_release as _export_arancel_release
+
+    return _export_arancel_release(Path(database_path), Path(output_dir))
+
+
 def build_release(database_path: Path, output_dir: Path) -> dict[str, object]:
     """Create deterministic public artifacts from a validated tariff database."""
-    from arancel_mx.pipeline.build import export_arancel_release
-
     return export_arancel_release(Path(database_path), Path(output_dir))
 
 
