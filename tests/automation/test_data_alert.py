@@ -167,6 +167,49 @@ def test_upsert_comments_on_existing_matching_issue_instead_of_creating_another(
     assert "https://github.com/owner/repo/actions/runs/123" in client.comments[0][1]
 
 
+def test_release_tag_collision_alert_stays_open_until_a_later_successful_run():
+    item = alert(stage="publish", failure_category="release_tag_collision")
+    client = FakeClient(labels=ALERT_LABELS)
+
+    number = upsert_alert(client, item)
+
+    assert number == 1
+    assert client.issues[0]["state"] == "open"
+    assert client.patches == []
+
+    closed = close_recovered_alerts(
+        client,
+        "https://github.com/owner/repo/actions/runs/999",
+        "deadbeef",
+    )
+
+    assert closed == (1,)
+    assert client.issues[0]["state"] == "closed"
+    assert client.patches == [(1, {"state": "closed"})]
+
+
+def test_successful_no_change_recovery_closes_prior_source_access_alert():
+    item = alert(failure_category="source_network", message="DOF was temporarily unavailable")
+    client = FakeClient([issue_for(item, 7)], labels=ALERT_LABELS)
+
+    closed = close_recovered_alerts(
+        client,
+        "https://github.com/owner/repo/actions/runs/1000",
+        "feedface",
+    )
+
+    assert closed == (7,)
+    assert client.issues[0]["state"] == "closed"
+    assert client.comments == [
+        (
+            7,
+            "Recovered. A later production run completed without a blocking data failure.\n\n"
+            "- Run: https://github.com/owner/repo/actions/runs/1000\n"
+            "- Commit: `feedface`",
+        )
+    ]
+
+
 def test_upsert_fails_when_multiple_open_issues_share_the_same_marker():
     item = alert()
     client = FakeClient(
