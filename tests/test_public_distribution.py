@@ -176,6 +176,29 @@ def test_readme_preserves_existing_public_information() -> None:
     assert [value for value in required if value not in readme] == []
 
 
+def test_readmes_document_verified_official_dataset_build() -> None:
+    spanish = (ROOT / "README.md").read_text(encoding="utf-8").lower()
+    english = (ROOT / "README.en.md").read_text(encoding="utf-8").lower()
+    release_process = (ROOT / "docs" / "release-process.md").read_text(encoding="utf-8").lower()
+    required = (
+        "scripts/build_official_dataset.py",
+        ".github/workflows/build-official-dataset.yml",
+        "build official dataset",
+        "arancel_mx.duckdb",
+        "arancel_mx.csv",
+        "arancel_mx.json",
+        "manifest.json",
+        "sha256sums",
+        "official-sources.tar.gz",
+    )
+
+    for document in (spanish, english, release_process):
+        assert [value for value in required if value not in document] == []
+    assert "construcción end-to-end de dataset oficial" in spanish
+    assert "end-to-end official dataset build" in english
+    assert "manual" in release_process
+
+
 def test_bilingual_readmes_stay_linked() -> None:
     spanish = (ROOT / "README.md").read_text(encoding="utf-8").lower()
     english_path = ROOT / "README.en.md"
