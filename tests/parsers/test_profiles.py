@@ -35,6 +35,29 @@ def test_resolves_ligie_profile_from_registered_aliases(tmp_path):
     assert resolved.profile.columns["unit_name"] == "Unidad"
 
 
+def test_ligie_profile_prefers_unique_more_specific_registered_candidate(tmp_path):
+    path = tmp_path / "current-ligie.xlsx"
+    workbook = Workbook()
+    fa = workbook.active
+    fa.title = "FA"
+    for _ in range(6):
+        fa.append([None])
+    fa.append(["Fracción Arancelaria", "Descripción", "Unidad de Medida"])
+    fa.append(["01012101", "Reproductores", "Cabeza"])
+    nico = workbook.create_sheet("NICO")
+    for _ in range(6):
+        nico.append([None])
+    nico.append(["FRACCIÓN ARANCELARIA", "DESCRIPCIÓN"])
+    nico.append(["01012101", "Reproductores"])
+    workbook.save(path)
+
+    resolved = resolve_workbook_profile(probe_workbook(path), "ligie_snapshot")
+
+    assert resolved.profile.sheet == "FA"
+    assert resolved.profile.header_row == 7
+    assert resolved.profile.columns["unit_name"] == "Unidad de Medida"
+
+
 def test_resolves_nico_profile_from_registered_aliases(tmp_path):
     path = make_workbook(
         tmp_path,
