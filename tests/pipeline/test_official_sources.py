@@ -1,6 +1,8 @@
+from dataclasses import replace
 from datetime import date, datetime, timezone
 from pathlib import Path
 
+from arancel_mx.pipeline import official_sources
 from arancel_mx.pipeline.official_dataset import OfficialDatasetConfig
 from arancel_mx.pipeline.official_sources import capture_official_inputs
 
@@ -105,3 +107,25 @@ def test_capture_official_inputs_uses_one_configured_timeout_for_every_request(t
     capture_official_inputs(config(tmp_path, timeout_s=17.5), session=session)
 
     assert {timeout for _url, timeout in session.requested} == {17.5}
+
+
+def test_capture_preserves_actual_http_retrieval_timestamp(tmp_path, monkeypatch):
+    retrieved = datetime(2026, 8, 10, 7, 59, 31, tzinfo=timezone.utc)
+    generated = datetime(2026, 8, 10, 8, 0, 0, tzinfo=timezone.utc)
+    real_fetch = official_sources.fetch_official_document
+
+    def fetch_with_known_timestamp(*args, **kwargs):
+        return replace(real_fetch(*args, **kwargs), retrieved_at=retrieved)
+
+    monkeypatch.setattr(
+        official_sources,
+        "fetch_official_document",
+        fetch_with_known_timestamp,
+    )
+
+    snapshot = capture_official_inputs(config(tmp_path), session=fake_session())
+
+    for source in snapshot.sources:
+        assert source.source_document["retrieved_at"] == retrieved
+        assert source.source_document["retrieved_at"] != generated
+        assert source.capture.metadata["retrieved_at"] == "2026-08-10T07:59:31Z"
