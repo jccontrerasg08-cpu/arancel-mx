@@ -24,7 +24,7 @@ def test_bilingual_readmes_describe_autonomous_fail_closed_pipeline():
     )
     for document in (spanish, english):
         assert [value for value in shared if value not in document] == []
-        assert ".github/workflows/build-official-dataset.yml" in document
+        assert ".github/workflows/build-official-dataset.yml" not in document
 
     assert "fuentes oficiales → captura → reconciliación legal → parseo → validación" in spanish
     assert "sin cambios: termina en verde" in spanish
