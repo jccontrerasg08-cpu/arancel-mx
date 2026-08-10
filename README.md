@@ -121,6 +121,6 @@ python -m build
 
 Este proyecto se distribuye bajo la licencia Apache‑2.0. Consulta LICENSE y NOTICE para atribuciones.
 
-##Agradecimientos##
+## Agradecimientos ##
 
 Gracias a los equipos que publican y mantienen las fuentes oficiales (Diputados, SNICE, DOF) y a la comunidad de código abierto por sus plantillas y prácticas de documentación.
