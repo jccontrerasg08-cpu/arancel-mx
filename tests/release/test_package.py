@@ -16,6 +16,47 @@ def _sha256(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _manifest(hashes):
+    return {
+        "dataset_version": "2026.08.09",
+        "schema_version": "2",
+        "validation_status": "passed",
+        "row_count": 1,
+        "registry_version": "2026-08-10",
+        "registry_sha256": "b" * 64,
+        "git_commit_sha": "local",
+        "github_run_id": "local",
+        "github_run_attempt": "local",
+        "github_workflow_ref": "local",
+        "github_artifact_name": "local",
+        "level_counts": {
+            "hs2": 1,
+            "hs4": 0,
+            "hs6": 0,
+            "fraccion8": 0,
+            "nico10": 0,
+        },
+        "reconciliation": {
+            "publishable": True,
+            "error_codes": [],
+            "discrepancies": [],
+            "legal_document_ids": ["doc-1"],
+            "proposal_document_ids": [],
+            "indicator_document_ids": [],
+        },
+        "source_identity": [
+            {
+                "dataset_key": "ligie",
+                "document_role": "ligie_snapshot",
+                "source_url": "https://www.snice.gob.mx/ligie.xlsx",
+                "sha256": "a" * 64,
+                "registry_version": "2026-08-10",
+            }
+        ],
+        "artifact_sha256": hashes,
+    }
+
+
 def _fixture(tmp_path):
     release = tmp_path / "release"
     sources = tmp_path / "sources"
@@ -26,11 +67,7 @@ def _fixture(tmp_path):
         path = release / name
         path.write_bytes(f"artifact:{name}".encode())
         hashes[name] = _sha256(path)
-    manifest = {
-        "dataset_version": "2026.08.09",
-        "validation_status": "passed",
-        "artifact_sha256": hashes,
-    }
+    manifest = _manifest(hashes)
     (release / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
     (release / "SHA256SUMS").write_text(
         "".join(f"{digest}  {name}\n" for name, digest in sorted(hashes.items())),
@@ -53,6 +90,28 @@ def test_build_release_delegates_to_deterministic_database_export(tmp_path, monk
     )
 
     assert build_release(database, tmp_path / "out") == expected
+
+
+def test_verify_release_requires_complete_schema_v2_provenance(tmp_path):
+    release, _sources = _fixture(tmp_path)
+    manifest_path = release / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    del manifest["registry_sha256"]
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="registry_sha256"):
+        verify_release(release)
+
+
+def test_verify_release_rejects_non_publishable_reconciliation(tmp_path):
+    release, _sources = _fixture(tmp_path)
+    manifest_path = release / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["reconciliation"]["publishable"] = False
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="reconciliation"):
+        verify_release(release)
 
 
 def test_prepares_allowlisted_source_archive_and_latest_pointer(tmp_path):
