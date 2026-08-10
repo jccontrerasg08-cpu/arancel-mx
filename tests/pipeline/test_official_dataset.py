@@ -190,6 +190,21 @@ def test_offline_build_produces_verified_release(tmp_path):
         assert "local_path" not in source
 
 
+def test_build_accepts_declared_legacy_charset_for_diputados_ledger(tmp_path):
+    build_config = config(tmp_path, "legacy-ledger")
+    session = fake_session()
+    session.responses[DIPUTADOS_URL] = Response(
+        DIPUTADOS_URL,
+        DIPUTADOS_LEDGER.encode("cp1252"),
+        "text/html; charset=windows-1252",
+    )
+
+    summary = build_official_dataset(build_config, session=session)
+
+    assert summary["validation_status"] == "passed"
+    assert summary["row_count"] == 5
+
+
 def test_identical_inputs_produce_logically_deterministic_release(tmp_path):
     first = config(tmp_path, "first")
     second = config(tmp_path, "second")
