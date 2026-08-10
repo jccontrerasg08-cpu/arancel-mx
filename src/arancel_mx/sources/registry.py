@@ -18,6 +18,7 @@ class RegistryEntry:
     allowed_hosts: tuple[str, ...]
     media_types: tuple[str, ...]
     families: tuple[tuple[str, tuple[str, ...]], ...]
+    direct_documents: tuple[tuple[str, str], ...]
     source_role: str
     authoritative_for_tariff: bool
     authoritative_for_discovery: bool
@@ -28,6 +29,15 @@ class RegistryEntry:
 def _page_identity(url: str) -> tuple[str, str]:
     parsed = urlparse(url)
     return parsed.netloc.lower(), parsed.path.rstrip("/").lower()
+
+
+def _validate_registered_url(url: str, allowed_hosts: tuple[str, ...]) -> str:
+    parsed = urlparse(url)
+    if parsed.scheme.lower() != "https":
+        raise ValueError(f"registered source URL must use HTTPS: {url}")
+    if (parsed.hostname or "").lower() not in allowed_hosts:
+        raise ValueError(f"registered source URL host is not allowed: {url}")
+    return url
 
 
 def load_source_registry(
@@ -42,16 +52,26 @@ def load_source_registry(
     version = str(payload["registry_version"])
     entries: dict[str, RegistryEntry] = {}
     for key, raw in payload["sources"].items():
+        allowed_hosts = tuple(host.lower() for host in raw["allowed_hosts"])
+        canonical_page = _validate_registered_url(raw["canonical_page"], allowed_hosts)
         families = tuple(
             (role, tuple(patterns)) for role, patterns in raw["families"].items()
+        )
+        direct_documents = tuple(
+            (
+                str(role),
+                _validate_registered_url(str(url), allowed_hosts),
+            )
+            for role, url in raw.get("direct_documents", {}).items()
         )
         entries[key] = RegistryEntry(
             dataset_key=key,
             registry_version=version,
-            canonical_page=raw["canonical_page"],
-            allowed_hosts=tuple(host.lower() for host in raw["allowed_hosts"]),
+            canonical_page=canonical_page,
+            allowed_hosts=allowed_hosts,
             media_types=tuple(value.lower() for value in raw["media_types"]),
             families=families,
+            direct_documents=direct_documents,
             source_role=raw["source_role"],
             authoritative_for_tariff=bool(raw["authoritative_for_tariff"]),
             authoritative_for_discovery=bool(raw["authoritative_for_discovery"]),
@@ -61,6 +81,16 @@ def load_source_registry(
             legal_publication_authority=raw["legal_publication_authority"],
         )
     return entries
+
+
+def registered_direct_document(entry: RegistryEntry, role: str) -> str:
+    """Return one explicitly registered direct document without guessing a URL."""
+    matches = [url for registered_role, url in entry.direct_documents if registered_role == role]
+    if len(matches) != 1:
+        raise ValueError(
+            f"registered direct document is missing or ambiguous: {entry.dataset_key}:{role}"
+        )
+    return matches[0]
 
 
 def classify_candidate(
