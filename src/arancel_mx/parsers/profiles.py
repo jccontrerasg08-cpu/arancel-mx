@@ -58,7 +58,10 @@ def _logical_columns(
     for logical, aliases in {**required, **optional}.items():
         matches = [original for original, normalized in headers if normalized in aliases]
         if len(matches) > 1:
-            raise ValueError(f"ambiguous workbook profile: {family}")
+            raise ValueError(
+                f"ambiguous workbook profile: {family}; "
+                f"logical={logical}; matching_headers={matches!r}"
+            )
         if matches:
             columns[logical] = matches[0]
         elif logical in required:
@@ -80,7 +83,12 @@ def resolve_workbook_profile(
     optional = definition["optional"]
     for sheet in probe.sheet_names:
         for row_number, row in enumerate(probe.samples.get(sheet, ()), start=1):
-            columns = _logical_columns(row, required, optional, family)
+            try:
+                columns = _logical_columns(row, required, optional, family)
+            except ValueError as exc:
+                raise ValueError(
+                    f"{exc}; sheet={sheet!r}; header_row={row_number}; row={row!r}"
+                ) from exc
             if columns is not None:
                 candidates.append(
                     WorkbookProfile(
@@ -93,7 +101,15 @@ def resolve_workbook_profile(
     if not candidates:
         raise ValueError(f"unknown workbook profile: {family}")
     if len(candidates) != 1:
-        raise ValueError(f"ambiguous workbook profile: {family}")
+        details = [
+            {
+                "sheet": candidate.sheet,
+                "header_row": candidate.header_row,
+                "columns": dict(candidate.columns),
+            }
+            for candidate in candidates
+        ]
+        raise ValueError(f"ambiguous workbook profile: {family}; candidates={details!r}")
     return ResolvedWorkbookProfile(
         family=family,
         parser_version=str(definition["parser_version"]),
