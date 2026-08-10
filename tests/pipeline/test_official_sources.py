@@ -72,16 +72,19 @@ def fake_session():
     return FakeSession(responses)
 
 
-def test_capture_official_inputs_returns_registered_base_roles(tmp_path):
-    config = OfficialDatasetConfig(
+def config(tmp_path, *, timeout_s=60.0):
+    return OfficialDatasetConfig(
         work_dir=tmp_path / "work",
         output_dir=tmp_path / "release",
         effective_as_of=date(2026, 8, 10),
         dataset_version="2026.08.10",
         generated_at=datetime(2026, 8, 10, 8, 0, tzinfo=timezone.utc),
+        timeout_s=timeout_s,
     )
 
-    snapshot = capture_official_inputs(config, session=fake_session())
+
+def test_capture_official_inputs_returns_registered_base_roles(tmp_path):
+    snapshot = capture_official_inputs(config(tmp_path), session=fake_session())
 
     assert {
         (source.dataset_key, source.document_role) for source in snapshot.sources
@@ -94,3 +97,11 @@ def test_capture_official_inputs_returns_registered_base_roles(tmp_path):
     assert len(snapshot.registry_sha256) == 64
     assert len(snapshot.identities) == 3
     assert all(identity.registry_version == "2026-08-10" for identity in snapshot.identities)
+
+
+def test_capture_official_inputs_uses_one_configured_timeout_for_every_request(tmp_path):
+    session = fake_session()
+
+    capture_official_inputs(config(tmp_path, timeout_s=17.5), session=session)
+
+    assert {timeout for _url, timeout in session.requested} == {17.5}
