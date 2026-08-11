@@ -18,7 +18,7 @@ Open Python tools to capture, normalize, reconcile, and publish Mexican tariff d
 [![DuckDB](https://img.shields.io/badge/DuckDB-embedded-FFF000?logo=duckdb&logoColor=000)](https://duckdb.org/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-**[Installation](#installation)** · **[CLI](#quick-cli-usage)** · **[Python](#python-usage)** · **[Data](#data-model)** · **[Sources](#official-sources)** · **[Automation](#official-data-pipeline)** · **[Contributing](#contributing)**
+**[Installation](#installation)** · **[CLI](#quick-cli-usage)** · **[Python](#python-usage)** · **[Data](#data-model)** · **[Sources](#official-sources)** · **[Automation](#official-data-pipeline)** · **[Certification](docs/production-certification.md)** · **[Contributing](#contributing)**
 
 </div>
 
@@ -49,6 +49,7 @@ Open Python tools to capture, normalize, reconcile, and publish Mexican tariff d
 - Runs a **daily automated check** and performs **automatic publication** only for a changed dataset that passes every gate.
 - Creates or updates a **GitHub Issue** when a production stage fails.
 - Publishes verified immutable releases named `data-YYYY.MM.DD` with an exact six-asset contract.
+- Maintains an isolated manual certification workflow for release/Issue permissions and rollback without touching `data-*` releases.
 
 ## What makes it different
 
@@ -237,7 +238,7 @@ The **Official data pipeline** workflow is defined in [`.github/workflows/offici
 
 Before publication, the bundle is verified locally, verified again after downloading the exact Actions artifact, uploaded to a draft release, and remotely verified before the draft becomes public. An existing `data-YYYY.MM.DD` tag or release is never overwritten.
 
-See [`docs/release-process.md`](docs/release-process.md) for the exact transaction and failure model.
+See [`docs/release-process.md`](docs/release-process.md) for the exact transaction and failure model and [`docs/production-certification.md`](docs/production-certification.md) for the isolated write-boundary certification runbook.
 
 ## Official sources
 
@@ -283,11 +284,13 @@ These images are documentary context, not a live technical status indicator for 
 ├── workflows/
 │   ├── ci.yml
 │   ├── official-data-pipeline.yml
+│   ├── production-certification.yml
 │   └── generate-demo.yml
 └── dependabot.yml
 requirements/
 └── production-build.txt
 src/arancel_mx/
+├── certification/
 ├── pipeline/
 ├── release/
 ├── sources/
@@ -296,6 +299,10 @@ src/arancel_mx/
 scripts/
 ├── build_official_dataset.py
 ├── run_official_pipeline.py
+├── certify_package_install.py
+├── check_duckdb_compat.py
+├── certify_github_release.py
+├── certify_github_issue.py
 ├── fetch_previous_release.py
 ├── publish_release.py
 └── data_alert.py
@@ -315,7 +322,9 @@ python -m build
 git diff --check
 ```
 
-`CI / test` is the stable merge-gate contract. Normal pull-request CI does not perform live official-source updates or publish releases.
+The workflow display name is **CI** and the exact required check context enforced by the `main` ruleset is **`test`**. Normal pull-request CI does not perform live official-source updates or publish releases.
+
+GitHub write permissions are certified separately through the manual **Production certification** workflow. Run `31450616908` on `a14c57ee3aeeb982e6aa7077ae1b34582585db8b` completed successfully and left no certification drafts or tags; see [`docs/production-certification.md`](docs/production-certification.md).
 
 ## Security and supply chain
 
@@ -325,10 +334,11 @@ git diff --check
 - Production permissions are job-scoped instead of using `write-all`.
 - Releases use the repository `GITHUB_TOKEN`, not a PAT.
 - Demo-generation automation opens a PR rather than pushing generated assets directly to `main`.
+- Write-boundary certification uses `certification-*` and `[CERTIFICATION ALERT]`, isolated from production namespaces.
 
-The production repository-settings runbook is [`docs/operations/github-settings.md`](docs/operations/github-settings.md). It defines the release-immutability, `main` ruleset, `CI / test`, Actions-permission, merge, and Advanced Security settings that maintainers must verify in the GitHub UI.
+The production repository-settings runbook is [`docs/operations/github-settings.md`](docs/operations/github-settings.md). It defines release immutability, the `main` ruleset, required check `test`, Actions permissions, merge settings, and Advanced Security settings that maintainers must verify in the GitHub UI.
 
-See [`SECURITY.md`](SECURITY.md), [`CONTRIBUTING.md`](CONTRIBUTING.md), and [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
+See [`SECURITY.md`](SECURITY.md), [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md), and [`docs/production-certification.md`](docs/production-certification.md).
 
 ## Project status
 
@@ -344,6 +354,7 @@ See [`SECURITY.md`](SECURITY.md), [`CONTRIBUTING.md`](CONTRIBUTING.md), and [`CO
 | Automatic source-change detection | Available |
 | Verified automatic publication | Available |
 | GitHub Issue alerts and recovery | Available |
+| Live release/Issue write-boundary certification | Available |
 | Stable public search API | Roadmap |
 | PyPI publication | Roadmap |
 
@@ -353,4 +364,4 @@ Open-source community contributions are welcome. Review [`CONTRIBUTING.md`](CONT
 
 Source, parser, reconciliation, and release-contract changes should add offline fixtures or tests for the expected behavior. Changes to the official build dependency environment should update `requirements/production-build.txt` in the same PR when appropriate.
 
-[Español](README.md) · [Documentation](docs/) · [Sources](docs/sources.md) · [Contribute](CONTRIBUTING.md) · [Security](SECURITY.md)
+[Español](README.md) · [Documentation](docs/) · [Sources](docs/sources.md) · [Certification](docs/production-certification.md) · [Contribute](CONTRIBUTING.md) · [Security](SECURITY.md)
