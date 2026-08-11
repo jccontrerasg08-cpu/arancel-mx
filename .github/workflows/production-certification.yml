@@ -67,13 +67,17 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           python -m scripts.certify_github_release \
-            --result-path out/release-boundary.json
+            --result-path out/release-boundary.json \
+            --state-path out/release-boundary-state.json
 
       - name: Verify cleanup after release-boundary attempt
         if: always()
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: python -m scripts.certify_github_release --cleanup-only
+        run: |
+          python -m scripts.certify_github_release \
+            --cleanup-only \
+            --state-path out/release-boundary-state.json
 
   issue-boundary:
     needs: offline
