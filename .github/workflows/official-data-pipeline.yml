@@ -176,6 +176,8 @@ jobs:
     timeout-minutes: 25
     permissions:
       contents: write
+      attestations: write
+      id-token: write
     outputs:
       status: ${{ steps.publisher_result.outputs.status }}
       stage: ${{ steps.publisher_result.outputs.stage }}
@@ -213,6 +215,36 @@ jobs:
 
           verify_publication_bundle(Path("out/release"))
           PY
+
+      - name: Generate build provenance attestation
+        uses: actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d # v4.2.1
+        with:
+          subject-path: |
+            out/release/arancel_mx.duckdb
+            out/release/arancel_mx.csv
+            out/release/arancel_mx.json
+            out/release/manifest.json
+            out/release/SHA256SUMS
+            out/release/official-sources.tar.gz
+
+      - name: Verify build provenance attestation
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          assets=(
+            "arancel_mx.duckdb"
+            "arancel_mx.csv"
+            "arancel_mx.json"
+            "manifest.json"
+            "SHA256SUMS"
+            "official-sources.tar.gz"
+          )
+          for asset in "${assets[@]}"; do
+            gh attestation verify "out/release/${asset}" \
+              --repo jccontrerasg08-cpu/arancel-mx \
+              --signer-workflow jccontrerasg08-cpu/arancel-mx/.github/workflows/official-data-pipeline.yml
+          done
 
       - name: Publish immutable verified release
         id: publisher
