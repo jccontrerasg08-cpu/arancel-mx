@@ -237,7 +237,7 @@ El required check de `main` es `test`. Un PR normal no publica releases ni ejecu
 
 Las contribuciones de la **comunidad de código abierto** son bienvenidas. Lee [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md), [`SECURITY.md`](SECURITY.md), [`SUPPORT.md`](SUPPORT.md), `LICENSE`, `NOTICE` y [`CITATION.cff`](CITATION.cff).
 
-Las Actions externas se fijan por SHA completo. El pipeline usa permisos por job, no `write-all`, y no necesita PAT para publicar releases.
+Las Actions externas se fijan por SHA completo. El pipeline usa permisos por job, no `write-all`, y no necesita PAT para publicar releases. La configuración mantenida de GitHub y el ruleset de producción están documentados en [`docs/operations/github-settings.md`](docs/operations/github-settings.md).
 
 ## Estado del proyecto
 

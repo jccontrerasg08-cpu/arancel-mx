@@ -165,6 +165,8 @@ The required `main` check is `test`. Normal pull requests do not publish data re
 
 Open-source community contributions are welcome. Read [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md), [`SECURITY.md`](SECURITY.md), [`SUPPORT.md`](SUPPORT.md), `LICENSE`, `NOTICE`, and [`CITATION.cff`](CITATION.cff).
 
+External Actions remain pinned to full commit SHAs. The maintained GitHub repository settings and production ruleset are documented in [`docs/operations/github-settings.md`](docs/operations/github-settings.md).
+
 ## Documentation status
 
 Canonical public documentation now lives under `docs/`. The Docusaurus/GitHub Pages site is being implemented separately and is not advertised as live until a real deployment is verified.
