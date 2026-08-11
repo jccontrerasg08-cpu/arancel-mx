@@ -66,6 +66,7 @@ def test_mutation_boundaries_use_builtin_token_and_module_entrypoints():
     assert "python scripts/certify_github_issue.py" not in workflow
     assert "--cleanup-only" in workflow
     assert "if: always()" in workflow
+    assert workflow.count("--state-path out/release-boundary-state.json") == 2
     assert "certification-" not in workflow
     assert "data-" not in workflow
 
