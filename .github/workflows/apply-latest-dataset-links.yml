@@ -1,0 +1,92 @@
+name: Apply latest dataset README links
+
+on:
+  push:
+    branches:
+      - docs/latest-dataset-downloads
+    paths:
+      - .github/workflows/apply-latest-dataset-links.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: docs/latest-dataset-downloads
+
+      - name: Insert latest-release download blocks
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          marker = "</div>\n\n---\n"
+
+          blocks = {
+              "README.md": '''<div align="center">
+
+          ## Última versión del dataset
+
+          **Descarga siempre la release pública más reciente de `arancel-mx`.**
+
+          **[DuckDB](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/arancel_mx.duckdb)** ·
+          **[CSV](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/arancel_mx.csv)** ·
+          **[JSON](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/arancel_mx.json)** ·
+          [Manifest](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/manifest.json) ·
+          [SHA256SUMS](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/SHA256SUMS) ·
+          [Fuentes oficiales](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/official-sources.tar.gz) ·
+          **[Ver release](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest)**
+
+          <sub>Los enlaces `/releases/latest/download/...` apuntan automáticamente a los assets de la release pública marcada como más reciente.</sub>
+
+          </div>''',
+              "README.en.md": '''<div align="center">
+
+          ## Latest dataset release
+
+          **Always download the most recent public `arancel-mx` dataset release.**
+
+          **[DuckDB](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/arancel_mx.duckdb)** ·
+          **[CSV](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/arancel_mx.csv)** ·
+          **[JSON](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/arancel_mx.json)** ·
+          [Manifest](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/manifest.json) ·
+          [SHA256SUMS](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/SHA256SUMS) ·
+          [Official sources](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/official-sources.tar.gz) ·
+          **[View release](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest)**
+
+          <sub>The `/releases/latest/download/...` links automatically resolve to assets from the public release currently marked as latest.</sub>
+
+          </div>''',
+          }
+
+          for filename, block in blocks.items():
+              path = Path(filename)
+              text = path.read_text(encoding="utf-8")
+              heading = "## Última versión del dataset" if filename == "README.md" else "## Latest dataset release"
+              if heading in text:
+                  continue
+              if marker not in text:
+                  raise SystemExit(f"hero marker not found in {filename}")
+              text = text.replace(marker, f"</div>\n\n{block}\n\n---\n", 1)
+              path.write_text(text, encoding="utf-8")
+          PY
+
+          git diff --check
+
+      - name: Commit README links
+        shell: bash
+        run: |
+          if git diff --quiet -- README.md README.en.md; then
+            echo "No README changes needed"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md README.en.md
+          git commit -m "docs: link latest dataset downloads"
+          git push origin HEAD:docs/latest-dataset-downloads
