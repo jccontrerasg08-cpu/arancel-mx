@@ -21,6 +21,7 @@ from scripts.github_api import GitHubApi, GitHubNotFound
 
 
 ASSET_NAME = "certification-proof.json"
+JSON_ACCEPT = "application/vnd.github+json"
 _TAG_PATTERN = re.compile(r"^certification-[0-9]+$")
 _COMMIT_PATTERN = re.compile(r"^[0-9a-fA-F]{40}$")
 
@@ -136,6 +137,44 @@ def _asset_upload_url(upload_template: str) -> str:
     return f"{base}?{urlencode({'name': ASSET_NAME})}"
 
 
+def _write_state(path: Path, tag: str, release_id: int) -> None:
+    payload = {"release_id": release_id, "tag": tag}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.tmp")
+    temporary.write_text(
+        json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        + "\n",
+        encoding="utf-8",
+    )
+    temporary.replace(path)
+
+
+def _read_state(path: Path, tag: str) -> int | None:
+    if not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise CertificationReleaseError("certification cleanup state is unreadable") from exc
+    if not isinstance(payload, dict) or set(payload) != {"release_id", "tag"}:
+        raise CertificationReleaseError("certification cleanup state has invalid schema")
+    if payload.get("tag") != tag:
+        raise CertificationReleaseError("certification cleanup state tag mismatch")
+    release_id = payload.get("release_id")
+    if not isinstance(release_id, int) or release_id <= 0:
+        raise CertificationReleaseError("certification cleanup state release id is invalid")
+    return release_id
+
+
+def _clear_state(path: Path | None) -> None:
+    if path is None:
+        return
+    try:
+        path.unlink()
+    except FileNotFoundError:
+        return
+
+
 def _verify_draft(
     client: GitHubApi,
     release_id: int,
@@ -185,16 +224,27 @@ def cleanup_certification_resources(
     tag: str,
     *,
     release_id: int | None = None,
+    state_path: Path | None = None,
 ) -> dict[str, bool]:
     """Idempotently remove the exact temporary certification release and tag ref."""
     tag = _validate_certification_tag(tag)
+    state_release_id = _read_state(state_path, tag) if state_path is not None else None
+    if release_id is None:
+        release_id = state_release_id
+    elif state_release_id is not None and state_release_id != release_id:
+        raise CertificationReleaseError("certification cleanup state release id mismatch")
+
     deleted_ids: set[int] = set()
 
     if release_id is not None:
         exact_release = _release_by_id(client, release_id)
         if exact_release is not None:
             _validate_cleanup_release(exact_release, release_id, tag)
-            client.request_bytes("DELETE", f"/releases/{release_id}")
+            client.request_bytes(
+                "DELETE",
+                f"/releases/{release_id}",
+                accept=JSON_ACCEPT,
+            )
             deleted_ids.add(release_id)
 
     for release in _matching_releases(client, tag):
@@ -204,15 +254,21 @@ def cleanup_certification_resources(
         if listed_id in deleted_ids:
             continue
         _validate_cleanup_release(release, listed_id, tag)
-        client.request_bytes("DELETE", f"/releases/{listed_id}")
+        client.request_bytes(
+            "DELETE",
+            f"/releases/{listed_id}",
+            accept=JSON_ACCEPT,
+        )
         deleted_ids.add(listed_id)
 
     if _tag_ref_exists(client, tag):
-        client.request_bytes("DELETE", f"/git/refs/tags/{tag}")
+        client.request_bytes(
+            "DELETE",
+            f"/git/refs/tags/{tag}",
+            accept=JSON_ACCEPT,
+        )
 
-    exact_release_absent = (
-        release_id is None or _release_by_id(client, release_id) is None
-    )
+    exact_release_absent = release_id is None or _release_by_id(client, release_id) is None
     release_absent = exact_release_absent and not _matching_releases(client, tag)
     tag_absent = not _tag_ref_exists(client, tag)
     if not release_absent or not tag_absent:
@@ -220,6 +276,7 @@ def cleanup_certification_resources(
             "certification cleanup verification failed: "
             f"release_absent={release_absent} tag_absent={tag_absent}"
         )
+    _clear_state(state_path)
     return {"release_absent": True, "tag_absent": True}
 
 
@@ -228,12 +285,16 @@ def certify_release_boundary(
     repository: str,
     run_id: str,
     commit_sha: str,
+    *,
+    state_path: Path | None = None,
 ) -> dict[str, object]:
     """Create, verify, and completely remove one temporary draft release."""
     repository = _validate_repository(repository)
     tag = certification_tag(run_id)
     commit_sha = _validate_commit_sha(commit_sha)
 
+    if state_path is not None and state_path.exists():
+        raise CertificationReleaseError("pre-existing certification cleanup state blocks mutation")
     if _matching_releases(client, tag):
         raise CertificationReleaseError(f"pre-existing certification release blocks {tag}")
     if _tag_ref_exists(client, tag):
@@ -271,6 +332,8 @@ def certify_release_boundary(
             raise CertificationReleaseError("GitHub draft release is missing id or upload URL")
         if created.get("draft") is not True or created.get("tag_name") != tag:
             raise CertificationReleaseError("GitHub did not create the expected draft release")
+        if state_path is not None:
+            _write_state(state_path, tag, release_id)
 
         client.request_upload_json(_asset_upload_url(upload_template), proof)
         asset_sha256 = _verify_draft(client, release_id, tag, proof)
@@ -285,6 +348,7 @@ def certify_release_boundary(
                 client,
                 tag,
                 release_id=release_id,
+                state_path=state_path,
             )
         except Exception as error:  # noqa: BLE001 - report rollback failure too
             cleanup_error = error
@@ -323,6 +387,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cleanup-only", action="store_true")
     parser.add_argument("--result-path", type=Path)
+    parser.add_argument("--state-path", type=Path)
     return parser.parse_args(argv)
 
 
@@ -347,12 +412,22 @@ def main(argv: list[str] | None = None) -> int:
     tag = certification_tag(run_id)
 
     if args.cleanup_only:
-        cleanup = cleanup_certification_resources(client, tag)
+        cleanup = cleanup_certification_resources(
+            client,
+            tag,
+            state_path=args.state_path,
+        )
         result: dict[str, object] = {"status": "passed", "tag": tag, **cleanup}
     else:
         if not commit_sha:
             raise ValueError("GITHUB_SHA is required for release-boundary certification")
-        result = certify_release_boundary(client, repository, run_id, commit_sha)
+        result = certify_release_boundary(
+            client,
+            repository,
+            run_id,
+            commit_sha,
+            state_path=args.state_path,
+        )
 
     if args.result_path is not None:
         _write_json(args.result_path, result)
