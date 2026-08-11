@@ -22,6 +22,24 @@ Open Python tools to capture, normalize, reconcile, and publish Mexican tariff d
 
 </div>
 
+<div align="center">
+
+## Latest dataset release
+
+**Always download the most recent public `arancel-mx` dataset release.**
+
+**[DuckDB](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/arancel_mx.duckdb)** ·
+**[CSV](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/arancel_mx.csv)** ·
+**[JSON](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/arancel_mx.json)** ·
+[Manifest](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/manifest.json) ·
+[SHA256SUMS](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/SHA256SUMS) ·
+[Official sources](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/official-sources.tar.gz) ·
+**[View release](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest)**
+
+<sub>The `/releases/latest/download/...` links automatically resolve to assets from the public release currently marked as latest.</sub>
+
+</div>
+
 ---
 
 <p align="center">
