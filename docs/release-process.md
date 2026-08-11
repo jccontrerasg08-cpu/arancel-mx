@@ -69,6 +69,30 @@ Los cinco archivos distintos de `SHA256SUMS` deben estar cubiertos por checksums
 
 Antes de cualquier mutación de GitHub Release, `verify_publication_bundle()` exige que el directorio contenga exactamente los six assets, valida manifest/schema/procedencia y vuelve a comprobar hashes.
 
+### Artifact attestation
+
+Cuando un build cambiado y validado entra realmente al job `publish`, GitHub Actions crea una sola **artifact attestation** de provenance SLSA sobre esos mismos seis archivos públicos. El paso usa la acción first-party `actions/attest`, autenticación OIDC de GitHub y sólo se ejecuta después de que `verify_publication_bundle()` haya aceptado el artifact descargado.
+
+Antes de ejecutar el publisher, cada subject se verifica contra este repositorio y contra el workflow firmante exacto:
+
+```bash
+gh attestation verify arancel_mx.duckdb \
+  --repo jccontrerasg08-cpu/arancel-mx \
+  --signer-workflow jccontrerasg08-cpu/arancel-mx/.github/workflows/official-data-pipeline.yml
+```
+
+Se aplica la misma forma de `gh attestation verify` a `arancel_mx.csv`, `arancel_mx.json`, `manifest.json`, `SHA256SUMS` y `official-sources.tar.gz`.
+
+Las tres capas responden preguntas diferentes:
+
+- `SHA256SUMS` comprueba consistencia local de digest de los archivos de release que cubre.
+- `manifest.json` registra procedencia del dataset, fuentes, registry, validación y ejecución dentro del contrato de release.
+- GitHub artifact attestation enlaza criptográficamente los digests de los subjects con la identidad del workflow de GitHub Actions que los produjo y autorizó para publicación.
+
+La artifact attestation **is not a legal signature** sobre los documentos oficiales mexicanos. No sustituye evidencia DOF/Diputados, la procedencia de las fuentes ni la reconciliación legal bloqueante del repositorio.
+
+Estado de A9 mientras no exista una publicación legítima posterior a su integración con verificación independiente de los seis subjects: **implemented / CI-verified; live attestation verification pending the next legitimate changed release**. La release `data-2026.08.11` fue creada antes de A9 y no constituye evidencia retroactiva de attestation.
+
 ## 8. Publicación automática e immutable release
 
 El job `publish` sólo puede ejecutarse cuando:
@@ -78,7 +102,7 @@ El job `publish` sólo puede ejecutarse cuando:
 3. el ref es `refs/heads/main`;
 4. la ejecución es programada o un `workflow_dispatch` confiable usa `publish=true`.
 
-El publisher descarga por nombre exacto el artifact `arancel-mx-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}`, ejecuta de nuevo `verify_publication_bundle()` y crea una GitHub Release en estado **draft** para el tag `data-YYYY.MM.DD`.
+El publisher descarga por nombre exacto el artifact `arancel-mx-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}`, ejecuta de nuevo `verify_publication_bundle()`, genera y verifica la attestation de los seis assets, y sólo entonces crea una GitHub Release en estado **draft** para el tag `data-YYYY.MM.DD`.
 
 Los six assets se suben al draft y se verifican remotamente por tamaño y digest cuando GitHub provee digest; si no, se descargan de nuevo y se recalcula SHA256. Sólo entonces el draft se hace público. Después de publicar, la release se vuelve a consultar y verificar.
 
@@ -95,7 +119,7 @@ Si ocurre un segundo cambio válido el mismo día y ya existe `data-YYYY.MM.DD`,
 El job `notify` es el único con `issues: write`:
 
 - build fallido: crea o actualiza un **GitHub Issue** determinista por stage + failure category;
-- publish fallido: crea o actualiza el GitHub Issue correspondiente;
+- publish fallido, incluida una falla al crear o verificar la attestation: crea o actualiza el GitHub Issue correspondiente;
 - ejecución posterior saludable: ejecuta **recovery**, comenta y cierra las alertas generadas por la automatización;
 - `no_change` + publisher `skipped` cuenta explícitamente como recovery saludable.
 
@@ -103,7 +127,7 @@ Los Issues del usuario sin el marcador oculto de automatización nunca se cierra
 
 ## 10. Límites de permisos
 
-El workflow tiene `contents: read` globalmente. El job de build permanece read-only; sólo `publish` recibe `contents: write`; sólo `notify` recibe `issues: write`. No se usa PAT, `write-all` ni `pull_request_target`.
+El workflow tiene `contents: read` globalmente. El job de build permanece read-only. Sólo `publish` recibe `contents: write`; para A9 ese mismo job recibe además `attestations: write` e `id-token: write`. Sólo `notify` recibe `issues: write`. No se usa PAT, `write-all`, `artifact-metadata: write` ni `pull_request_target`.
 
 Los binarios, bases DuckDB, snapshots oficiales y bundles de release no se escriben al historial Git.
 
