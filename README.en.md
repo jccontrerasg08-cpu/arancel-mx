@@ -19,6 +19,25 @@ Open Python tooling and data releases for LIGIE, Mexican MX8 tariff fractions, a
 </div>
 
 <p align="center"><img alt="arancel-mx demo" src="docs/demo.gif" style="max-width:100%" /></p>
+<div align="center">
+
+## Latest dataset release
+
+**Always download the most recent public `arancel-mx` dataset release.**
+
+**[DuckDB](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/arancel_mx.duckdb)** ·
+**[CSV](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/arancel_mx.csv)** ·
+**[JSON](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/arancel_mx.json)** ·
+[Manifest](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/manifest.json) ·
+[SHA256SUMS](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/SHA256SUMS) ·
+[Official sources](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/official-sources.tar.gz) ·
+**[View release](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest)**
+
+<sub>The `/releases/latest/download/...` links automatically resolve to assets from the public release currently marked as latest.</sub>
+
+</div>
+
+---
 
 ## In 30 seconds
 

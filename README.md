@@ -19,6 +19,26 @@ Herramientas abiertas en Python y releases de datos para LIGIE, fracciones MX8 y
 
 </div>
 
+<div align="center">
+
+## Última versión del dataset
+
+**Descarga siempre la release pública más reciente de `arancel-mx`.**
+
+**[DuckDB](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/arancel_mx.duckdb)** ·
+**[CSV](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/arancel_mx.csv)** ·
+**[JSON](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/arancel_mx.json)** ·
+[Manifest](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/manifest.json) ·
+[SHA256SUMS](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/SHA256SUMS) ·
+[Fuentes oficiales](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/official-sources.tar.gz) ·
+**[Ver release](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest)**
+
+<sub>Los enlaces `/releases/latest/download/...` apuntan automáticamente a los assets de la release pública marcada como más reciente.</sub>
+
+</div>
+
+---
+
 <p align="center">
   <img alt="arancel-mx demo" src="docs/demo.gif" style="max-width:100%" />
 </p>
