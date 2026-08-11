@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use arancel-mx in research, analysis, or public data work, please cite the software and record the exact dataset release tag or manifest used."
+title: "arancel-mx"
+type: software
+authors:
+  - family-names: "Contreras Gastélum"
+    given-names: "Juan Carlos"
+    alias: "jccontrerasg08-cpu"
+repository-code: "https://github.com/jccontrerasg08-cpu/arancel-mx"
+url: "https://github.com/jccontrerasg08-cpu/arancel-mx"
+license: Apache-2.0
+version: "0.1.0"
+keywords:
+  - Mexico
+  - tariffs
+  - LIGIE
+  - NICO
+  - customs
+  - trade data

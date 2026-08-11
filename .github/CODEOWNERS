@@ -1,0 +1,9 @@
+# Informational ownership. Branch protection currently does not require code-owner review.
+* @jccontrerasg08-cpu
+
+# High-impact areas remain explicitly owned for review routing.
+/.github/ @jccontrerasg08-cpu
+/src/arancel_mx/sources/ @jccontrerasg08-cpu
+/src/arancel_mx/release/ @jccontrerasg08-cpu
+/scripts/ @jccontrerasg08-cpu
+/requirements/ @jccontrerasg08-cpu
