@@ -190,6 +190,8 @@ CI también prueba instalación limpia de wheel y sdist fuera del checkout. La p
 
 El proyecto conserva **capture manifests y hashes**. Una release puede relacionarse con las capturas concretas que la originaron.
 
+La documentación web usa Docusaurus con dependencias fijadas por `website/package-lock.json`. `.github/workflows/docs-ci.yml` ejecuta `npm ci`, typecheck y builds independientes para español e inglés con permisos de solo lectura.
+
 ## Proceso y calendario visual
 
 ### Calendario DOF, parte 1
@@ -215,6 +217,7 @@ src/arancel_mx/ paquete Python
 scripts/        build, publicación, certificación y utilidades
 docs/           documentación pública y de ingeniería
 tests/          tests offline y contratos de producción
+website/         sitio Docusaurus y lockfile npm reproducible
 LICENSE
 NOTICE
 CITATION.cff
@@ -237,7 +240,7 @@ El required check de `main` es `test`. Un PR normal no publica releases ni ejecu
 
 Las contribuciones de la **comunidad de código abierto** son bienvenidas. Lee [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md), [`SECURITY.md`](SECURITY.md), [`SUPPORT.md`](SUPPORT.md), `LICENSE`, `NOTICE` y [`CITATION.cff`](CITATION.cff).
 
-Las Actions externas se fijan por SHA completo. El pipeline usa permisos por job, no `write-all`, y no necesita PAT para publicar releases. La configuración mantenida de GitHub y el ruleset de producción están documentados en [`docs/operations/github-settings.md`](docs/operations/github-settings.md).
+Las Actions externas se fijan por SHA completo. El pipeline usa permisos por job, no `write-all`, y no necesita PAT para publicar releases.
 
 ## Estado del proyecto
 
@@ -252,9 +255,13 @@ Las Actions externas se fijan por SHA completo. El pipeline usa permisos por job
 | Publicación automática verificada | Disponible |
 | GitHub Issue alerts y recovery | Disponible |
 | Caracterización VUCEM no autoritativa | Disponible |
+| Docusaurus ES/EN + CI read-only | Disponible en esta rama, pendiente de despliegue |
 | API de búsqueda estable | Roadmap |
 | Publicación en PyPI | Roadmap |
-| Sitio Docusaurus / Homepage | En implementación, no se anuncia como live todavía |
+
+## Operación del repositorio
+
+La configuración objetivo de Actions, releases, rulesets y seguridad está documentada en [`docs/operations/github-settings.md`](docs/operations/github-settings.md).
 
 ## Notas de procedencia
 
