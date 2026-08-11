@@ -22,9 +22,14 @@ def test_docs_ci_is_read_only_and_uses_committed_lockfile():
 
     text = WORKFLOW.read_text(encoding="utf-8")
     assert "pull_request:" in text
+    assert "push:" in text
+    assert "branches:\n      - main" in text
     assert "permissions:\n  contents: read" in text
 
     required = (
+        "concurrency:",
+        "cancel-in-progress: true",
+        "persist-credentials: false",
         'node-version: "22"',
         "cache: npm",
         "cache-dependency-path: website/package-lock.json",
