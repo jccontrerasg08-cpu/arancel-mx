@@ -18,7 +18,7 @@ Herramientas abiertas en Python para capturar, normalizar, reconciliar y publica
 [![DuckDB](https://img.shields.io/badge/DuckDB-embedded-FFF000?logo=duckdb&logoColor=000)](https://duckdb.org/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-**[Instalación](#instalación)** · **[CLI](#uso-rápido-cli)** · **[Python](#uso-desde-python)** · **[Datos](#modelo-de-datos)** · **[Fuentes](#fuentes-oficiales)** · **[Automatización](#pipeline-oficial-autónomo)** · **[Contribuir](#contribución)**
+**[Instalación](#instalación)** · **[CLI](#uso-rápido-cli)** · **[Python](#uso-desde-python)** · **[Datos](#modelo-de-datos)** · **[Fuentes](#fuentes-oficiales)** · **[Automatización](#pipeline-oficial-autónomo)** · **[Certificación](docs/production-certification.md)** · **[Contribuir](#contribución)**
 
 </div>
 
@@ -51,6 +51,7 @@ Licencia del proyecto: **Apache-2.0**.
 - Ejecuta una **revisión diaria automatizada** y hace **publicación automática** sólo cuando el dataset cambió y todos los gates pasaron.
 - Abre o actualiza un **GitHub Issue** cuando cualquier stage de producción falla.
 - Usa releases `data-YYYY.MM.DD` y un contrato exacto de seis assets verificables.
+- Mantiene una certificación manual aislada para probar permisos de release/Issue y verificar rollback sin tocar releases `data-*`.
 
 ## Por qué es diferente
 
@@ -241,7 +242,7 @@ La **publicación automática** ocurre sólo para un cambio válido y verificado
 
 Antes de publicar, el bundle se verifica localmente, se vuelve a verificar después de descargar el artifact y se sube a una release draft. Los seis assets remotos se comprueban antes de hacer pública la release. Un tag `data-YYYY.MM.DD` existente nunca se sobrescribe.
 
-Consulta [`docs/release-process.md`](docs/release-process.md) para el contrato exacto.
+Consulta [`docs/release-process.md`](docs/release-process.md) para el contrato exacto y [`docs/production-certification.md`](docs/production-certification.md) para el runbook de certificación de permisos y rollback.
 
 ## Fuentes oficiales
 
@@ -287,11 +288,13 @@ Estas imágenes son contexto documental y no un indicador dinámico del estado d
 ├── workflows/
 │   ├── ci.yml
 │   ├── official-data-pipeline.yml
+│   ├── production-certification.yml
 │   └── generate-demo.yml
 └── dependabot.yml
 requirements/
 └── production-build.txt
 src/arancel_mx/
+├── certification/
 ├── pipeline/
 ├── release/
 ├── sources/
@@ -300,6 +303,10 @@ src/arancel_mx/
 scripts/
 ├── build_official_dataset.py
 ├── run_official_pipeline.py
+├── certify_package_install.py
+├── check_duckdb_compat.py
+├── certify_github_release.py
+├── certify_github_issue.py
 ├── fetch_previous_release.py
 ├── publish_release.py
 └── data_alert.py
@@ -319,7 +326,9 @@ python -m build
 git diff --check
 ```
 
-`CI / test` es el contrato estable de merge. No hace live-update de fuentes ni publica releases durante un PR normal.
+El workflow se muestra como **CI** y el contexto exacto requerido por el ruleset de `main` es **`test`**. Un PR normal no hace live-update de fuentes ni publica releases.
+
+La certificación live de permisos GitHub se ejecuta aparte mediante el workflow manual **Production certification**. El run `31450616908` sobre `a14c57ee3aeeb982e6aa7077ae1b34582585db8b` terminó verde y dejó cero drafts/tags de certificación; consulta [`docs/production-certification.md`](docs/production-certification.md).
 
 ## Seguridad y supply chain
 
@@ -329,10 +338,11 @@ git diff --check
 - El pipeline de producción usa permisos por job, no `write-all`.
 - No usa PAT para releases.
 - La automatización de demos abre PR en vez de empujar a `main`.
+- La certificación de write-boundaries usa namespaces `certification-*` y `[CERTIFICATION ALERT]`, separados de producción.
 
-El runbook de configuración de producción está en [`docs/operations/github-settings.md`](docs/operations/github-settings.md). Ahí se documentan release immutability, el ruleset de `main`, `CI / test`, permisos de Actions y controles de Advanced Security que deben verificarse en la UI.
+El runbook de configuración de producción está en [`docs/operations/github-settings.md`](docs/operations/github-settings.md). Ahí se documentan release immutability, el ruleset de `main`, el required check `test`, permisos de Actions y controles de Advanced Security que deben verificarse en la UI.
 
-Ver [`SECURITY.md`](SECURITY.md) y [`CONTRIBUTING.md`](CONTRIBUTING.md).
+Ver [`SECURITY.md`](SECURITY.md), [`CONTRIBUTING.md`](CONTRIBUTING.md) y [`docs/production-certification.md`](docs/production-certification.md).
 
 ## Estado del proyecto
 
@@ -348,6 +358,7 @@ Ver [`SECURITY.md`](SECURITY.md) y [`CONTRIBUTING.md`](CONTRIBUTING.md).
 | Detección automática de cambios | Disponible |
 | Publicación automática verificada | Disponible |
 | GitHub Issue alerts y recovery | Disponible |
+| Certificación live de release/Issue write-boundaries | Disponible |
 | API de búsqueda estable | Roadmap |
 | Publicación en PyPI | Roadmap |
 
