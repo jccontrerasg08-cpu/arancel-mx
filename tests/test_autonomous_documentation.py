@@ -54,6 +54,14 @@ def test_release_process_documents_exact_publication_and_recovery_contract():
         "github issue",
         "recovery",
         "ci / test",
+        "artifact attestation",
+        "actions/attest",
+        "gh attestation verify",
+        "--repo jccontrerasg08-cpu/arancel-mx",
+        "--signer-workflow jccontrerasg08-cpu/arancel-mx/.github/workflows/official-data-pipeline.yml",
+        "sha256sums",
+        "manifest.json",
+        "not a legal signature",
     )
 
     assert [value for value in required if value not in release] == []
