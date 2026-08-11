@@ -76,11 +76,12 @@ class FakeGitHub:
             }
             return dict(self.release)
         if method == "GET" and path == "/releases/10":
-            assert self.release is not None
+            if self.release is None:
+                raise GitHubNotFound(404, "Not Found")
             return {**self.release, "assets": list(self.release["assets"])}
         raise AssertionError(f"unexpected JSON request: {method} {path} {kwargs}")
 
-    def request_upload_json(self, upload_url, data, **kwargs):
+    def request_upload_json(self, upload_url, data):
         assert self.release is not None
         self.events.append("upload_asset")
         self.mutations.append(("UPLOAD", upload_url, bytes(data)))
@@ -113,6 +114,15 @@ class FakeGitHub:
             self.ref_exists = False
             return b""
         raise AssertionError(f"unexpected bytes request: {method} {path} {kwargs}")
+
+
+class HiddenDraftFromListGitHub(FakeGitHub):
+    """Model the live API lag where a just-created draft is not listed yet."""
+
+    def request_json(self, method, path, **kwargs):
+        if method == "GET" and path.startswith("/releases?per_page=100&page="):
+            return []
+        return super().request_json(method, path, **kwargs)
 
 
 def test_certification_tag_rejects_production_or_unscoped_names():
@@ -165,6 +175,19 @@ def test_release_boundary_downloads_asset_when_github_digest_is_missing():
     assert client.ref_exists is False
 
 
+def test_release_boundary_deletes_created_draft_by_id_when_listing_is_stale():
+    client = HiddenDraftFromListGitHub()
+
+    result = certify_release_boundary(client, REPOSITORY, RUN_ID, COMMIT_SHA)
+
+    assert result["status"] == "passed"
+    assert result["release_absent"] is True
+    assert result["tag_absent"] is True
+    assert client.release is None
+    assert client.ref_exists is False
+    assert "delete_release" in client.events
+
+
 def test_preexisting_certification_resource_blocks_before_mutation():
     for client in (
         FakeGitHub(preexisting_release=True),
@@ -197,8 +220,28 @@ def test_cleanup_only_removes_orphan_release_and_ref_and_is_idempotent():
     assert client.ref_exists is False
 
 
+def test_cleanup_can_target_known_release_id_when_listing_is_stale():
+    client = HiddenDraftFromListGitHub()
+    client.release = {
+        "id": 10,
+        "tag_name": TAG,
+        "draft": True,
+        "prerelease": True,
+        "target_commitish": COMMIT_SHA,
+        "upload_url": "unused",
+        "assets": [],
+    }
+    client.ref_exists = True
+
+    result = cleanup_certification_resources(client, TAG, release_id=10)
+
+    assert result == {"release_absent": True, "tag_absent": True}
+    assert client.release is None
+    assert client.ref_exists is False
+
+
 class UploadAndCleanupFailureGitHub(FakeGitHub):
-    def request_upload_json(self, upload_url, data, **kwargs):
+    def request_upload_json(self, upload_url, data):
         raise RuntimeError("simulated upload failure")
 
     def request_bytes(self, method, path, **kwargs):
