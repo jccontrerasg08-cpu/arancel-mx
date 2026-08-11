@@ -64,4 +64,4 @@ CI / producción     -> pins exactos en requirements/production-build.txt
 - [`sources.md`](sources.md): fuentes oficiales y su función.
 - [`provenance.md`](provenance.md): trazabilidad documental.
 - [`verify-release.md`](verify-release.md): verificación independiente de una release.
-- [`../SUPPORT.md`](../SUPPORT.md): cómo pedir soporte o reportar un problema.
+- [Soporte](https://github.com/jccontrerasg08-cpu/arancel-mx/blob/main/SUPPORT.md): cómo pedir soporte o reportar un problema.

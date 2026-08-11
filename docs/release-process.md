@@ -1,32 +1,30 @@
 # Proceso de publicación
 
-`arancel-mx` usa un pipeline autónomo y fail-closed para construir y publicar snapshots oficiales. El workflow de producción es **Official data pipeline**, definido en [`.github/workflows/official-data-pipeline.yml`](../.github/workflows/official-data-pipeline.yml), y corre diariamente con cron `17 11 * * *` además de admitir `workflow_dispatch`.
+`arancel-mx` usa un pipeline autónomo y fail-closed para construir y publicar snapshots oficiales. El workflow de producción es **Official data pipeline**, definido en [`.github/workflows/official-data-pipeline.yml`](https://github.com/jccontrerasg08-cpu/arancel-mx/blob/main/.github/workflows/official-data-pipeline.yml), y corre diariamente con cron `17 11 * * *` además de admitir `workflow_dispatch`.
 
 > La publicación automatizada sólo debe activarse en producción después de habilitar release immutability y las protecciones de `main`. El modo manual `workflow_dispatch` usa `publish=false` por defecto para permitir un dry-run sin mutaciones.
 
 ## 1. Tests y entorno reproducible
 
-Antes de acceder a fuentes externas, el job `build-and-verify` instala el entorno con `requirements/production-build.txt` y ejecuta `python -m pytest -q`. El check estable para merges es `CI / test`.
+Antes de acceder a fuentes externas, `build-and-verify` instala el entorno con `requirements/production-build.txt` y ejecuta `python -m pytest -q`. El check estable para merges es `CI / test`.
 
-La compatibilidad pública del paquete sigue declarada en `pyproject.toml`; el build oficial, en cambio, usa versiones exactas para que una ejecución programada no cambie silenciosamente de dependencias.
+La compatibilidad pública del paquete sigue declarada en `pyproject.toml`; el build oficial usa versiones exactas para que una ejecución programada no cambie silenciosamente de dependencias.
 
 ## 2. Captura de fuentes oficiales
 
-La construcción end-to-end de dataset oficial puede ejecutarse con `scripts/build_official_dataset.py`; el workflow de producción usa `scripts/run_official_pipeline.py` para añadir comparación con la release anterior y diagnósticos estructurados.
+La construcción end-to-end puede ejecutarse con `scripts/build_official_dataset.py`; producción usa `scripts/run_official_pipeline.py` para añadir comparación contra la release anterior y diagnósticos estructurados.
 
-Cada snapshot registrado se descarga y se conserva con identidad de fuente, SHA256 y `retrieved_at`. **`retrieved_at` significa actual fetch time**, es decir, la hora real de la captura HTTP. No se sustituye por `generated_at`.
-
-`generated_at` identifica cuándo se generó el candidato/release. Ambos tiempos se conservan por separado para evitar atribuir al documento una hora de recuperación que no tuvo.
+Cada snapshot registrado conserva identidad de fuente, SHA256 y `retrieved_at`. **`retrieved_at` significa actual fetch time**, es decir, la hora real de captura HTTP. `generated_at` identifica cuándo se generó el candidato/release. Ambos tiempos se conservan por separado.
 
 ## 3. Reconciliación legal como gate
 
-El ledger registrado de la Cámara de Diputados se reconcilia contra evidencia DOF y las fuentes operativas registradas de SNICE antes de publicar. Una discrepancia legal, evidencia DOF faltante, ambigüedad de snapshot, fallo de parser, checksum inconsistente o validación inválida bloquea el pipeline.
+El ledger registrado de la Cámara de Diputados se reconcilia contra evidencia DOF y fuentes operativas registradas de SNICE antes de publicar. Una discrepancia legal, evidencia DOF faltante, ambigüedad de snapshot, fallo de parser, checksum inconsistente o validación inválida bloquea el pipeline.
 
-La reconciliación no convierte una observación técnica en una opinión jurídica. El proyecto conserva evidencia y detecta inconsistencias; **no constituye asesoría legal**.
+La reconciliación conserva evidencia y detecta inconsistencias; **no constituye asesoría legal**.
 
 ## 4. Parseo, normalización y validación
 
-Los bytes capturados se procesan con parsers offline. El candidato se materializa en DuckDB y se valida antes de exportar. Entre los gates se encuentran:
+Los bytes capturados se procesan con parsers offline. El candidato se materializa en DuckDB y se valida antes de exportar. Los gates incluyen:
 
 - jerarquía HS2 → HS4 → HS6 → fracción8 → NICO10;
 - ausencia de duplicados y padres faltantes;
@@ -35,21 +33,32 @@ Los bytes capturados se procesan con parsers offline. El candidato se materializ
 - procedencia completa;
 - reconciliación legal publicable.
 
-Si cualquiera de estos gates falla, no existe camino hacia el job publisher.
+Si cualquiera falla, no existe camino hacia el job publisher.
 
 ## 5. `no_change` y detección de cambios
 
 El pipeline descarga el `manifest.json` de la última release válida y compara la identidad registrada de las fuentes.
 
-- Si la identidad no cambió, el resultado es `no_change`: la ejecución termina en verde, el publisher queda `skipped` y no se crea tag ni release.
-- Si hubo un cambio y todos los gates pasan, el resultado es `built`: se genera el bundle verificado y puede continuar a publicación.
-- Si falla cualquier gate, el resultado es `failed`: publicación bloqueada y diagnóstico disponible para el notifier.
+- Sin cambios: `no_change`, ejecución verde, publisher `skipped`, sin tag ni release.
+- Cambio con todos los gates verdes: `built`, se genera el bundle verificado.
+- Cualquier gate fallido: `failed`, publicación bloqueada y diagnóstico disponible para el notifier.
 
 ## 6. Manifest schema v2 y procedencia
 
-`manifest.json` usa `schema_version: "2"`, también referido como **schema v2**. Además de versión, conteos, hashes y fuentes, el manifest conserva procedencia de la ejecución, incluyendo commit, registry y GitHub Actions.
+`manifest.json` usa `schema_version: "2"`, también llamado **schema v2**. Conserva versión, conteos, hashes, fuentes y procedencia de ejecución.
 
-Campos relevantes incluyen `generated_at`, `registry_version`, `registry_sha256`, `git_commit_sha`, `github_run_id`, `github_run_attempt`, `github_workflow_ref` y `github_artifact_name`.
+Campos relevantes:
+
+```text
+generated_at
+registry_version
+registry_sha256
+git_commit_sha
+github_run_id
+github_run_attempt
+github_workflow_ref
+github_artifact_name
+```
 
 ## 7. Contrato exacto de publicación
 
@@ -65,15 +74,15 @@ release/
 └── official-sources.tar.gz
 ```
 
-Los cinco archivos distintos de `SHA256SUMS` deben estar cubiertos por checksums. `official-sources.tar.gz` conserva los snapshots capturados y `source_capture.json` necesarios para auditar el build.
+Los cinco archivos distintos de `SHA256SUMS` deben estar cubiertos por checksums. `official-sources.tar.gz` conserva snapshots y `source_capture.json` necesarios para auditar el build.
 
-Antes de cualquier mutación de GitHub Release, `verify_publication_bundle()` exige que el directorio contenga exactamente los six assets, valida manifest/schema/procedencia y vuelve a comprobar hashes.
+Antes de cualquier mutación de GitHub Release, `verify_publication_bundle()` exige exactamente los six assets y valida manifest/schema/procedencia y hashes.
 
 ### Artifact attestation
 
-Cuando un build cambiado y validado entra realmente al job `publish`, GitHub Actions crea una sola **artifact attestation** de provenance SLSA sobre esos mismos seis archivos públicos. El paso usa la acción first-party `actions/attest`, autenticación OIDC de GitHub y sólo se ejecuta después de que `verify_publication_bundle()` haya aceptado el artifact descargado.
+Cuando un build cambiado y validado entra realmente a `publish`, GitHub Actions crea una **artifact attestation** de provenance SLSA sobre esos seis archivos usando `actions/attest` y OIDC.
 
-Antes de ejecutar el publisher, cada subject se verifica contra este repositorio y contra el workflow firmante exacto:
+Antes de ejecutar el publisher, cada subject se verifica contra el repositorio y el workflow firmante exacto:
 
 ```bash
 gh attestation verify arancel_mx.duckdb \
@@ -81,56 +90,56 @@ gh attestation verify arancel_mx.duckdb \
   --signer-workflow jccontrerasg08-cpu/arancel-mx/.github/workflows/official-data-pipeline.yml
 ```
 
-Se aplica la misma forma de `gh attestation verify` a `arancel_mx.csv`, `arancel_mx.json`, `manifest.json`, `SHA256SUMS` y `official-sources.tar.gz`.
+La misma forma de `gh attestation verify` se aplica a `arancel_mx.csv`, `arancel_mx.json`, `manifest.json`, `SHA256SUMS` y `official-sources.tar.gz`.
 
-Las tres capas responden preguntas diferentes:
+Las capas responden preguntas distintas:
 
-- `SHA256SUMS` comprueba consistencia local de digest de los archivos de release que cubre.
-- `manifest.json` registra procedencia del dataset, fuentes, registry, validación y ejecución dentro del contrato de release.
-- GitHub artifact attestation enlaza criptográficamente los digests de los subjects con la identidad del workflow de GitHub Actions que los produjo y autorizó para publicación.
+- `SHA256SUMS` comprueba digests locales de los archivos de release.
+- `manifest.json` registra procedencia del dataset, fuentes, registry, validación y ejecución.
+- La artifact attestation enlaza criptográficamente los digests con la identidad del workflow de GitHub Actions.
 
-La artifact attestation **is not a legal signature** sobre los documentos oficiales mexicanos. No sustituye evidencia DOF/Diputados, la procedencia de las fuentes ni la reconciliación legal bloqueante del repositorio.
+La artifact attestation **is not a legal signature** sobre documentos oficiales mexicanos. No sustituye evidencia DOF/Diputados, procedencia de fuentes ni reconciliación legal bloqueante.
 
-Estado de A9 mientras no exista una publicación legítima posterior a su integración con verificación independiente de los seis subjects: **implemented / CI-verified; live attestation verification pending the next legitimate changed release**. La release `data-2026.08.11` fue creada antes de A9 y no constituye evidencia retroactiva de attestation.
+Estado A9 hasta que exista una publicación legítima posterior con verificación independiente: **implemented / CI-verified; live attestation verification pending the next legitimate changed release**. `data-2026.08.11` fue creada antes de A9 y no es evidencia retroactiva.
 
 ## 8. Publicación automática e immutable release
 
-El job `publish` sólo puede ejecutarse cuando:
+`publish` sólo puede ejecutarse cuando:
 
 1. `build-and-verify` terminó con éxito;
-2. su output es exactamente `built`;
+2. su output es `built`;
 3. el ref es `refs/heads/main`;
-4. la ejecución es programada o un `workflow_dispatch` confiable usa `publish=true`.
+4. la ejecución es programada o `workflow_dispatch` confiable usa `publish=true`.
 
-El publisher descarga por nombre exacto el artifact `arancel-mx-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}`, ejecuta de nuevo `verify_publication_bundle()`, genera y verifica la attestation de los seis assets, y sólo entonces crea una GitHub Release en estado **draft** para el tag `data-YYYY.MM.DD`.
+El publisher descarga el artifact exacto `arancel-mx-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}`, ejecuta de nuevo `verify_publication_bundle()`, genera/verifica la attestation de los six assets y sólo entonces crea una GitHub Release **draft** para `data-YYYY.MM.DD`.
 
-Los six assets se suben al draft y se verifican remotamente por tamaño y digest cuando GitHub provee digest; si no, se descargan de nuevo y se recalcula SHA256. Sólo entonces el draft se hace público. Después de publicar, la release se vuelve a consultar y verificar.
+Los assets del draft se verifican remotamente por tamaño y digest cuando GitHub lo provee; en caso contrario se descargan otra vez y se recalcula SHA256. Sólo después el draft se hace público y se vuelve a consultar.
 
 La política es **immutable**: nunca se sobrescribe un tag o release existente.
 
 ### Same-date second change
 
-Si ocurre un segundo cambio válido el mismo día y ya existe `data-YYYY.MM.DD`, el sistema no sobreescribe esa identidad. Falla con categoría `release_tag_collision`. Este **same-date** collision bloquea publicación y se trata como alerta operativa.
+Si ocurre un segundo cambio válido el mismo día y ya existe `data-YYYY.MM.DD`, el sistema falla con `release_tag_collision`. Este **same-date** collision bloquea publicación y genera una alerta operativa.
 
 ## 9. Fallos, GitHub Issue y recovery
 
-**Cualquier falla bloquea la publicación.** Los pasos principales escriben JSON de diagnóstico antes de devolver un código distinto de cero. El workflow extrae mensajes acotados y sin secretos, y luego falla explícitamente el job.
+**Cualquier falla bloquea la publicación.** Los pasos principales escriben JSON de diagnóstico acotado antes de devolver código distinto de cero.
 
-El job `notify` es el único con `issues: write`:
+`notify` es el único job con `issues: write`:
 
 - build fallido: crea o actualiza un **GitHub Issue** determinista por stage + failure category;
-- publish fallido, incluida una falla al crear o verificar la attestation: crea o actualiza el GitHub Issue correspondiente;
-- ejecución posterior saludable: ejecuta **recovery**, comenta y cierra las alertas generadas por la automatización;
+- publish fallido, incluida falla de attestation: crea o actualiza el Issue correspondiente;
+- ejecución posterior saludable: ejecuta **recovery**, comenta y cierra alertas de automatización;
 - `no_change` + publisher `skipped` cuenta explícitamente como recovery saludable.
 
-Los Issues del usuario sin el marcador oculto de automatización nunca se cierran mediante recovery.
+Issues del usuario sin el marcador oculto de automatización nunca se cierran mediante recovery.
 
 ## 10. Límites de permisos
 
-El workflow tiene `contents: read` globalmente. El job de build permanece read-only. Sólo `publish` recibe `contents: write`; para A9 ese mismo job recibe además `attestations: write` e `id-token: write`. Sólo `notify` recibe `issues: write`. No se usa PAT, `write-all`, `artifact-metadata: write` ni `pull_request_target`.
+El workflow tiene `contents: read` globalmente. Build permanece read-only. Sólo `publish` recibe `contents: write`; A9 añade en ese job `attestations: write` e `id-token: write`. Sólo `notify` recibe `issues: write`. No se usa PAT, `write-all`, `artifact-metadata: write` ni `pull_request_target`.
 
-Los binarios, bases DuckDB, snapshots oficiales y bundles de release no se escriben al historial Git.
+Los binarios, bases DuckDB, snapshots y bundles de release no se escriben al historial Git.
 
 ## Compatibilidad del entrypoint
 
-`scripts/build_official_dataset.py` permanece como entrypoint público de construcción. La automatización de producción vive únicamente en `.github/workflows/official-data-pipeline.yml`, por lo que no hay dos schedules de dataset ejecutándose en paralelo.
+`scripts/build_official_dataset.py` permanece como entrypoint público. La automatización productiva vive únicamente en `.github/workflows/official-data-pipeline.yml`, evitando schedules paralelos para el mismo dataset.
