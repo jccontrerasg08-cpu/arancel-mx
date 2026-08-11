@@ -19,6 +19,7 @@ RUN_ID = "31439123456"
 COMMIT_SHA = "a" * 40
 TAG = f"certification-{RUN_ID}"
 ASSET_NAME = "certification-proof.json"
+JSON_ACCEPT = "application/vnd.github+json"
 
 
 class FakeGitHub:
@@ -104,11 +105,13 @@ class FakeGitHub:
             self.events.append("download_asset")
             return self.asset_bytes[100]
         if method == "DELETE" and path == "/releases/10":
+            assert kwargs == {"accept": JSON_ACCEPT}
             self.events.append("delete_release")
             self.mutations.append((method, path, None))
             self.release = None
             return b""
         if method == "DELETE" and path == f"/git/refs/tags/{TAG}":
+            assert kwargs == {"accept": JSON_ACCEPT}
             self.events.append("delete_tag")
             self.mutations.append((method, path, None))
             self.ref_exists = False
@@ -186,6 +189,51 @@ def test_release_boundary_deletes_created_draft_by_id_when_listing_is_stale():
     assert client.release is None
     assert client.ref_exists is False
     assert "delete_release" in client.events
+
+
+def test_release_boundary_persists_exact_release_id_until_cleanup_succeeds(tmp_path):
+    state_path = tmp_path / "release-boundary-state.json"
+    client = UploadAndCleanupFailureGitHub()
+
+    with pytest.raises(CertificationReleaseError):
+        certify_release_boundary(
+            client,
+            REPOSITORY,
+            RUN_ID,
+            COMMIT_SHA,
+            state_path=state_path,
+        )
+
+    assert json.loads(state_path.read_text(encoding="utf-8")) == {
+        "release_id": 10,
+        "tag": TAG,
+    }
+
+
+def test_cleanup_uses_persisted_release_id_when_listing_is_stale(tmp_path):
+    state_path = tmp_path / "release-boundary-state.json"
+    state_path.write_text(
+        json.dumps({"release_id": 10, "tag": TAG}),
+        encoding="utf-8",
+    )
+    client = HiddenDraftFromListGitHub()
+    client.release = {
+        "id": 10,
+        "tag_name": TAG,
+        "draft": True,
+        "prerelease": True,
+        "target_commitish": COMMIT_SHA,
+        "upload_url": "unused",
+        "assets": [],
+    }
+    client.ref_exists = True
+
+    result = cleanup_certification_resources(client, TAG, state_path=state_path)
+
+    assert result == {"release_absent": True, "tag_absent": True}
+    assert client.release is None
+    assert client.ref_exists is False
+    assert not state_path.exists()
 
 
 def test_preexisting_certification_resource_blocks_before_mutation():
