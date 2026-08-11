@@ -49,18 +49,21 @@ def test_issue_boundary_is_the_only_issues_write_job_and_isolated_from_data_aler
     assert "contents: read" in issue_job
     assert "issues: write" in issue_job
     assert "contents: write" not in issue_job
-    assert "scripts/certify_github_issue.py" in issue_job
+    assert "python -m scripts.certify_github_issue" in issue_job
+    assert "python scripts/certify_github_issue.py" not in issue_job
     assert "scripts/data_alert.py" not in workflow
     assert "[DATA ALERT]" not in workflow
 
 
-def test_mutation_boundaries_use_builtin_token_and_release_always_runs_cleanup():
+def test_mutation_boundaries_use_builtin_token_and_module_entrypoints():
     workflow = _workflow()
 
     assert workflow.count("GITHUB_TOKEN: ${{ github.token }}") == 3
     assert "secrets." not in workflow
-    assert "python scripts/certify_github_release.py" in workflow
-    assert "python scripts/certify_github_issue.py" in workflow
+    assert "python -m scripts.certify_github_release" in workflow
+    assert "python -m scripts.certify_github_issue" in workflow
+    assert "python scripts/certify_github_release.py" not in workflow
+    assert "python scripts/certify_github_issue.py" not in workflow
     assert "--cleanup-only" in workflow
     assert "if: always()" in workflow
     assert "certification-" not in workflow
