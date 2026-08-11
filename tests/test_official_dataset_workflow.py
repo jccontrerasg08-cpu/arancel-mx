@@ -7,6 +7,16 @@ WORKFLOW = ROOT / ".github" / "workflows" / "official-data-pipeline.yml"
 LEGACY_WORKFLOW = ROOT / ".github" / "workflows" / "build-official-dataset.yml"
 ACTION_REF = re.compile(r"^\s*uses:\s*[^@\s]+@([0-9a-f]{40})(?:\s|$)", re.MULTILINE)
 ANY_ACTION = re.compile(r"^\s*uses:\s*[^@\s]+@([^\s#]+)", re.MULTILINE)
+ATTEST_ACTION = "actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d"
+PUBLIC_ATTESTATION_PATHS = (
+    "out/release/arancel_mx.duckdb",
+    "out/release/arancel_mx.csv",
+    "out/release/arancel_mx.json",
+    "out/release/manifest.json",
+    "out/release/SHA256SUMS",
+    "out/release/official-sources.tar.gz",
+)
+PUBLIC_ATTESTATION_NAMES = tuple(path.rsplit("/", 1)[-1] for path in PUBLIC_ATTESTATION_PATHS)
 
 
 def _workflow() -> str:
@@ -91,6 +101,73 @@ def test_only_publisher_has_contents_write_and_it_requires_built_trusted_main():
     assert "python -m scripts.publish_release" in publish
 
 
+def test_publisher_is_only_attestation_signer_and_uses_pinned_first_party_action():
+    workflow = _workflow()
+    build = _job_block(workflow, "build-and-verify", "publish")
+    publish = _job_block(workflow, "publish", "notify")
+    notify = _job_block(workflow, "notify")
+
+    assert workflow.count("attestations: write") == 1
+    assert workflow.count("id-token: write") == 1
+    assert "attestations: write" in publish
+    assert "id-token: write" in publish
+    assert "contents: write" in publish
+    assert "attestations: write" not in build
+    assert "id-token: write" not in build
+    assert "attestations: write" not in notify
+    assert "id-token: write" not in notify
+    assert "artifact-metadata: write" not in workflow
+
+    assert publish.count(ATTEST_ACTION) == 1
+    assert "actions/attest@v4" not in workflow
+
+
+def test_attestation_subjects_are_exactly_the_six_public_release_files():
+    workflow = _workflow()
+    publish = _job_block(workflow, "publish", "notify")
+
+    match = re.search(
+        r"subject-path:\s*\|\n(?P<body>(?:\s+out/release/[^\n]+\n){6})",
+        publish,
+    )
+    assert match is not None
+    subjects = tuple(line.strip() for line in match.group("body").splitlines())
+    assert subjects == PUBLIC_ATTESTATION_PATHS
+    assert "out/release/*" not in publish
+    assert "out/release/**" not in publish
+
+
+def test_attestation_is_verified_before_existing_release_publisher():
+    workflow = _workflow()
+    publish = _job_block(workflow, "publish", "notify")
+
+    assert "Generate build provenance attestation" in publish
+    assert "Verify build provenance attestation" in publish
+    assert "gh attestation verify" in publish
+    assert "--repo jccontrerasg08-cpu/arancel-mx" in publish
+    assert (
+        "--signer-workflow "
+        "jccontrerasg08-cpu/arancel-mx/.github/workflows/official-data-pipeline.yml"
+    ) in publish
+    assert "GH_TOKEN: ${{ github.token }}" in publish
+
+    array_match = re.search(
+        r"assets=\(\n(?P<body>(?:\s+\"[^\"]+\"\n){6})\s+\)",
+        publish,
+    )
+    assert array_match is not None
+    verified_names = tuple(
+        line.strip().strip('"') for line in array_match.group("body").splitlines()
+    )
+    assert verified_names == PUBLIC_ATTESTATION_NAMES
+
+    assert publish.index("Independently verify publication bundle") < publish.index(
+        "Generate build provenance attestation"
+    ) < publish.index("Verify build provenance attestation") < publish.index(
+        "Publish immutable verified release"
+    )
+
+
 def test_publisher_uses_structured_result_file_instead_of_console_redirection():
     workflow = _workflow()
     publish = _job_block(workflow, "publish", "notify")
@@ -142,10 +219,12 @@ def test_failed_build_can_never_satisfy_publisher_condition():
 def test_manual_publish_false_is_a_non_mutating_dry_run():
     workflow = _workflow()
     publish = _job_block(workflow, "publish", "notify")
+    build = _job_block(workflow, "build-and-verify", "publish")
     notify = _job_block(workflow, "notify")
 
     assert "type: boolean" in workflow
     assert "default: false" in workflow
     assert "github.event_name == 'schedule' || inputs.publish == true" in publish
+    assert "Generate build provenance attestation" not in build
     assert "inputs.publish != true" in notify
     assert "Dry run complete; GitHub issue mutation is disabled." in notify
