@@ -10,16 +10,20 @@ on:
       - ".github/workflows/docs-bootstrap.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   bootstrap:
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref == 'feat/audit-14-20-24-docs-vucem'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Check out repository
+      - name: Check out exact PR head without persisted credentials
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
 
       - name: Set up Node.js
@@ -46,7 +50,41 @@ jobs:
           npm run build -- --locale es
           npm run build -- --locale en
 
-      - name: Upload generated lockfile for reviewed commit
+      - name: Commit only the generated lockfile to the authorized branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_BRANCH: feat/audit-14-20-24-docs-vucem
+        run: |
+          set -euo pipefail
+
+          test -f website/package-lock.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          lock = json.loads(Path("website/package-lock.json").read_text(encoding="utf-8"))
+          assert lock.get("name") == "arancel-mx-docs"
+          assert lock.get("lockfileVersion") == 3
+          PY
+
+          if [ -z "$(git status --porcelain -- website/package-lock.json)" ]; then
+            echo "package-lock.json is already committed and unchanged."
+            exit 0
+          fi
+
+          git add -- website/package-lock.json
+          staged="$(git diff --cached --name-only)"
+          test "$staged" = "website/package-lock.json"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "build(docs): lock npm dependencies"
+
+          basic="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          git -c http.https://github.com/.extraheader="AUTHORIZATION: basic $basic" \
+            push origin "HEAD:refs/heads/${TARGET_BRANCH}"
+
+      - name: Upload generated lockfile for audit trace
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: docs-package-lock-${{ github.run_id }}-${{ github.run_attempt }}
