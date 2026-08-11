@@ -38,6 +38,12 @@ jobs:
       - name: Build distributions
         run: python -m build
 
+      - name: Smoke-test built wheel in a clean environment
+        run: python scripts/certify_package_install.py dist/*.whl
+
+      - name: Smoke-test built source distribution in a clean environment
+        run: python scripts/certify_package_install.py dist/*.tar.gz
+
   release-boundary:
     needs: offline
     runs-on: ubuntu-latest
