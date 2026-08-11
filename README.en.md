@@ -173,3 +173,7 @@ Repository Actions are pinned by full commit SHA and use least-privilege permiss
 ## Documentation status
 
 Canonical public documentation lives under `docs/`. Docusaurus ES/EN and permanent read-only docs CI are implemented on this branch. GitHub Pages is intentionally not advertised as live until a real production deployment is verified.
+
+## Repository operations
+
+The target GitHub Actions, release, ruleset, and security settings are documented in [`docs/operations/github-settings.md`](docs/operations/github-settings.md).
