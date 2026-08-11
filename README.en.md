@@ -128,7 +128,7 @@ The **Official data pipeline** is [`.github/workflows/official-data-pipeline.yml
 - **any failure blocks publication** and produces bounded diagnostics for a GitHub Issue.
 - Production releases use the immutable `data-YYYY.MM.DD` namespace.
 
-The public end-to-end builder remains `scripts/build_official_dataset.py`.
+The public end-to-end builder remains `scripts/build_official_dataset.py`. A verified bundle contains `arancel_mx.duckdb`, `arancel_mx.csv`, `arancel_mx.json`, `manifest.json`, `SHA256SUMS`, and `official-sources.tar.gz`.
 
 ## Reproducibility and verification
 
