@@ -98,6 +98,27 @@ def _matching_releases(client: GitHubApi, tag: str) -> list[dict[str, Any]]:
     return matches
 
 
+def _release_by_id(client: GitHubApi, release_id: int) -> dict[str, Any] | None:
+    if not isinstance(release_id, int) or release_id <= 0:
+        raise ValueError("release id must be a positive integer")
+    try:
+        value = client.request_json("GET", f"/releases/{release_id}")
+    except GitHubNotFound:
+        return None
+    if not isinstance(value, dict):
+        raise CertificationReleaseError("GitHub release response must be an object")
+    return value
+
+
+def _validate_cleanup_release(release: dict[str, Any], release_id: int, tag: str) -> None:
+    if release.get("id") != release_id:
+        raise CertificationReleaseError("certification cleanup release id mismatch")
+    if release.get("tag_name") != tag:
+        raise CertificationReleaseError("certification cleanup release tag mismatch")
+    if release.get("draft") is not True:
+        raise CertificationReleaseError("certification cleanup refuses a non-draft release")
+
+
 def _tag_ref_exists(client: GitHubApi, tag: str) -> bool:
     try:
         value = client.request_json("GET", f"/git/ref/tags/{tag}")
@@ -159,20 +180,40 @@ def _verify_draft(
     return expected
 
 
-def cleanup_certification_resources(client: GitHubApi, tag: str) -> dict[str, bool]:
+def cleanup_certification_resources(
+    client: GitHubApi,
+    tag: str,
+    *,
+    release_id: int | None = None,
+) -> dict[str, bool]:
     """Idempotently remove the exact temporary certification release and tag ref."""
     tag = _validate_certification_tag(tag)
+    deleted_ids: set[int] = set()
+
+    if release_id is not None:
+        exact_release = _release_by_id(client, release_id)
+        if exact_release is not None:
+            _validate_cleanup_release(exact_release, release_id, tag)
+            client.request_bytes("DELETE", f"/releases/{release_id}")
+            deleted_ids.add(release_id)
 
     for release in _matching_releases(client, tag):
-        release_id = release.get("id")
-        if not isinstance(release_id, int):
+        listed_id = release.get("id")
+        if not isinstance(listed_id, int):
             raise CertificationReleaseError("matching certification release has invalid id")
-        client.request_bytes("DELETE", f"/releases/{release_id}")
+        if listed_id in deleted_ids:
+            continue
+        _validate_cleanup_release(release, listed_id, tag)
+        client.request_bytes("DELETE", f"/releases/{listed_id}")
+        deleted_ids.add(listed_id)
 
     if _tag_ref_exists(client, tag):
         client.request_bytes("DELETE", f"/git/refs/tags/{tag}")
 
-    release_absent = not _matching_releases(client, tag)
+    exact_release_absent = (
+        release_id is None or _release_by_id(client, release_id) is None
+    )
+    release_absent = exact_release_absent and not _matching_releases(client, tag)
     tag_absent = not _tag_ref_exists(client, tag)
     if not release_absent or not tag_absent:
         raise CertificationReleaseError(
@@ -200,6 +241,7 @@ def certify_release_boundary(
 
     proof = _proof_bytes(repository, str(run_id), commit_sha, tag)
     mutation_started = False
+    release_id: int | None = None
     primary_error: Exception | None = None
     asset_sha256: str | None = None
 
@@ -230,11 +272,7 @@ def certify_release_boundary(
         if created.get("draft") is not True or created.get("tag_name") != tag:
             raise CertificationReleaseError("GitHub did not create the expected draft release")
 
-        client.request_upload_json(
-            _asset_upload_url(upload_template),
-            proof,
-            content_type="application/json",
-        )
+        client.request_upload_json(_asset_upload_url(upload_template), proof)
         asset_sha256 = _verify_draft(client, release_id, tag, proof)
     except Exception as error:  # noqa: BLE001 - preserve failure through cleanup
         primary_error = error
@@ -243,7 +281,11 @@ def certify_release_boundary(
     cleanup_error: Exception | None = None
     if mutation_started:
         try:
-            cleanup_result = cleanup_certification_resources(client, tag)
+            cleanup_result = cleanup_certification_resources(
+                client,
+                tag,
+                release_id=release_id,
+            )
         except Exception as error:  # noqa: BLE001 - report rollback failure too
             cleanup_error = error
 
