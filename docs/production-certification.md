@@ -1,44 +1,44 @@
-# Production certification
+# Certificación de producción
 
-This runbook documents the repository's controlled production-certification workflow and the evidence required before its GitHub write boundaries are considered healthy.
+Este runbook documenta el workflow controlado de certificación de producción del repositorio y la evidencia requerida antes de considerar saludables sus límites de escritura en GitHub.
 
-> The certification workflow is intentionally separate from the official tariff-data pipeline. It must never publish a production `data-*` release or create a production `[DATA ALERT]` issue.
+> El workflow de certificación está separado deliberadamente del pipeline oficial de datos arancelarios. Nunca debe publicar una release productiva `data-*` ni crear un Issue productivo `[DATA ALERT]`.
 
-## Certified live baseline
+## Baseline live certificado
 
-The release and Issue write boundaries were successfully exercised from protected `main` on 2026-08-11 UTC.
+Los límites de escritura de Releases e Issues se ejercieron correctamente desde `main` protegido el 2026-08-11 UTC.
 
 - Workflow: `Production certification`
 - Run: `31450616908`
 - Commit: `a14c57ee3aeeb982e6aa7077ae1b34582585db8b`
-- Overall conclusion: `success`
+- Conclusión general: `success`
 - `offline`: `success`
 - `release-boundary`: `success`
 - `issue-boundary`: `success`
-- Temporary release tag: `certification-31450616908`
-- Final release state: absent
-- Final tag/ref state: absent
-- Certification Issue: `#28`, `[CERTIFICATION ALERT] 31450616908`, closed
-- Production release `data-2026.08.10`: unchanged
+- Tag temporal: `certification-31450616908`
+- Estado final de release: ausente
+- Estado final de tag/ref: ausente
+- Issue de certificación: `#28`, `[CERTIFICATION ALERT] 31450616908`, cerrado
+- Release productiva `data-2026.08.10`: sin cambios
 
-This evidence certifies the isolated GitHub write boundaries only. It does not replace the official-source, legal-reconciliation, release-integrity, timestamp, or artifact-attestation gates documented elsewhere in the repository.
+Esta evidencia certifica únicamente los límites aislados de escritura en GitHub. No sustituye los gates de fuentes oficiales, reconciliación legal, integridad de release, timestamps o artifact attestations documentados en otras partes del repositorio.
 
-## Safety boundaries
+## Límites de seguridad
 
-The workflow is manual-only (`workflow_dispatch`) and runs from trusted `main`.
+El workflow es sólo manual (`workflow_dispatch`) y se ejecuta desde `main` confiable.
 
-Its namespaces are deliberately isolated:
+Sus namespaces están aislados deliberadamente:
 
 ```text
-Temporary release/tag: certification-<github-run-id>
-Certification Issue:   [CERTIFICATION ALERT] <github-run-id>
-Production release:    data-YYYY.MM.DD
-Production alert:      [DATA ALERT] ...
+Release/tag temporal: certification-<github-run-id>
+Issue de certificación: [CERTIFICATION ALERT] <github-run-id>
+Release productiva:     data-YYYY.MM.DD
+Alerta productiva:      [DATA ALERT] ...
 ```
 
-The certification helpers reject production namespaces. A certification release remains a draft/prerelease for its entire lifetime and is deleted after verification. A certification Issue is closed and retained as an auditable trace.
+Los helpers de certificación rechazan namespaces productivos. Una release de certificación permanece draft/prerelease durante toda su vida y se elimina después de verificarla. El Issue de certificación se cierra y se conserva como evidencia auditable.
 
-Permissions are job-scoped:
+Los permisos son por job:
 
 ```text
 offline            contents: read
@@ -46,74 +46,74 @@ release-boundary   contents: write
 issue-boundary     contents: read + issues: write
 ```
 
-The workflow uses the built-in `github.token`; no external PAT is required.
+El workflow usa `github.token`; no requiere PAT externo.
 
-## Manual dispatch
+## Ejecución manual
 
-In GitHub:
+En GitHub:
 
-1. Open **Actions**.
-2. Select **Production certification**.
-3. Choose **Run workflow**.
-4. Select branch **main**.
-5. Run the workflow.
+1. Abre **Actions**.
+2. Selecciona **Production certification**.
+3. Elige **Run workflow**.
+4. Selecciona la rama **main**.
+5. Ejecuta el workflow.
 
-Do not dispatch the live mutation workflow from a pull-request branch.
+No ejecutes el workflow de mutación live desde una rama de pull request.
 
-Before dispatch, verify:
-
-```text
-main is protected
-required check `test` is green on current main
-no open production DATA ALERT is attributable to current main
-no certification draft/tag already exists for the new run
-workflow permissions still match this runbook
-```
-
-## Expected successful lifecycle
-
-The release boundary performs this lifecycle:
+Antes de ejecutarlo, verifica:
 
 ```text
-preflight for existing certification resources
-create temporary draft/prerelease
-persist exact temporary release ID locally
-upload certification-proof.json
-verify asset metadata/digest
-DELETE the exact draft by release ID
-DELETE the temporary certification tag/ref if present
-verify release absence by ID and listing
-verify tag/ref absence
-always-run cleanup repeats the absence check
+main está protegido
+el required check `test` está verde en main actual
+no existe un DATA ALERT productivo abierto atribuible al main actual
+no existe un draft/tag de certificación para el nuevo run
+los permisos del workflow siguen coincidiendo con este runbook
 ```
 
-The Issue boundary creates an isolated certification Issue, verifies it, records completion, and closes it. The Issue remains closed as audit evidence.
+## Ciclo esperado de una ejecución exitosa
 
-A successful run must finish with all three jobs green and these postconditions:
+El límite de release ejecuta:
 
 ```text
-0 remaining certification drafts for the run
-0 remaining certification tags/refs for the run
-1 closed [CERTIFICATION ALERT] Issue for the run
-0 new data-* tags
-0 production releases modified by certification
-main SHA unchanged by certification
+preflight de recursos de certificación existentes
+crear draft/prerelease temporal
+persistir localmente el release ID exacto
+subir certification-proof.json
+verificar metadata/digest del asset
+DELETE del draft exacto por release ID
+DELETE del tag/ref temporal si existe
+verificar ausencia de release por ID y listado
+verificar ausencia de tag/ref
+cleanup always-run repite la comprobación de ausencia
 ```
 
-If any cleanup postcondition fails, stop. Remove only the exact certification resource after independently checking its run ID and namespace. Never delete or edit a `data-*` release while repairing certification cleanup.
+El límite de Issues crea un Issue aislado de certificación, lo verifica, registra finalización y lo cierra. El Issue cerrado permanece como evidencia auditable.
 
-## Inspecting evidence
-
-For the certified baseline, inspect:
+Un run exitoso debe terminar con los tres jobs verdes y estas postcondiciones:
 
 ```text
-Actions → Production certification → run 31450616908
-Issues  → #28 [CERTIFICATION ALERT] 31450616908
-Releases → confirm no Production certification 31450616908 draft remains
-Tags     → confirm certification-31450616908 is absent
+0 drafts de certificación restantes para el run
+0 tags/refs de certificación restantes para el run
+1 [CERTIFICATION ALERT] cerrado para el run
+0 tags data-* nuevos
+0 releases productivas modificadas por certificación
+SHA de main sin cambios por certificación
 ```
 
-The release-boundary log must contain a final result equivalent to:
+Si falla alguna postcondición de cleanup, detente. Elimina únicamente el recurso de certificación exacto después de comprobar independientemente su run ID y namespace. Nunca elimines ni edites una release `data-*` al reparar cleanup de certificación.
+
+## Inspección de evidencia
+
+Para el baseline certificado revisa:
+
+```text
+Actions  → Production certification → run 31450616908
+Issues   → #28 [CERTIFICATION ALERT] 31450616908
+Releases → confirmar que no queda draft Production certification 31450616908
+Tags     → confirmar que certification-31450616908 está ausente
+```
+
+El log de `release-boundary` debe contener un resultado final equivalente a:
 
 ```json
 {
@@ -124,24 +124,24 @@ The release-boundary log must contain a final result equivalent to:
 }
 ```
 
-The Issue-boundary result must identify the certification Issue with `state: "closed"`.
+El resultado de `issue-boundary` debe identificar el Issue de certificación con `state: "closed"`.
 
-## Package artifact smoke certification
+## Certificación smoke de artefactos del paquete
 
-Build the distributions first:
+Primero construye las distribuciones:
 
 ```bash
 python -m build
 ```
 
-Then exercise both artifacts in isolated virtual environments outside the repository checkout:
+Después prueba ambos artefactos en virtualenvs aislados fuera del checkout:
 
 ```bash
 python scripts/certify_package_install.py dist/*.whl
 python scripts/certify_package_install.py dist/*.tar.gz
 ```
 
-Each clean install verifies:
+Cada instalación limpia verifica:
 
 ```text
 import arancel_mx
@@ -150,11 +150,11 @@ arancel-mx --help
 packaged sources/source_registry.json is present
 ```
 
-CI runs the same wheel and sdist smoke boundary.
+CI y el workflow manual de certificación ejecutan el mismo límite smoke para wheel y sdist.
 
-## Public bundle verification
+## Verificación del bundle público
 
-A public bundle is valid only when it contains exactly:
+Un bundle público sólo es válido cuando contiene exactamente:
 
 ```text
 arancel_mx.duckdb
@@ -165,32 +165,19 @@ SHA256SUMS
 official-sources.tar.gz
 ```
 
-Run the independent certification layer against a prepared release directory:
+La capa independiente de certificación valida el conjunto exacto de assets, checksums, seguridad e identidades del source archive y equivalencia lógica CSV/JSON. DuckDB tiene su propio contrato de consumidor y probe de versión mínima.
 
-```bash
-python - <<'PY'
-from pathlib import Path
-from arancel_mx.certification import certify_bundle
-
-report = certify_bundle(Path("out/release"))
-print(report)
-assert report.passed
-PY
-```
-
-This checker validates the exact asset set, checksums, source archive safety and source identities, and CSV/JSON logical equivalence. DuckDB has its own consumer-contract and minimum-version probe.
-
-For the documented minimum DuckDB compatibility boundary:
+Para el límite documentado de compatibilidad mínima de DuckDB:
 
 ```bash
 python scripts/check_duckdb_compat.py out/release/arancel_mx.duckdb
 ```
 
-The repository CI additionally executes this probe in an isolated DuckDB `1.1.0` environment.
+CI ejecuta adicionalmente este probe dentro de un entorno aislado con DuckDB `1.1.0`.
 
-## Routine verification commands
+## Comandos rutinarios de verificación
 
-Before merging certification-related changes:
+Antes de integrar cambios de certificación:
 
 ```bash
 python -m pytest -q
@@ -198,41 +185,25 @@ python -m build
 git diff --check
 ```
 
-A certification workflow PR must also show that:
+Un PR que modifique certificación también debe demostrar que parte del `main` protegido actual, que los supuestos cambiantes de API/Actions se verificaron contra documentación oficial, que se conservan permisos mínimos, que Actions siguen fijadas por SHA completo, que no se versionaron credenciales ni datasets productivos generados, que cleanup es fail-closed y que cualquier mutación live sólo ocurre después de merge desde `main` confiable.
 
-```text
-it is based on current protected main
-GitHub API/action assumptions were rechecked against official documentation when they could have changed
-least-privilege permissions are preserved
-external Actions remain full-SHA pinned
-no credentials or generated production datasets are committed
-cleanup is fail-closed and independently verified
-live mutation happens only after merge from trusted main
-```
+## Recuperación ante fallos
 
-## Failure recovery
+Si un run live de certificación falla:
 
-If a live certification run fails:
+1. Lee el log exacto del job antes de modificar código.
+2. Revisa Releases, Tags e Issues independientemente en GitHub.
+3. Identifica el recurso exacto `certification-<run-id>` antes de cleanup.
+4. Nunca infieras propiedad por un nombre parcial ni elimines una release productiva `data-*`.
+5. Agrega un test RED que reproduzca el fallo live antes de implementar el fix.
+6. Integra el fix sólo después de que pase el gate normal del repositorio.
+7. Elimina cualquier huérfano legacy creado antes de que existiera estado persistente de cleanup confiable.
+8. Repite `Production certification` desde `main` protegido y exige de nuevo todas las postcondiciones.
 
-1. Read the exact job log before changing code.
-2. Check Releases, Tags, and Issues independently through GitHub, because list endpoints can be eventually consistent.
-3. Identify the exact `certification-<run-id>` resource before cleanup.
-4. Never infer ownership from a partial name or delete a production `data-*` release.
-5. Add a RED test reproducing the live failure before implementing a fix.
-6. Merge the fix only after the normal repository gate passes.
-7. Remove any legacy orphan created by code that predates reliable persisted cleanup state.
-8. Re-run `Production certification` from protected `main` and require all postconditions again.
+## Alcance de esta certificación
 
-## Scope of this certification
+El run live exitoso demuestra que el repositorio puede ejercer y revertir de forma segura su límite aislado de escritura de GitHub Release y puede crear/cerrar un Issue aislado con permisos mínimos por job.
 
-The successful live run proves that the repository can safely exercise and roll back its isolated GitHub release-write boundary and can create/close an isolated Issue with least-privilege job permissions.
+Por sí solo **no demuestra** que exista una actualización oficial arancelaria, que una reconciliación legal futura vaya a pasar, que una futura release productiva vaya a ser inmutable, que una futura artifact attestation vaya a verificarse o que todas las fuentes oficiales externas estén accesibles en este momento.
 
-It does **not** by itself prove:
-
-- that an official tariff-source update exists;
-- that legal reconciliation will pass for a future source change;
-- that a future production release will be immutable;
-- that artifact attestations are configured and verifiable;
-- or that every external official source is currently reachable.
-
-Those are separate production gates and must be certified independently.
+Esos siguen siendo gates productivos separados.
