@@ -1,6 +1,4 @@
-"""Open tools for Mexican tariff data."""
-
-from importlib.metadata import version as _distribution_version
+"""Public consumer-facing types and exceptions."""
 
 from arancel_mx.consumer.errors import (
     ArancelMXError,
@@ -15,8 +13,6 @@ from arancel_mx.consumer.errors import (
     RecordNotFoundError,
 )
 from arancel_mx.consumer.models import DatasetInfo, ProvenanceRecord, SearchResult, TariffRecord
-
-__version__ = _distribution_version("arancel-mx")
 
 __all__ = [
     "ArancelMXError",
@@ -33,5 +29,4 @@ __all__ = [
     "RecordNotFoundError",
     "SearchResult",
     "TariffRecord",
-    "__version__",
 ]
