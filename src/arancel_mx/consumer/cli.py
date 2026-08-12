@@ -1,11 +1,16 @@
-"""Consumer command parser composition and, later, command handlers."""
+"""Consumer command parser composition and command handlers."""
 
 from __future__ import annotations
 
 import argparse
+import sys
+
+from arancel_mx.consumer.dataset import Dataset
+from arancel_mx.consumer.output import render
 
 
 _OUTPUT_FORMATS = ("table", "json", "csv")
+_QUERY_ACTIONS = {"lookup", "search", "parent", "children", "provenance"}
 
 
 def _add_dataset_selection(parser: argparse.ArgumentParser) -> None:
@@ -122,12 +127,11 @@ def register_consumer_commands(
     )
     verify.set_defaults(consumer_action="data_verify")
 
-    lookup = _add_query_command(
+    _add_query_command(
         subparsers,
         "lookup",
         help_text="Busca un código arancelario exacto",
     )
-    lookup.set_defaults(consumer_action="lookup")
 
     search = _add_query_command(
         subparsers,
@@ -136,7 +140,6 @@ def register_consumer_commands(
         positional="text",
     )
     search.add_argument("--limit", type=int, default=20)
-    search.set_defaults(consumer_action="search")
 
     _add_query_command(
         subparsers,
@@ -153,3 +156,46 @@ def register_consumer_commands(
         "provenance",
         help_text="Muestra las fuentes trazables de un código",
     )
+
+
+def _selected_dataset(namespace: argparse.Namespace) -> Dataset:
+    options = {"offline": namespace.offline}
+    if namespace.dataset:
+        return Dataset.version(namespace.dataset, **options)
+    return Dataset.latest(**options)
+
+
+def _emit(value: object, *, format_name: str) -> None:
+    text = render(value, format_name=format_name)
+    sys.stdout.write(text)
+    if text and not text.endswith("\n"):
+        sys.stdout.write("\n")
+
+
+def _run_query(namespace: argparse.Namespace) -> int:
+    dataset = _selected_dataset(namespace)
+    action = namespace.consumer_action
+    if action == "lookup":
+        value: object = dataset.lookup(namespace.code)
+    elif action == "search":
+        value = dataset.search(namespace.text, limit=namespace.limit)
+    elif action == "parent":
+        parent_record = dataset.parent(namespace.code)
+        value = () if parent_record is None and namespace.format != "json" else parent_record
+    elif action == "children":
+        value = dataset.children(namespace.code)
+    elif action == "provenance":
+        value = dataset.provenance(namespace.code)
+    else:
+        raise ValueError(f"unsupported consumer query action: {action}")
+    _emit(value, format_name=namespace.format)
+    return 0
+
+
+def run_consumer(namespace: argparse.Namespace) -> int:
+    """Run one parsed consumer command and return its process exit code."""
+
+    action = getattr(namespace, "consumer_action", None)
+    if action in _QUERY_ACTIONS:
+        return _run_query(namespace)
+    raise ValueError(f"unsupported consumer command: {action}")
