@@ -161,7 +161,22 @@ def patch_local_verifier(monkeypatch, events, value=None):
         assert path.name == "release"
         return value or manifest()
 
+    def certify(path, verified_manifest):
+        events.append("duckdb_certify")
+        assert path.name == "arancel_mx.duckdb"
+        assert verified_manifest == (value or manifest())
+        return (
+            "core_objects",
+            "public_columns",
+            "release_metadata",
+            "row_count",
+            "record_ids",
+            "hierarchy",
+            "value_origin",
+        )
+
     monkeypatch.setattr(publisher, "verify_publication_bundle", verify)
+    monkeypatch.setattr(publisher, "certify_duckdb", certify)
 
 
 @pytest.mark.parametrize(
@@ -218,6 +233,7 @@ def test_success_is_verify_then_draft_upload_remote_verify_and_publish(tmp_path,
     }
     assert events == [
         "local_verify",
+        "duckdb_certify",
         "check_release",
         "check_tag",
         "create_draft",

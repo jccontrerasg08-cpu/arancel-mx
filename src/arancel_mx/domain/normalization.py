@@ -327,11 +327,28 @@ def consolidate_records(
                     for rate in applicable_rates
                     for parent in parent_classifications
                 ]
+                if not applicable_rates:
+                    raise ValueError(
+                        f"NICO {code} has no matching tariff rate for publication"
+                    )
+                if not parent_classifications:
+                    raise ValueError(
+                        f"NICO {code} has no contemporaneous parent fraction for publication"
+                    )
+                if not applicability:
+                    raise ValueError(
+                        f"NICO {code} has no publishable rate/parent intersection"
+                    )
             else:
+                if not applicable_rates:
+                    raise ValueError(
+                        f"tariff fraction {code} has no matching tariff rate for publication"
+                    )
                 applicability = [(rate, None) for rate in applicable_rates]
         else:
             applicability = [(None, None)]
 
+        produced = 0
         for rate, parent_classification in applicability:
             classification_start = classification.get("classification_effective_from")
             classification_end = classification.get("classification_effective_to")
@@ -371,6 +388,12 @@ def consolidate_records(
                 }
             )
             description = " ".join(str(classification["description"]).split())
+            if level == "nico10":
+                primary_source_document_id = classification.get("source_document_id")
+            elif rate is not None:
+                primary_source_document_id = rate.get("source_document_id")
+            else:
+                primary_source_document_id = classification.get("source_document_id")
             row: dict[str, object] = {
                 "record_id": None,
                 "record_version": None,
@@ -419,9 +442,7 @@ def consolidate_records(
                 "effective_to": effective_to,
                 "observed_at": None,
                 "retrieved_at": None,
-                "primary_source_document_id": (
-                    rate.get("source_document_id") if rate else classification.get("source_document_id")
-                ),
+                "primary_source_document_id": primary_source_document_id,
                 "primary_source_authority": None,
                 "primary_source_url": None,
                 "source_document_ids_json": canonical_json(source_ids),
@@ -429,6 +450,12 @@ def consolidate_records(
             }
             row["record_hash"] = semantic_record_hash(row)
             candidates.append(row)
+            produced += 1
+
+        if level in {"fraccion8", "nico10"} and produced == 0:
+            raise ValueError(
+                f"{level} {code} has no overlapping rate/parent interval for publication"
+            )
 
     def sort_key(row: Mapping[str, object]) -> tuple[object, ...]:
         effective_from = row.get("effective_from")
@@ -464,7 +491,10 @@ def stage_rows(conn: Any, rows: list[Mapping[str, Any]]) -> int:
             row.get("capture_id"), row.get("dataset_key"), row.get("document_role"),
             row.get("sheet_name"), row.get("source_row_number"), row.get("parser_version"),
         ]
-        staging_id = str(row.get("staging_row_id") or record_id({"staging": identity}))
+        staging_id = str(
+            row.get("staging_row_id")
+            or hashlib.sha256(canonical_json(identity).encode("utf-8")).hexdigest()
+        )
         conn.execute(
             """INSERT OR REPLACE INTO staging_arancel_row
                (staging_row_id, capture_id, dataset_key, document_role, sheet_name,

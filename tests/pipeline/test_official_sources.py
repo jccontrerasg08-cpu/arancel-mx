@@ -111,24 +111,32 @@ def test_capture_official_inputs_returns_registered_and_required_legal_roles(tmp
     } == {
         ("ligie", "ligie_snapshot"),
         ("nico", "nico_snapshot"),
+        ("diputados_ligie", "legal_ledger"),
         ("diputados_ligie", "consolidated_text"),
         ("dof_law_reform", "law_reform"),
         ("dof_tariff_decree", "tariff_decree"),
     }
     assert snapshot.registry_version == "2026-08-10"
     assert len(snapshot.registry_sha256) == 64
-    assert len(snapshot.identities) == 5
+    assert len(snapshot.identities) == 6
     assert all(identity.registry_version == "2026-08-10" for identity in snapshot.identities)
     assert snapshot.reconciliation.publishable is True
     assert snapshot.reconciliation.discrepancies == ()
 
-    by_key = {source.dataset_key: source for source in snapshot.sources}
-    assert by_key["dof_law_reform"].source_document["published_at"] == date(
-        2025, 12, 29
-    )
-    assert by_key["dof_tariff_decree"].source_document["published_at"] == date(
-        2026, 4, 23
-    )
+    by_role = {
+        (source.dataset_key, source.document_role): source
+        for source in snapshot.sources
+    }
+    assert by_role[("dof_law_reform", "law_reform")].source_document[
+        "published_at"
+    ] == date(2025, 12, 29)
+    assert by_role[("dof_tariff_decree", "tariff_decree")].source_document[
+        "published_at"
+    ] == date(2026, 4, 23)
+    ledger = by_role[("diputados_ligie", "legal_ledger")]
+    assert ledger.capture.path.is_file()
+    assert ledger.source_document["media_type"].startswith("text/html")
+    assert ledger.source_document["sha256"] == ledger.capture.sha256
 
 
 def test_missing_captured_required_dof_role_blocks_reconciliation(tmp_path, monkeypatch):
@@ -172,6 +180,7 @@ def test_release_sources_preserve_required_dof_evidence(tmp_path):
         "dof-law-reform.pdf",
         "dof-tariff-decree.pdf",
         "ligie-consolidated.pdf",
+        "ligie-ledger.htm",
         "ligie.xlsx",
         "nico.xlsx",
         "source_capture.json",

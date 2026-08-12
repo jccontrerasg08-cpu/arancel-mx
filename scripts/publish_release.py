@@ -12,6 +12,7 @@ import sys
 import tempfile
 from urllib.parse import quote, urlencode
 
+from arancel_mx.certification.consumer import certify_duckdb
 from arancel_mx.release.package import (
     PUBLIC_RELEASE_ASSETS,
     sha256,
@@ -212,6 +213,7 @@ def publish_release(
     release_dir = Path(release_dir).resolve()
     commit_sha = _nonblank(commit_sha, "commit_sha")
     manifest = verify_publication_bundle(release_dir)
+    certify_duckdb(release_dir / "arancel_mx.duckdb", manifest)
     dataset_version = _nonblank(str(manifest.get("dataset_version") or ""), "dataset_version")
     manifest_commit = _nonblank(str(manifest.get("git_commit_sha") or ""), "manifest git_commit_sha")
     if manifest_commit != commit_sha:

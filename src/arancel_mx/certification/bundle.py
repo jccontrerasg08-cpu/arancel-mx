@@ -10,6 +10,7 @@ from pathlib import Path, PurePosixPath
 import tarfile
 from typing import Any
 
+from arancel_mx.certification.consumer import certify_duckdb
 from arancel_mx.certification.reports import CertificationReport
 from arancel_mx.domain.normalization import PUBLIC_COLUMNS
 from arancel_mx.release.metadata import source_identity_from_manifest
@@ -264,9 +265,10 @@ def _certify_csv_json(release_dir: Path, manifest: dict[str, Any]) -> int:
 
 
 def certify_bundle(release_dir: Path) -> CertificationReport:
-    """Certify hashes, archived evidence, provenance, and CSV/JSON equivalence."""
+    """Certify hashes, archived evidence, provenance, DuckDB, and CSV/JSON equivalence."""
     release_dir = Path(release_dir).resolve()
     manifest = verify_publication_bundle(release_dir)
+    duckdb_checks = certify_duckdb(release_dir / "arancel_mx.duckdb", manifest)
     captured, _members = _read_source_archive(release_dir)
     _certify_source_provenance(manifest, captured)
     row_count = _certify_csv_json(release_dir, manifest)
@@ -274,6 +276,7 @@ def certify_bundle(release_dir: Path) -> CertificationReport:
         passed=True,
         checks=(
             "publication_bundle",
+            *duckdb_checks,
             "source_archive",
             "source_provenance",
             "csv_json_equivalence",

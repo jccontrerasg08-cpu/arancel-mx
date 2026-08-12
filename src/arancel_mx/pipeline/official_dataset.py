@@ -121,7 +121,17 @@ def _fraction_and_rate_rows(staging_rows, source_id: str, config: OfficialDatase
             "source_document_id": source_id,
         }
         fractions.append(fraction)
-        rates.append(rate)
+        has_tariff_values = any(
+            value not in (None, "")
+            for value in (
+                normalized.get("igi_text"),
+                normalized.get("ige_text"),
+                normalized.get("igi_value"),
+                normalized.get("ige_value"),
+            )
+        )
+        if has_tariff_values:
+            rates.append(rate)
     return fractions, rates
 
 
@@ -146,6 +156,24 @@ def _nico_rows(staging_rows, source_id: str, config: OfficialDatasetConfig):
 def _level_counts(classifications: list[dict[str, object]]) -> dict[str, int]:
     counts = Counter(str(row["level"]) for row in classifications)
     return {level: int(counts.get(level, 0)) for level in RELEASE_LEVELS}
+
+
+def _required_source(
+    snapshot: OfficialInputSnapshot,
+    dataset_key: str,
+    document_role: str,
+):
+    matches = [
+        source
+        for source in snapshot.sources
+        if source.dataset_key == dataset_key and source.document_role == document_role
+    ]
+    if len(matches) != 1:
+        raise ValueError(
+            "official snapshot is missing required source "
+            f"{dataset_key}/{document_role}"
+        )
+    return matches[0]
 
 
 def _release_metadata(
@@ -244,10 +272,11 @@ def build_official_dataset(
     # A marked schema-v1 baseline deliberately reaches the full build. The schema
     # and provenance upgrade itself is a meaningful release change even if tariff
     # rows would otherwise be logically identical.
-    sources_by_key = {source.dataset_key: source for source in snapshot.sources}
-    ligie_source = sources_by_key["ligie"]
-    nico_source = sources_by_key["nico"]
-    diputados_source = sources_by_key["diputados_ligie"]
+    ligie_source = _required_source(snapshot, "ligie", "ligie_snapshot")
+    nico_source = _required_source(snapshot, "nico", "nico_snapshot")
+    diputados_source = _required_source(
+        snapshot, "diputados_ligie", "consolidated_text"
+    )
 
     ligie_profile = resolve_workbook_profile(
         probe_workbook(ligie_source.capture.path), "ligie_snapshot"
