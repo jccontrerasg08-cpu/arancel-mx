@@ -35,6 +35,9 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          # This job parses untrusted official documents; keep the token out of .git/config.
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
@@ -54,15 +57,16 @@ jobs:
 
       - name: Resolve UTC dataset version and provenance
         id: metadata
+        shell: bash
         run: |
+          set -euo pipefail
           dataset_date="$(date -u +%Y-%m-%d)"
-          dataset_version="${dataset_date//-/.}"
-          generated_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          artifact_name="arancel-mx-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-          echo "DATASET_DATE=${dataset_date}" >> "$GITHUB_ENV"
-          echo "DATASET_VERSION=${dataset_version}" >> "$GITHUB_ENV"
-          echo "GENERATED_AT=${generated_at}" >> "$GITHUB_ENV"
-          echo "ARANCEL_MX_ARTIFACT_NAME=${artifact_name}" >> "$GITHUB_ENV"
+          {
+            echo "DATASET_DATE=${dataset_date}"
+            echo "DATASET_VERSION=${dataset_date//-/.}"
+            echo "GENERATED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "ARANCEL_MX_ARTIFACT_NAME=arancel-mx-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          } >> "$GITHUB_ENV"
 
       - name: Fetch previous published dataset manifest
         id: previous
@@ -75,23 +79,15 @@ jobs:
 
       - name: Record previous-release lookup failure
         if: steps.previous.outcome == 'failure'
+        shell: bash
         run: |
-          python - <<'PY'
-          import json
-          from pathlib import Path
-
-          result = {
-              "status": "failed",
-              "stage": "previous_release",
-              "dataset_version": "${{ env.DATASET_VERSION }}",
-              "failure_category": "previous_release_lookup",
-              "message": "previous published dataset lookup failed; inspect the workflow run logs",
-          }
-          Path("out").mkdir(exist_ok=True)
-          Path("out/pipeline-result.json").write_text(
-              json.dumps(result, sort_keys=True) + "\n", encoding="utf-8"
-          )
-          PY
+          set -euo pipefail
+          python -m scripts.workflow_diagnostics write-failure \
+            --path out/pipeline-result.json \
+            --stage previous_release \
+            --failure-category previous_release_lookup \
+            --dataset-version "${DATASET_VERSION:-}" \
+            --message "previous published dataset lookup failed; inspect the workflow run logs"
 
       - name: Run fail-closed official data pipeline
         id: pipeline
@@ -112,45 +108,13 @@ jobs:
       - name: Extract bounded pipeline diagnostics
         id: pipeline_result
         if: always()
-        env:
-          ARTIFACT_NAME: arancel-mx-${{ github.run_id }}-${{ github.run_attempt }}
-          FALLBACK_VERSION: ${{ env.DATASET_VERSION }}
+        shell: bash
         run: |
-          python - <<'PY'
-          import json
-          import os
-          from pathlib import Path
-
-          path = Path("out/pipeline-result.json")
-          if path.is_file():
-              try:
-                  result = json.loads(path.read_text(encoding="utf-8"))
-              except Exception:
-                  result = {}
-          else:
-              result = {}
-          if not isinstance(result, dict) or not result:
-              result = {
-                  "status": "failed",
-                  "stage": "preflight",
-                  "dataset_version": os.environ.get("FALLBACK_VERSION") or "unknown",
-                  "failure_category": "preflight_failure",
-                  "message": "workflow failed before structured pipeline diagnostics were available; inspect the run logs",
-              }
-          message = " ".join(str(result.get("message") or "").split())[:800]
-          values = {
-              "status": str(result.get("status") or "failed"),
-              "stage": str(result.get("stage") or "unknown"),
-              "dataset_version": str(result.get("dataset_version") or os.environ.get("FALLBACK_VERSION") or "unknown"),
-              "failure_category": str(result.get("failure_category") or "unknown_error"),
-              "message": message,
-              "artifact_name": str(result.get("artifact_name") or os.environ["ARTIFACT_NAME"]),
-          }
-          output = Path(os.environ["GITHUB_OUTPUT"])
-          with output.open("a", encoding="utf-8") as stream:
-              for key, value in values.items():
-                  stream.write(f"{key}={value}\n")
-          PY
+          set -euo pipefail
+          python -m scripts.workflow_diagnostics pipeline-outputs \
+            --result out/pipeline-result.json \
+            --dataset-version "${DATASET_VERSION:-}" \
+            --artifact-name "${ARANCEL_MX_ARTIFACT_NAME:-arancel-mx-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}}"
 
       - name: Upload verified changed bundle
         if: steps.pipeline_result.outputs.status == 'built' && steps.pipeline.outcome == 'success'
@@ -175,9 +139,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     permissions:
-      contents: write
-      attestations: write
-      id-token: write
+      contents: write # only this job may create the immutable release for a tag
+      attestations: write # sign SLSA provenance for the six public assets
+      id-token: write # mint the short-lived OIDC identity attestation requires
     outputs:
       status: ${{ steps.publisher_result.outputs.status }}
       stage: ${{ steps.publisher_result.outputs.stage }}
@@ -188,6 +152,8 @@ jobs:
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           ref: ${{ github.sha }}
+          # Publication and attestation use explicit token env vars, never git credentials.
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
@@ -196,10 +162,10 @@ jobs:
           cache: pip
           cache-dependency-path: requirements/production-build.txt
 
-      - name: Install exact production environment
+      - name: Install exact production runtime
         run: |
           python -m pip install pip==26.2.1
-          python -m pip install -c requirements/production-build.txt -e ".[dev]"
+          python -m pip install -c requirements/production-build.txt -e .
 
       - name: Download exact verified build artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -208,13 +174,17 @@ jobs:
           path: out/release
 
       - name: Independently certify publication bundle
+        shell: bash
         run: |
+          set -euo pipefail
           python - <<'PY'
           from pathlib import Path
+
           from arancel_mx.certification import certify_bundle
 
           report = certify_bundle(Path("out/release"))
-          assert report.passed is True
+          if not report.passed:
+              raise SystemExit("publication bundle certification failed")
           PY
 
       - name: Generate build provenance attestation
@@ -262,35 +232,11 @@ jobs:
       - name: Extract bounded publisher diagnostics
         id: publisher_result
         if: always()
+        shell: bash
         run: |
-          python - <<'PY'
-          import json
-          import os
-          from pathlib import Path
-
-          path = Path("out/publisher-result.json")
-          try:
-              result = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
-          except Exception:
-              result = {}
-          if not isinstance(result, dict) or not result:
-              result = {
-                  "status": "failed",
-                  "stage": "publish",
-                  "failure_category": "publisher_failure",
-                  "message": "publisher failed without structured diagnostics; inspect the workflow run logs",
-              }
-          values = {
-              "status": str(result.get("status") or "failed"),
-              "stage": str(result.get("stage") or ("complete" if result.get("status") == "published" else "publish")),
-              "failure_category": str(result.get("failure_category") or ""),
-              "message": " ".join(str(result.get("message") or "").split())[:800],
-          }
-          output = Path(os.environ["GITHUB_OUTPUT"])
-          with output.open("a", encoding="utf-8") as stream:
-              for key, value in values.items():
-                  stream.write(f"{key}={value}\n")
-          PY
+          set -euo pipefail
+          python -m scripts.workflow_diagnostics publisher-outputs \
+            --result out/publisher-result.json
 
       - name: Fail after publisher diagnostics are exposed
         if: always() && (steps.publisher.outcome == 'failure' || steps.publisher_result.outputs.status == 'failed')
@@ -303,10 +249,13 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
-      issues: write
+      issues: write # only this job may open, update, or close the automation alert
     steps:
       - name: Check out exact workflow commit
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          # Alerting uses the REST API through an explicit token env var.
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
@@ -315,10 +264,10 @@ jobs:
           cache: pip
           cache-dependency-path: requirements/production-build.txt
 
-      - name: Install exact production environment
+      - name: Install exact production runtime
         run: |
           python -m pip install pip==26.2.1
-          python -m pip install -c requirements/production-build.txt -e ".[dev]"
+          python -m pip install -c requirements/production-build.txt -e .
 
       - name: Dry-run notification boundary
         if: github.ref != 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && inputs.publish != true)
@@ -331,27 +280,19 @@ jobs:
           needs.build-and-verify.result == 'failure'
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          ALERT_STATUS: failed
           ALERT_STAGE: ${{ needs.build-and-verify.outputs.stage }}
           ALERT_VERSION: ${{ needs.build-and-verify.outputs.dataset_version }}
           ALERT_CATEGORY: ${{ needs.build-and-verify.outputs.failure_category }}
           ALERT_MESSAGE: ${{ needs.build-and-verify.outputs.message }}
+        shell: bash
         run: |
-          python - <<'PY'
-          import json
-          import os
-          from pathlib import Path
-
-          payload = {
-              "status": "failed",
-              "stage": os.environ.get("ALERT_STAGE") or "build",
-              "dataset_version": os.environ.get("ALERT_VERSION") or "unknown",
-              "failure_category": os.environ.get("ALERT_CATEGORY") or "build_failure",
-              "message": os.environ.get("ALERT_MESSAGE") or "build failed; inspect the workflow run logs",
-          }
-          Path("out").mkdir(exist_ok=True)
-          Path("out/alert-result.json").write_text(json.dumps(payload) + "\n", encoding="utf-8")
-          PY
+          set -euo pipefail
+          python -m scripts.workflow_diagnostics write-failure \
+            --path out/alert-result.json \
+            --stage "${ALERT_STAGE:-build}" \
+            --failure-category "${ALERT_CATEGORY:-build_failure}" \
+            --dataset-version "${ALERT_VERSION:-}" \
+            --message "${ALERT_MESSAGE:-build failed; inspect the workflow run logs}"
           python -m scripts.data_alert failure --result out/alert-result.json
 
       - name: Upsert publication failure alert
@@ -367,22 +308,15 @@ jobs:
           ALERT_VERSION: ${{ needs.build-and-verify.outputs.dataset_version }}
           ALERT_CATEGORY: ${{ needs.publish.outputs.failure_category }}
           ALERT_MESSAGE: ${{ needs.publish.outputs.message }}
+        shell: bash
         run: |
-          python - <<'PY'
-          import json
-          import os
-          from pathlib import Path
-
-          payload = {
-              "status": "failed",
-              "stage": os.environ.get("ALERT_STAGE") or "publish",
-              "dataset_version": os.environ.get("ALERT_VERSION") or "unknown",
-              "failure_category": os.environ.get("ALERT_CATEGORY") or "release_publication",
-              "message": os.environ.get("ALERT_MESSAGE") or "publication failed; inspect the workflow run logs",
-          }
-          Path("out").mkdir(exist_ok=True)
-          Path("out/alert-result.json").write_text(json.dumps(payload) + "\n", encoding="utf-8")
-          PY
+          set -euo pipefail
+          python -m scripts.workflow_diagnostics write-failure \
+            --path out/alert-result.json \
+            --stage "${ALERT_STAGE:-publish}" \
+            --failure-category "${ALERT_CATEGORY:-release_publication}" \
+            --dataset-version "${ALERT_VERSION:-}" \
+            --message "${ALERT_MESSAGE:-publication failed; inspect the workflow run logs}"
           python -m scripts.data_alert failure --result out/alert-result.json
 
       - name: Close recovered automation alerts

@@ -21,6 +21,12 @@ def _workflow_texts() -> dict[str, str]:
     }
 
 
+def _job_start(workflow: str, job: str) -> int:
+    match = re.search(rf"^  {re.escape(job)}:$", workflow, re.MULTILINE)
+    assert match is not None, job
+    return match.start()
+
+
 def _tracked_files() -> list[str]:
     return subprocess.check_output(
         ["git", "ls-files"], cwd=ROOT, text=True
@@ -60,12 +66,25 @@ def test_workflows_contain_no_high_risk_shortcuts():
 def test_official_python_jobs_share_the_reviewed_constraints_file():
     ci = (WORKFLOWS / "ci.yml").read_text(encoding="utf-8")
     production = (WORKFLOWS / "official-data-pipeline.yml").read_text(encoding="utf-8")
-    install = 'python -m pip install -c requirements/production-build.txt -e ".[dev]"'
+    development = 'python -m pip install -c requirements/production-build.txt -e ".[dev]"'
 
-    assert install in ci
-    assert production.count(install) == 3
+    assert development in ci
     assert "python -m pip install pip==26.2.1" in ci
     assert production.count("python -m pip install pip==26.2.1") == 3
+    assert "python -m pip install --upgrade" not in production
+
+
+def test_only_the_read_only_build_job_installs_development_tooling():
+    production = (WORKFLOWS / "official-data-pipeline.yml").read_text(encoding="utf-8")
+    development = 'python -m pip install -c requirements/production-build.txt -e ".[dev]"'
+    runtime = "python -m pip install -c requirements/production-build.txt -e ."
+    build_block = production[
+        _job_start(production, "build-and-verify") : _job_start(production, "publish")
+    ]
+
+    assert development in build_block
+    assert production.count(development) == 1
+    assert production.count(f"{runtime}\n") == 2
 
 
 def test_generated_official_data_and_local_secrets_are_not_tracked():

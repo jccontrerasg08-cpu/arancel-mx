@@ -24,12 +24,18 @@ def _workflow() -> str:
     return WORKFLOW.read_text(encoding="utf-8")
 
 
+def _job_start(workflow: str, job: str) -> int:
+    # Anchor on the job key itself; `publish` is also the name of a workflow input.
+    match = re.search(rf"^  {re.escape(job)}:$", workflow, re.MULTILINE)
+    assert match is not None, job
+    return match.start()
+
+
 def _job_block(workflow: str, job: str, next_job: str | None = None) -> str:
-    start = workflow.index(f"  {job}:")
+    start = _job_start(workflow, job)
     if next_job is None:
         return workflow[start:]
-    end = workflow.index(f"  {next_job}:", start + 1)
-    return workflow[start:end]
+    return workflow[start : _job_start(workflow, next_job)]
 
 
 def test_autonomous_workflow_replaces_legacy_weekly_workflow():
