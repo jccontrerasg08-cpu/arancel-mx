@@ -144,12 +144,17 @@ def main(argv: Sequence[str] | None = None) -> int:
             "warning: 'update' is a deprecated read-only alias; use check-updates",
             file=sys.stderr,
         )
-    try:
-        if hasattr(namespace, "consumer_action"):
+
+    if hasattr(namespace, "consumer_action"):
+        try:
             return run_consumer(namespace)
+        except ArancelMXError as error:
+            print(f"error: {error}", file=sys.stderr)
+            return 2
+
+    try:
         _print_json(_dispatch(namespace))
     except (
-        ArancelMXError,
         ValueError,
         FileNotFoundError,
         json.JSONDecodeError,
