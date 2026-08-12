@@ -1,0 +1,198 @@
+from pathlib import Path
+
+
+def replace_section(path: str, start: str, end: str, replacement: str) -> None:
+    target = Path(path)
+    text = target.read_text(encoding="utf-8")
+    start_index = text.index(start)
+    end_index = text.index(end, start_index)
+    updated = text[:start_index] + replacement.rstrip() + "\n\n" + text[end_index:]
+    target.write_text(updated, encoding="utf-8")
+
+
+SPANISH = '''## Instalación
+
+Requiere Python 3.11 o superior.
+
+### Consumo del dataset publicado
+
+La distribución pública está preparada para instalarse desde PyPI con el siguiente contrato cuando se publique el paquete:
+
+```bash
+pip install arancel-mx
+arancel-mx --version
+arancel-mx doctor
+```
+
+El paquete y los datasets se versionan por separado. `arancel-mx --version` muestra la versión del paquete Python; cada dataset usa una release inmutable `data-YYYY.MM.DD`.
+
+### Desarrollo del repositorio
+
+Para contribuir o ejecutar el pipeline desde el checkout:
+
+```bash
+python -m venv .venv
+# PowerShell: .\\.venv\\Scripts\\Activate.ps1
+# macOS/Linux: source .venv/bin/activate
+python -m pip install -e ".[dev]"
+python -m arancel_mx --help
+```
+
+Los builds oficiales y CI usan el entorno reproducible definido por `requirements/production-build.txt`:
+
+```bash
+python -m pip install pip==26.2.1
+python -m pip install -c requirements/production-build.txt -e ".[dev]"
+```
+
+## Uso rápido CLI
+
+El flujo para consumidores parte del dataset publicado y no requiere clonar el repositorio:
+
+```bash
+arancel-mx doctor
+arancel-mx data download
+arancel-mx lookup 01012101
+arancel-mx search "refrigeradores"
+arancel-mx data verify
+```
+
+Después de descargar y verificar una release, las consultas pueden operar en modo offline estricto:
+
+```bash
+arancel-mx lookup 01012101 --offline --format json
+arancel-mx data verify --offline --format json
+```
+
+También se puede fijar una release exacta con `--dataset data-YYYY.MM.DD`. Consulta [`docs/consumer-cli.md`](docs/consumer-cli.md) para `data status/list/update/path/verify`, formatos JSON/CSV, variables de entorno, integridad del cache y el contrato de `doctor`.
+
+### Comandos para consumidores
+
+| Comando | Uso |
+|---|---|
+| `doctor` | Diagnostica instalación, cache, dataset, DuckDB y acceso remoto |
+| `data download` | Descarga y promueve al cache sólo una release verificada |
+| `data status` / `data list` | Muestra versiones locales y, cuando se solicita, releases remotas válidas |
+| `data update` | Descarga la release válida más reciente sin borrar versiones anteriores |
+| `data path` | Imprime únicamente la ruta del DuckDB seleccionado |
+| `data verify` | Revalida integridad local y opcionalmente el bundle remoto |
+| `lookup` / `search` | Consulta por código exacto o texto |
+| `parent` / `children` | Navega la jerarquía HS2 → HS4 → HS6 → MX8 → NICO10 |
+| `provenance` | Muestra trazabilidad documental del código seleccionado |
+
+### Comandos de mantenimiento del repositorio
+
+Los mantenedores conservan los comandos de construcción y publicación:
+
+```bash
+# exportar artefactos desde una base DuckDB validada
+python -m arancel_mx build --database data/arancel.duckdb --output-dir out/release
+
+# revisar el ledger oficial y escribir un reporte de cambios
+python -m arancel_mx check-updates --state-path data/update_state/ligie.json --report-path out/update.json
+
+# reconciliar evidencia
+python -m arancel_mx reconcile --ledger-json ledger.json --dof-json dof.json --snice-json snice.json
+
+# verificar y preparar un bundle local
+python -m arancel_mx release --release-dir out/release --source-dir data/raw/release --latest-dir out/latest
+```
+
+Durante la serie 0.x, `update` permanece como alias de compatibilidad de sólo lectura para `check-updates`; la documentación nueva usa `check-updates` como nombre preferido.
+'''
+
+ENGLISH = '''## Installation
+
+Python 3.11 or newer is required.
+
+### Published dataset consumer
+
+The public distribution is prepared for the following PyPI installation contract once the package is published:
+
+```bash
+pip install arancel-mx
+arancel-mx --version
+arancel-mx doctor
+```
+
+The package and datasets are versioned independently. `arancel-mx --version` reports the Python package version; each dataset uses an immutable `data-YYYY.MM.DD` release.
+
+### Repository development
+
+For contributors and publication-pipeline work from a checkout:
+
+```bash
+python -m venv .venv
+# PowerShell: .\\.venv\\Scripts\\Activate.ps1
+# macOS/Linux: source .venv/bin/activate
+python -m pip install -e ".[dev]"
+python -m arancel_mx --help
+```
+
+Official builds and CI use the reproducible environment constrained by `requirements/production-build.txt`:
+
+```bash
+python -m pip install pip==26.2.1
+python -m pip install -c requirements/production-build.txt -e ".[dev]"
+```
+
+## Quick CLI usage
+
+The consumer flow starts from published data and does not require cloning the repository:
+
+```bash
+arancel-mx doctor
+arancel-mx data download
+arancel-mx lookup 01012101
+arancel-mx search "refrigeradores"
+arancel-mx data verify
+```
+
+After a release has been downloaded and verified, queries can run in strict offline mode:
+
+```bash
+arancel-mx lookup 01012101 --offline --format json
+arancel-mx data verify --offline --format json
+```
+
+Pin an exact release with `--dataset data-YYYY.MM.DD`. See [`docs/consumer-cli.md`](docs/consumer-cli.md) for `data status/list/update/path/verify`, JSON/CSV formats, environment variables, cache integrity, and the `doctor` contract.
+
+### Consumer commands
+
+| Command | Purpose |
+|---|---|
+| `doctor` | Diagnose installation, cache, dataset, DuckDB, and remote access |
+| `data download` | Download and promote only a verified release into the cache |
+| `data status` / `data list` | Show local versions and, when requested, valid remote releases |
+| `data update` | Download the newest valid release without deleting older versions |
+| `data path` | Print only the selected DuckDB path |
+| `data verify` | Revalidate local integrity and optionally the remote bundle |
+| `lookup` / `search` | Query by exact code or text |
+| `parent` / `children` | Navigate HS2 → HS4 → HS6 → MX8 → NICO10 |
+| `provenance` | Show documentary traceability for a selected code |
+
+### Repository maintainer commands
+
+Maintainers retain the build and publication commands:
+
+```bash
+# export artifacts from an already validated DuckDB database
+python -m arancel_mx build --database data/arancel.duckdb --output-dir out/release
+
+# check registered official-source state and write a change report
+python -m arancel_mx check-updates --state-path data/update_state/ligie.json --report-path out/update.json
+
+# reconcile legal evidence
+python -m arancel_mx reconcile --ledger-json ledger.json --dof-json dof.json --snice-json snice.json
+
+# verify and prepare a local publication bundle
+python -m arancel_mx release --release-dir out/release --source-dir data/raw/release --latest-dir out/latest
+```
+
+During the 0.x series, `update` remains a deprecated read-only compatibility alias for `check-updates`; new documentation uses `check-updates` as the preferred maintainer command.
+'''
+
+
+if __name__ == "__main__":
+    replace_section("README.md", "## Instalación", "## Uso desde Python", SPANISH)
+    replace_section("README.en.md", "## Installation", "## Python usage", ENGLISH)
