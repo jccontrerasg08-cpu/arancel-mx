@@ -121,13 +121,13 @@ def looks_like_html_url(url: str) -> bool:
     return path.endswith((".html", ".htm", ".php")) or "openview" in query or "opendocument" in query
 
 
-def fetch_accessible_html(
+def fetch_html_body(
     session: requests.Session,
     url: str,
     *,
     timeout: float,
-) -> tuple[int, str]:
-    """Download one HTML page and verify it contains usable content."""
+) -> tuple[int, str, str]:
+    """Download one HTML page, verify it is usable, and return status, final URL, and body."""
     cleaned = sanitize_documented_url(url)
     last_error: requests.RequestException | ValueError | None = None
     for attempt in range(3):
@@ -135,13 +135,24 @@ def fetch_accessible_html(
             response = session.get(cleaned, allow_redirects=True, timeout=timeout)
             response.raise_for_status()
             ensure_html_body_accessible(response.text, url=response.url)
-            return response.status_code, response.url
+            return response.status_code, response.url, response.text
         except (requests.RequestException, ValueError) as exc:
             last_error = exc
             if attempt == 2:
                 break
     assert last_error is not None
     raise last_error
+
+
+def fetch_accessible_html(
+    session: requests.Session,
+    url: str,
+    *,
+    timeout: float,
+) -> tuple[int, str]:
+    """Download one HTML page and verify it contains usable content."""
+    status, final_url, _html = fetch_html_body(session, url, timeout=timeout)
+    return status, final_url
 
 
 def check_documented_url(

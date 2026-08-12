@@ -13,7 +13,7 @@ from arancel_mx.sources.html_pages import (
     ensure_html_body_accessible,
     validate_ligie_html_page,
 )
-from scripts.check_documented_urls import build_session, check_reachable
+from scripts.check_documented_urls import build_session, check_reachable, fetch_html_body
 
 
 def _fetch_html(
@@ -22,10 +22,7 @@ def _fetch_html(
     *,
     timeout: float,
 ) -> tuple[int, str, str]:
-    response = session.get(url, allow_redirects=True, timeout=timeout)
-    response.raise_for_status()
-    ensure_html_body_accessible(response.text, url=response.url)
-    return response.status_code, response.url, response.text
+    return fetch_html_body(session, url, timeout=timeout)
 
 
 def _check_binary_target(

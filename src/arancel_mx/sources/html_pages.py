@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from html import unescape
 from html.parser import HTMLParser
 import re
 import unicodedata
@@ -121,6 +122,15 @@ def _fold(value: object) -> str:
     ).casefold()
 
 
+def _fold_html(html: str) -> str:
+    """Fold visible HTML text after decoding entities and normalizing accents."""
+    return _fold(unescape(html))
+
+
+def _fold_path(url: str) -> str:
+    return _fold(urlparse(url).path)
+
+
 class _LinkParser(HTMLParser):
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
@@ -183,8 +193,13 @@ def ligie_entry_urls(html: str, base_url: str) -> list[str]:
     """Return absolute URLs that point to the official LIGIE section on SNICE."""
     matches: list[str] = []
     for url, title in extract_links(html, base_url):
-        folded = _fold(f"{title} {url}")
-        if "ligie.info" in folded or "impuestos generales de importacion" in folded:
+        folded = _fold_html(f"{title} {url}")
+        path_folded = _fold_path(url)
+        if (
+            "ligie.info" in folded
+            or "impuestos generales de importacion" in folded
+            or "ligie.info" in path_folded
+        ):
             matches.append(url)
     return matches
 
@@ -193,8 +208,18 @@ def fracciones_arancelarias_consult_urls(html: str, base_url: str) -> list[str]:
     """Return absolute URLs for the official Fracciones Arancelarias consult entry points."""
     matches: list[str] = []
     for url, title in extract_links(html, base_url):
-        folded = _fold(f"{title} {url}")
-        if "fracciones arancelarias" in folded or "fraccion arancelaria" in folded:
+        folded = _fold_html(f"{title} {url}")
+        path_folded = _fold_path(url)
+        haystack = f"{folded} {path_folded}"
+        markers = (
+            "fracciones arancelarias",
+            "fraccion arancelaria",
+            "fracciones.arancelarias",
+            "cp.consulta.fracciones.arancelarias",
+            "hce.consulta.fracciones.arancelarias",
+            "hce.mi.fraccion.arancelaria",
+        )
+        if any(marker in haystack for marker in markers):
             matches.append(url)
     return matches
 
@@ -241,8 +266,13 @@ def validate_legal_library_index_html(
     html: str,
     base_url: str = SNICE_LEGAL_LIBRARY_INDEX_URL,
 ) -> str:
-    folded = _fold(html)
-    if "biblioteca juridica" not in folded:
+    folded = _fold_html(html)
+    has_library_marker = (
+        "biblioteca juridica" in folded
+        or ("biblioteca" in folded and "juridica" in folded)
+        or "codigos y leyes" in folded
+    )
+    if not has_library_marker:
         raise ValueError("SNICE legal library index HTML is missing Biblioteca Jurídica markers")
     ligie_urls = ligie_entry_urls(html, base_url)
     if not ligie_urls:
@@ -261,22 +291,29 @@ def validate_biblioteca_juridica_html(
 
 
 def validate_individual_classifier_html(html: str) -> None:
-    folded = _fold(html)
+    folded = _fold_html(html)
+    lowered = html.lower()
     markers = (
         "mi fraccion arancelaria",
         "fraccion arancelaria",
         "hce.mi.fraccion.arancelaria",
         "clasificador",
         "buscador",
+        "hce.mi.fraccion",
     )
     if not any(marker in folded for marker in markers):
         raise ValueError("individual classifier HTML is missing expected consult markers")
-    if "<iframe" not in html.lower() and "hce." not in folded and "consulta" not in folded:
+    has_embed_surface = any(
+        token in lowered or token in folded
+        for token in ("<iframe", "<frame", "hce.", "consulta", "frameset")
+    )
+    if not has_embed_surface:
         raise ValueError("individual classifier HTML does not expose an embeddable consult surface")
 
 
 def validate_fraction_consult_html(html: str) -> None:
-    folded = _fold(html)
+    folded = _fold_html(html)
+    lowered = html.lower()
     markers = (
         "fracciones arancelarias",
         "fraccion arancelaria",
@@ -286,12 +323,16 @@ def validate_fraction_consult_html(html: str) -> None:
     )
     if not any(marker in folded for marker in markers):
         raise ValueError("fraction consult HTML is missing expected consult markers")
-    if "<iframe" not in html.lower() and "hce." not in folded and "consulta" not in folded:
+    has_embed_surface = any(
+        token in lowered or token in folded
+        for token in ("<iframe", "<frame", "hce.", "consulta", "frameset")
+    )
+    if not has_embed_surface:
         raise ValueError("fraction consult HTML does not expose an embeddable consult surface")
 
 
 def validate_vucem_classifier_index_html(html: str) -> None:
-    folded = _fold(html)
+    folded = _fold_html(html)
     markers = (
         "fracciones arancelarias",
         "clasificador",
@@ -303,7 +344,7 @@ def validate_vucem_classifier_index_html(html: str) -> None:
 
 
 def validate_vucem_fraction_sheet_html(html: str, *, base_url: str) -> None:
-    folded = _fold(html)
+    folded = _fold_html(html)
     markers = (
         "fraccion arancelaria",
         "importacion",
@@ -417,7 +458,7 @@ def validate_ligie_html_page(page_id: str, html: str, *, base_url: str | None = 
         return None
     if page_id == "snice_modifications_index":
         if not re.search(r"ligie\.info\d+\.mod\d+\.html", html, flags=re.I):
-            if "modificaciones" not in _fold(html):
+            if "modificaciones" not in _fold_html(html):
                 raise ValueError("SNICE modifications index HTML is missing modification markers")
         return None
     if page_id == "snice_legal_library_index":

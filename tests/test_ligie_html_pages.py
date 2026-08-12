@@ -92,6 +92,43 @@ def test_legal_library_index_fixture_exposes_ligie_entry_link() -> None:
     )
 
 
+def test_snice_validators_accept_entity_encoded_legacy_html() -> None:
+    legal_library_html = (
+        "<!doctype html><html><body>"
+        "<h1>Biblioteca Jur&iacute;dica</h1>"
+        "<h4>C&oacute;digos y Leyes</h4>"
+        "<a href='ligie.info22.html'>Ley de los Impuestos Generales de Importaci&oacute;n y de Exportaci&oacute;n.</a>"
+        "</body></html>"
+    )
+    biblioteca_html = (
+        "<!doctype html><html><body>"
+        "<h1>LIGIE</h1>"
+        "<a href='cp.consulta.fracciones.arancelarias.html'>Consulta</a>"
+        "</body></html>"
+    )
+    classifier_html = (
+        "<!doctype html><html><body>"
+        "<h1>Mi Fracci&oacute;n Arancelaria</h1>"
+        "<iframe src='hce.mi.fraccion.arancelaria.app.html'></iframe>"
+        "</body></html>"
+    )
+    validate_ligie_html_page(
+        "snice_legal_library_index",
+        legal_library_html,
+        base_url=SNICE_LEGAL_LIBRARY_INDEX_URL,
+    )
+    consult_url = validate_ligie_html_page(
+        "snice_biblioteca_juridica",
+        biblioteca_html,
+        base_url=SNICE_BIBLIOTECA_JURIDICA_URL,
+    )
+    assert consult_url.endswith("cp.consulta.fracciones.arancelarias.html")
+    validate_ligie_html_page("snice_individual_classifier", classifier_html)
+    assert fracciones_arancelarias_consult_urls(biblioteca_html, SNICE_BIBLIOTECA_JURIDICA_URL) == [
+        SNICE_FRACTION_CONSULT_URL
+    ]
+
+
 def test_biblioteca_juridica_fixture_exposes_individual_fraction_consult_link() -> None:
     html = (FIXTURES / "snice" / "ligie.info22.ligiebibjur.html").read_text(encoding="utf-8")
     consult_urls = fracciones_arancelarias_consult_urls(html, SNICE_BIBLIOTECA_JURIDICA_URL)
