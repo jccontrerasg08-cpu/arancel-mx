@@ -29,6 +29,8 @@ def test_public_dataset_signatures_have_annotations() -> None:
         signature = inspect.signature(getattr(Dataset, name))
         assert signature.return_annotation is not inspect.Signature.empty, name
         for parameter in signature.parameters.values():
+            if parameter.name in {"self", "cls"}:
+                continue
             assert parameter.annotation is not inspect.Signature.empty, f"{name}.{parameter.name}"
 
 
