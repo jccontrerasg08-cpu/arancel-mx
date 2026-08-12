@@ -28,6 +28,11 @@ SNICE_BIBLIOTECA_JURIDICA_URL = (
 SNICE_INDIVIDUAL_CLASSIFIER_URL = (
     "https://www.snice.gob.mx/cs/avi/snice/hce.mi.fraccion.arancelaria.html"
 )
+SNICE_FRACTION_CONSULT_URL = (
+    "https://www.snice.gob.mx/cs/avi/snice/cp.consulta.fracciones.arancelarias.html"
+)
+
+MIN_HTML_BODY_BYTES = 256
 
 
 @dataclass(frozen=True)
@@ -62,6 +67,15 @@ LIGIE_HTML_PAGES: tuple[LigieHtmlPage, ...] = (
         "individual_classifier",
     ),
 )
+
+
+@dataclass(frozen=True)
+class HtmlAccessTarget:
+    """A linked resource that must be reachable to use a cataloged HTML page."""
+
+    url: str
+    kind: str
+    page_id: str | None = None
 
 
 def _fold(value: object) -> str:
@@ -106,6 +120,27 @@ def extract_links(html: str, base_url: str) -> list[tuple[str, str]]:
         for href, title in parser.links
         if href and not href.startswith("#")
     ]
+
+
+def extract_iframe_srcs(html: str, base_url: str) -> list[str]:
+    """Return absolute iframe src URLs embedded in one HTML page."""
+    return [
+        url
+        for url, title in extract_links(html, base_url)
+        if title == "iframe"
+    ]
+
+
+def ensure_html_body_accessible(html: str, *, url: str) -> None:
+    """Fail when an HTML response is empty or too small to contain page content."""
+    encoded = html.encode("utf-8")
+    if len(encoded) < MIN_HTML_BODY_BYTES:
+        raise ValueError(
+            f"{url} returned an unusually small HTML body ({len(encoded)} bytes)"
+        )
+    folded = _fold(html)
+    if "<html" not in folded and "<body" not in folded and "<table" not in folded:
+        raise ValueError(f"{url} does not look like an HTML document")
 
 
 def ligie_entry_urls(html: str, base_url: str) -> list[str]:
@@ -204,6 +239,76 @@ def validate_individual_classifier_html(html: str) -> None:
         raise ValueError("individual classifier HTML does not expose an embeddable consult surface")
 
 
+def validate_fraction_consult_html(html: str) -> None:
+    folded = _fold(html)
+    markers = (
+        "fracciones arancelarias",
+        "fraccion arancelaria",
+        "cp.consulta.fracciones.arancelarias",
+        "consulta",
+        "hce.",
+    )
+    if not any(marker in folded for marker in markers):
+        raise ValueError("fraction consult HTML is missing expected consult markers")
+    if "<iframe" not in html.lower() and "hce." not in folded and "consulta" not in folded:
+        raise ValueError("fraction consult HTML does not expose an embeddable consult surface")
+
+
+def collect_ligie_html_access_targets(
+    page_id: str,
+    html: str,
+    *,
+    base_url: str,
+) -> tuple[HtmlAccessTarget, ...]:
+    """Return linked resources that must be reachable to use one cataloged HTML page."""
+    targets: list[HtmlAccessTarget] = []
+    derived = _derived_consult_url(page_id, html, base_url)
+    if page_id == "snice_legal_library_index" and derived:
+        targets.append(HtmlAccessTarget(derived, "html_page", "snice_ligie_index"))
+    if page_id == "snice_biblioteca_juridica" and derived:
+        targets.append(HtmlAccessTarget(derived, "html_page", "snice_fraction_consult"))
+    if page_id == "snice_individual_classifier":
+        for iframe_url in extract_iframe_srcs(html, base_url):
+            targets.append(HtmlAccessTarget(iframe_url, "embed", None))
+    if page_id in {"snice_ligie_index", "snice_nico_index"}:
+        registry = load_source_registry()
+        entry = registry["ligie" if page_id == "snice_ligie_index" else "nico"]
+        required_role = "ligie_snapshot" if page_id == "snice_ligie_index" else "nico_snapshot"
+
+        class _Client:
+            def __init__(self, text: str, url: str):
+                self.text = text
+                self.url = url
+
+            def get(self, url, timeout=None):
+                return self
+
+            def raise_for_status(self):
+                return None
+
+        discovered = discover_registered_sources({entry.dataset_key: entry}, _Client(html, base_url))
+        for document in discovered:
+            if document.document_role == required_role:
+                targets.append(HtmlAccessTarget(document.source_url, "snapshot", None))
+    if page_id == "diputados_ledger":
+        snapshot = parse_ligie_ledger(html, base_url)
+        for document in snapshot.documents:
+            if document.category == "consolidated_text":
+                for link in document.links:
+                    targets.append(HtmlAccessTarget(link.url, "document", None))
+    return tuple(targets)
+
+
+def _derived_consult_url(page_id: str, html: str, base_url: str) -> str | None:
+    if page_id == "snice_legal_library_index":
+        ligie_urls = ligie_entry_urls(html, base_url)
+        return ligie_urls[0] if ligie_urls else None
+    if page_id == "snice_biblioteca_juridica":
+        consult_urls = fracciones_arancelarias_consult_urls(html, base_url)
+        return consult_urls[0] if consult_urls else None
+    return None
+
+
 def validate_ligie_html_page(page_id: str, html: str, *, base_url: str | None = None) -> str | None:
     """Validate one official HTML page and optionally return a derived consult URL."""
     registry = load_source_registry()
@@ -241,6 +346,9 @@ def validate_ligie_html_page(page_id: str, html: str, *, base_url: str | None = 
             html,
             base_url or SNICE_BIBLIOTECA_JURIDICA_URL,
         )
+    if page_id == "snice_fraction_consult":
+        validate_fraction_consult_html(html)
+        return None
     if page_id == "snice_individual_classifier":
         validate_individual_classifier_html(html)
         return None

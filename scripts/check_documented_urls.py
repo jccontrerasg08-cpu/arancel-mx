@@ -16,6 +16,7 @@ from arancel_mx.sources.html_pages import (
     SNICE_BIBLIOTECA_JURIDICA_URL,
     SNICE_INDIVIDUAL_CLASSIFIER_URL,
     SNICE_MODIFICATIONS_INDEX_URL,
+    ensure_html_body_accessible,
 )
 from arancel_mx.sources.registry import load_source_registry
 
@@ -96,6 +97,46 @@ def extract_bare_http_urls(text: str) -> list[str]:
     return bare_urls
 
 
+def looks_like_html_url(url: str) -> bool:
+    """Return True when a documented URL should return an HTML document body."""
+    path = urlparse(url).path.lower()
+    return path.endswith((".html", ".htm", ".php"))
+
+
+def fetch_accessible_html(
+    session: requests.Session,
+    url: str,
+    *,
+    timeout: float,
+) -> tuple[int, str]:
+    """Download one HTML page and verify it contains usable content."""
+    last_error: requests.RequestException | ValueError | None = None
+    for attempt in range(3):
+        try:
+            response = session.get(url, allow_redirects=True, timeout=timeout)
+            response.raise_for_status()
+            ensure_html_body_accessible(response.text, url=response.url)
+            return response.status_code, response.url
+        except (requests.RequestException, ValueError) as exc:
+            last_error = exc
+            if attempt == 2:
+                break
+    assert last_error is not None
+    raise last_error
+
+
+def check_documented_url(
+    session: requests.Session,
+    url: str,
+    *,
+    timeout: float,
+) -> tuple[int, str]:
+    """Return the HTTP status and final URL for one documented public endpoint."""
+    if looks_like_html_url(url):
+        return fetch_accessible_html(session, url, timeout=timeout)
+    return check_reachable(session, url, timeout=timeout)
+
+
 def check_reachable(session: requests.Session, url: str, *, timeout: float) -> tuple[int, str]:
     """Return the HTTP status and final URL for one documented public endpoint."""
     last_error: requests.RequestException | None = None
@@ -146,10 +187,10 @@ def main() -> int:
     failures: list[str] = []
     for url in documented_public_urls():
         try:
-            status, final_url = check_reachable(session, url, timeout=args.timeout)
+            status, final_url = check_documented_url(session, url, timeout=args.timeout)
             suffix = f" -> {final_url}" if final_url != url else ""
             print(f"OK [{status}] {url}{suffix}")
-        except requests.RequestException as exc:
+        except (requests.RequestException, ValueError) as exc:
             failures.append(f"{url}: {exc}")
             print(f"FAIL {url}: {exc}")
 

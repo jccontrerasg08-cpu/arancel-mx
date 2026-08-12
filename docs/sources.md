@@ -70,9 +70,9 @@ El pipeline y la consulta pública dependen de estas páginas HTML oficiales:
 - [SNICE, biblioteca jurídica LIGIE](https://www.snice.gob.mx/cs/avi/snice/ligie.info22.ligiebibjur.html) — entrada a la consulta oficial de fracciones.
 - [SNICE, clasificador individual](https://www.snice.gob.mx/cs/avi/snice/hce.mi.fraccion.arancelaria.html) — consulta individual de códigos.
 
-`python -m scripts.validate_ligie_html_pages` verifica que sigan siendo alcanzables y parseables por los adaptadores del repositorio.
+`python -m scripts.validate_ligie_html_pages` verifica que sigan siendo alcanzables, que el HTML contenga contenido utilizable y que los recursos enlazados (consulta de fracciones, clasificador embebido, snapshots descubiertos y PDF consolidado) también respondan.
 
-`python -m scripts.check_documented_urls` verifica que estas URLs sigan siendo alcanzables desde CI.
+`python -m scripts.check_documented_urls` verifica que estas URLs sigan siendo alcanzables desde CI y descarga el cuerpo HTML de las páginas documentadas.
 
 ## Fixtures offline
 
