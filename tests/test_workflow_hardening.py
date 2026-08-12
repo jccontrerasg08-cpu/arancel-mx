@@ -20,7 +20,6 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOWS = ROOT / ".github" / "workflows"
-WRITE_SCOPES_ALLOWED_AT_WORKFLOW_LEVEL: frozenset[str] = frozenset()
 # Only the manually dispatched documentation workflow pushes with git, so it is the
 # single place where the checkout credential may stay in .git/config.
 CHECKOUTS_KEEPING_CREDENTIALS = frozenset({"generate-demo.yml"})
@@ -86,11 +85,7 @@ def test_no_workflow_grants_write_permissions_outside_a_job(workflows):
     for name, document in workflows.items():
         permissions = document.get("permissions")
         assert isinstance(permissions, dict), f"{name} must declare default permissions"
-        granted = {
-            scope
-            for scope, level in permissions.items()
-            if level == "write" and scope not in WRITE_SCOPES_ALLOWED_AT_WORKFLOW_LEVEL
-        }
+        granted = {scope for scope, level in permissions.items() if level == "write"}
         assert granted == set(), f"{name} grants {sorted(granted)} to every job"
 
 
