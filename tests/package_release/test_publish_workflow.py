@@ -74,6 +74,19 @@ def test_production_publish_is_final_release_only(workflow: dict) -> None:
     assert "'true'" in condition
 
 
+def test_tag_must_point_at_protected_main_tip(workflow: dict) -> None:
+    # A pkg-v* tag can be created on any commit; the release must originate from
+    # the protected main tip, so the validation job compares the tag SHA to main.
+    steps = workflow["jobs"]["validate-tag"]["steps"]
+    origin_gate = [
+        step
+        for step in steps
+        if "origin main" in str(step.get("run", ""))
+        and "TAG_SHA" in str(step.get("env", {}))
+    ]
+    assert origin_gate, "validate-tag must gate on the protected main tip"
+
+
 def test_no_stored_upload_secrets(workflow_text: str) -> None:
     lowered = workflow_text.lower()
     assert "secrets." not in workflow_text
