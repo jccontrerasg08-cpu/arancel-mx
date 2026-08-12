@@ -80,6 +80,28 @@ def test_invalid_consumer_environment_is_mapped_to_actionable_public_error(
     assert "ARANCEL_MX_TIMEOUT" in captured.err
 
 
+def test_invalid_consumer_environment_is_mapped_for_query_commands(
+    monkeypatch,
+    capsys,
+) -> None:
+    monkeypatch.setattr(
+        consumer_cli,
+        "resolve_config",
+        lambda **kwargs: (_ for _ in ()).throw(ValueError("ARANCEL_MX_TIMEOUT must be greater than zero")),
+    )
+    monkeypatch.setattr(
+        consumer_cli.Dataset,
+        "latest",
+        lambda **kwargs: (_ for _ in ()).throw(AssertionError("dataset access must follow validated config")),
+    )
+
+    assert cli.main(["lookup", "01012101"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "invalid consumer configuration" in captured.err
+    assert "ARANCEL_MX_TIMEOUT" in captured.err
+
+
 def test_negative_search_limit_is_rejected_by_parser_before_dataset_access(monkeypatch, capsys) -> None:
     monkeypatch.setattr(
         consumer_cli,
