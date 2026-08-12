@@ -47,13 +47,13 @@ class DoctorResult:
 
 
 def _check(
-    name: str,
+    check_name: str,
     status: CheckStatus,
     detail: str,
     **safe_metadata: object,
 ) -> DiagnosticCheck:
     return DiagnosticCheck(
-        name=name,
+        name=check_name,
         status=status,
         detail=detail,
         metadata=tuple(
@@ -64,13 +64,10 @@ def _check(
 
 def _package_checks() -> list[DiagnosticCheck]:
     checks: list[DiagnosticCheck] = []
-
     try:
         distribution = metadata.distribution("arancel-mx")
         version = distribution.version
-        checks.append(
-            _check("package_version", "pass", f"arancel-mx {version}", version=version)
-        )
+        checks.append(_check("package_version", "pass", f"arancel-mx {version}", version=version))
         checks.append(
             _check(
                 "distribution_metadata",
@@ -83,11 +80,7 @@ def _package_checks() -> list[DiagnosticCheck]:
         checks.extend(
             [
                 _check("package_version", "fail", "arancel-mx distribution metadata is missing"),
-                _check(
-                    "distribution_metadata",
-                    "fail",
-                    "installed distribution metadata is unavailable",
-                ),
+                _check("distribution_metadata", "fail", "installed distribution metadata is unavailable"),
             ]
         )
 
@@ -112,14 +105,9 @@ def _package_checks() -> list[DiagnosticCheck]:
 
     try:
         console_scripts = metadata.entry_points(group="console_scripts")
-        entrypoint = next(
-            (entry for entry in console_scripts if entry.name == "arancel-mx"),
-            None,
-        )
+        entrypoint = next((entry for entry in console_scripts if entry.name == "arancel-mx"), None)
         if entrypoint is None:
-            checks.append(
-                _check("console_entrypoint", "fail", "arancel-mx console entrypoint is missing")
-            )
+            checks.append(_check("console_entrypoint", "fail", "arancel-mx console entrypoint is missing"))
         else:
             checks.append(
                 _check(
@@ -130,23 +118,16 @@ def _package_checks() -> list[DiagnosticCheck]:
                 )
             )
     except (TypeError, AttributeError):
-        checks.append(
-            _check("console_entrypoint", "fail", "console entrypoint metadata is unreadable")
-        )
+        checks.append(_check("console_entrypoint", "fail", "console entrypoint metadata is unreadable"))
 
     try:
         registry = resources.files("arancel_mx.sources").joinpath("source_registry.json")
         payload = json.loads(registry.read_text(encoding="utf-8"))
         if not isinstance(payload, (dict, list)) or not payload:
             raise ValueError("empty registry")
-        checks.append(
-            _check("source_registry", "pass", "packaged source registry is readable")
-        )
+        checks.append(_check("source_registry", "pass", "packaged source registry is readable"))
     except (OSError, json.JSONDecodeError, ValueError, ModuleNotFoundError):
-        checks.append(
-            _check("source_registry", "fail", "packaged source registry is missing or invalid")
-        )
-
+        checks.append(_check("source_registry", "fail", "packaged source registry is missing or invalid"))
     return checks
 
 
@@ -154,12 +135,7 @@ def _cache_writable_check(cache_dir: Path) -> DiagnosticCheck:
     probe: Path | None = None
     try:
         cache_dir.mkdir(parents=True, exist_ok=True)
-        with tempfile.NamedTemporaryFile(
-            mode="wb",
-            prefix=".doctor-",
-            dir=cache_dir,
-            delete=False,
-        ) as stream:
+        with tempfile.NamedTemporaryFile(mode="wb", prefix=".doctor-", dir=cache_dir, delete=False) as stream:
             stream.write(b"doctor")
             probe = Path(stream.name)
         probe.unlink()
@@ -180,7 +156,6 @@ def _dataset_checks(
     checks: list[DiagnosticCheck] = []
     selected: str | None = None
     path: Path | None = None
-
     try:
         local_versions = manager.list_local()
         selected = config.dataset or (local_versions[-1] if local_versions else None)
@@ -201,43 +176,26 @@ def _dataset_checks(
             )
         )
     except ArancelMXError:
-        checks.append(
-            _check(
-                "verified_dataset",
-                "fail",
-                "no usable verified local dataset is available",
-            )
-        )
+        checks.append(_check("verified_dataset", "fail", "no usable verified local dataset is available"))
 
     if path is None:
-        checks.append(
-            _check("duckdb_query", "fail", "read-only dataset query cannot run without verified data")
-        )
-        checks.append(
-            _check("offline_readiness", "fail", "offline mode has no usable verified dataset")
-        )
+        checks.append(_check("duckdb_query", "fail", "read-only dataset query cannot run without verified data"))
+        checks.append(_check("offline_readiness", "fail", "offline mode has no usable verified dataset"))
         return checks, selected, None
 
     try:
         with duckdb_connect(path, read_only=True) as connection:
             row = connection.execute(
-                """
-                SELECT code
-                FROM arancel_mx
-                WHERE is_current = TRUE
-                ORDER BY code ASC
-                LIMIT 1
-                """
+                "SELECT code FROM arancel_mx WHERE is_current = TRUE ORDER BY code ASC LIMIT 1"
             ).fetchone()
         if row is None or not row[0]:
             raise duckdb.Error("no current tariff rows")
-        sample_code = str(row[0])
         checks.append(
             _check(
                 "duckdb_query",
                 "pass",
                 "read-only DuckDB query succeeded",
-                sample_code=sample_code,
+                sample_code=str(row[0]),
                 read_only="true",
             )
         )
@@ -250,38 +208,21 @@ def _dataset_checks(
             )
         )
     except (duckdb.Error, OSError):
-        checks.append(
-            _check("duckdb_query", "fail", "read-only DuckDB query failed")
-        )
-        checks.append(
-            _check("offline_readiness", "fail", "verified dataset is not ready for offline queries")
-        )
-
+        checks.append(_check("duckdb_query", "fail", "read-only DuckDB query failed"))
+        checks.append(_check("offline_readiness", "fail", "verified dataset is not ready for offline queries"))
     return checks, selected, path
 
 
-def _network_check(
-    config: ConsumerConfig,
-    manager: DatasetManager,
-) -> DiagnosticCheck:
+def _network_check(config: ConsumerConfig, manager: DatasetManager) -> DiagnosticCheck:
     if config.offline:
         return _check("network_release", "skip", "network check skipped by offline mode")
     try:
         remote = manager.list_remote()
         if not remote:
             return _check("network_release", "warn", "no valid remote data releases were found")
-        return _check(
-            "network_release",
-            "pass",
-            "public release metadata is reachable",
-            latest=remote[0],
-        )
+        return _check("network_release", "pass", "public release metadata is reachable", latest=remote[0])
     except ArancelMXError:
-        return _check(
-            "network_release",
-            "warn",
-            "public release metadata is currently unreachable",
-        )
+        return _check("network_release", "warn", "public release metadata is currently unreachable")
 
 
 def run_doctor(
@@ -297,7 +238,6 @@ def run_doctor(
     dataset_checks, _, _ = _dataset_checks(config, active_manager)
     checks.extend(dataset_checks)
     checks.append(_network_check(config, active_manager))
-
     if any(check.status == "fail" for check in checks):
         status: DoctorStatus = "UNHEALTHY"
     elif any(check.status == "warn" for check in checks):
@@ -330,9 +270,6 @@ def render_doctor_human(result: DoctorResult) -> str:
 
     marker = {"pass": "OK", "warn": "WARN", "fail": "FAIL", "skip": "SKIP"}
     lines = ["arancel-mx doctor", ""]
-    lines.extend(
-        f"[{marker[check.status]}] {check.name}: {check.detail}"
-        for check in result.checks
-    )
+    lines.extend(f"[{marker[check.status]}] {check.name}: {check.detail}" for check in result.checks)
     lines.extend(["", f"Status: {result.status}"])
     return "\n".join(lines)
