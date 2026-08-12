@@ -170,8 +170,8 @@ def _required_source(
     ]
     if len(matches) != 1:
         raise ValueError(
-            "official snapshot is missing required source "
-            f"{dataset_key}/{document_role}"
+            "official snapshot must contain exactly one source "
+            f"{dataset_key}/{document_role}; found {len(matches)}"
         )
     return matches[0]
 

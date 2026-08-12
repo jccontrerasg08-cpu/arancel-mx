@@ -48,6 +48,26 @@ class Session:
         return self.response
 
 
+def test_http_url_on_allowed_host_is_rejected():
+    with pytest.raises(ValueError, match="must use https"):
+        fetch_official_document(
+            Session(Response("http://www.snice.gob.mx/file.pdf")),
+            "http://www.snice.gob.mx/file.pdf",
+            ("www.snice.gob.mx", "snice.gob.mx"),
+            ("application/pdf",),
+        )
+
+
+def test_https_redirect_to_http_is_rejected():
+    with pytest.raises(ValueError, match="must use https"):
+        fetch_official_document(
+            Session(Response("http://www.snice.gob.mx/file.pdf")),
+            "https://www.snice.gob.mx/file.pdf",
+            ("www.snice.gob.mx", "snice.gob.mx"),
+            ("application/pdf",),
+        )
+
+
 def test_redirect_outside_registered_host_is_rejected():
     with pytest.raises(ValueError, match="not allowed"):
         fetch_official_document(

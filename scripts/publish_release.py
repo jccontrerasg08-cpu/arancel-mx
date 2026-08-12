@@ -12,11 +12,10 @@ import sys
 import tempfile
 from urllib.parse import quote, urlencode
 
-from arancel_mx.certification.consumer import certify_duckdb
+from arancel_mx.certification.bundle import certify_bundle
 from arancel_mx.release.package import (
     PUBLIC_RELEASE_ASSETS,
     sha256,
-    verify_publication_bundle,
 )
 from scripts.github_api import GitHubApi, GitHubApiError, GitHubNotFound
 
@@ -36,6 +35,13 @@ def _nonblank(value: str, label: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise PublicationError("publisher_configuration", f"{label} must be a non-blank string")
     return value.strip()
+
+
+def _load_certified_manifest(release_dir: Path) -> dict[str, object]:
+    payload = json.loads((release_dir / "manifest.json").read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise PublicationError("release_publication", "certified manifest must be a JSON object")
+    return payload
 
 
 def _sanitize_message(message: object, *extra_secrets: object) -> str:
@@ -212,8 +218,10 @@ def publish_release(
 ) -> dict[str, object]:
     release_dir = Path(release_dir).resolve()
     commit_sha = _nonblank(commit_sha, "commit_sha")
-    manifest = verify_publication_bundle(release_dir)
-    certify_duckdb(release_dir / "arancel_mx.duckdb", manifest)
+    report = certify_bundle(release_dir)
+    if not report.passed:
+        raise PublicationError("release_publication", "publication bundle certification failed")
+    manifest = _load_certified_manifest(release_dir)
     dataset_version = _nonblank(str(manifest.get("dataset_version") or ""), "dataset_version")
     manifest_commit = _nonblank(str(manifest.get("git_commit_sha") or ""), "manifest git_commit_sha")
     if manifest_commit != commit_sha:

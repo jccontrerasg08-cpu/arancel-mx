@@ -207,13 +207,14 @@ jobs:
           name: arancel-mx-${{ github.run_id }}-${{ github.run_attempt }}
           path: out/release
 
-      - name: Independently verify publication bundle
+      - name: Independently certify publication bundle
         run: |
           python - <<'PY'
           from pathlib import Path
-          from arancel_mx.release import verify_publication_bundle
+          from arancel_mx.certification import certify_bundle
 
-          verify_publication_bundle(Path("out/release"))
+          report = certify_bundle(Path("out/release"))
+          assert report.passed is True
           PY
 
       - name: Generate build provenance attestation

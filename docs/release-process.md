@@ -67,11 +67,11 @@ release/
 
 Los cinco archivos distintos de `SHA256SUMS` deben estar cubiertos por checksums. `official-sources.tar.gz` conserva los snapshots capturados y `source_capture.json` necesarios para auditar el build.
 
-Antes de cualquier mutación de GitHub Release, `verify_publication_bundle()` exige que el directorio contenga exactamente los six assets, valida manifest/schema/procedencia y vuelve a comprobar hashes.
+Antes de cualquier mutación de GitHub Release, `certify_bundle()` exige que el directorio contenga exactamente los six assets, valida manifest/schema/procedencia, abre el DuckDB público, comprueba el archive de fuentes (incluido el ledger Diputados) y vuelve a comprobar hashes.
 
 ### Artifact attestation
 
-Cuando un build cambiado y validado entra realmente al job `publish`, GitHub Actions crea una sola **artifact attestation** de provenance SLSA sobre esos mismos seis archivos públicos. El paso usa la acción first-party `actions/attest`, autenticación OIDC de GitHub y sólo se ejecuta después de que `verify_publication_bundle()` haya aceptado el artifact descargado.
+Cuando un build cambiado y validado entra realmente al job `publish`, GitHub Actions crea una sola **artifact attestation** de provenance SLSA sobre esos mismos seis archivos públicos. El paso usa la acción first-party `actions/attest`, autenticación OIDC de GitHub y sólo se ejecuta después de que `certify_bundle()` haya aceptado el artifact descargado.
 
 Antes de ejecutar el publisher, cada subject se verifica contra este repositorio y contra el workflow firmante exacto:
 
@@ -102,7 +102,7 @@ El job `publish` sólo puede ejecutarse cuando:
 3. el ref es `refs/heads/main`;
 4. la ejecución es programada o un `workflow_dispatch` confiable usa `publish=true`.
 
-El publisher descarga por nombre exacto el artifact `arancel-mx-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}`, ejecuta de nuevo `verify_publication_bundle()`, genera y verifica la attestation de los seis assets, y sólo entonces crea una GitHub Release en estado **draft** para el tag `data-YYYY.MM.DD`.
+El publisher descarga por nombre exacto el artifact `arancel-mx-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}`, ejecuta de nuevo `certify_bundle()`, genera y verifica la attestation de los seis assets, y sólo entonces crea una GitHub Release en estado **draft** para el tag `data-YYYY.MM.DD`.
 
 Los six assets se suben al draft y se verifican remotamente por tamaño y digest cuando GitHub provee digest; si no, se descargan de nuevo y se recalcula SHA256. Sólo entonces el draft se hace público. Después de publicar, la release se vuelve a consultar y verificar.
 

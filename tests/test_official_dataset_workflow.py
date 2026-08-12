@@ -97,7 +97,7 @@ def test_only_publisher_has_contents_write_and_it_requires_built_trusted_main():
     assert "github.ref == 'refs/heads/main'" in publish
     assert "actions/download-artifact@" in publish
     assert "arancel-mx-${{ github.run_id }}-${{ github.run_attempt }}" in publish
-    assert "verify_publication_bundle" in publish
+    assert "certify_bundle" in publish
     assert "python -m scripts.publish_release" in publish
 
 
@@ -161,7 +161,7 @@ def test_attestation_is_verified_before_existing_release_publisher():
     )
     assert verified_names == PUBLIC_ATTESTATION_NAMES
 
-    assert publish.index("Independently verify publication bundle") < publish.index(
+    assert publish.index("Independently certify publication bundle") < publish.index(
         "Generate build provenance attestation"
     ) < publish.index("Verify build provenance attestation") < publish.index(
         "Publish immutable verified release"

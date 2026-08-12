@@ -26,6 +26,17 @@ _CAPTURE_FIELDS = (
     "source_url",
 )
 
+REQUIRED_SOURCE_ROLES = frozenset(
+    {
+        ("ligie", "ligie_snapshot"),
+        ("nico", "nico_snapshot"),
+        ("diputados_ligie", "legal_ledger"),
+        ("diputados_ligie", "consolidated_text"),
+        ("dof_law_reform", "law_reform"),
+        ("dof_tariff_decree", "tariff_decree"),
+    }
+)
+
 
 def _plain_decimal(value: Decimal) -> str:
     text = format(value, "f")
@@ -191,6 +202,14 @@ def _certify_source_provenance(
     ):
         raise ValueError("source capture does not match manifest.source_identity")
 
+    present_roles = {(row["dataset_key"], row["document_role"]) for row in captured}
+    missing_roles = sorted(REQUIRED_SOURCE_ROLES - present_roles)
+    if missing_roles:
+        raise ValueError(
+            "publication bundle is missing required official source roles: "
+            + ", ".join(f"{key}/{role}" for key, role in missing_roles)
+        )
+
 
 def _read_csv_rows(path: Path) -> list[dict[str, str]]:
     with path.open("r", encoding="utf-8", newline="") as stream:
@@ -279,6 +298,7 @@ def certify_bundle(release_dir: Path) -> CertificationReport:
             *duckdb_checks,
             "source_archive",
             "source_provenance",
+            "required_source_roles",
             "csv_json_equivalence",
         ),
         row_count=row_count,
