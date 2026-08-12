@@ -5,8 +5,10 @@ from __future__ import annotations
 import argparse
 import sys
 
+from arancel_mx.consumer.config import resolve_config
 from arancel_mx.consumer.dataset import Dataset
-from arancel_mx.consumer.output import render
+from arancel_mx.consumer.manager import DatasetManager
+from arancel_mx.consumer.output import render, render_path
 
 
 _OUTPUT_FORMATS = ("table", "json", "csv")
@@ -165,6 +167,19 @@ def _selected_dataset(namespace: argparse.Namespace) -> Dataset:
     return Dataset.latest(**options)
 
 
+def _consumer_config(namespace: argparse.Namespace):
+    options: dict[str, object] = {}
+    if getattr(namespace, "dataset", None) is not None:
+        options["dataset"] = namespace.dataset
+    if getattr(namespace, "offline", None) is not None:
+        options["offline"] = namespace.offline
+    return resolve_config(**options)
+
+
+def _manager(namespace: argparse.Namespace) -> DatasetManager:
+    return DatasetManager(_consumer_config(namespace))
+
+
 def _emit(value: object, *, format_name: str) -> None:
     text = render(value, format_name=format_name)
     sys.stdout.write(text)
@@ -192,10 +207,30 @@ def _run_query(namespace: argparse.Namespace) -> int:
     return 0
 
 
+def _run_data_download(namespace: argparse.Namespace) -> int:
+    manager = _manager(namespace)
+    path = manager.ensure(namespace.dataset)
+    _emit(
+        {"path": str(path), "status": "verified"},
+        format_name=namespace.format,
+    )
+    return 0
+
+
+def _run_data_path(namespace: argparse.Namespace) -> int:
+    path = _manager(namespace).selected_path(namespace.dataset)
+    sys.stdout.write(render_path(path) + "\n")
+    return 0
+
+
 def run_consumer(namespace: argparse.Namespace) -> int:
     """Run one parsed consumer command and return its process exit code."""
 
     action = getattr(namespace, "consumer_action", None)
     if action in _QUERY_ACTIONS:
         return _run_query(namespace)
+    if action == "data_download":
+        return _run_data_download(namespace)
+    if action == "data_path":
+        return _run_data_path(namespace)
     raise ValueError(f"unsupported consumer command: {action}")
