@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 import arancel_mx
 from arancel_mx.cli import build_parser, main
 
@@ -31,6 +33,15 @@ def test_existing_maintainer_help_remains_available(capsys) -> None:
 def test_no_args_still_returns_help_and_zero(capsys) -> None:
     assert main([]) == 0
     assert "arancel-mx" in capsys.readouterr().out
+
+
+def test_data_requires_nested_subcommand(capsys) -> None:
+    with pytest.raises(SystemExit) as exc_info:
+        build_parser().parse_args(["data"])
+    assert exc_info.value.code == 2
+    captured = capsys.readouterr()
+    assert "required" in captured.err.lower()
+    assert "status" in captured.err
 
 
 def test_update_alias_warning_is_unchanged(tmp_path, monkeypatch, capsys) -> None:
