@@ -73,7 +73,7 @@ where = ["src"]
 include = ["arancel_mx*"]
 
 [tool.setuptools.package-data]
-arancel_mx = ["sources/source_registry.json"]
+arancel_mx = ["sources/source_registry.json", "py.typed"]
 
 [tool.pytest.ini_options]
 pythonpath = [".", "src"]
