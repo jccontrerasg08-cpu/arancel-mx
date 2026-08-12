@@ -235,5 +235,5 @@ def certify_duckdb(
             _require_hierarchy(connection)
             _require_value_origin(connection)
     except duckdb.Error as exc:
-        raise ValueError(f"public DuckDB is not readable: {database_path}") from exc
+        raise ValueError(f"public DuckDB is not readable: {database_path}: {exc}") from exc
     return _CHECKS

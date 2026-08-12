@@ -46,4 +46,4 @@ def test_package_release_doc_keeps_code_and_data_release_channels_separate() -> 
     assert "GitHub Releases" in document
     assert "TestPyPI" in document
     assert "PyPI" in document
-    assert "do not create a GitHub Release" in document
+    assert "not create a GitHub Release" in document

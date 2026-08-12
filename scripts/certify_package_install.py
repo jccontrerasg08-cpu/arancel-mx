@@ -103,7 +103,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         type=Path,
         help="Optional local DuckDB fixture for a read-only consumer query probe.",
     )
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+    if args.dataset is not None and not args.expected_version:
+        parser.error("--dataset requires --expected-version so the consumer probe runs")
+    return args
 
 
 def _probe_command(

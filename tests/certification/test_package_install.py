@@ -5,6 +5,9 @@ from pathlib import Path
 import subprocess
 import sys
 
+import pytest
+
+from scripts import certify_package_install as certifier
 from scripts.certify_package_install import smoke_commands
 from tests.consumer.conftest import create_consumer_duckdb
 
@@ -19,6 +22,15 @@ def _clean_env() -> dict[str, str]:
     env.pop("PYTHONHOME", None)
     env["PYTHONNOUSERSITE"] = "1"
     return env
+
+
+def test_dataset_requires_expected_version() -> None:
+    # A dataset probe without an expected version would only check file existence,
+    # so certification could pass without ever querying the dataset.
+    with pytest.raises(SystemExit):
+        certifier._parse_args(
+            ["dist/arancel_mx-0.2.0-py3-none-any.whl", "--dataset", "local.duckdb"]
+        )
 
 
 def test_smoke_commands_cover_installed_package_surfaces(tmp_path: Path) -> None:

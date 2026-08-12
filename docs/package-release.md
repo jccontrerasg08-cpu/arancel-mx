@@ -93,7 +93,7 @@ Package candidates use git tags such as:
 pkg-v0.2.0
 ```
 
-The package workflow must **do not create a GitHub Release** for `pkg-v*` tags. GitHub Releases remain reserved for `data-*` bundles because the repository's public `/releases/latest/download/...` links are part of the dataset download contract.
+The package workflow must **not create a GitHub Release** for `pkg-v*` tags. GitHub Releases remain reserved for `data-*` bundles because the repository's public `/releases/latest/download/...` links are part of the dataset download contract.
 
 The package publication channel is instead:
 
