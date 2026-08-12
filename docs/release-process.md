@@ -2,6 +2,8 @@
 
 `arancel-mx` usa un pipeline autónomo y fail-closed para construir y publicar snapshots oficiales. El workflow de producción es **Official data pipeline**, definido en [`.github/workflows/official-data-pipeline.yml`](../.github/workflows/official-data-pipeline.yml), y corre diariamente con cron `17 11 * * *` además de admitir `workflow_dispatch`.
 
+Las ejecuciones que pueden mutar (cron y `publish=true`) comparten un único grupo de concurrency y nunca se solapan. Los dry runs usan un grupo propio por ref: GitHub mantiene una sola ejecución pendiente por grupo y cancela la anterior, así que compartir el grupo permitiría que un dry run manual desplazara en silencio una ejecución de producción encolada.
+
 > La publicación automatizada sólo debe activarse en producción después de habilitar release immutability y las protecciones de `main`. El modo manual `workflow_dispatch` usa `publish=false` por defecto para permitir un dry-run sin mutaciones.
 
 ## 1. Tests y entorno reproducible
@@ -102,7 +104,9 @@ El job `publish` sólo puede ejecutarse cuando:
 3. el ref es `refs/heads/main`;
 4. la ejecución es programada o un `workflow_dispatch` confiable usa `publish=true`.
 
-El publisher descarga por nombre exacto el artifact `arancel-mx-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}`, ejecuta de nuevo `certify_bundle()`, genera y verifica la attestation de los seis assets, y sólo entonces crea una GitHub Release en estado **draft** para el tag `data-YYYY.MM.DD`.
+El publisher descarga por nombre exacto el artifact que el build registró (`github_artifact_name` del manifest, con la forma `arancel-mx-<run_id>-<run_attempt>` del intento que lo produjo), ejecuta de nuevo `certify_bundle()`, genera y verifica la attestation de los seis assets, y sólo entonces crea una GitHub Release en estado **draft** para el tag `data-YYYY.MM.DD`.
+
+Ambos extremos del handoff usan el nombre registrado, no `github.run_attempt`: al re-ejecutar sólo el job fallido, `build-and-verify` no vuelve a subir el artifact, así que derivar el nombre del número de intento haría fallar la descarga y obligaría a repetir el build completo.
 
 Los six assets se suben al draft y se verifican remotamente por tamaño y digest cuando GitHub provee digest; si no, se descargan de nuevo y se recalcula SHA256. Sólo entonces el draft se hace público. Después de publicar, la release se vuelve a consultar y verificar.
 
@@ -120,8 +124,8 @@ Esa extracción es una frontera de confianza: los outputs del job `build-and-ver
 
 El job `notify` es el único con `issues: write`:
 
-- build fallido: crea o actualiza un **GitHub Issue** determinista por stage + failure category;
-- publish fallido, incluida una falla al crear o verificar la attestation: crea o actualiza el GitHub Issue correspondiente;
+- build fallido o cancelado: crea o actualiza un **GitHub Issue** determinista por stage + failure category;
+- publish fallido o cancelado, incluida una falla al crear o verificar la attestation: crea o actualiza el GitHub Issue correspondiente;
 - ejecución posterior saludable: ejecuta **recovery**, comenta y cierra las alertas generadas por la automatización;
 - `no_change` + publisher `skipped` cuenta explícitamente como recovery saludable.
 
