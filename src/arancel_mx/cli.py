@@ -22,7 +22,7 @@ from arancel_mx.consumer.errors import ArancelMXError
 COMMANDS = ("build", "check-updates", "update", "reconcile", "release")
 _MAINTAINER_HINT = (
     "This command needs the maintainer dependencies. "
-    "Install them with: pip install 'arancel-mx[maintainer]'"
+    'Install them with: pip install "arancel-mx[maintainer]"'
 )
 
 
@@ -31,18 +31,14 @@ def _missing_maintainer_extra(exc: ModuleNotFoundError) -> ValueError:
     return ValueError(f"{_MAINTAINER_HINT} (missing: {missing})")
 
 
-def _maintainer_attr(module_name: str, attr: str) -> Any:
-    """Import a maintainer-only symbol, or explain the missing extra."""
-
+def _invoke_maintainer(
+    module_name: str,
+    attr: str,
+    *args: object,
+    **kwargs: object,
+) -> object:
     try:
-        module = importlib.import_module(module_name)
-    except ModuleNotFoundError as exc:
-        raise _missing_maintainer_extra(exc) from exc
-    return getattr(module, attr)
-
-
-def _call_maintainer(implementation: Any, *args: object, **kwargs: object) -> object:
-    try:
+        implementation = getattr(importlib.import_module(module_name), attr)
         return implementation(*args, **kwargs)
     except ModuleNotFoundError as exc:
         raise _missing_maintainer_extra(exc) from exc
@@ -51,8 +47,9 @@ def _call_maintainer(implementation: Any, *args: object, **kwargs: object) -> ob
 def build_release(database: Path, output: Path) -> object:
     """Lazy maintainer wrapper for release building."""
 
-    return _call_maintainer(
-        _maintainer_attr("arancel_mx.release.package", "build_release"),
+    return _invoke_maintainer(
+        "arancel_mx.release.package",
+        "build_release",
         database,
         output,
     )
@@ -61,17 +58,15 @@ def build_release(database: Path, output: Path) -> object:
 def check_for_updates(config: object) -> object:
     """Lazy maintainer wrapper for official-source update checks."""
 
-    return _call_maintainer(
-        _maintainer_attr("arancel_mx.pipeline.update", "check_for_updates"),
-        config,
-    )
+    return _invoke_maintainer("arancel_mx.pipeline.update", "check_for_updates", config)
 
 
 def reconcile_legal_instruments(*items: object) -> object:
     """Lazy maintainer wrapper for legal-evidence reconciliation."""
 
-    return _call_maintainer(
-        _maintainer_attr("arancel_mx.pipeline.reconcile", "reconcile_legal_instruments"),
+    return _invoke_maintainer(
+        "arancel_mx.pipeline.reconcile",
+        "reconcile_legal_instruments",
         *items,
     )
 
@@ -79,8 +74,9 @@ def reconcile_legal_instruments(*items: object) -> object:
 def prepare_release_archive(*paths: Path) -> object:
     """Lazy maintainer wrapper for publication bundle preparation."""
 
-    return _call_maintainer(
-        _maintainer_attr("arancel_mx.release.package", "prepare_release_archive"),
+    return _invoke_maintainer(
+        "arancel_mx.release.package",
+        "prepare_release_archive",
         *paths,
     )
 
@@ -154,15 +150,13 @@ def _read_json(path: str) -> Any:
 
 
 def _update_config(namespace: argparse.Namespace) -> object:
-    update_config_cls = _maintainer_attr("arancel_mx.pipeline.update", "UpdateConfig")
-
     options: dict[str, object] = {
         "state_path": Path(namespace.state_path),
         "report_path": Path(namespace.report_path) if namespace.report_path else None,
     }
     if namespace.ledger_url:
         options["ledger_url"] = namespace.ledger_url
-    return update_config_cls(**options)
+    return _invoke_maintainer("arancel_mx.pipeline.update", "UpdateConfig", **options)
 
 
 def _dispatch(namespace: argparse.Namespace) -> object:

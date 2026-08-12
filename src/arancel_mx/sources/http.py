@@ -179,8 +179,6 @@ def fetch_official_document(
             _require_allowed_https_url(next_url, allowed_hosts, redirected=True)
             current_url = next_url
 
-        if response is None:
-            raise ValueError("official document request returned no response")
         response.raise_for_status()
         final_url = str(getattr(response, "url", "") or current_url)
         _require_allowed_https_url(
