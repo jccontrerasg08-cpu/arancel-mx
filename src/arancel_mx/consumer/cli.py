@@ -7,9 +7,10 @@ import sys
 
 from arancel_mx.consumer.config import resolve_config
 from arancel_mx.consumer.dataset import Dataset
+from arancel_mx.consumer.doctor import doctor_to_dict, render_doctor_human, run_doctor
 from arancel_mx.consumer.errors import DatasetUnavailableError
 from arancel_mx.consumer.manager import DatasetManager
-from arancel_mx.consumer.output import render, render_path
+from arancel_mx.consumer.output import render, render_json, render_path
 
 
 _OUTPUT_FORMATS = ("table", "json", "csv")
@@ -211,10 +212,7 @@ def _run_query(namespace: argparse.Namespace) -> int:
 def _run_data_download(namespace: argparse.Namespace) -> int:
     manager = _manager(namespace)
     path = manager.ensure(namespace.dataset)
-    _emit(
-        {"path": str(path), "status": "verified"},
-        format_name=namespace.format,
-    )
+    _emit({"path": str(path), "status": "verified"}, format_name=namespace.format)
     return 0
 
 
@@ -234,8 +232,7 @@ def _run_data_status(namespace: argparse.Namespace) -> int:
         remote_versions = manager.list_remote()
         remote_latest = remote_versions[0] if remote_versions else None
     update_available = bool(
-        remote_latest is not None
-        and (local_latest is None or remote_latest > local_latest)
+        remote_latest is not None and (local_latest is None or remote_latest > local_latest)
     )
     _emit(
         {
@@ -275,10 +272,7 @@ def _run_data_update(namespace: argparse.Namespace) -> int:
             "dataset update requires network access and is unavailable in offline mode"
         )
     status, path = manager.update()
-    _emit(
-        {"path": str(path), "status": status},
-        format_name=namespace.format,
-    )
+    _emit({"path": str(path), "status": status}, format_name=namespace.format)
     return 0
 
 
@@ -296,6 +290,15 @@ def _run_data_verify(namespace: argparse.Namespace) -> int:
     )
     _emit(info, format_name=namespace.format)
     return 0
+
+
+def _run_doctor(namespace: argparse.Namespace) -> int:
+    result = run_doctor(_consumer_config(namespace))
+    if namespace.json:
+        sys.stdout.write(render_json(doctor_to_dict(result)) + "\n")
+    else:
+        sys.stdout.write(render_doctor_human(result) + "\n")
+    return result.exit_code
 
 
 def run_consumer(namespace: argparse.Namespace) -> int:
@@ -316,4 +319,6 @@ def run_consumer(namespace: argparse.Namespace) -> int:
         return _run_data_update(namespace)
     if action == "data_verify":
         return _run_data_verify(namespace)
+    if action == "doctor":
+        return _run_doctor(namespace)
     raise ValueError(f"unsupported consumer command: {action}")
