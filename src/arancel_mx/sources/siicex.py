@@ -9,11 +9,10 @@ import unicodedata
 from arancel_mx.sources.vucem import TableParser, normalize_fraction_code
 
 
-SIICEX_TARIFA_INDEX_URL = (
-    "http://www.siicex-caaarem.org.mx/Bases/tigiei.nsf/TarifaW?OpenView"
-)
+SIICEX_HOME_URL = "http://www.siicex-caaarem.org.mx/"
+
 SIICEX_SAMPLE_FRACTION_CODE = "90014002"
-SIICEX_SAMPLE_FRACTION_DOCUMENT_URL = (
+SIICEX_SAMPLE_FRACTION_FIXTURE_URL = (
     "http://www.siicex-caaarem.org.mx/Bases/tigiei.nsf/"
     "d58945443a3d19d886256bab00510b2e/c08642781ad9ca4e8625730200736507?OpenDocument"
 )
@@ -104,7 +103,7 @@ def parse_fraction_document(html: str, *, expected_code: str | None = None) -> S
     )
 
 
-def validate_tarifa_index_html(html: str) -> None:
+def validate_home_html(html: str) -> None:
     folded = _fold(html)
     markers = (
         "tarifa",
@@ -115,4 +114,4 @@ def validate_tarifa_index_html(html: str) -> None:
         "caaarem",
     )
     if not any(marker in folded for marker in markers):
-        raise ValueError("SIICEX TarifaW index HTML is missing expected tariff markers")
+        raise ValueError("SIICEX home page HTML is missing expected tariff markers")

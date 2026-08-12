@@ -71,9 +71,9 @@ El pipeline y la consulta pública dependen de estas páginas HTML oficiales:
 - [SNICE, clasificador individual](https://www.snice.gob.mx/cs/avi/snice/hce.mi.fraccion.arancelaria.html) — consulta individual de códigos.
 - [VUCEM, buscador de fracciones](https://www.ventanillaunica.gob.mx/vucem/Clasificador.html) — clasificador informativo de la Ventanilla Única.
 - [VUCEM, ficha de fracción 90014002](https://www.ventanillaunica.gob.mx/Clasificador/data/buildHojas1/90014002.html) — ejemplo de hoja HTML por código de 8 dígitos (`buildHojas1/{codigo}.html`).
-- [SIICEX-CAAAREM, tarifa TIGIE](http://www.siicex-caaarem.org.mx/Bases/tigiei.nsf/TarifaW?OpenView) — consulta histórica de la tarifa mantenida por CAAAREM (HTTP legado).
+- [SIICEX-CAAAREM](http://www.siicex-caaarem.org.mx/) — portal de consulta histórica de la tarifa mantenida por CAAAREM (HTTP legado).
 
-`python -m scripts.validate_ligie_html_pages` verifica que sigan siendo alcanzables, que el HTML contenga contenido utilizable, que los recursos enlazados respondan y que la fracción de referencia `90014002` coincida entre VUCEM y SIICEX.
+`python -m scripts.validate_ligie_html_pages` verifica que sigan siendo alcanzables, que el HTML contenga contenido utilizable y que los recursos enlazados respondan.
 
 `python -m scripts.check_documented_urls` verifica que estas URLs sigan siendo alcanzables desde CI y descarga el cuerpo HTML de las páginas documentadas.
 

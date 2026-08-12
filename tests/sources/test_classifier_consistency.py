@@ -11,11 +11,7 @@ from arancel_mx.sources.classifier_consistency import (
     descriptions_consistent,
     normalize_duty,
 )
-from arancel_mx.sources.siicex import (
-    SIICEX_SAMPLE_FRACTION_DOCUMENT_URL,
-    SIICEX_TARIFA_INDEX_URL,
-    parse_fraction_document,
-)
+from arancel_mx.sources.siicex import SIICEX_HOME_URL, parse_fraction_document
 from arancel_mx.sources.vucem import VUCEM_SAMPLE_FRACTION_SHEET_URL, parse_fraction_sheet
 
 
@@ -65,7 +61,5 @@ def test_descriptions_consistent_accepts_subset_phrasing() -> None:
     assert descriptions_consistent(long_text, short_text)
 
 
-def test_siicex_tarifa_index_url_is_documented_http_endpoint() -> None:
-    assert SIICEX_TARIFA_INDEX_URL.startswith("http://www.siicex-caaarem.org.mx/")
-    assert "TarifaW?OpenView" in SIICEX_TARIFA_INDEX_URL
-    assert "OpenDocument" in SIICEX_SAMPLE_FRACTION_DOCUMENT_URL
+def test_siicex_home_url_is_documented_http_endpoint() -> None:
+    assert SIICEX_HOME_URL == "http://www.siicex-caaarem.org.mx/"

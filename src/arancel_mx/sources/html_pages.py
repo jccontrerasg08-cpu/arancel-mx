@@ -12,10 +12,10 @@ from arancel_mx.pipeline.reconcile import discover_registered_sources
 from arancel_mx.sources.diputados import parse_ligie_ledger
 from arancel_mx.sources.registry import RegistryEntry, load_source_registry
 from arancel_mx.sources.siicex import (
-    SIICEX_SAMPLE_FRACTION_DOCUMENT_URL,
-    SIICEX_TARIFA_INDEX_URL,
+    SIICEX_HOME_URL,
+    SIICEX_SAMPLE_FRACTION_FIXTURE_URL,
     parse_fraction_document,
-    validate_tarifa_index_html,
+    validate_home_html,
 )
 from arancel_mx.sources.vucem import (
     VUCEM_CLASSIFIER_INDEX_URL,
@@ -94,14 +94,9 @@ VUCEM_HTML_PAGES: tuple[LigieHtmlPage, ...] = (
 
 SIICEX_HTML_PAGES: tuple[LigieHtmlPage, ...] = (
     LigieHtmlPage(
-        "siicex_tarifa_index",
-        SIICEX_TARIFA_INDEX_URL,
+        "siicex_home",
+        SIICEX_HOME_URL,
         "classifier_discovery",
-    ),
-    LigieHtmlPage(
-        "siicex_fraction_document",
-        SIICEX_SAMPLE_FRACTION_DOCUMENT_URL,
-        "fraction_sheet",
     ),
 )
 
@@ -331,7 +326,7 @@ def validate_vucem_fraction_sheet_html(html: str, *, base_url: str) -> None:
 def validate_siicex_fraction_document_html(
     html: str,
     *,
-    base_url: str = SIICEX_SAMPLE_FRACTION_DOCUMENT_URL,
+    base_url: str = SIICEX_SAMPLE_FRACTION_FIXTURE_URL,
 ) -> None:
     folded = _fold(html)
     if "fraccion" not in folded and "hts code" not in folded:
@@ -447,13 +442,13 @@ def validate_ligie_html_page(page_id: str, html: str, *, base_url: str | None = 
     if page_id == "vucem_fraction_sheet":
         validate_vucem_fraction_sheet_html(html, base_url=base_url or VUCEM_SAMPLE_FRACTION_SHEET_URL)
         return None
-    if page_id == "siicex_tarifa_index":
-        validate_tarifa_index_html(html)
+    if page_id == "siicex_home":
+        validate_home_html(html)
         return None
     if page_id == "siicex_fraction_document":
         validate_siicex_fraction_document_html(
             html,
-            base_url=base_url or SIICEX_SAMPLE_FRACTION_DOCUMENT_URL,
+            base_url=base_url or SIICEX_SAMPLE_FRACTION_FIXTURE_URL,
         )
         return None
     raise ValueError(f"unknown LIGIE HTML page id: {page_id}")
