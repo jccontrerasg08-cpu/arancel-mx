@@ -14,6 +14,8 @@ arancel-mx --version
 arancel-mx doctor
 arancel-mx data download
 arancel-mx lookup 01012101
+arancel-mx ficha 01012101
+arancel-mx chapters
 arancel-mx search "refrigeradores"
 arancel-mx data verify
 ```
@@ -82,7 +84,7 @@ arancel-mx provenance 01012101
 ```
 
 - `lookup` resolves an exact normalized tariff code.
-- `ficha` returns the SIICEX-style hierarchy card (section grouping, chapter → heading → subheading → fraction/NICO, UM, IGI, IGE) from the verified official dataset only.
+- `ficha` returns the SIICEX-style hierarchy card (section grouping, chapter → heading → subheading → fraction/NICO, UM, IGI, IGE) from the verified official dataset only. IGI/IGE are the official `igi_text` / `ige_text` values (for example `10` and `Ex.`), not rewritten percentages. Codes absent from the current official snapshot fail closed.
 - `chapters` lists current HS2 chapters.
 - `search` ranks current records by code or description.
 - `parent` returns the direct parent in the HS2 → HS4 → HS6 → MX8 → NICO10 hierarchy.

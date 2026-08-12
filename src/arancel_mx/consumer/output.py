@@ -138,7 +138,7 @@ def _render_ficha_table(ficha: Ficha) -> str:
     record = ficha.record
     lines = [
         f"{'Código':<12}{ficha.formatted_code}",
-        f"{'Nivel':<12}{record.level}",
+        f"{'Nivel':<12}{_LEVEL_LABELS.get(record.level, record.level)}",
     ]
     if ficha.section is not None:
         lines.append(f"{'Sección':<12}{ficha.section.roman}  {ficha.section.name}")

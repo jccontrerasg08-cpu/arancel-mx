@@ -37,6 +37,8 @@ El pipeline **no** captura ni publica SIICEX-CAAAREM, dumps de entrenamiento com
 
 La ficha pública de `arancel-mx` (`arancel-mx ficha` / `Dataset.ficha`) reproduce la navegación capítulo → partida → subpartida → fracción → NICO y las tasas IGI/IGE **sólo** desde el dataset oficial verificado. No inventa IVA, franja/región, permisos, TLC, PROSEC ni correlaciones SCIAN que esas compilaciones muestran y que este registro no captura.
 
+Un visor de terceros puede mostrar fracciones o tasas que ya no existen en la LIGIE vigente. El ejemplo SIICEX `11063001` (harina de sagú, IGI 13%) no está en el snapshot SNICE actual; las fracciones vigentes son `11062002` (sagú, IGI 10) y `11063002` (productos del Capítulo 08, IGI 10). `arancel-mx ficha 11063001` falla cerrado.
+
 ## Diputados ledger + DOF reconciliation
 
 El ledger **registered** de la Cámara de Diputados es el ancla para saber qué documentos legales deben ser explicables por la construcción. El pipeline realiza **reconciliation** de ese ledger con evidencia del **DOF** y con las fuentes registradas de SNICE.

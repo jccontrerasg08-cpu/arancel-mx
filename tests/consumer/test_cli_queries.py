@@ -208,6 +208,18 @@ def test_ficha_json_contract(capsys) -> None:
     assert payload["section"]["roman"] == "I"
     assert payload["section"]["source"] == "hs_section_grouping"
     assert payload["hierarchy"][0]["code"] == "01"
+    assert [child["code"] for child in payload["children"]] == ["0101210100"]
+
+
+def test_ficha_table_uses_spanish_level_labels(capsys) -> None:
+    assert main(["ficha", "01012101"]) == 0
+    text = capsys.readouterr().out
+    assert "Fracción" in text
+    assert "NICO" in text
+    assert "Hijos" in text
+    assert "0101.21.01 00" in text
+    assert "fraccion8" not in text
+    assert "nico10" not in text
 
 
 def test_chapters_json_contract(capsys) -> None:

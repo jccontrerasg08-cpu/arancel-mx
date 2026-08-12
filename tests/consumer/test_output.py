@@ -150,6 +150,8 @@ def test_ficha_table_is_a_human_card() -> None:
     assert "Capítulo" in text
     assert "Fracción" in text
     assert "IGI" in text
+    assert "fraccion8" not in text
+    assert "hs2" not in text
 
 
 def test_ficha_table_lists_direct_children() -> None:

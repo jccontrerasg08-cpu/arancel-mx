@@ -17,6 +17,8 @@ def test_bilingual_readmes_show_install_and_consumer_first_commands() -> None:
         "arancel-mx doctor",
         "arancel-mx data download",
         "arancel-mx lookup 01012101",
+        "arancel-mx ficha 01012101",
+        "arancel-mx chapters",
         "arancel-mx data verify",
         "docs/consumer-cli.md",
     )
