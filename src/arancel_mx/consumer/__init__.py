@@ -1,5 +1,6 @@
-"""Public consumer-facing types and exceptions."""
+"""Public consumer-facing types, exceptions, and Dataset facade."""
 
+from arancel_mx.consumer.dataset import Dataset
 from arancel_mx.consumer.errors import (
     ArancelMXError,
     DatasetDownloadError,
@@ -16,6 +17,7 @@ from arancel_mx.consumer.models import DatasetInfo, ProvenanceRecord, SearchResu
 
 __all__ = [
     "ArancelMXError",
+    "Dataset",
     "DatasetDownloadError",
     "DatasetError",
     "DatasetInfo",

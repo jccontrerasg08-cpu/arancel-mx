@@ -2,6 +2,7 @@
 
 from importlib.metadata import version as _distribution_version
 
+from arancel_mx.consumer.dataset import Dataset
 from arancel_mx.consumer.errors import (
     ArancelMXError,
     DatasetDownloadError,
@@ -20,6 +21,7 @@ __version__ = _distribution_version("arancel-mx")
 
 __all__ = [
     "ArancelMXError",
+    "Dataset",
     "DatasetDownloadError",
     "DatasetError",
     "DatasetInfo",
