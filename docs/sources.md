@@ -46,6 +46,20 @@ Después de capturar y reconciliar, la identidad de las fuentes se compara con e
 
 Una release válida incluye `official-sources.tar.gz`, que conserva los bytes oficiales capturados y `source_capture.json`. Los hashes permiten reconstruir exactamente qué snapshots fueron observados en ese build aunque la página oficial cambie después.
 
+## Páginas canónicas documentadas
+
+Estas son las URLs públicas registradas y referenciadas por el proyecto. Deben permanecer en HTTPS y en formato de enlace Markdown en la documentación orientada a usuarios:
+
+- [Diputados, ledger LIGIE](https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm)
+- [Diputados, texto consolidado PDF](https://www.diputados.gob.mx/LeyesBiblio/pdf/LIGIE_2022.pdf)
+- [SNICE, LIGIE](https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html)
+- [SNICE, NICO y propuestas](https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html)
+- [SNICE, notas nacionales](https://www.snice.gob.mx/cs/avi/snice/ligie.notasnac22.html)
+- [SNICE, indicadores arancelarios](https://www.snice.gob.mx/cs/avi/snice/ligie.indicaranc22.html)
+- [DOF, metodología NICO (27/06/2022)](https://www.dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022)
+
+`python -m scripts.check_documented_urls` verifica que estas URLs sigan siendo alcanzables desde CI.
+
 ## Fixtures offline
 
 Las pruebas de PR usan fragmentos mínimos y sanitizados en `tests/fixtures/` y no dependen de que DOF, Diputados o SNICE estén disponibles en ese momento. Cada cambio de parser, reconciliación o source registry debe incluir un fixture reproducible o una construcción sintética equivalente.

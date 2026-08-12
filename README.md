@@ -304,12 +304,12 @@ El registro versionado vive en `src/arancel_mx/sources/source_registry.json`.
 
 Fuentes principales:
 
-- Diputados, LIGIE: https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm
-- SNICE, LIGIE: https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html
-- SNICE, NICO y propuestas NICO: https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html
-- SNICE, notas nacionales: https://www.snice.gob.mx/cs/avi/snice/ligie.notasnac22.html
-- SNICE, indicadores: https://www.snice.gob.mx/cs/avi/snice/ligie.indicaranc22.html
-- Diario Oficial de la Federación, publicación relacionada: https://www.dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022
+- [Diputados, LIGIE](https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm)
+- [SNICE, LIGIE](https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html)
+- [SNICE, NICO y propuestas NICO](https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html)
+- [SNICE, notas nacionales](https://www.snice.gob.mx/cs/avi/snice/ligie.notasnac22.html)
+- [SNICE, indicadores](https://www.snice.gob.mx/cs/avi/snice/ligie.indicaranc22.html)
+- [Diario Oficial de la Federación, publicación relacionada](https://www.dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022)
 
 `docs/sources.md` explica cómo el ledger registrado de Diputados se usa como ancla y cómo la evidencia DOF participa como gate antes de publicar.
 
