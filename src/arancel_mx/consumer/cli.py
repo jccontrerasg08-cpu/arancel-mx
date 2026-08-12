@@ -268,6 +268,20 @@ def _run_data_list(namespace: argparse.Namespace) -> int:
     return 0
 
 
+def _run_data_update(namespace: argparse.Namespace) -> int:
+    manager = _manager(namespace)
+    if manager.config.offline:
+        raise DatasetUnavailableError(
+            "dataset update requires network access and is unavailable in offline mode"
+        )
+    status, path = manager.update()
+    _emit(
+        {"path": str(path), "status": status},
+        format_name=namespace.format,
+    )
+    return 0
+
+
 def run_consumer(namespace: argparse.Namespace) -> int:
     """Run one parsed consumer command and return its process exit code."""
 
@@ -282,4 +296,6 @@ def run_consumer(namespace: argparse.Namespace) -> int:
         return _run_data_status(namespace)
     if action == "data_list":
         return _run_data_list(namespace)
+    if action == "data_update":
+        return _run_data_update(namespace)
     raise ValueError(f"unsupported consumer command: {action}")
