@@ -1,7 +1,11 @@
 version: 2
 updates:
+  # "/" covers pyproject.toml (public compatibility ranges); "/requirements" covers
+  # production-build.txt, the exact pins every official build and release uses.
   - package-ecosystem: "pip"
-    directory: "/"
+    directories:
+      - "/"
+      - "/requirements"
     schedule:
       interval: weekly
       day: monday

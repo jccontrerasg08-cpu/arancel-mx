@@ -22,6 +22,7 @@ PyMuPDF==1.28.2
 pyproject_hooks==1.2.0
 pytest==9.1.1
 python-dateutil==2.9.0.post0
+PyYAML==6.0.3
 reportlab==5.0.0
 requests==2.34.2
 six==1.17.0
