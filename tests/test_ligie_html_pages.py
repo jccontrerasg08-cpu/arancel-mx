@@ -11,10 +11,12 @@ from arancel_mx.sources.html_pages import (
     LIGIE_HTML_PAGES,
     SNICE_BIBLIOTECA_JURIDICA_URL,
     SNICE_INDIVIDUAL_CLASSIFIER_URL,
+    SNICE_LEGAL_LIBRARY_INDEX_URL,
     SNICE_LIGIE_INDEX_URL,
     SNICE_MODIFICATIONS_INDEX_URL,
     SNICE_NICO_INDEX_URL,
     fracciones_arancelarias_consult_urls,
+    ligie_entry_urls,
     validate_ligie_html_page,
 )
 from scripts.check_documented_urls import build_session, check_reachable
@@ -30,6 +32,7 @@ def test_ligie_html_page_catalog_covers_pipeline_and_consult_entrypoints() -> No
         "diputados_ledger",
         "snice_ligie_index",
         "snice_nico_index",
+        "snice_legal_library_index",
         "snice_biblioteca_juridica",
         "snice_individual_classifier",
     } <= page_ids
@@ -55,6 +58,16 @@ def test_offline_fixtures_parse_diputados_ledger_and_snice_discovery_pages() -> 
         "snice_modifications_index",
         (FIXTURES / "snice" / "ligie.info22.mod.html").read_text(encoding="utf-8"),
         base_url=SNICE_MODIFICATIONS_INDEX_URL,
+    )
+
+
+def test_legal_library_index_fixture_exposes_ligie_entry_link() -> None:
+    html = (FIXTURES / "snice" / "biblioteca.juridica.html").read_text(encoding="utf-8")
+    ligie_urls = ligie_entry_urls(html, SNICE_LEGAL_LIBRARY_INDEX_URL)
+    assert ligie_urls == ["https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html"]
+    assert (
+        validate_ligie_html_page("snice_legal_library_index", html, base_url=SNICE_LEGAL_LIBRARY_INDEX_URL)
+        == ligie_urls[0]
     )
 
 
@@ -110,6 +123,9 @@ def test_validate_ligie_html_pages_script_exits_zero_when_pages_parse(
         DIPUTADOS_LEDGER_URL: (FIXTURES / "diputados" / "ligie_2022.html").read_text(encoding="utf-8"),
         SNICE_LIGIE_INDEX_URL: (FIXTURES / "snice" / "ligie.info22.html").read_text(encoding="utf-8"),
         SNICE_NICO_INDEX_URL: (FIXTURES / "snice" / "ligie.nico2022.html").read_text(encoding="utf-8"),
+        SNICE_LEGAL_LIBRARY_INDEX_URL: (
+            FIXTURES / "snice" / "biblioteca.juridica.html"
+        ).read_text(encoding="utf-8"),
         SNICE_BIBLIOTECA_JURIDICA_URL: (
             FIXTURES / "snice" / "ligie.info22.ligiebibjur.html"
         ).read_text(encoding="utf-8"),

@@ -19,6 +19,9 @@ SNICE_NICO_INDEX_URL = "https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.htm
 SNICE_MODIFICATIONS_INDEX_URL = (
     "https://www.snice.gob.mx/cs/avi/snice/ligie.info22.mod.html"
 )
+SNICE_LEGAL_LIBRARY_INDEX_URL = (
+    "https://www.snice.gob.mx/cs/avi/snice/biblioteca.juridica.html"
+)
 SNICE_BIBLIOTECA_JURIDICA_URL = (
     "https://www.snice.gob.mx/cs/avi/snice/ligie.info22.ligiebibjur.html"
 )
@@ -42,6 +45,11 @@ LIGIE_HTML_PAGES: tuple[LigieHtmlPage, ...] = (
         "snice_modifications_index",
         SNICE_MODIFICATIONS_INDEX_URL,
         "modification_discovery",
+    ),
+    LigieHtmlPage(
+        "snice_legal_library_index",
+        SNICE_LEGAL_LIBRARY_INDEX_URL,
+        "legal_library_discovery",
     ),
     LigieHtmlPage(
         "snice_biblioteca_juridica",
@@ -100,6 +108,16 @@ def extract_links(html: str, base_url: str) -> list[tuple[str, str]]:
     ]
 
 
+def ligie_entry_urls(html: str, base_url: str) -> list[str]:
+    """Return absolute URLs that point to the official LIGIE section on SNICE."""
+    matches: list[str] = []
+    for url, title in extract_links(html, base_url):
+        folded = _fold(f"{title} {url}")
+        if "ligie.info" in folded or "impuestos generales de importacion" in folded:
+            matches.append(url)
+    return matches
+
+
 def fracciones_arancelarias_consult_urls(html: str, base_url: str) -> list[str]:
     """Return absolute URLs for the official Fracciones Arancelarias consult entry points."""
     matches: list[str] = []
@@ -146,6 +164,19 @@ def validate_snice_discovery_html(
         raise ValueError(
             f"SNICE discovery HTML for {entry.dataset_key} is missing {required_role}; found {sorted(roles)}"
         )
+
+
+def validate_legal_library_index_html(
+    html: str,
+    base_url: str = SNICE_LEGAL_LIBRARY_INDEX_URL,
+) -> str:
+    folded = _fold(html)
+    if "biblioteca juridica" not in folded:
+        raise ValueError("SNICE legal library index HTML is missing Biblioteca Jurídica markers")
+    ligie_urls = ligie_entry_urls(html, base_url)
+    if not ligie_urls:
+        raise ValueError("SNICE legal library index HTML is missing a LIGIE entry link")
+    return ligie_urls[0]
 
 
 def validate_biblioteca_juridica_html(
@@ -200,6 +231,11 @@ def validate_ligie_html_page(page_id: str, html: str, *, base_url: str | None = 
             if "modificaciones" not in _fold(html):
                 raise ValueError("SNICE modifications index HTML is missing modification markers")
         return None
+    if page_id == "snice_legal_library_index":
+        return validate_legal_library_index_html(
+            html,
+            base_url or SNICE_LEGAL_LIBRARY_INDEX_URL,
+        )
     if page_id == "snice_biblioteca_juridica":
         return validate_biblioteca_juridica_html(
             html,

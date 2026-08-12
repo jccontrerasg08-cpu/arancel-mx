@@ -66,7 +66,8 @@ El pipeline y la consulta pública dependen de estas páginas HTML oficiales:
 - [SNICE, índice LIGIE](https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html) — descubrimiento de snapshots `FRACCIONESARANCELARIAS*.xlsx`.
 - [SNICE, índice NICO](https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html) — descubrimiento de snapshots `NICO-*.xlsx`.
 - [SNICE, modificaciones](https://www.snice.gob.mx/cs/avi/snice/ligie.info22.mod.html) — índice de modificaciones publicadas.
-- [SNICE, biblioteca jurídica](https://www.snice.gob.mx/cs/avi/snice/ligie.info22.ligiebibjur.html) — entrada a la consulta oficial de fracciones.
+- [SNICE, biblioteca jurídica general](https://www.snice.gob.mx/cs/avi/snice/biblioteca.juridica.html) — índice legal de SNICE con enlace a la LIGIE.
+- [SNICE, biblioteca jurídica LIGIE](https://www.snice.gob.mx/cs/avi/snice/ligie.info22.ligiebibjur.html) — entrada a la consulta oficial de fracciones.
 - [SNICE, clasificador individual](https://www.snice.gob.mx/cs/avi/snice/hce.mi.fraccion.arancelaria.html) — consulta individual de códigos.
 
 `python -m scripts.validate_ligie_html_pages` verifica que sigan siendo alcanzables y parseables por los adaptadores del repositorio.
