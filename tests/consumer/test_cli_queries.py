@@ -161,3 +161,27 @@ def test_query_formats_csv_without_extra_blank_line(capsys) -> None:
     output = capsys.readouterr().out
     assert output.startswith("code,level,description")
     assert not output.endswith("\n\n")
+
+
+def test_empty_search_csv_keeps_search_schema(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(FakeDataset, "search", lambda self, text, limit=20: ())
+    assert main(["search", "sin coincidencias", "--format", "csv"]) == 0
+    output = capsys.readouterr().out
+    assert output.startswith("score,match_kind,code,level,description")
+    assert output.count("\n") == 1
+
+
+def test_empty_children_csv_keeps_tariff_schema(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(FakeDataset, "children", lambda self, code: ())
+    assert main(["children", "010121", "--format", "csv"]) == 0
+    output = capsys.readouterr().out
+    assert output.startswith("code,level,description")
+    assert output.count("\n") == 1
+
+
+def test_empty_provenance_csv_keeps_provenance_schema(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(FakeDataset, "provenance", lambda self, code: ())
+    assert main(["provenance", "01012101", "--format", "csv"]) == 0
+    output = capsys.readouterr().out
+    assert output.startswith("source_document_id,role,is_primary,authority")
+    assert output.count("\n") == 1
