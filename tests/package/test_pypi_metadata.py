@@ -38,6 +38,7 @@ def test_console_script_points_to_public_cli_entrypoint() -> None:
 
 
 def test_classifiers_do_not_claim_uncertified_future_python_versions() -> None:
+    # Add newer interpreter classifiers only after the blocking matrix proves them.
     classifiers = set(_project()["classifiers"])
     assert "Development Status :: 4 - Beta" in classifiers
     assert "License :: OSI Approved :: Apache Software License" in classifiers
