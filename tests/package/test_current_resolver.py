@@ -1,16 +1,16 @@
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 import subprocess
 import sys
 
-from scripts.certify_package_install import smoke_commands
 from tests.consumer.conftest import create_consumer_duckdb
 
 
 ROOT = Path(__file__).resolve().parents[2]
-CERTIFIER = ROOT / "scripts" / "certify_package_install.py"
+SCRIPT = ROOT / "scripts" / "current_resolver_probe.py"
 
 
 def _clean_env() -> dict[str, str]:
@@ -21,29 +21,14 @@ def _clean_env() -> dict[str, str]:
     return env
 
 
-def test_smoke_commands_cover_installed_package_surfaces(tmp_path: Path) -> None:
-    commands = smoke_commands(
-        Path("dist/arancel_mx-0.2.0-py3-none-any.whl"),
-        tmp_path / "venv",
-    )
-    rendered = [" ".join(command) for command in commands]
-
-    assert any("-m pip check" in item for item in rendered)
-    assert any("import arancel_mx" in item for item in rendered)
-    assert any("-m arancel_mx --help" in item for item in rendered)
-    assert any("arancel-mx" in item and "--help" in item for item in rendered)
-    assert any("importlib.resources" in item and "source_registry.json" in item for item in rendered)
-    assert any("pandas" in item and "openpyxl" in item and "find_spec" in item for item in rendered)
-
-
-def test_clean_wheel_install_runs_probe_with_local_dataset(tmp_path: Path) -> None:
+def test_current_resolver_probe_records_normal_runtime_resolution(tmp_path: Path) -> None:
     dist = tmp_path / "dist"
     subprocess.run(
         [sys.executable, "-m", "build", "--wheel", "--outdir", str(dist)],
         cwd=ROOT,
         check=True,
-        text=True,
         capture_output=True,
+        text=True,
     )
     wheel = next(dist.glob("arancel_mx-0.2.0-*.whl"))
     dataset = create_consumer_duckdb(
@@ -55,7 +40,7 @@ def test_clean_wheel_install_runs_probe_with_local_dataset(tmp_path: Path) -> No
     completed = subprocess.run(
         [
             sys.executable,
-            str(CERTIFIER),
+            str(SCRIPT),
             str(wheel),
             "--expected-version",
             "0.2.0",
@@ -69,5 +54,19 @@ def test_clean_wheel_install_runs_probe_with_local_dataset(tmp_path: Path) -> No
         check=False,
     )
     assert completed.returncode == 0, completed.stdout + completed.stderr
-    assert '"status":"ok"' in completed.stdout
-    assert '"lookup_code":"01012101"' in completed.stdout
+    report = json.loads(completed.stdout)
+    assert report["status"] == "ok"
+    assert report["resolved"]["arancel-mx"] == "0.2.0"
+    for dependency in ("duckdb", "filelock", "platformdirs", "requests"):
+        assert dependency in report["resolved"]
+    for heavy in ("pandas", "openpyxl", "pymupdf", "xlrd"):
+        assert heavy not in report["resolved"]
+    assert report["probe"]["lookup_code"] == "01012101"
+
+
+def test_current_resolver_probe_does_not_use_repository_constraints() -> None:
+    source = SCRIPT.read_text(encoding="utf-8")
+    assert "production-build.txt" not in source
+    assert "requirements/" not in source
+    assert "--constraint" not in source
+    assert "' -c '" not in source

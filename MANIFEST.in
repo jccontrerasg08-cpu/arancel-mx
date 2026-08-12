@@ -1,0 +1,24 @@
+include README.md
+include README.en.md
+include CHANGELOG.md
+include LICENSE
+include NOTICE
+include pyproject.toml
+include docs/package-release.md
+include docs/consumer-cli.md
+
+prune tests
+prune data
+prune out
+prune docs/superpowers
+prune .github
+prune .worktrees
+
+global-exclude *.duckdb
+global-exclude *.xlsx
+global-exclude *.xls
+global-exclude *.pdf
+global-exclude *.pem
+global-exclude *.key
+global-exclude .env
+global-exclude .env.*
