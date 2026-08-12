@@ -15,7 +15,14 @@ permissions:
   contents: read
 
 concurrency:
-  group: arancel-mx-official-data-production
+  # Mutating runs serialize on one group. Dry runs get their own group per ref:
+  # GitHub keeps a single pending slot per group and cancels whatever was pending
+  # before it, so sharing the group would let a manual dry run silently displace a
+  # queued production run.
+  group: >-
+    ${{ (github.event_name == 'schedule' || inputs.publish == true)
+    && 'arancel-mx-official-data-production'
+    || format('arancel-mx-official-data-dry-run-{0}', github.ref) }}
   cancel-in-progress: false
 
 jobs:
@@ -52,11 +59,9 @@ jobs:
           python -m pip install -c requirements/production-build.txt -e ".[dev]"
 
       - name: Run offline tests before source access
-        id: tests
         run: python -m pytest -q
 
       - name: Resolve UTC dataset version and provenance
-        id: metadata
         shell: bash
         run: |
           set -euo pipefail
@@ -118,7 +123,9 @@ jobs:
         if: steps.pipeline_result.outputs.status == 'built' && steps.pipeline.outcome == 'success'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: arancel-mx-${{ github.run_id }}-${{ github.run_attempt }}
+          # The name the manifest recorded, so re-running only the failed publish job
+          # still finds this artifact after github.run_attempt has incremented.
+          name: ${{ steps.pipeline_result.outputs.artifact_name }}
           path: out/release/
           if-no-files-found: error
           retention-days: 30
@@ -168,7 +175,7 @@ jobs:
       - name: Download exact verified build artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: arancel-mx-${{ github.run_id }}-${{ github.run_attempt }}
+          name: ${{ needs.build-and-verify.outputs.artifact_name }}
           path: out/release
 
       - name: Independently certify publication bundle
@@ -279,7 +286,8 @@ jobs:
         if: >-
           github.ref == 'refs/heads/main' &&
           (github.event_name == 'schedule' || inputs.publish == true) &&
-          needs.build-and-verify.result == 'failure'
+          (needs.build-and-verify.result == 'failure' ||
+          needs.build-and-verify.result == 'cancelled')
         env:
           GITHUB_TOKEN: ${{ github.token }}
           ALERT_STAGE: ${{ needs.build-and-verify.outputs.stage }}
@@ -291,10 +299,10 @@ jobs:
           set -euo pipefail
           python -m scripts.workflow_diagnostics write-failure \
             --path out/alert-result.json \
-            --stage "${ALERT_STAGE:-build}" \
-            --failure-category "${ALERT_CATEGORY:-build_failure}" \
-            --dataset-version "${ALERT_VERSION:-}" \
-            --message "${ALERT_MESSAGE:-build failed; inspect the workflow run logs}"
+            --stage="${ALERT_STAGE:-build}" \
+            --failure-category="${ALERT_CATEGORY:-build_failure}" \
+            --dataset-version="${ALERT_VERSION:-}" \
+            --message="${ALERT_MESSAGE:-build failed or was cancelled; inspect the workflow run logs}"
           python -m scripts.data_alert failure --result out/alert-result.json
 
       - name: Upsert publication failure alert
@@ -303,7 +311,7 @@ jobs:
           (github.event_name == 'schedule' || inputs.publish == true) &&
           needs.build-and-verify.result == 'success' &&
           needs.build-and-verify.outputs.status == 'built' &&
-          needs.publish.result == 'failure'
+          (needs.publish.result == 'failure' || needs.publish.result == 'cancelled')
         env:
           GITHUB_TOKEN: ${{ github.token }}
           ALERT_STAGE: ${{ needs.publish.outputs.stage }}
@@ -315,10 +323,10 @@ jobs:
           set -euo pipefail
           python -m scripts.workflow_diagnostics write-failure \
             --path out/alert-result.json \
-            --stage "${ALERT_STAGE:-publish}" \
-            --failure-category "${ALERT_CATEGORY:-release_publication}" \
-            --dataset-version "${ALERT_VERSION:-}" \
-            --message "${ALERT_MESSAGE:-publication failed; inspect the workflow run logs}"
+            --stage="${ALERT_STAGE:-publish}" \
+            --failure-category="${ALERT_CATEGORY:-release_publication}" \
+            --dataset-version="${ALERT_VERSION:-}" \
+            --message="${ALERT_MESSAGE:-publication failed or was cancelled; inspect the workflow run logs}"
           python -m scripts.data_alert failure --result out/alert-result.json
 
       - name: Close recovered automation alerts
@@ -327,7 +335,7 @@ jobs:
           (github.event_name == 'schedule' || inputs.publish == true) &&
           needs.build-and-verify.result == 'success' &&
           ((needs.build-and-verify.outputs.status == 'no_change' && needs.publish.result == 'skipped') ||
-           needs.publish.result == 'success')
+          needs.publish.result == 'success')
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: python -m scripts.data_alert recovery
