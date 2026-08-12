@@ -70,6 +70,21 @@ def test_data_update_no_change_is_idempotent(capsys) -> None:
     }
 
 
+def test_data_update_rejects_dataset_pin(capsys) -> None:
+    assert main([
+        "data",
+        "update",
+        "--dataset",
+        "data-2026.08.11",
+        "--format",
+        "json",
+    ]) == 2
+    captured = capsys.readouterr()
+    assert "unrecognized arguments" in captured.err
+    assert "--dataset" in captured.err
+    assert FakeManager.instances == []
+
+
 def test_data_update_offline_is_rejected_before_manager_update(capsys) -> None:
     FakeManager.fail_if_update_called = True
     assert main(["data", "update", "--offline", "--format", "json"]) == 2
