@@ -93,8 +93,6 @@ jobs:
         id: pipeline
         if: steps.previous.outcome == 'success'
         continue-on-error: true
-        env:
-          ARANCEL_MX_ARTIFACT_NAME: ${{ env.ARANCEL_MX_ARTIFACT_NAME }}
         run: |
           python scripts/run_official_pipeline.py \
             --work-dir out/work \
@@ -187,6 +185,9 @@ jobs:
               raise SystemExit("publication bundle certification failed")
           PY
 
+      # Passing no predicate input selects the action's SLSA build provenance mode,
+      # and leaving push-to-registry false means no storage record is created, so
+      # the two permissions above are the complete set this step needs.
       - name: Generate build provenance attestation
         uses: actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d # v4.2.1
         with:
@@ -201,6 +202,7 @@ jobs:
       - name: Verify build provenance attestation
         env:
           GH_TOKEN: ${{ github.token }}
+        shell: bash
         run: |
           set -euo pipefail
           assets=(
