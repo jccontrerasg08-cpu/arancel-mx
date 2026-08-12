@@ -20,8 +20,9 @@ def test_demo_workflow_is_manual_pr_based_and_least_privilege():
     assert "schedule:" not in workflow
     assert "pull_request:" not in workflow
     assert "pull_request_target:" not in workflow
-    assert re.search(r"^\s+contents: write$", workflow, re.MULTILINE)
-    assert re.search(r"^\s+pull-requests: write$", workflow, re.MULTILINE)
+    assert re.search(r"^\s+contents: write(?: #.*)?$", workflow, re.MULTILINE)
+    assert re.search(r"^\s+pull-requests: write(?: #.*)?$", workflow, re.MULTILINE)
+    assert not re.search(r"^permissions:\n(?:\s+\S+: \S+.*\n)*\s+\S+: write", workflow)
     assert 'branch="automation/demo-${GITHUB_RUN_ID}"' in workflow
     assert 'git push origin "$branch"' in workflow
     assert "gh pr create" in workflow
