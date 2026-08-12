@@ -116,6 +116,8 @@ Si ocurre un segundo cambio válido el mismo día y ya existe `data-YYYY.MM.DD`,
 
 **Cualquier falla bloquea la publicación.** Los pasos principales escriben JSON de diagnóstico antes de devolver un código distinto de cero. El workflow extrae mensajes acotados y sin secretos, y luego falla explícitamente el job.
 
+Esa extracción es una frontera de confianza: los outputs del job `build-and-verify` deciden si `publish` puede ejecutarse. `scripts/workflow_diagnostics.py` es el único código autorizado a escribir outputs del workflow. Valida `status` contra un vocabulario cerrado (`built`, `no_change`, `failed`), acota cada token y mensaje a una sola línea, y rechaza escribir cualquier línea si un valor no es seguro. Un `status` desconocido nunca se propaga: se degrada a `failed` con categoría `invalid_diagnostics`.
+
 El job `notify` es el único con `issues: write`:
 
 - build fallido: crea o actualiza un **GitHub Issue** determinista por stage + failure category;
@@ -128,6 +130,10 @@ Los Issues del usuario sin el marcador oculto de automatización nunca se cierra
 ## 10. Límites de permisos
 
 El workflow tiene `contents: read` globalmente. El job de build permanece read-only. Sólo `publish` recibe `contents: write`; para A9 ese mismo job recibe además `attestations: write` e `id-token: write`. Sólo `notify` recibe `issues: write`. No se usa PAT, `write-all`, `artifact-metadata: write` ni `pull_request_target`.
+
+Ningún job de este workflow conserva la credencial de checkout: los tres usan `persist-credentials: false` y llegan a GitHub mediante variables de entorno de token explícitas. El job de build es el único que instala `.[dev]`, porque es el único que ejecuta la suite; `publish` y `notify` instalan sólo el runtime, de modo que el job que firma la attestation no carga herramientas de desarrollo.
+
+Los invariantes estructurales de todos los workflows (acciones fijadas por SHA, escrituras siempre dentro de un job, permisos y timeout por job, credenciales de checkout explícitas, y ausencia de interpolación `${{ ... }}` dentro de scripts de shell) se verifican offline en `tests/test_workflow_hardening.py`.
 
 Los binarios, bases DuckDB, snapshots oficiales y bundles de release no se escriben al historial Git.
 
