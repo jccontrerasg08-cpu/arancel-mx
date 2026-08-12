@@ -17,6 +17,16 @@ _OUTPUT_FORMATS = ("table", "json", "csv")
 _QUERY_ACTIONS = {"lookup", "search", "parent", "children", "provenance"}
 
 
+def _positive_int(value: str) -> int:
+    try:
+        parsed = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("must be an integer greater than zero") from exc
+    if parsed <= 0:
+        raise argparse.ArgumentTypeError("must be greater than zero")
+    return parsed
+
+
 def _add_dataset_selection(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--dataset",
@@ -143,7 +153,7 @@ def register_consumer_commands(
         help_text="Busca por código o descripción",
         positional="text",
     )
-    search.add_argument("--limit", type=int, default=20)
+    search.add_argument("--limit", type=_positive_int, default=20)
 
     _add_query_command(
         subparsers,
@@ -175,7 +185,12 @@ def _consumer_config(namespace: argparse.Namespace):
         options["dataset"] = namespace.dataset
     if getattr(namespace, "offline", None) is not None:
         options["offline"] = namespace.offline
-    return resolve_config(**options)
+    try:
+        return resolve_config(**options)
+    except ValueError as exc:
+        raise DatasetUnavailableError(
+            f"invalid consumer configuration: {exc}"
+        ) from exc
 
 
 def _manager(namespace: argparse.Namespace) -> DatasetManager:
