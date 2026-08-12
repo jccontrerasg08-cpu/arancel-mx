@@ -50,6 +50,28 @@ class ProvenanceRecord:
 
 
 @dataclass(frozen=True, slots=True)
+class HsSection:
+    """HS/LIGIE section grouping derived from chapter number, not a captured source."""
+
+    roman: str
+    name: str
+    chapter_from: str
+    chapter_to: str
+    source: Literal["hs_section_grouping"] = "hs_section_grouping"
+
+
+@dataclass(frozen=True, slots=True)
+class Ficha:
+    """SIICEX-style tariff card built only from the verified official dataset."""
+
+    record: TariffRecord
+    formatted_code: str
+    section: HsSection | None
+    hierarchy: tuple[TariffRecord, ...]
+    children: tuple[TariffRecord, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class DatasetInfo:
     dataset_version: str | None
     schema_version: str | None

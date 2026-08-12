@@ -7,7 +7,7 @@ import pytest
 
 from arancel_mx.cli import main
 from arancel_mx.consumer.errors import InvalidCodeError
-from arancel_mx.consumer.models import ProvenanceRecord, SearchResult, TariffRecord
+from arancel_mx.consumer.models import Ficha, HsSection, ProvenanceRecord, SearchResult, TariffRecord
 import arancel_mx.consumer.cli as consumer_cli
 
 
@@ -82,6 +82,19 @@ class FakeDataset:
                 effective_to=None,
             ),
         )
+
+    def ficha(self, code: str) -> Ficha:
+        record = _record()
+        return Ficha(
+            record=record,
+            formatted_code="0101.21.01",
+            section=HsSection("I", "Animales vivos y productos del reino animal", "01", "05"),
+            hierarchy=(_record("01", "hs2"), record),
+            children=(_record("0101210100", "nico10"),),
+        )
+
+    def chapters(self) -> tuple[TariffRecord, ...]:
+        return (_record("01", "hs2"),)
 
 
 @pytest.fixture(autouse=True)
@@ -184,4 +197,29 @@ def test_empty_provenance_csv_keeps_provenance_schema(monkeypatch, capsys) -> No
     assert main(["provenance", "01012101", "--format", "csv"]) == 0
     output = capsys.readouterr().out
     assert output.startswith("source_document_id,role,is_primary,authority")
+    assert output.count("\n") == 1
+
+
+def test_ficha_json_contract(capsys) -> None:
+    assert main(["ficha", "01012101", "--format", "json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["formatted_code"] == "0101.21.01"
+    assert payload["record"]["code"] == "01012101"
+    assert payload["section"]["roman"] == "I"
+    assert payload["section"]["source"] == "hs_section_grouping"
+    assert payload["hierarchy"][0]["code"] == "01"
+
+
+def test_chapters_json_contract(capsys) -> None:
+    assert main(["chapters", "--format", "json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload[0]["code"] == "01"
+    assert payload[0]["level"] == "hs2"
+
+
+def test_empty_chapters_csv_keeps_tariff_schema(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(FakeDataset, "chapters", lambda self: ())
+    assert main(["chapters", "--format", "csv"]) == 0
+    output = capsys.readouterr().out
+    assert output.startswith("code,level,description")
     assert output.count("\n") == 1

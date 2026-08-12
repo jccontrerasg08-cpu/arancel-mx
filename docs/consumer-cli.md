@@ -73,6 +73,8 @@ Use `--format json` for structured automation and `--format csv` for row-oriente
 
 ```bash
 arancel-mx lookup 01012101
+arancel-mx ficha 01012101
+arancel-mx chapters
 arancel-mx search "refrigeradores" --limit 20
 arancel-mx parent 01012101
 arancel-mx children 010121
@@ -80,12 +82,24 @@ arancel-mx provenance 01012101
 ```
 
 - `lookup` resolves an exact normalized tariff code.
+- `ficha` returns the SIICEX-style hierarchy card (section grouping, chapter → heading → subheading → fraction/NICO, UM, IGI, IGE) from the verified official dataset only.
+- `chapters` lists current HS2 chapters.
 - `search` ranks current records by code or description.
 - `parent` returns the direct parent in the HS2 → HS4 → HS6 → MX8 → NICO10 hierarchy.
 - `children` returns direct children of a code.
 - `provenance` returns the recorded source traceability for the selected code.
 
 The same normalization and query semantics are shared by the public Python consumer layer and CLI.
+
+```python
+from arancel_mx import Dataset
+
+dataset = Dataset.latest()  # or Dataset.open("arancel_mx.duckdb")
+card = dataset.ficha("01012101")
+print(card.formatted_code, card.record.description, card.record.igi_text)
+for node in card.hierarchy:
+    print(node.level, node.code, node.description)
+```
 
 ## Dataset lifecycle commands
 

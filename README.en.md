@@ -183,6 +183,8 @@ The consumer flow starts from published data and does not require cloning the re
 arancel-mx doctor
 arancel-mx data download
 arancel-mx lookup 01012101
+arancel-mx ficha 01012101
+arancel-mx chapters
 arancel-mx search "refrigeradores"
 arancel-mx data verify
 ```
@@ -207,6 +209,8 @@ Pin an exact release with `--dataset data-YYYY.MM.DD`. See [`docs/consumer-cli.m
 | `data path` | Print only the selected DuckDB path |
 | `data verify` | Revalidate local integrity and optionally the remote bundle |
 | `lookup` / `search` | Query by exact code or text |
+| `ficha` | Hierarchy card from chapter → fraction/NICO with UM, IGI, and IGE |
+| `chapters` | List current HS2 chapters |
 | `parent` / `children` | Navigate HS2 → HS4 → HS6 → MX8 → NICO10 |
 | `provenance` | Show documentary traceability for a selected code |
 
@@ -233,12 +237,16 @@ During the 0.x series, `update` remains a deprecated read-only compatibility ali
 ## Python usage
 
 ```python
-import arancel_mx
+from arancel_mx import Dataset
 
-print(arancel_mx.__version__)
+dataset = Dataset.latest()
+card = dataset.ficha("01012101")
+print(card.formatted_code, card.record.description, card.record.igi_text)
+for chapter in dataset.chapters():
+    print(chapter.code, chapter.description)
 ```
 
-The public query API will grow as search and HS6 ↔ MX8 ↔ NICO10 navigation interfaces stabilize. Unimplemented roadmap capabilities are not presented as stable API.
+`Dataset.open("arancel_mx.duckdb")` opens a local file after structural validation. `ficha` and `chapters` read the verified official dataset; they do not scrape SIICEX-CAAAREM or dumps such as tigies-mx.
 
 ## Data model
 
@@ -309,7 +317,7 @@ Primary registered URLs include:
 - SNICE, indicators: https://www.snice.gob.mx/cs/avi/snice/ligie.indicaranc22.html
 - Diario Oficial de la Federación, related publication: https://www.dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022
 
-[`docs/sources.md`](docs/sources.md) explains how the registered Diputados ledger anchors reconciliation and how DOF evidence acts as a blocking publication gate.
+[`docs/sources.md`](docs/sources.md) explains how the registered Diputados ledger anchors reconciliation and how DOF evidence acts as a blocking publication gate. SIICEX-CAAAREM and dumps such as tigies-mx are not official sources.
 
 ## Official process visuals
 
@@ -411,7 +419,8 @@ See [`SECURITY.md`](SECURITY.md), [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CODE_O
 | Verified automatic publication | Available |
 | GitHub Issue alerts and recovery | Available |
 | Live release/Issue write-boundary certification | Available |
-| Stable public search API | Roadmap |
+| Stable public search API | Available |
+| TIGIE card (`ficha` / `chapters`) | Available |
 | PyPI publication | Roadmap |
 
 ## Contributing

@@ -40,5 +40,7 @@ def test_consumer_guide_documents_offline_formats_and_version_pinning() -> None:
         "--format csv",
         "arancel-mx doctor --json",
         "arancel-mx search \"refrigeradores\"",
+        "arancel-mx ficha",
+        "arancel-mx chapters",
     )
     assert [value for value in required if value not in guide] == []

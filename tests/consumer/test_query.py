@@ -8,7 +8,17 @@ import pytest
 
 from arancel_mx.consumer.errors import InvalidCodeError, QueryError, RecordNotFoundError
 from arancel_mx.consumer.models import ProvenanceRecord, SearchResult, TariffRecord
-from arancel_mx.consumer.query import children, lookup, normalize_code, parent, provenance, search
+from arancel_mx.consumer.query import (
+    chapters,
+    children,
+    ficha,
+    format_code,
+    lookup,
+    normalize_code,
+    parent,
+    provenance,
+    search,
+)
 
 
 @pytest.mark.parametrize(
@@ -52,6 +62,21 @@ def test_normalize_rejects_lengths_other_than_2_4_6_8_10(raw: str) -> None:
 def test_normalize_rejects_empty_value() -> None:
     with pytest.raises(InvalidCodeError):
         normalize_code("   ")
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("01", "01"),
+        ("0101", "01.01"),
+        ("010121", "0101.21"),
+        ("01012101", "0101.21.01"),
+        ("01.01.21.01", "0101.21.01"),
+        ("0101210100", "0101.21.01 00"),
+    ],
+)
+def test_format_code_matches_tigie_browser_display(raw: str, expected: str) -> None:
+    assert format_code(raw) == expected
 
 
 def _connect(path: Path) -> duckdb.DuckDBPyConnection:
@@ -291,3 +316,47 @@ def test_provenance_returns_primary_first_then_deterministic_source_order(
     ]
     assert records[0].is_primary is True
     assert records[1].is_primary is False
+
+
+def test_ficha_returns_official_hierarchy_card(consumer_duckdb: Path) -> None:
+    conn = _connect(consumer_duckdb)
+    try:
+        card = ficha(conn, "01.01.21.01")
+    finally:
+        conn.close()
+
+    assert card.formatted_code == "0101.21.01"
+    assert card.record.code == "01012101"
+    assert card.section is not None
+    assert card.section.roman == "I"
+    assert card.section.source == "hs_section_grouping"
+    assert tuple(node.code for node in card.hierarchy) == (
+        "01",
+        "0101",
+        "010121",
+        "01012101",
+    )
+    assert tuple(node.code for node in card.children) == ("0101210100",)
+
+
+def test_ficha_for_chapter_has_no_parent_and_lists_headings(consumer_duckdb: Path) -> None:
+    conn = _connect(consumer_duckdb)
+    try:
+        card = ficha(conn, "01")
+    finally:
+        conn.close()
+
+    assert card.record.level == "hs2"
+    assert card.hierarchy[0].code == "01"
+    assert tuple(node.code for node in card.children) == ("0101",)
+
+
+def test_chapters_returns_current_hs2_records(consumer_duckdb: Path) -> None:
+    conn = _connect(consumer_duckdb)
+    try:
+        result = chapters(conn)
+    finally:
+        conn.close()
+
+    assert tuple(record.code for record in result) == ("01",)
+    assert result[0].description == "Animales vivos"

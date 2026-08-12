@@ -28,6 +28,15 @@ Cada descarga conserva como mínimo la URL final, SHA256, tamaño, tipo de medio
 
 Un parseo sólo puede reutilizarse cuando la identidad capturada y las versiones relevantes de parser/esquema/registro siguen siendo compatibles.
 
+## Compilaciones no oficiales
+
+El pipeline **no** captura ni publica SIICEX-CAAAREM, dumps de entrenamiento como [tigies-mx](https://github.com/andyeswong/tigies-mx), ni otros visores TIGIE de terceros.
+
+- `http://www.siicex-caaarem.org.mx/` is not an official source. Es un visor compilado de la confederación de agentes aduanales (HTTP, Lotus Notes). Puede mostrar IGI/IGE, permisos, TLC y PROSEC, pero no es Diputados, DOF ni SNICE, y el fetch oficial exige HTTPS sobre hosts registrados.
+- `tigies-mx` es un dump estático para entrenar modelos (capítulos, TIGIE plana, correlación SCIAN). No tiene procedencia SHA256 ni reconciliación legal.
+
+La ficha pública de `arancel-mx` (`arancel-mx ficha` / `Dataset.ficha`) reproduce la navegación capítulo → partida → subpartida → fracción → NICO y las tasas IGI/IGE **sólo** desde el dataset oficial verificado. No inventa IVA, franja/región, permisos, TLC, PROSEC ni correlaciones SCIAN que esas compilaciones muestran y que este registro no captura.
+
 ## Diputados ledger + DOF reconciliation
 
 El ledger **registered** de la Cámara de Diputados es el ancla para saber qué documentos legales deben ser explicables por la construcción. El pipeline realiza **reconciliation** de ese ledger con evidencia del **DOF** y con las fuentes registradas de SNICE.

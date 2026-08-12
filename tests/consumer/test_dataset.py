@@ -8,12 +8,14 @@ import pytest
 import arancel_mx
 import arancel_mx.consumer.dataset as dataset_module
 from arancel_mx.consumer.dataset import Dataset
-from arancel_mx.consumer.models import DatasetInfo, SearchResult, TariffRecord
+from arancel_mx.consumer.models import DatasetInfo, Ficha, SearchResult, TariffRecord
 
 
 def test_root_package_exports_dataset() -> None:
     assert arancel_mx.Dataset is Dataset
     assert "Dataset" in arancel_mx.__all__
+    assert "Ficha" in arancel_mx.__all__
+    assert "HsSection" in arancel_mx.__all__
 
 
 def test_dataset_open_validates_local_file_read_only(consumer_duckdb: Path) -> None:
@@ -105,6 +107,14 @@ def test_dataset_parent_children_and_provenance_delegate_to_query_layer(
     assert tuple(item.code for item in dataset.children("010121")) == ("01012101",)
     provenance = dataset.provenance("01012101")
     assert provenance[0].source_document_id == "fixture-source"
+
+
+def test_dataset_ficha_and_chapters(consumer_duckdb: Path) -> None:
+    dataset = Dataset.open(consumer_duckdb)
+    card = dataset.ficha("01012101")
+    assert isinstance(card, Ficha)
+    assert card.formatted_code == "0101.21.01"
+    assert tuple(item.code for item in dataset.chapters()) == ("01",)
 
 
 def test_dataset_connect_context_manager_closes_connection(consumer_duckdb: Path) -> None:

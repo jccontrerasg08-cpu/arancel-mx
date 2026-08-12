@@ -81,6 +81,9 @@ def test_sources_document_legal_reconciliation_as_blocking_gate():
         "discrepancy",
         "publication",
         "retrieved_at",
+        "siicex-caaarem",
+        "tigies-mx",
+        "not an official source",
     )
     assert [value for value in required if value not in sources] == []
 
