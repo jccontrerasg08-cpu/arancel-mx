@@ -13,6 +13,8 @@ All notable changes to the Python package are documented here. Dataset releases 
 - Strict offline operation after a dataset has been downloaded and verified.
 - Transactional cache promotion, release pinning, SHA256 validation, manifest checks, DuckDB structural verification, and exact six-asset bundle certification.
 - Cross-platform cache configuration and a PEP 561 `py.typed` marker for the public consumer API.
+- Tag-driven `publish-python-package.yml` workflow that builds the distribution once and publishes it to TestPyPI, then to PyPI for final tags after manual approval, using Trusted Publishing (OIDC) with no stored upload tokens.
+- `scripts/validate_package_tag.py` tag/version validator and a `docs/testpypi-pypi-setup.md` Trusted Publisher setup checklist.
 
 ### Changed
 

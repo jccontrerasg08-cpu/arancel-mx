@@ -15,6 +15,7 @@ APPROVED_ACTIONS = {
     "actions/setup-node",
     "actions/setup-python",
     "actions/upload-artifact",
+    "pypa/gh-action-pypi-publish",
 }
 
 
