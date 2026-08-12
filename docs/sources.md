@@ -56,7 +56,7 @@ Estas son las URLs públicas registradas y referenciadas por el proyecto. Deben 
 - [SNICE, NICO y propuestas](https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html)
 - [SNICE, notas nacionales](https://www.snice.gob.mx/cs/avi/snice/ligie.notasnac22.html)
 - [SNICE, indicadores arancelarios](https://www.snice.gob.mx/cs/avi/snice/ligie.indicaranc22.html)
-- [DOF, metodología NICO (27/06/2022)](https://www.dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022)
+- [DOF, metodología NICO (27/06/2022)](https://dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022)
 
 ## Páginas HTML operativas
 
@@ -71,8 +71,9 @@ El pipeline y la consulta pública dependen de estas páginas HTML oficiales:
 - [SNICE, clasificador individual](https://www.snice.gob.mx/cs/avi/snice/hce.mi.fraccion.arancelaria.html) — consulta individual de códigos.
 - [VUCEM, buscador de fracciones](https://www.ventanillaunica.gob.mx/vucem/Clasificador.html) — clasificador informativo de la Ventanilla Única.
 - [VUCEM, ficha de fracción 90014002](https://www.ventanillaunica.gob.mx/Clasificador/data/buildHojas1/90014002.html) — ejemplo de hoja HTML por código de 8 dígitos (`buildHojas1/{codigo}.html`).
+- [SIICEX-CAAAREM, tarifa TIGIE](http://www.siicex-caaarem.org.mx/Bases/tigiei.nsf/TarifaW?OpenView) — consulta histórica de la tarifa mantenida por CAAAREM (HTTP legado).
 
-`python -m scripts.validate_ligie_html_pages` verifica que sigan siendo alcanzables, que el HTML contenga contenido utilizable y que los recursos enlazados (consulta de fracciones, clasificador embebido, snapshots descubiertos y PDF consolidado) también respondan.
+`python -m scripts.validate_ligie_html_pages` verifica que sigan siendo alcanzables, que el HTML contenga contenido utilizable, que los recursos enlazados respondan y que la fracción de referencia `90014002` coincida entre VUCEM y SIICEX.
 
 `python -m scripts.check_documented_urls` verifica que estas URLs sigan siendo alcanzables desde CI y descarga el cuerpo HTML de las páginas documentadas.
 

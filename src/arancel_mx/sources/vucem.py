@@ -138,3 +138,7 @@ def parse_fraction_sheet(html: str, *, base_url: str) -> VucemFractionSheet:
         export_duty=export_duty,
         nico_rows=_nico_rows(parser.tables),
     )
+
+
+normalize_fraction_code = _normalize_code
+TableParser = _TableParser

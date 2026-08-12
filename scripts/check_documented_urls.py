@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 import argparse
-import json
-import os
 import re
-from pathlib import Path
 from urllib.parse import urlparse
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.ssl_ import create_urllib3_context
 
 from arancel_mx.sources.html_pages import (
     OPERATIONAL_HTML_PAGES,
@@ -24,8 +23,12 @@ from arancel_mx.sources.registry import load_source_registry
 REPOSITORY_URL = "https://github.com/jccontrerasg08-cpu/arancel-mx"
 USER_AGENT = f"arancel-mx-url-check/1.0 (+{REPOSITORY_URL})"
 
+DOF_NICO_METHODOLOGY_URL = (
+    "https://dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022"
+)
+
 EXTRA_DOCUMENTED_URLS = (
-    "https://www.dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022",
+    DOF_NICO_METHODOLOGY_URL,
     "https://www.contributor-covenant.org/version/2/1/code_of_conduct/",
     SNICE_MODIFICATIONS_INDEX_URL,
     SNICE_BIBLIOTECA_JURIDICA_URL,
@@ -43,8 +46,14 @@ README_RELEASE_URLS = (
     f"{REPOSITORY_URL}/actions",
 )
 
-URL_PATTERN = re.compile(r"https?://[^\s\)\]\"'<>,`]+")
+URL_PATTERN = re.compile(r"https?://[^\s\)\]\"'<>,`:]+")
 MARKDOWN_LINK_PATTERN = re.compile(r"\[[^\]]+\]\((https?://[^)]+)\)")
+TRAILING_URL_PUNCTUATION = ".,;:"
+
+
+def sanitize_documented_url(url: str) -> str:
+    """Strip trailing punctuation that markdown or log formatting may leave on a URL."""
+    return url.strip().rstrip(TRAILING_URL_PUNCTUATION)
 
 
 def registered_public_urls() -> tuple[str, ...]:
@@ -71,36 +80,45 @@ def documented_public_urls() -> tuple[str, ...]:
     )
 
 
-def is_parseable_url(url: str) -> bool:
-    """Return True when a URL is absolute, HTTPS, and free of trailing punctuation."""
-    if url != url.rstrip(".,;:"):
-        return False
-    parsed = urlparse(url)
-    if parsed.scheme.lower() != "https":
-        return False
-    if not parsed.netloc:
-        return False
-    if any(char in url for char in (" ", "\n", "\r", "\t", "`", "<", ">")):
-        return False
-    return True
-
-
 def extract_bare_http_urls(text: str) -> list[str]:
     """Extract bare HTTP(S) URLs that are not already inside markdown link targets."""
-    linked = {match.group(1) for match in MARKDOWN_LINK_PATTERN.finditer(text)}
+    linked = {sanitize_documented_url(match.group(1)) for match in MARKDOWN_LINK_PATTERN.finditer(text)}
     bare_urls: list[str] = []
     for match in URL_PATTERN.finditer(text):
-        url = match.group(0).rstrip(".,;:")
+        url = sanitize_documented_url(match.group(0))
         if url in linked:
             continue
         bare_urls.append(url)
     return bare_urls
 
 
+def is_parseable_url(url: str) -> bool:
+    """Return True when a URL is absolute, HTTPS (or allowed HTTP), and well-formed."""
+    cleaned = sanitize_documented_url(url)
+    if cleaned != url.strip():
+        return False
+    parsed = urlparse(cleaned)
+    scheme = parsed.scheme.lower()
+    if scheme not in {"https", "http"}:
+        return False
+    if scheme == "http":
+        from arancel_mx.sources.siicex import SIICEX_HTTP_HOSTS
+
+        if parsed.netloc.lower() not in SIICEX_HTTP_HOSTS:
+            return False
+    if not parsed.netloc:
+        return False
+    if any(char in cleaned for char in (" ", "\n", "\r", "\t", "`", "<", ">")):
+        return False
+    return True
+
+
 def looks_like_html_url(url: str) -> bool:
     """Return True when a documented URL should return an HTML document body."""
-    path = urlparse(url).path.lower()
-    return path.endswith((".html", ".htm", ".php"))
+    parsed = urlparse(sanitize_documented_url(url))
+    path = parsed.path.lower()
+    query = parsed.query.lower()
+    return path.endswith((".html", ".htm", ".php")) or "openview" in query or "opendocument" in query
 
 
 def fetch_accessible_html(
@@ -110,10 +128,11 @@ def fetch_accessible_html(
     timeout: float,
 ) -> tuple[int, str]:
     """Download one HTML page and verify it contains usable content."""
+    cleaned = sanitize_documented_url(url)
     last_error: requests.RequestException | ValueError | None = None
     for attempt in range(3):
         try:
-            response = session.get(url, allow_redirects=True, timeout=timeout)
+            response = session.get(cleaned, allow_redirects=True, timeout=timeout)
             response.raise_for_status()
             ensure_html_body_accessible(response.text, url=response.url)
             return response.status_code, response.url
@@ -132,23 +151,25 @@ def check_documented_url(
     timeout: float,
 ) -> tuple[int, str]:
     """Return the HTTP status and final URL for one documented public endpoint."""
-    if looks_like_html_url(url):
-        return fetch_accessible_html(session, url, timeout=timeout)
-    return check_reachable(session, url, timeout=timeout)
+    cleaned = sanitize_documented_url(url)
+    if looks_like_html_url(cleaned):
+        return fetch_accessible_html(session, cleaned, timeout=timeout)
+    return check_reachable(session, cleaned, timeout=timeout)
 
 
 def check_reachable(session: requests.Session, url: str, *, timeout: float) -> tuple[int, str]:
     """Return the HTTP status and final URL for one documented public endpoint."""
+    cleaned = sanitize_documented_url(url)
     last_error: requests.RequestException | None = None
     for attempt in range(3):
         try:
-            response = session.head(url, allow_redirects=True, timeout=timeout)
+            response = session.head(cleaned, allow_redirects=True, timeout=timeout)
             if response.status_code in {405, 501}:
-                response = session.get(url, allow_redirects=True, timeout=timeout, stream=True)
+                response = session.get(cleaned, allow_redirects=True, timeout=timeout, stream=True)
                 response.close()
             if response.status_code >= 400:
                 raise requests.HTTPError(
-                    f"{url} returned HTTP {response.status_code}",
+                    f"{cleaned} returned HTTP {response.status_code}",
                     response=response,
                 )
             return response.status_code, response.url
@@ -160,9 +181,20 @@ def check_reachable(session: requests.Session, url: str, *, timeout: float) -> t
     raise last_error
 
 
+class _LegacyGovernmentSslAdapter(HTTPAdapter):
+    """Allow HTTPS to legacy Mexican government hosts with weak DH parameters."""
+
+    def init_poolmanager(self, *args, **kwargs):
+        context = create_urllib3_context()
+        context.set_ciphers("DEFAULT:@SECLEVEL=1")
+        kwargs["ssl_context"] = context
+        return super().init_poolmanager(*args, **kwargs)
+
+
 def build_session() -> requests.Session:
     session = requests.Session()
     session.headers["User-Agent"] = USER_AGENT
+    session.mount("https://", _LegacyGovernmentSslAdapter())
     return session
 
 
@@ -188,11 +220,11 @@ def main() -> int:
     for url in documented_public_urls():
         try:
             status, final_url = check_documented_url(session, url, timeout=args.timeout)
-            suffix = f" -> {final_url}" if final_url != url else ""
+            suffix = f" -> {final_url}" if final_url != sanitize_documented_url(url) else ""
             print(f"OK [{status}] {url}{suffix}")
         except (requests.RequestException, ValueError) as exc:
-            failures.append(f"{url}: {exc}")
-            print(f"FAIL {url}: {exc}")
+            failures.append(f"{url} -> {exc}")
+            print(f"FAIL {url} -> {exc}")
 
     if failures:
         print("\nUnreachable documented URLs:")

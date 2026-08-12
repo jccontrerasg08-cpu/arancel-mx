@@ -309,7 +309,7 @@ Fuentes principales:
 - [SNICE, NICO y propuestas NICO](https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html)
 - [SNICE, notas nacionales](https://www.snice.gob.mx/cs/avi/snice/ligie.notasnac22.html)
 - [SNICE, indicadores](https://www.snice.gob.mx/cs/avi/snice/ligie.indicaranc22.html)
-- [Diario Oficial de la Federación, publicación relacionada](https://www.dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022)
+- [Diario Oficial de la Federación, publicación relacionada](https://dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022)
 
 `docs/sources.md` explica cómo el ledger registrado de Diputados se usa como ancla y cómo la evidencia DOF participa como gate antes de publicar.
 

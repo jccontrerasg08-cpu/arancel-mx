@@ -307,7 +307,7 @@ Primary registered URLs include:
 - [SNICE, NICO and NICO proposals](https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html)
 - [SNICE, National Notes](https://www.snice.gob.mx/cs/avi/snice/ligie.notasnac22.html)
 - [SNICE, indicators](https://www.snice.gob.mx/cs/avi/snice/ligie.indicaranc22.html)
-- [Diario Oficial de la Federación, related publication](https://www.dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022)
+- [Diario Oficial de la Federación, related publication](https://dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022)
 
 [`docs/sources.md`](docs/sources.md) explains how the registered Diputados ledger anchors reconciliation and how DOF evidence acts as a blocking publication gate.
 

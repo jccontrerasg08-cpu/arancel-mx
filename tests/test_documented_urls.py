@@ -16,6 +16,7 @@ from scripts.check_documented_urls import (
     extract_bare_http_urls,
     is_parseable_url,
     registered_public_urls,
+    sanitize_documented_url,
 )
 
 
@@ -38,6 +39,21 @@ def test_documented_public_urls_include_registry_readme_and_governance_links() -
         assert url in documented
     for url in README_RELEASE_URLS:
         assert url in documented
+
+
+def test_documented_public_urls_have_no_trailing_punctuation() -> None:
+    for url in documented_public_urls():
+        assert url == sanitize_documented_url(url), f"trailing punctuation in documented URL: {url!r}"
+
+
+def test_sanitize_documented_url_strips_trailing_colons_and_commas() -> None:
+    assert (
+        sanitize_documented_url(
+            "https://www.ventanillaunica.gob.mx/vucem/clasificador.html:"
+        )
+        == "https://www.ventanillaunica.gob.mx/vucem/clasificador.html"
+    )
+    assert sanitize_documented_url("https://example.com/path,") == "https://example.com/path"
 
 
 def _official_sources_section(text: str) -> str:

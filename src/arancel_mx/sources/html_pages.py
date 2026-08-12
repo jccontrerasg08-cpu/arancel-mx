@@ -11,6 +11,12 @@ from urllib.parse import urljoin, urlparse
 from arancel_mx.pipeline.reconcile import discover_registered_sources
 from arancel_mx.sources.diputados import parse_ligie_ledger
 from arancel_mx.sources.registry import RegistryEntry, load_source_registry
+from arancel_mx.sources.siicex import (
+    SIICEX_SAMPLE_FRACTION_DOCUMENT_URL,
+    SIICEX_TARIFA_INDEX_URL,
+    parse_fraction_document,
+    validate_tarifa_index_html,
+)
 from arancel_mx.sources.vucem import (
     VUCEM_CLASSIFIER_INDEX_URL,
     VUCEM_SAMPLE_FRACTION_SHEET_URL,
@@ -86,7 +92,22 @@ VUCEM_HTML_PAGES: tuple[LigieHtmlPage, ...] = (
     ),
 )
 
-OPERATIONAL_HTML_PAGES: tuple[LigieHtmlPage, ...] = LIGIE_HTML_PAGES + VUCEM_HTML_PAGES
+SIICEX_HTML_PAGES: tuple[LigieHtmlPage, ...] = (
+    LigieHtmlPage(
+        "siicex_tarifa_index",
+        SIICEX_TARIFA_INDEX_URL,
+        "classifier_discovery",
+    ),
+    LigieHtmlPage(
+        "siicex_fraction_document",
+        SIICEX_SAMPLE_FRACTION_DOCUMENT_URL,
+        "fraction_sheet",
+    ),
+)
+
+OPERATIONAL_HTML_PAGES: tuple[LigieHtmlPage, ...] = (
+    LIGIE_HTML_PAGES + VUCEM_HTML_PAGES + SIICEX_HTML_PAGES
+)
 
 
 @dataclass(frozen=True)
@@ -307,6 +328,21 @@ def validate_vucem_fraction_sheet_html(html: str, *, base_url: str) -> None:
         raise ValueError("VUCEM fraction sheet HTML is missing a fraction description")
 
 
+def validate_siicex_fraction_document_html(
+    html: str,
+    *,
+    base_url: str = SIICEX_SAMPLE_FRACTION_DOCUMENT_URL,
+) -> None:
+    folded = _fold(html)
+    if "fraccion" not in folded and "hts code" not in folded:
+        raise ValueError("SIICEX fraction document HTML is missing fraction markers")
+    if "<table" not in html.lower():
+        raise ValueError("SIICEX fraction document HTML does not expose tariff table content")
+    document = parse_fraction_document(html, expected_code=None)
+    if not document.description.strip():
+        raise ValueError("SIICEX fraction document HTML is missing a fraction description")
+
+
 def collect_ligie_html_access_targets(
     page_id: str,
     html: str,
@@ -410,5 +446,14 @@ def validate_ligie_html_page(page_id: str, html: str, *, base_url: str | None = 
         return None
     if page_id == "vucem_fraction_sheet":
         validate_vucem_fraction_sheet_html(html, base_url=base_url or VUCEM_SAMPLE_FRACTION_SHEET_URL)
+        return None
+    if page_id == "siicex_tarifa_index":
+        validate_tarifa_index_html(html)
+        return None
+    if page_id == "siicex_fraction_document":
+        validate_siicex_fraction_document_html(
+            html,
+            base_url=base_url or SIICEX_SAMPLE_FRACTION_DOCUMENT_URL,
+        )
         return None
     raise ValueError(f"unknown LIGIE HTML page id: {page_id}")

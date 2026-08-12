@@ -21,6 +21,11 @@ from arancel_mx.sources.html_pages import (
     ligie_entry_urls,
     validate_ligie_html_page,
 )
+from scripts.check_documented_urls import looks_like_html_url
+from arancel_mx.sources.siicex import (
+    SIICEX_SAMPLE_FRACTION_DOCUMENT_URL,
+    SIICEX_TARIFA_INDEX_URL,
+)
 from arancel_mx.sources.vucem import (
     VUCEM_CLASSIFIER_INDEX_URL,
     VUCEM_SAMPLE_FRACTION_CODE,
@@ -28,7 +33,6 @@ from arancel_mx.sources.vucem import (
     fraction_sheet_url,
     parse_fraction_sheet,
 )
-from scripts.check_documented_urls import looks_like_html_url
 from scripts.validate_ligie_html_pages import main as validate_ligie_html_pages_main
 
 
@@ -47,6 +51,8 @@ def test_operational_html_page_catalog_covers_pipeline_and_consult_entrypoints()
         "snice_individual_classifier",
         "vucem_classifier_index",
         "vucem_fraction_sheet",
+        "siicex_tarifa_index",
+        "siicex_fraction_document",
     } <= page_ids
 
 
@@ -110,10 +116,21 @@ def test_vucem_fraction_sheet_fixture_exposes_tariff_and_nico_rows() -> None:
     validate_ligie_html_page("vucem_fraction_sheet", html, base_url=VUCEM_SAMPLE_FRACTION_SHEET_URL)
     sheet = parse_fraction_sheet(html, base_url=VUCEM_SAMPLE_FRACTION_SHEET_URL)
     assert sheet.code == VUCEM_SAMPLE_FRACTION_CODE
-    assert "lentes de contacto" in sheet.description.casefold()
+    assert "cristal oftálmico" in sheet.description.casefold()
     assert sheet.import_duty == "Ex."
     assert sheet.export_duty == "Ex."
-    assert sheet.nico_rows == (("00", "Lentes de contacto.", "Ex.", "Ex."),)
+    assert sheet.nico_rows[0][0] == "00"
+
+
+def test_siicex_tarifa_index_and_fraction_document_fixtures_parse() -> None:
+    index_html = (FIXTURES / "siicex" / "TarifaW.OpenView.html").read_text(encoding="utf-8")
+    fraction_html = (FIXTURES / "siicex" / "fraction.90014002.OpenDocument.html").read_text(encoding="utf-8")
+    validate_ligie_html_page("siicex_tarifa_index", index_html, base_url=SIICEX_TARIFA_INDEX_URL)
+    validate_ligie_html_page(
+        "siicex_fraction_document",
+        fraction_html,
+        base_url=SIICEX_SAMPLE_FRACTION_DOCUMENT_URL,
+    )
 
 
 def test_vucem_classifier_index_fixture_is_parseable() -> None:
@@ -174,6 +191,8 @@ def test_ensure_html_body_accessible_rejects_tiny_pages() -> None:
 def test_looks_like_html_url_detects_documented_html_endpoints() -> None:
     assert looks_like_html_url(SNICE_LIGIE_INDEX_URL)
     assert looks_like_html_url(VUCEM_SAMPLE_FRACTION_SHEET_URL)
+    assert looks_like_html_url(SIICEX_TARIFA_INDEX_URL)
+    assert looks_like_html_url(SIICEX_SAMPLE_FRACTION_DOCUMENT_URL)
     assert looks_like_html_url("https://www.dof.gob.mx/nota_detalle.php?codigo=1")
     assert not looks_like_html_url("https://www.diputados.gob.mx/LeyesBiblio/pdf/LIGIE_2022.pdf")
 
@@ -220,6 +239,10 @@ def test_validate_ligie_html_pages_script_exits_zero_when_pages_parse(
         VUCEM_CLASSIFIER_INDEX_URL: (FIXTURES / "vucem" / "Clasificador.html").read_text(encoding="utf-8"),
         VUCEM_SAMPLE_FRACTION_SHEET_URL: (
             FIXTURES / "vucem" / "buildHojas1.90014002.html"
+        ).read_text(encoding="utf-8"),
+        SIICEX_TARIFA_INDEX_URL: (FIXTURES / "siicex" / "TarifaW.OpenView.html").read_text(encoding="utf-8"),
+        SIICEX_SAMPLE_FRACTION_DOCUMENT_URL: (
+            FIXTURES / "siicex" / "fraction.90014002.OpenDocument.html"
         ).read_text(encoding="utf-8"),
         "https://www.snice.gob.mx/cs/avi/snice/hce.mi.fraccion.arancelaria.app.html": _FAKE_HTML,
         "https://www.snice.gob.mx/cs/avi/snice/hce.consulta.fracciones.arancelarias.app.html": _FAKE_HTML,

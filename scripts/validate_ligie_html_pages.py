@@ -6,6 +6,7 @@ import argparse
 
 import requests
 
+from arancel_mx.sources.classifier_consistency import compare_vucem_and_siicex_fractions
 from arancel_mx.sources.html_pages import (
     OPERATIONAL_HTML_PAGES,
     HtmlAccessTarget,
@@ -13,6 +14,8 @@ from arancel_mx.sources.html_pages import (
     ensure_html_body_accessible,
     validate_ligie_html_page,
 )
+from arancel_mx.sources.siicex import parse_fraction_document
+from arancel_mx.sources.vucem import parse_fraction_sheet
 from scripts.check_documented_urls import build_session, check_reachable
 
 
@@ -54,6 +57,7 @@ def validate_ligie_html_site(
     """Validate cataloged HTML pages and every linked resource they expose."""
     failures: list[str] = []
     visited: set[str] = set()
+    fraction_html_by_source: dict[str, tuple[str, str]] = {}
 
     def process_html_page(page_id: str, url: str, label: str) -> None:
         if url in visited:
@@ -62,12 +66,14 @@ def validate_ligie_html_site(
         try:
             status, final_url, html = _fetch_html(session, url, timeout=timeout)
             validate_ligie_html_page(page_id, html, base_url=final_url)
+            if page_id in {"vucem_fraction_sheet", "siicex_fraction_document"}:
+                fraction_html_by_source[page_id] = (final_url, html)
             print(f"OK [{status}] {label}: {final_url}")
             for target in collect_ligie_html_access_targets(page_id, html, base_url=final_url):
                 process_target(target)
         except Exception as exc:
             failures.append(f"{label} ({url}): {exc}")
-            print(f"FAIL {label}: {exc}")
+            print(f"FAIL {label} ({url}) -> {exc}")
 
     def process_target(target: HtmlAccessTarget) -> None:
         if target.url in visited:
@@ -88,10 +94,29 @@ def validate_ligie_html_site(
             print(f"OK [{status}] {target.kind}: {final_url}")
         except Exception as exc:
             failures.append(f"{target.kind} ({target.url}): {exc}")
-            print(f"FAIL {target.kind} ({target.url}): {exc}")
+            print(f"FAIL {target.kind} ({target.url}) -> {exc}")
 
     for page in OPERATIONAL_HTML_PAGES:
         process_html_page(page.page_id, page.url, page.page_id)
+
+    if {"vucem_fraction_sheet", "siicex_fraction_document"} <= fraction_html_by_source.keys():
+        vucem_url, vucem_html = fraction_html_by_source["vucem_fraction_sheet"]
+        siicex_url, siicex_html = fraction_html_by_source["siicex_fraction_document"]
+        try:
+            discrepancies = compare_vucem_and_siicex_fractions(
+                parse_fraction_sheet(vucem_html, base_url=vucem_url),
+                parse_fraction_document(siicex_html, expected_code=None),
+            )
+            if discrepancies:
+                message = "; ".join(discrepancies)
+                failures.append(f"classifier_crosscheck ({vucem_url} vs {siicex_url}): {message}")
+                print(f"FAIL classifier_crosscheck: {message}")
+            else:
+                print("OK classifier_crosscheck: VUCEM and SIICEX fraction data match")
+        except Exception as exc:
+            failures.append(f"classifier_crosscheck: {exc}")
+            print(f"FAIL classifier_crosscheck: {exc}")
+
     return failures
 
 
