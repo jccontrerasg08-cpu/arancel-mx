@@ -16,12 +16,41 @@ import requests
 from arancel_mx import __version__
 from arancel_mx.consumer.cli import register_consumer_commands, run_consumer
 from arancel_mx.consumer.errors import ArancelMXError
-from arancel_mx.pipeline.reconcile import reconcile_legal_instruments
-from arancel_mx.pipeline.update import UpdateConfig, check_for_updates
-from arancel_mx.release.package import build_release, prepare_release_archive
 
 
 COMMANDS = ("build", "check-updates", "update", "reconcile", "release")
+
+
+def build_release(database: Path, output: Path) -> object:
+    """Lazy maintainer wrapper for release building."""
+
+    from arancel_mx.release.package import build_release as implementation
+
+    return implementation(database, output)
+
+
+def check_for_updates(config: object) -> object:
+    """Lazy maintainer wrapper for official-source update checks."""
+
+    from arancel_mx.pipeline.update import check_for_updates as implementation
+
+    return implementation(config)
+
+
+def reconcile_legal_instruments(*items: object) -> object:
+    """Lazy maintainer wrapper for legal-evidence reconciliation."""
+
+    from arancel_mx.pipeline.reconcile import reconcile_legal_instruments as implementation
+
+    return implementation(*items)
+
+
+def prepare_release_archive(*paths: Path) -> object:
+    """Lazy maintainer wrapper for publication bundle preparation."""
+
+    from arancel_mx.release.package import prepare_release_archive as implementation
+
+    return implementation(*paths)
 
 
 def _add_update_arguments(parser: argparse.ArgumentParser) -> None:
@@ -92,7 +121,9 @@ def _read_json(path: str) -> Any:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
-def _update_config(namespace: argparse.Namespace) -> UpdateConfig:
+def _update_config(namespace: argparse.Namespace) -> object:
+    from arancel_mx.pipeline.update import UpdateConfig
+
     options: dict[str, object] = {
         "state_path": Path(namespace.state_path),
         "report_path": Path(namespace.report_path) if namespace.report_path else None,
