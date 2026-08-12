@@ -70,6 +70,12 @@ def test_csv_search_result_has_score_and_match_kind_first() -> None:
     assert text.splitlines()[1].startswith("700,code_prefix,01012101,")
 
 
+def test_csv_empty_typed_sequence_still_emits_schema_header() -> None:
+    text = render_csv((), empty_schema="search")
+    assert text.startswith("score,match_kind,code,level,description")
+    assert text.count("\n") == 1
+
+
 def test_table_output_handles_none_without_literal_python_repr() -> None:
     text = render_table((_record(),))
     assert "01012101" in text
