@@ -187,15 +187,12 @@ def _consumer_config(namespace: argparse.Namespace):
 
 
 def _selected_dataset(namespace: argparse.Namespace) -> Dataset:
-    config = _consumer_config(namespace)
-    options = {
-        "offline": config.offline,
-        "cache_dir": config.cache_dir,
-        "timeout": config.timeout,
-    }
-    selected = namespace.dataset or config.dataset
-    if selected:
-        return Dataset.version(selected, **options)
+    # Validate environment/configuration through the same public error boundary
+    # used by data and doctor before Dataset resolves it internally.
+    _consumer_config(namespace)
+    options = {"offline": namespace.offline}
+    if namespace.dataset:
+        return Dataset.version(namespace.dataset, **options)
     return Dataset.latest(**options)
 
 
