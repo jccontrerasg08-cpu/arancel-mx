@@ -7,6 +7,7 @@ import sys
 
 from arancel_mx.consumer.config import resolve_config
 from arancel_mx.consumer.dataset import Dataset
+from arancel_mx.consumer.errors import DatasetUnavailableError
 from arancel_mx.consumer.manager import DatasetManager
 from arancel_mx.consumer.output import render, render_path
 
@@ -223,6 +224,50 @@ def _run_data_path(namespace: argparse.Namespace) -> int:
     return 0
 
 
+def _run_data_status(namespace: argparse.Namespace) -> int:
+    manager = _manager(namespace)
+    local_versions = manager.list_local()
+    local_latest = local_versions[-1] if local_versions else None
+    selected = namespace.dataset or manager.config.dataset or local_latest
+    remote_latest = None
+    if not manager.config.offline:
+        remote_versions = manager.list_remote()
+        remote_latest = remote_versions[0] if remote_versions else None
+    update_available = bool(
+        remote_latest is not None
+        and (local_latest is None or remote_latest > local_latest)
+    )
+    _emit(
+        {
+            "local_latest": local_latest,
+            "local_versions": local_versions,
+            "offline": manager.config.offline,
+            "remote_latest": remote_latest,
+            "selected": selected,
+            "update_available": update_available,
+        },
+        format_name=namespace.format,
+    )
+    return 0
+
+
+def _run_data_list(namespace: argparse.Namespace) -> int:
+    manager = _manager(namespace)
+    if namespace.remote:
+        if manager.config.offline:
+            raise DatasetUnavailableError(
+                "remote dataset listing is unavailable in offline mode"
+            )
+        versions = manager.list_remote()
+        scope = "remote"
+    else:
+        versions = manager.list_local()
+        scope = "local"
+    rows = tuple({"dataset": version, "scope": scope} for version in versions)
+    _emit(rows, format_name=namespace.format)
+    return 0
+
+
 def run_consumer(namespace: argparse.Namespace) -> int:
     """Run one parsed consumer command and return its process exit code."""
 
@@ -233,4 +278,8 @@ def run_consumer(namespace: argparse.Namespace) -> int:
         return _run_data_download(namespace)
     if action == "data_path":
         return _run_data_path(namespace)
+    if action == "data_status":
+        return _run_data_status(namespace)
+    if action == "data_list":
+        return _run_data_list(namespace)
     raise ValueError(f"unsupported consumer command: {action}")
