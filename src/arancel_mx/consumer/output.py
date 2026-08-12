@@ -151,6 +151,11 @@ def _render_ficha_table(ficha: Ficha) -> str:
         lines.append(f"{'IGI':<12}{record.igi_text}")
     if record.ige_text:
         lines.append(f"{'IGE':<12}{record.ige_text}")
+    if ficha.children:
+        lines.append(f"{'Hijos':<12}{len(ficha.children)}")
+        for child in ficha.children:
+            label = _LEVEL_LABELS.get(child.level, child.level)
+            lines.append(f"{label:<12}{format_code(child.code)}  {child.description}")
     return "\n".join(lines)
 
 

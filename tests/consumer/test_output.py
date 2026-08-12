@@ -150,3 +150,36 @@ def test_ficha_table_is_a_human_card() -> None:
     assert "Capítulo" in text
     assert "Fracción" in text
     assert "IGI" in text
+
+
+def test_ficha_table_lists_direct_children() -> None:
+    nico = TariffRecord(
+        code="0101210100",
+        level="nico10",
+        description="Reproductores de raza pura.",
+        unit_name="Cbza",
+        igi_text="10",
+        igi_kind="ad_valorem",
+        igi_value=10.0,
+        ige_text="Ex.",
+        ige_kind="exento",
+        ige_value=0.0,
+        parent_code="01012101",
+        dataset_version="2026.08.11",
+        schema_version="2",
+        effective_from=None,
+        effective_to=None,
+        is_current=True,
+    )
+    card = _ficha()
+    card = Ficha(
+        record=card.record,
+        formatted_code=card.formatted_code,
+        section=card.section,
+        hierarchy=card.hierarchy,
+        children=(nico,),
+    )
+    text = render_table(card)
+    assert "Hijos" in text
+    assert "NICO" in text
+    assert "0101.21.01 00" in text
