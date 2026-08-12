@@ -1,4 +1,4 @@
-"""Command-line interface for tariff build and release workflows."""
+"""Command-line interface for consumer and tariff-maintainer workflows."""
 
 from __future__ import annotations
 
@@ -13,6 +13,8 @@ from typing import Any
 
 import requests
 
+from arancel_mx import __version__
+from arancel_mx.consumer.cli import register_consumer_commands
 from arancel_mx.pipeline.reconcile import reconcile_legal_instruments
 from arancel_mx.pipeline.update import UpdateConfig, check_for_updates
 from arancel_mx.release.package import build_release, prepare_release_archive
@@ -30,9 +32,16 @@ def _add_update_arguments(parser: argparse.ArgumentParser) -> None:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="arancel-mx",
-        description="Construye y valida datos arancelarios de México.",
+        description="Consulta, verifica y construye datos arancelarios de México.",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
     )
     subparsers = parser.add_subparsers(dest="command")
+
+    register_consumer_commands(subparsers)
 
     build = subparsers.add_parser("build", help="Exporta una base arancelaria validada")
     build.add_argument("--database", required=True)
@@ -119,7 +128,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         parser.print_help()
         return 0
 
-    namespace = parser.parse_args(arguments)
+    try:
+        namespace = parser.parse_args(arguments)
+    except SystemExit as exc:
+        # argparse uses SystemExit for help/version as well as syntax errors.  The
+        # console entrypoint can return the same code while remaining easy to test.
+        return int(exc.code or 0)
+
     if namespace.command is None:
         parser.print_help()
         return 0
