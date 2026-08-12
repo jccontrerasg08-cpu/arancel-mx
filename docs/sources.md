@@ -58,6 +58,19 @@ Estas son las URLs públicas registradas y referenciadas por el proyecto. Deben 
 - [SNICE, indicadores arancelarios](https://www.snice.gob.mx/cs/avi/snice/ligie.indicaranc22.html)
 - [DOF, metodología NICO (27/06/2022)](https://www.dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022)
 
+## Páginas HTML operativas
+
+El pipeline y la consulta pública dependen de estas páginas HTML oficiales:
+
+- [Diputados, ledger LIGIE](https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm) — parseo del ledger legal.
+- [SNICE, índice LIGIE](https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html) — descubrimiento de snapshots `FRACCIONESARANCELARIAS*.xlsx`.
+- [SNICE, índice NICO](https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html) — descubrimiento de snapshots `NICO-*.xlsx`.
+- [SNICE, modificaciones](https://www.snice.gob.mx/cs/avi/snice/ligie.info22.mod.html) — índice de modificaciones publicadas.
+- [SNICE, biblioteca jurídica](https://www.snice.gob.mx/cs/avi/snice/ligie.info22.ligiebibjur.html) — entrada a la consulta oficial de fracciones.
+- [SNICE, clasificador individual](https://www.snice.gob.mx/cs/avi/snice/hce.mi.fraccion.arancelaria.html) — consulta individual de códigos.
+
+`python -m scripts.validate_ligie_html_pages` verifica que sigan siendo alcanzables y parseables por los adaptadores del repositorio.
+
 `python -m scripts.check_documented_urls` verifica que estas URLs sigan siendo alcanzables desde CI.
 
 ## Fixtures offline

@@ -11,6 +11,12 @@ from urllib.parse import urlparse
 
 import requests
 
+from arancel_mx.sources.html_pages import (
+    LIGIE_HTML_PAGES,
+    SNICE_BIBLIOTECA_JURIDICA_URL,
+    SNICE_INDIVIDUAL_CLASSIFIER_URL,
+    SNICE_MODIFICATIONS_INDEX_URL,
+)
 from arancel_mx.sources.registry import load_source_registry
 
 
@@ -20,6 +26,9 @@ USER_AGENT = f"arancel-mx-url-check/1.0 (+{REPOSITORY_URL})"
 EXTRA_DOCUMENTED_URLS = (
     "https://www.dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022",
     "https://www.contributor-covenant.org/version/2/1/code_of_conduct/",
+    SNICE_MODIFICATIONS_INDEX_URL,
+    SNICE_BIBLIOTECA_JURIDICA_URL,
+    SNICE_INDIVIDUAL_CLASSIFIER_URL,
 )
 
 README_RELEASE_URLS = (
@@ -48,12 +57,14 @@ def registered_public_urls() -> tuple[str, ...]:
 
 def documented_public_urls() -> tuple[str, ...]:
     """Return the curated set of public URLs documented for users and operators."""
+    html_page_urls = tuple(page.url for page in LIGIE_HTML_PAGES)
     return tuple(
         dict.fromkeys(
             (
                 *registered_public_urls(),
                 *EXTRA_DOCUMENTED_URLS,
                 *README_RELEASE_URLS,
+                *html_page_urls,
             )
         )
     )
