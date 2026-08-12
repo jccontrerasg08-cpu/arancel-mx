@@ -7,6 +7,7 @@ import subprocess
 import sys
 
 from packaging.requirements import Requirement
+from packaging.version import Version
 import tomllib
 
 from tests.consumer.conftest import create_consumer_duckdb
@@ -75,17 +76,17 @@ def _run_probe(tmp_path: Path, *, mode: str) -> dict[str, object]:
 
 def test_declared_runtime_minima_match_certified_floor_configuration() -> None:
     project = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["project"]
-    declared: dict[str, str] = {}
+    declared: dict[str, Version] = {}
     for raw in project["dependencies"]:
         requirement = Requirement(raw)
         lower_bounds = [
-            spec.version
+            Version(spec.version)
             for spec in requirement.specifier
             if spec.operator in {">=", "=="}
         ]
         assert len(lower_bounds) == 1, raw
         declared[requirement.name.lower()] = lower_bounds[0]
-    assert declared == EXPECTED_FLOORS
+    assert declared == {name: Version(version) for name, version in EXPECTED_FLOORS.items()}
 
 
 def test_minimum_runtime_dependency_set_installs_and_queries(tmp_path: Path) -> None:
@@ -94,7 +95,7 @@ def test_minimum_runtime_dependency_set_installs_and_queries(tmp_path: Path) -> 
     assert report["mode"] == "floor"
     assert report["pip_check"] == "ok"
     for name, version in EXPECTED_FLOORS.items():
-        assert report["resolved"][name] == version
+        assert Version(report["resolved"][name]) == Version(version)
     assert report["probe"]["lookup_code"] == "01012101"
 
 
@@ -105,9 +106,7 @@ def test_latest_allowed_runtime_dependency_set_installs_and_queries(tmp_path: Pa
     assert report["pip_check"] == "ok"
     for name, floor in EXPECTED_FLOORS.items():
         assert name in report["resolved"]
-        assert report["resolved"][name] != ""
-        if name == "duckdb":
-            assert report["resolved"][name] != floor or report["resolved"][name] == floor
+        assert Version(report["resolved"][name]) >= Version(floor)
     assert report["probe"]["lookup_code"] == "01012101"
 
 
