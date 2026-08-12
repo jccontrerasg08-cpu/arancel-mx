@@ -7,7 +7,7 @@ import pytest
 
 from arancel_mx.sources.html_pages import (
     DIPUTADOS_LEDGER_URL,
-    LIGIE_HTML_PAGES,
+    OPERATIONAL_HTML_PAGES,
     SNICE_BIBLIOTECA_JURIDICA_URL,
     SNICE_FRACTION_CONSULT_URL,
     SNICE_INDIVIDUAL_CLASSIFIER_URL,
@@ -21,7 +21,14 @@ from arancel_mx.sources.html_pages import (
     ligie_entry_urls,
     validate_ligie_html_page,
 )
-from scripts.check_documented_urls import build_session, check_reachable, looks_like_html_url
+from arancel_mx.sources.vucem import (
+    VUCEM_CLASSIFIER_INDEX_URL,
+    VUCEM_SAMPLE_FRACTION_CODE,
+    VUCEM_SAMPLE_FRACTION_SHEET_URL,
+    fraction_sheet_url,
+    parse_fraction_sheet,
+)
+from scripts.check_documented_urls import looks_like_html_url
 from scripts.validate_ligie_html_pages import main as validate_ligie_html_pages_main
 
 
@@ -29,8 +36,8 @@ FIXTURES = Path(__file__).resolve().parent / "fixtures"
 _FAKE_HTML = "<!doctype html><html><body>" + ("consulta fracciones arancelarias " * 20) + "</body></html>"
 
 
-def test_ligie_html_page_catalog_covers_pipeline_and_consult_entrypoints() -> None:
-    page_ids = {page.page_id for page in LIGIE_HTML_PAGES}
+def test_operational_html_page_catalog_covers_pipeline_and_consult_entrypoints() -> None:
+    page_ids = {page.page_id for page in OPERATIONAL_HTML_PAGES}
     assert {
         "diputados_ledger",
         "snice_ligie_index",
@@ -38,7 +45,16 @@ def test_ligie_html_page_catalog_covers_pipeline_and_consult_entrypoints() -> No
         "snice_legal_library_index",
         "snice_biblioteca_juridica",
         "snice_individual_classifier",
+        "vucem_classifier_index",
+        "vucem_fraction_sheet",
     } <= page_ids
+
+
+def test_fraction_sheet_url_builds_official_vucem_path() -> None:
+    assert (
+        fraction_sheet_url("90014002")
+        == "https://www.ventanillaunica.gob.mx/Clasificador/data/buildHojas1/90014002.html"
+    )
 
 
 def test_offline_fixtures_parse_diputados_ledger_and_snice_discovery_pages() -> None:
@@ -87,6 +103,22 @@ def test_biblioteca_juridica_fixture_exposes_individual_fraction_consult_link() 
 def test_fraction_consult_fixture_is_parseable_html_shell() -> None:
     html = (FIXTURES / "snice" / "cp.consulta.fracciones.arancelarias.html").read_text(encoding="utf-8")
     validate_ligie_html_page("snice_fraction_consult", html)
+
+
+def test_vucem_fraction_sheet_fixture_exposes_tariff_and_nico_rows() -> None:
+    html = (FIXTURES / "vucem" / "buildHojas1.90014002.html").read_text(encoding="utf-8")
+    validate_ligie_html_page("vucem_fraction_sheet", html, base_url=VUCEM_SAMPLE_FRACTION_SHEET_URL)
+    sheet = parse_fraction_sheet(html, base_url=VUCEM_SAMPLE_FRACTION_SHEET_URL)
+    assert sheet.code == VUCEM_SAMPLE_FRACTION_CODE
+    assert "lentes de contacto" in sheet.description.casefold()
+    assert sheet.import_duty == "Ex."
+    assert sheet.export_duty == "Ex."
+    assert sheet.nico_rows == (("00", "Lentes de contacto.", "Ex.", "Ex."),)
+
+
+def test_vucem_classifier_index_fixture_is_parseable() -> None:
+    html = (FIXTURES / "vucem" / "Clasificador.html").read_text(encoding="utf-8")
+    validate_ligie_html_page("vucem_classifier_index", html, base_url=VUCEM_CLASSIFIER_INDEX_URL)
 
 
 def test_collect_access_targets_follows_ligie_entry_consult_and_snapshot_links() -> None:
@@ -141,6 +173,7 @@ def test_ensure_html_body_accessible_rejects_tiny_pages() -> None:
 
 def test_looks_like_html_url_detects_documented_html_endpoints() -> None:
     assert looks_like_html_url(SNICE_LIGIE_INDEX_URL)
+    assert looks_like_html_url(VUCEM_SAMPLE_FRACTION_SHEET_URL)
     assert looks_like_html_url("https://www.dof.gob.mx/nota_detalle.php?codigo=1")
     assert not looks_like_html_url("https://www.diputados.gob.mx/LeyesBiblio/pdf/LIGIE_2022.pdf")
 
@@ -155,6 +188,7 @@ def test_individual_classifier_fixture_is_parseable_html_shell() -> None:
     reason="live LIGIE HTML page checks disabled",
 )
 def test_live_ligie_html_pages_are_reachable_and_parseable() -> None:
+    from scripts.check_documented_urls import build_session
     from scripts.validate_ligie_html_pages import validate_ligie_html_site
 
     failures = validate_ligie_html_site(build_session(), timeout=30.0)
@@ -183,12 +217,12 @@ def test_validate_ligie_html_pages_script_exits_zero_when_pages_parse(
         SNICE_INDIVIDUAL_CLASSIFIER_URL: (
             FIXTURES / "snice" / "hce.mi.fraccion.arancelaria.html"
         ).read_text(encoding="utf-8"),
-        "https://www.snice.gob.mx/cs/avi/snice/hce.mi.fraccion.arancelaria.app.html": (
-            _FAKE_HTML
-        ),
-        "https://www.snice.gob.mx/cs/avi/snice/hce.consulta.fracciones.arancelarias.app.html": (
-            _FAKE_HTML
-        ),
+        VUCEM_CLASSIFIER_INDEX_URL: (FIXTURES / "vucem" / "Clasificador.html").read_text(encoding="utf-8"),
+        VUCEM_SAMPLE_FRACTION_SHEET_URL: (
+            FIXTURES / "vucem" / "buildHojas1.90014002.html"
+        ).read_text(encoding="utf-8"),
+        "https://www.snice.gob.mx/cs/avi/snice/hce.mi.fraccion.arancelaria.app.html": _FAKE_HTML,
+        "https://www.snice.gob.mx/cs/avi/snice/hce.consulta.fracciones.arancelarias.app.html": _FAKE_HTML,
         "https://www.snice.gob.mx/files/FRACCIONESARANCELARIAS_20260810.XLSX": "snapshot",
         "https://www.snice.gob.mx/files/NICO-AGOSTO26-LIGIE_20260810-20260810.XLSX": "snapshot",
         "https://www.diputados.gob.mx/LeyesBiblio/pdf/LIGIE_2022.pdf": "document",

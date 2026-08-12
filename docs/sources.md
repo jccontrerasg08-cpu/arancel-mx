@@ -69,6 +69,8 @@ El pipeline y la consulta pública dependen de estas páginas HTML oficiales:
 - [SNICE, biblioteca jurídica general](https://www.snice.gob.mx/cs/avi/snice/biblioteca.juridica.html) — índice legal de SNICE con enlace a la LIGIE.
 - [SNICE, biblioteca jurídica LIGIE](https://www.snice.gob.mx/cs/avi/snice/ligie.info22.ligiebibjur.html) — entrada a la consulta oficial de fracciones.
 - [SNICE, clasificador individual](https://www.snice.gob.mx/cs/avi/snice/hce.mi.fraccion.arancelaria.html) — consulta individual de códigos.
+- [VUCEM, buscador de fracciones](https://www.ventanillaunica.gob.mx/vucem/Clasificador.html) — clasificador informativo de la Ventanilla Única.
+- [VUCEM, ficha de fracción 90014002](https://www.ventanillaunica.gob.mx/Clasificador/data/buildHojas1/90014002.html) — ejemplo de hoja HTML por código de 8 dígitos (`buildHojas1/{codigo}.html`).
 
 `python -m scripts.validate_ligie_html_pages` verifica que sigan siendo alcanzables, que el HTML contenga contenido utilizable y que los recursos enlazados (consulta de fracciones, clasificador embebido, snapshots descubiertos y PDF consolidado) también respondan.
 

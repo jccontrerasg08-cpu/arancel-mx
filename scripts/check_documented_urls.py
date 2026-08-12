@@ -12,7 +12,7 @@ from urllib.parse import urlparse
 import requests
 
 from arancel_mx.sources.html_pages import (
-    LIGIE_HTML_PAGES,
+    OPERATIONAL_HTML_PAGES,
     SNICE_BIBLIOTECA_JURIDICA_URL,
     SNICE_INDIVIDUAL_CLASSIFIER_URL,
     SNICE_MODIFICATIONS_INDEX_URL,
@@ -58,7 +58,7 @@ def registered_public_urls() -> tuple[str, ...]:
 
 def documented_public_urls() -> tuple[str, ...]:
     """Return the curated set of public URLs documented for users and operators."""
-    html_page_urls = tuple(page.url for page in LIGIE_HTML_PAGES)
+    html_page_urls = tuple(page.url for page in OPERATIONAL_HTML_PAGES)
     return tuple(
         dict.fromkeys(
             (

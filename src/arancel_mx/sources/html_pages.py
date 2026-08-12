@@ -11,6 +11,11 @@ from urllib.parse import urljoin, urlparse
 from arancel_mx.pipeline.reconcile import discover_registered_sources
 from arancel_mx.sources.diputados import parse_ligie_ledger
 from arancel_mx.sources.registry import RegistryEntry, load_source_registry
+from arancel_mx.sources.vucem import (
+    VUCEM_CLASSIFIER_INDEX_URL,
+    VUCEM_SAMPLE_FRACTION_SHEET_URL,
+    parse_fraction_sheet,
+)
 
 
 DIPUTADOS_LEDGER_URL = "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm"
@@ -67,6 +72,21 @@ LIGIE_HTML_PAGES: tuple[LigieHtmlPage, ...] = (
         "individual_classifier",
     ),
 )
+
+VUCEM_HTML_PAGES: tuple[LigieHtmlPage, ...] = (
+    LigieHtmlPage(
+        "vucem_classifier_index",
+        VUCEM_CLASSIFIER_INDEX_URL,
+        "classifier_discovery",
+    ),
+    LigieHtmlPage(
+        "vucem_fraction_sheet",
+        VUCEM_SAMPLE_FRACTION_SHEET_URL,
+        "fraction_sheet",
+    ),
+)
+
+OPERATIONAL_HTML_PAGES: tuple[LigieHtmlPage, ...] = LIGIE_HTML_PAGES + VUCEM_HTML_PAGES
 
 
 @dataclass(frozen=True)
@@ -254,6 +274,39 @@ def validate_fraction_consult_html(html: str) -> None:
         raise ValueError("fraction consult HTML does not expose an embeddable consult surface")
 
 
+def validate_vucem_classifier_index_html(html: str) -> None:
+    folded = _fold(html)
+    markers = (
+        "fracciones arancelarias",
+        "clasificador",
+        "ventanilla",
+        "vucem",
+    )
+    if not any(marker in folded for marker in markers):
+        raise ValueError("VUCEM classifier index HTML is missing expected consult markers")
+
+
+def validate_vucem_fraction_sheet_html(html: str, *, base_url: str) -> None:
+    folded = _fold(html)
+    markers = (
+        "fraccion arancelaria",
+        "importacion",
+        "exportacion",
+        "arancel",
+        "igi",
+        "ige",
+        "ligie",
+        "tigie",
+    )
+    if not any(marker in folded for marker in markers):
+        raise ValueError("VUCEM fraction sheet HTML is missing tariff markers")
+    if "<table" not in html.lower():
+        raise ValueError("VUCEM fraction sheet HTML does not expose tariff table content")
+    sheet = parse_fraction_sheet(html, base_url=base_url)
+    if not sheet.description.strip():
+        raise ValueError("VUCEM fraction sheet HTML is missing a fraction description")
+
+
 def collect_ligie_html_access_targets(
     page_id: str,
     html: str,
@@ -351,5 +404,11 @@ def validate_ligie_html_page(page_id: str, html: str, *, base_url: str | None = 
         return None
     if page_id == "snice_individual_classifier":
         validate_individual_classifier_html(html)
+        return None
+    if page_id == "vucem_classifier_index":
+        validate_vucem_classifier_index_html(html)
+        return None
+    if page_id == "vucem_fraction_sheet":
+        validate_vucem_fraction_sheet_html(html, base_url=base_url or VUCEM_SAMPLE_FRACTION_SHEET_URL)
         return None
     raise ValueError(f"unknown LIGIE HTML page id: {page_id}")

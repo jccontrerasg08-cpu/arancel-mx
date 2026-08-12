@@ -7,7 +7,7 @@ import argparse
 import requests
 
 from arancel_mx.sources.html_pages import (
-    LIGIE_HTML_PAGES,
+    OPERATIONAL_HTML_PAGES,
     HtmlAccessTarget,
     collect_ligie_html_access_targets,
     ensure_html_body_accessible,
@@ -90,7 +90,7 @@ def validate_ligie_html_site(
             failures.append(f"{target.kind} ({target.url}): {exc}")
             print(f"FAIL {target.kind} ({target.url}): {exc}")
 
-    for page in LIGIE_HTML_PAGES:
+    for page in OPERATIONAL_HTML_PAGES:
         process_html_page(page.page_id, page.url, page.page_id)
     return failures
 
