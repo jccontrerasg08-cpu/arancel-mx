@@ -30,6 +30,7 @@ def test_project_license_and_python_floor_are_explicit() -> None:
     assert project["license"] == "Apache-2.0"
     assert project["license-files"] == ["LICENSE", "NOTICE"]
     assert project["requires-python"] == ">=3.11"
+    assert not any(str(item).startswith("License ::") for item in project["classifiers"])
 
 
 def test_console_script_points_to_public_cli_entrypoint() -> None:
@@ -41,7 +42,6 @@ def test_classifiers_do_not_claim_uncertified_future_python_versions() -> None:
     # Add newer interpreter classifiers only after the blocking matrix proves them.
     classifiers = set(_project()["classifiers"])
     assert "Development Status :: 4 - Beta" in classifiers
-    assert "License :: OSI Approved :: Apache Software License" in classifiers
     assert "Programming Language :: Python :: 3 :: Only" in classifiers
     assert "Programming Language :: Python :: 3.11" in classifiers
     assert "Programming Language :: Python :: 3.12" not in classifiers
