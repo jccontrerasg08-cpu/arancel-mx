@@ -98,3 +98,26 @@ def test_expected_validation_error_returns_two(tmp_path, monkeypatch, capsys):
 
     assert result == 2
     assert capsys.readouterr().err == "error: invalid release\n"
+
+
+def test_build_without_maintainer_extra_is_actionable(monkeypatch, capsys, tmp_path):
+    class BlockedImportlib:
+        def import_module(self, name, package=None):
+            raise ModuleNotFoundError("No module named 'pandas'", name="pandas")
+
+    monkeypatch.setattr(cli, "importlib", BlockedImportlib())
+
+    result = main(
+        [
+            "build",
+            "--database",
+            str(tmp_path / "db"),
+            "--output-dir",
+            str(tmp_path / "out"),
+        ]
+    )
+
+    assert result == 2
+    err = capsys.readouterr().err
+    assert "arancel-mx[maintainer]" in err
+    assert "pandas" in err

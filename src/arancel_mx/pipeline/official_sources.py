@@ -417,20 +417,18 @@ def write_release_sources(
 
     def release_filename(item: CapturedOfficialSource) -> str:
         suffix = Path(urlparse(item.fetched.final_url).path).suffix.lower()
-        if item.dataset_key == "ligie":
+        key = (item.dataset_key, item.document_role)
+        if key == ("ligie", "ligie_snapshot"):
             return f"ligie{suffix}"
-        if item.dataset_key == "nico":
+        if key == ("nico", "nico_snapshot"):
             return f"nico{suffix}"
-        if (
-            item.dataset_key == "diputados_ligie"
-            and item.document_role == "legal_ledger"
-        ):
+        if key == ("diputados_ligie", "legal_ledger"):
             return f"ligie-ledger{suffix or '.html'}"
-        if item.dataset_key == "diputados_ligie":
+        if key == ("diputados_ligie", "consolidated_text"):
             return "ligie-consolidated.pdf"
-        if item.dataset_key == "dof_law_reform":
+        if key == ("dof_law_reform", "law_reform"):
             return f"dof-law-reform{suffix}"
-        if item.dataset_key == "dof_tariff_decree":
+        if key == ("dof_tariff_decree", "tariff_decree"):
             return f"dof-tariff-decree{suffix}"
         raise ValueError(
             f"unexpected release source: {item.dataset_key}/{item.document_role}"

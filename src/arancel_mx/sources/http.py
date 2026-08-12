@@ -7,7 +7,10 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import PurePosixPath
 import re
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
+
+MAX_REDIRECTS = 5
+_REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
 
 
 _EXTENSION_MEDIA_TYPES = {
@@ -44,6 +47,44 @@ def _host_allowed(url: str, allowed_hosts: tuple[str, ...]) -> bool:
 def _require_https(url: str) -> None:
     if urlparse(url).scheme.lower() != "https":
         raise ValueError(f"official document URL must use https: {url}")
+
+
+def _require_allowed_https_url(
+    url: str,
+    allowed_hosts: tuple[str, ...],
+    *,
+    redirected: bool,
+) -> None:
+    _require_https(url)
+    if not _host_allowed(url, allowed_hosts):
+        kind = "redirected host" if redirected else "requested host"
+        raise ValueError(f"{kind} is not allowed: {url}")
+
+
+def _close_response(response: object) -> None:
+    close = getattr(response, "close", None)
+    if callable(close):
+        close()
+
+
+def _is_redirect(response: object) -> bool:
+    if getattr(response, "is_redirect", False):
+        return True
+    status = getattr(response, "status_code", None)
+    try:
+        return int(status) in _REDIRECT_STATUSES
+    except (TypeError, ValueError):
+        return False
+
+
+def _redirect_location(response: object, current_url: str) -> str:
+    headers = getattr(response, "headers", None) or {}
+    location = headers.get("Location")
+    if location is None:
+        location = headers.get("location")
+    if not location or not str(location).strip():
+        raise ValueError(f"official document redirect is missing Location: {current_url}")
+    return urljoin(current_url, str(location).strip())
 
 
 def _normalized_media_type(value: object) -> str:
@@ -118,17 +159,39 @@ def fetch_official_document(
         raise ValueError("timeout_s must be positive")
     if max_bytes < 1:
         raise ValueError("max_bytes must be positive")
-    _require_https(url)
-    if not _host_allowed(url, allowed_hosts):
-        raise ValueError(f"requested host is not allowed: {url}")
+    _require_allowed_https_url(url, allowed_hosts, redirected=False)
 
-    response = session.get(url, timeout=timeout_s, stream=True)
+    current_url = url
+    response = None
+    redirects = 0
     try:
+        while True:
+            response = session.get(
+                current_url,
+                timeout=timeout_s,
+                stream=True,
+                allow_redirects=False,
+            )
+            if not _is_redirect(response):
+                break
+            if redirects >= MAX_REDIRECTS:
+                raise ValueError("official document redirect limit exceeded")
+            next_url = _redirect_location(response, current_url)
+            _close_response(response)
+            response = None
+            redirects += 1
+            _require_allowed_https_url(next_url, allowed_hosts, redirected=True)
+            current_url = next_url
+
+        if response is None:
+            raise ValueError("official document request returned no response")
         response.raise_for_status()
-        final_url = str(response.url)
-        _require_https(final_url)
-        if not _host_allowed(final_url, allowed_hosts):
-            raise ValueError(f"redirected host is not allowed: {final_url}")
+        final_url = str(getattr(response, "url", "") or current_url)
+        _require_allowed_https_url(
+            final_url,
+            allowed_hosts,
+            redirected=final_url != url,
+        )
 
         content_type = response.headers.get("Content-Type")
         allowed_media_types = {value.lower() for value in media_types}
@@ -160,6 +223,4 @@ def fetch_official_document(
             charset=_declared_charset(content_type),
         )
     finally:
-        close = getattr(response, "close", None)
-        if callable(close):
-            close()
+        _close_response(response)
