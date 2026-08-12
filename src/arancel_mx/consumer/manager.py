@@ -41,6 +41,7 @@ _BUNDLE_ASSETS = (
     "SHA256SUMS",
     "official-sources.tar.gz",
 )
+_EXPECTED_ASSET_SET = frozenset(_BUNDLE_ASSETS)
 
 
 class DatasetManager:
@@ -82,6 +83,17 @@ class DatasetManager:
         if selected is not None:
             return client.version(selected)
         return client.latest()
+
+    @staticmethod
+    def _validate_release_contract(release: DataRelease) -> None:
+        actual = frozenset(release.assets_by_name)
+        if actual != _EXPECTED_ASSET_SET:
+            missing = sorted(_EXPECTED_ASSET_SET - actual)
+            extra = sorted(actual - _EXPECTED_ASSET_SET)
+            raise DatasetIntegrityError(
+                f"data release {release.tag} asset set mismatch: "
+                f"missing={missing} extra={extra}"
+            )
 
     @staticmethod
     def _read_text(path: Path, *, label: str, encoding: str) -> str:
@@ -166,7 +178,11 @@ class DatasetManager:
         name: str,
         destination: Path,
     ) -> str:
-        asset = release.assets_by_name[name]
+        asset = release.assets_by_name.get(name)
+        if asset is None:
+            raise DatasetIntegrityError(
+                f"data release {release.tag} asset set is missing required asset: {name}"
+            )
         written = stream_download(
             self._session,
             asset.url,
@@ -190,6 +206,7 @@ class DatasetManager:
         return staging
 
     def _ensure_release_locked(self, release: DataRelease) -> Path:
+        self._validate_release_contract(release)
         paths = self.cache.paths(release.tag)
         if paths.verified.is_file():
             self._validate_cached(release.tag)
@@ -264,6 +281,7 @@ class DatasetManager:
         release = self._client().latest()
         with self.cache.locked():
             if self.cache.paths(release.tag).verified.is_file():
+                self._validate_release_contract(release)
                 self._validate_cached(release.tag)
                 return "no_change", self.cache.paths(release.tag).duckdb
             return "downloaded", self._ensure_release_locked(release)
@@ -272,7 +290,10 @@ class DatasetManager:
         return self.cache.list_verified()
 
     def list_remote(self) -> tuple[str, ...]:
-        return tuple(release.tag for release in self._client().list())
+        releases = self._client().list()
+        for release in releases:
+            self._validate_release_contract(release)
+        return tuple(release.tag for release in releases)
 
     def selected_path(self, tag: str | None = None) -> Path:
         selected = self._selected_local_tag(tag)
@@ -280,6 +301,7 @@ class DatasetManager:
         return self.cache.paths(selected).duckdb
 
     def _verify_remote_identity(self, release: DataRelease) -> VerifiedMetadata:
+        self._validate_release_contract(release)
         metadata = self.cache.load_verified(release.tag)
         if metadata.release_id != release.release_id:
             raise DatasetIntegrityError(
@@ -299,6 +321,7 @@ class DatasetManager:
         return metadata
 
     def _verify_bundle(self, release: DataRelease) -> None:
+        self._validate_release_contract(release)
         certification_root = self.cache.root / ".certification"
         work = certification_root / f"{release.tag}-{uuid.uuid4().hex}"
         try:
