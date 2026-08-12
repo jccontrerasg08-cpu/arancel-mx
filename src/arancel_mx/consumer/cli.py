@@ -27,17 +27,21 @@ def _positive_int(value: str) -> int:
     return parsed
 
 
-def _add_dataset_selection(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument(
-        "--dataset",
-        help="Pin an exact data-YYYY.MM.DD release instead of the latest selection",
-    )
+def _add_offline(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--offline",
         action="store_true",
         default=None,
         help="Use verified local data only and make no network requests",
     )
+
+
+def _add_dataset_selection(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--dataset",
+        help="Pin an exact data-YYYY.MM.DD release instead of the latest selection",
+    )
+    _add_offline(parser)
 
 
 def _add_output_format(parser: argparse.ArgumentParser) -> None:
@@ -85,7 +89,7 @@ def register_consumer_commands(
         "data",
         help="Administra versiones verificadas del dataset público",
     )
-    data_subparsers = data.add_subparsers(dest="data_command")
+    data_subparsers = data.add_subparsers(dest="data_command", required=True)
 
     status = data_subparsers.add_parser("status", help="Muestra estado local y remoto")
     _add_dataset_selection(status)
@@ -102,7 +106,7 @@ def register_consumer_commands(
     update = data_subparsers.add_parser(
         "update", help="Descarga la release más reciente sin borrar versiones previas"
     )
-    _add_dataset_selection(update)
+    _add_offline(update)
     _add_output_format(update)
     update.set_defaults(consumer_action="data_update")
 
