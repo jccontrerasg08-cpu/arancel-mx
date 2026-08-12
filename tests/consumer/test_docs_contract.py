@@ -17,6 +17,8 @@ def test_bilingual_readmes_show_install_and_consumer_first_commands() -> None:
         "arancel-mx doctor",
         "arancel-mx data download",
         "arancel-mx lookup 01012101",
+        "arancel-mx ficha 01012101",
+        "arancel-mx chapters",
         "arancel-mx data verify",
         "docs/consumer-cli.md",
     )
@@ -40,5 +42,7 @@ def test_consumer_guide_documents_offline_formats_and_version_pinning() -> None:
         "--format csv",
         "arancel-mx doctor --json",
         "arancel-mx search \"refrigeradores\"",
+        "arancel-mx ficha",
+        "arancel-mx chapters",
     )
     assert [value for value in required if value not in guide] == []

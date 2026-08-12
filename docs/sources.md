@@ -28,6 +28,17 @@ Cada descarga conserva como mínimo la URL final, SHA256, tamaño, tipo de medio
 
 Un parseo sólo puede reutilizarse cuando la identidad capturada y las versiones relevantes de parser/esquema/registro siguen siendo compatibles.
 
+## Compilaciones no oficiales
+
+El pipeline **no** captura ni publica SIICEX-CAAAREM, dumps de entrenamiento como [tigies-mx](https://github.com/andyeswong/tigies-mx), ni otros visores TIGIE de terceros.
+
+- `http://www.siicex-caaarem.org.mx/` is not an official source. Es un visor compilado de la confederación de agentes aduanales (HTTP, Lotus Notes). Puede mostrar IGI/IGE, permisos, TLC y PROSEC, pero no es Diputados, DOF ni SNICE, y el fetch oficial exige HTTPS sobre hosts registrados.
+- `tigies-mx` es un dump estático para entrenar modelos (capítulos, TIGIE plana, correlación SCIAN). No tiene procedencia SHA256 ni reconciliación legal.
+
+La ficha pública de `arancel-mx` (`arancel-mx ficha` / `Dataset.ficha`) reproduce la navegación capítulo → partida → subpartida → fracción → NICO y las tasas IGI/IGE **sólo** desde el dataset oficial verificado. No inventa IVA, franja/región, permisos, TLC, PROSEC ni correlaciones SCIAN que esas compilaciones muestran y que este registro no captura.
+
+Un visor de terceros puede mostrar fracciones o tasas que ya no existen en la LIGIE vigente. El ejemplo SIICEX `11063001` (harina de sagú, IGI 13%) no está en el snapshot SNICE actual; las fracciones vigentes son `11062002` (sagú, IGI 10) y `11063002` (productos del Capítulo 08, IGI 10). `arancel-mx ficha 11063001` falla cerrado.
+
 ## Diputados ledger + DOF reconciliation
 
 El ledger **registered** de la Cámara de Diputados es el ancla para saber qué documentos legales deben ser explicables por la construcción. El pipeline realiza **reconciliation** de ese ledger con evidencia del **DOF** y con las fuentes registradas de SNICE.
@@ -44,7 +55,7 @@ Después de capturar y reconciliar, la identidad de las fuentes se compara con e
 
 ## Evidencia preservada
 
-Una release válida incluye `official-sources.tar.gz`, que conserva los bytes oficiales capturados y `source_capture.json`. Los hashes permiten reconstruir exactamente qué snapshots fueron observados en ese build aunque la página oficial cambie después.
+Una release válida incluye `official-sources.tar.gz`, que conserva los bytes oficiales capturados —incluidos el ledger registered de Diputados que ancla la reconciliación legal— y `source_capture.json`. Los hashes permiten reconstruir exactamente qué snapshots fueron observados en ese build aunque la página oficial cambie después.
 
 ## Páginas canónicas documentadas
 

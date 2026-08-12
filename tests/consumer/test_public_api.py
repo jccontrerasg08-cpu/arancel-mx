@@ -17,7 +17,14 @@ from arancel_mx.consumer.errors import (
     QueryError,
     RecordNotFoundError,
 )
-from arancel_mx.consumer.models import DatasetInfo, ProvenanceRecord, SearchResult, TariffRecord
+from arancel_mx.consumer.models import (
+    DatasetInfo,
+    Ficha,
+    HsSection,
+    ProvenanceRecord,
+    SearchResult,
+    TariffRecord,
+)
 
 
 def test_runtime_version_comes_from_distribution_metadata() -> None:
@@ -100,6 +107,39 @@ def test_provenance_record_constructor_fields_are_contractual() -> None:
     )
     assert record.source_document_id == "snice-ligie-2026-04-20"
     assert record.is_primary is True
+
+
+def test_ficha_and_hs_section_are_frozen_public_models() -> None:
+    record = TariffRecord(
+        code="01012101",
+        level="fraccion8",
+        description="Reproductores de raza pura.",
+        unit_name="Cbza",
+        igi_text="10",
+        igi_kind="ad_valorem",
+        igi_value=10.0,
+        ige_text="Ex.",
+        ige_kind="exento",
+        ige_value=0.0,
+        parent_code="010121",
+        dataset_version="2026.08.11",
+        schema_version="2",
+        effective_from=None,
+        effective_to=None,
+        is_current=True,
+    )
+    section = HsSection("I", "Animales vivos y productos del reino animal", "01", "05")
+    card = Ficha(
+        record=record,
+        formatted_code="0101.21.01",
+        section=section,
+        hierarchy=(record,),
+        children=(),
+    )
+    assert card.section is section
+    assert card.section.source == "hs_section_grouping"
+    with pytest.raises(FrozenInstanceError):
+        card.formatted_code = "x"  # type: ignore[misc]
 
 
 def test_dataset_info_distinguishes_structural_and_release_integrity() -> None:

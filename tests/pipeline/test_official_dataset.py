@@ -149,7 +149,7 @@ class FakeSession:
         self.responses = responses
         self.requested = []
 
-    def get(self, url, timeout=None, stream=False):
+    def get(self, url, timeout=None, stream=False, allow_redirects=True):
         self.requested.append(url)
         if url not in self.responses:
             raise AssertionError(f"unexpected network URL: {url}")
@@ -212,7 +212,7 @@ def test_offline_build_produces_verified_release(tmp_path):
 
     assert summary["validation_status"] == "passed"
     assert summary["row_count"] == 5
-    assert summary["source_count"] == 5
+    assert summary["source_count"] == 6
     assert sorted(path.name for path in build_config.output_dir.iterdir()) == [
         "SHA256SUMS",
         "arancel_mx.csv",
@@ -263,7 +263,21 @@ def test_offline_build_produces_verified_release(tmp_path):
         (build_config.output_dir / "manifest.json").read_text(encoding="utf-8")
     )
     assert manifest["validation_status"] == "passed"
-    assert len(manifest["source_documents"]) == 5
+    assert len(manifest["source_documents"]) == 6
+    assert {
+        (
+            identity["dataset_key"],
+            identity["document_role"],
+        )
+        for identity in manifest["source_identity"]
+    } == {
+        ("ligie", "ligie_snapshot"),
+        ("nico", "nico_snapshot"),
+        ("diputados_ligie", "legal_ledger"),
+        ("diputados_ligie", "consolidated_text"),
+        ("dof_law_reform", "law_reform"),
+        ("dof_tariff_decree", "tariff_decree"),
+    }
     for source in manifest["source_documents"]:
         assert source["source_url"].startswith("https://")
         assert len(source["sha256"]) == 64
@@ -279,7 +293,7 @@ def test_build_rejects_fraction_dataset_without_tariff_values(tmp_path):
         XLSX_TYPE,
     )
 
-    with pytest.raises(ValueError, match="tariff values"):
+    with pytest.raises(ValueError, match="no matching tariff rate"):
         build_official_dataset(build_config, session=session)
 
 
@@ -414,7 +428,7 @@ def test_schema_v2_manifest_replay_returns_no_change_without_candidate(tmp_path)
         "schema_version": "2",
         "row_count": 5,
         "validation_status": "passed",
-        "source_count": 5,
+        "source_count": 6,
         "output_dir": None,
     }
     assert not second.output_dir.exists()

@@ -6,6 +6,7 @@ import argparse
 from collections.abc import Sequence
 from dataclasses import asdict, is_dataclass
 from datetime import date, datetime
+import importlib
 import json
 from pathlib import Path
 import sys
@@ -16,12 +17,72 @@ import requests
 from arancel_mx import __version__
 from arancel_mx.consumer.cli import register_consumer_commands, run_consumer
 from arancel_mx.consumer.errors import ArancelMXError
-from arancel_mx.pipeline.reconcile import reconcile_legal_instruments
-from arancel_mx.pipeline.update import UpdateConfig, check_for_updates
-from arancel_mx.release.package import build_release, prepare_release_archive
 
 
 COMMANDS = ("build", "check-updates", "update", "reconcile", "release")
+_MAINTAINER_HINT = (
+    "This command needs the maintainer dependencies. "
+    "Install them with: pip install 'arancel-mx[maintainer]'"
+)
+
+
+def _missing_maintainer_extra(exc: ModuleNotFoundError) -> ValueError:
+    missing = exc.name or "a required package"
+    return ValueError(f"{_MAINTAINER_HINT} (missing: {missing})")
+
+
+def _maintainer_attr(module_name: str, attr: str) -> Any:
+    """Import a maintainer-only symbol, or explain the missing extra."""
+
+    try:
+        module = importlib.import_module(module_name)
+    except ModuleNotFoundError as exc:
+        raise _missing_maintainer_extra(exc) from exc
+    return getattr(module, attr)
+
+
+def _call_maintainer(implementation: Any, *args: object, **kwargs: object) -> object:
+    try:
+        return implementation(*args, **kwargs)
+    except ModuleNotFoundError as exc:
+        raise _missing_maintainer_extra(exc) from exc
+
+
+def build_release(database: Path, output: Path) -> object:
+    """Lazy maintainer wrapper for release building."""
+
+    return _call_maintainer(
+        _maintainer_attr("arancel_mx.release.package", "build_release"),
+        database,
+        output,
+    )
+
+
+def check_for_updates(config: object) -> object:
+    """Lazy maintainer wrapper for official-source update checks."""
+
+    return _call_maintainer(
+        _maintainer_attr("arancel_mx.pipeline.update", "check_for_updates"),
+        config,
+    )
+
+
+def reconcile_legal_instruments(*items: object) -> object:
+    """Lazy maintainer wrapper for legal-evidence reconciliation."""
+
+    return _call_maintainer(
+        _maintainer_attr("arancel_mx.pipeline.reconcile", "reconcile_legal_instruments"),
+        *items,
+    )
+
+
+def prepare_release_archive(*paths: Path) -> object:
+    """Lazy maintainer wrapper for publication bundle preparation."""
+
+    return _call_maintainer(
+        _maintainer_attr("arancel_mx.release.package", "prepare_release_archive"),
+        *paths,
+    )
 
 
 def _add_update_arguments(parser: argparse.ArgumentParser) -> None:
@@ -92,14 +153,16 @@ def _read_json(path: str) -> Any:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
-def _update_config(namespace: argparse.Namespace) -> UpdateConfig:
+def _update_config(namespace: argparse.Namespace) -> object:
+    update_config = _maintainer_attr("arancel_mx.pipeline.update", "UpdateConfig")
+
     options: dict[str, object] = {
         "state_path": Path(namespace.state_path),
         "report_path": Path(namespace.report_path) if namespace.report_path else None,
     }
     if namespace.ledger_url:
         options["ledger_url"] = namespace.ledger_url
-    return UpdateConfig(**options)
+    return _call_maintainer(update_config, **options)
 
 
 def _dispatch(namespace: argparse.Namespace) -> object:

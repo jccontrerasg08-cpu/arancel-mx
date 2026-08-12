@@ -46,7 +46,7 @@ def test_release_process_documents_exact_publication_and_recovery_contract():
         "generated_at",
         "no_change",
         "draft",
-        "verify_publication_bundle",
+        "certify_bundle",
         "six assets",
         "immutable",
         "same-date",
@@ -81,6 +81,9 @@ def test_sources_document_legal_reconciliation_as_blocking_gate():
         "discrepancy",
         "publication",
         "retrieved_at",
+        "siicex-caaarem",
+        "tigies-mx",
+        "not an official source",
     )
     assert [value for value in required if value not in sources] == []
 

@@ -125,6 +125,24 @@ def test_full_consumer_cli_sequence_survives_strict_offline_mode(
     assert provenance[0]["source_document_id"] == "fixture-source"
     assert provenance[0]["is_primary"] is True
 
+    assert main(["ficha", "01012101", "--dataset", TAG, "--format", "json"]) == 0
+    card = _json_stdout(capsys)
+    assert card["formatted_code"] == "0101.21.01"
+    assert card["record"]["code"] == "01012101"
+    assert card["section"]["roman"] == "I"
+    assert card["section"]["source"] == "hs_section_grouping"
+    assert [node["code"] for node in card["hierarchy"]] == [
+        "01",
+        "0101",
+        "010121",
+        "01012101",
+    ]
+    assert [child["code"] for child in card["children"]] == ["0101210100"]
+
+    assert main(["chapters", "--dataset", TAG, "--format", "json"]) == 0
+    chapters = _json_stdout(capsys)
+    assert [row["code"] for row in chapters] == ["01"]
+
     assert main(["data", "path", "--dataset", TAG]) == 0
     path_capture = capsys.readouterr()
     assert path_capture.err == ""

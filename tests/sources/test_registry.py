@@ -62,3 +62,13 @@ def test_missing_direct_document_fails_closed():
 
     with pytest.raises(ValueError, match="registered direct document"):
         registered_direct_document(entry, "consolidated_text")
+
+
+def test_registry_excludes_unofficial_compiled_tigie_hosts() -> None:
+    hosts = {
+        host
+        for entry in load_source_registry().values()
+        for host in entry.allowed_hosts
+    }
+    assert "siicex-caaarem.org.mx" not in hosts
+    assert "www.siicex-caaarem.org.mx" not in hosts

@@ -255,8 +255,6 @@ def test_ci_workflow_builds_package_without_secrets_or_network_updates() -> None
         "push:",
         "contents: read",
         "test:",
-        "actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
-        "actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
         'python-version: "3.11"',
         "python -m pip install pip==26.2.1",
         'python -m pip install -c requirements/production-build.txt -e ".[dev]"',
@@ -264,6 +262,16 @@ def test_ci_workflow_builds_package_without_secrets_or_network_updates() -> None
         "python -m build",
         "git diff --check",
     )
+    # Verify checkout and setup-python are pinned to a full 40-hex commit SHA
+    # without hard-coding the exact value, which Dependabot rotates. Full action
+    # pinning and approved-repository coverage live in tests/package/test_action_pinning.py.
+    pinned_actions = ("actions/checkout", "actions/setup-python")
+    unpinned = [
+        action
+        for action in pinned_actions
+        if re.search(rf"{re.escape(action)}@[0-9a-f]{{40}}\b", workflow) is None
+    ]
+    assert unpinned == []
     forbidden = (
         "contents: write",
         "issues: write",

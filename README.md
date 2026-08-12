@@ -185,6 +185,8 @@ El flujo para consumidores parte del dataset publicado y no requiere clonar el r
 arancel-mx doctor
 arancel-mx data download
 arancel-mx lookup 01012101
+arancel-mx ficha 01012101
+arancel-mx chapters
 arancel-mx search "refrigeradores"
 arancel-mx data verify
 ```
@@ -209,6 +211,8 @@ También se puede fijar una release exacta con `--dataset data-YYYY.MM.DD`. Cons
 | `data path` | Imprime únicamente la ruta del DuckDB seleccionado |
 | `data verify` | Revalida integridad local y opcionalmente el bundle remoto |
 | `lookup` / `search` | Consulta por código exacto o texto |
+| `ficha` | Ficha jerárquica capítulo → fracción/NICO con UM, IGI e IGE |
+| `chapters` | Lista los capítulos HS2 vigentes |
 | `parent` / `children` | Navega la jerarquía HS2 → HS4 → HS6 → MX8 → NICO10 |
 | `provenance` | Muestra trazabilidad documental del código seleccionado |
 
@@ -235,12 +239,16 @@ Durante la serie 0.x, `update` permanece como alias de compatibilidad de sólo l
 ## Uso desde Python
 
 ```python
-import arancel_mx
+from arancel_mx import Dataset
 
-print(arancel_mx.__version__)
+dataset = Dataset.latest()
+card = dataset.ficha("01012101")
+print(card.formatted_code, card.record.description, card.record.igi_text)
+for chapter in dataset.chapters():
+    print(chapter.code, chapter.description)
 ```
 
-La API pública seguirá creciendo conforme se estabilicen interfaces de búsqueda y navegación HS6 ↔ MX8 ↔ NICO10. Las capacidades no implementadas no se presentan como API estable.
+`Dataset.open("arancel_mx.duckdb")` abre un archivo local ya validado estructuralmente. `ficha` y `chapters` usan el dataset oficial verificado; no scrapean SIICEX-CAAAREM ni dumps como tigies-mx.
 
 ## Modelo de datos
 
@@ -311,7 +319,7 @@ Fuentes principales:
 - [SNICE, indicadores](https://www.snice.gob.mx/cs/avi/snice/ligie.indicaranc22.html)
 - [Diario Oficial de la Federación, publicación relacionada](https://dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022)
 
-`docs/sources.md` explica cómo el ledger registrado de Diputados se usa como ancla y cómo la evidencia DOF participa como gate antes de publicar.
+`docs/sources.md` explica cómo el ledger registrado de Diputados se usa como ancla y cómo la evidencia DOF participa como gate antes de publicar. SIICEX-CAAAREM y dumps como tigies-mx no son fuentes oficiales.
 
 ## Proceso y calendario visual
 
@@ -413,7 +421,8 @@ Ver [`SECURITY.md`](SECURITY.md), [`CONTRIBUTING.md`](CONTRIBUTING.md) y [`docs/
 | Publicación automática verificada | Disponible |
 | GitHub Issue alerts y recovery | Disponible |
 | Certificación live de release/Issue write-boundaries | Disponible |
-| API de búsqueda estable | Roadmap |
+| API de búsqueda estable | Disponible |
+| Ficha TIGIE (`ficha` / `chapters`) | Disponible |
 | Publicación en PyPI | Roadmap |
 
 ## Contribución

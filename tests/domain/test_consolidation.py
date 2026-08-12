@@ -1,6 +1,8 @@
 from datetime import date
 from decimal import Decimal
 
+import pytest
+
 from arancel_mx.domain.normalization import consolidate_records
 
 
@@ -11,7 +13,7 @@ RELEASE = {
 }
 
 
-def test_nico_requires_a_contemporaneous_parent_fraction():
+def test_nico_without_parent_fraction_fails_closed():
     classification = {
         "level": "nico10",
         "code": "0101210100",
@@ -32,7 +34,63 @@ def test_nico_requires_a_contemporaneous_parent_fraction():
         "source_document_id": "doc-rate",
     }
 
-    assert consolidate_records([classification], [rate], RELEASE) == []
+    with pytest.raises(ValueError, match="no contemporaneous parent fraction"):
+        consolidate_records([classification], [rate], RELEASE)
+
+
+def test_fraction_without_matching_rate_fails_closed():
+    classification = {
+        "level": "fraccion8",
+        "code": "01012101",
+        "description": "Reproductores de raza pura.",
+        "ligie_version": "LIGIE-2022",
+        "validity_basis": "observed_snapshot",
+        "classification_effective_from": None,
+        "classification_effective_to": None,
+        "source_document_id": "doc-fraction",
+    }
+
+    with pytest.raises(ValueError, match="no matching tariff rate"):
+        consolidate_records([classification], [], RELEASE)
+
+
+def test_nico_primary_source_is_the_nico_document():
+    fraction = {
+        "level": "fraccion8",
+        "code": "01012101",
+        "description": "Reproductores de raza pura.",
+        "ligie_version": "LIGIE-2022",
+        "validity_basis": "observed_snapshot",
+        "classification_effective_from": None,
+        "classification_effective_to": None,
+        "source_document_id": "doc-fraction",
+    }
+    nico = {
+        "level": "nico10",
+        "code": "0101210100",
+        "description": "Reproductores.",
+        "ligie_version": "LIGIE-2022",
+        "validity_basis": "observed_snapshot",
+        "classification_effective_from": None,
+        "classification_effective_to": None,
+        "source_document_id": "doc-nico",
+    }
+    rate = {
+        "code": "01012101",
+        "igi_text": "10",
+        "igi_kind": "ad_valorem",
+        "igi_value": Decimal("10"),
+        "ligie_version": "LIGIE-2022",
+        "rate_effective_from": None,
+        "rate_effective_to": None,
+        "source_document_id": "doc-rate",
+    }
+
+    rows = consolidate_records([fraction, nico], [rate], RELEASE)
+    by_level = {row["level"]: row for row in rows}
+
+    assert by_level["fraccion8"]["primary_source_document_id"] == "doc-rate"
+    assert by_level["nico10"]["primary_source_document_id"] == "doc-nico"
 
 
 def test_observed_snapshot_without_start_date_is_current():

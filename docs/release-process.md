@@ -2,6 +2,8 @@
 
 `arancel-mx` usa un pipeline autónomo y fail-closed para construir y publicar snapshots oficiales. El workflow de producción es **Official data pipeline**, definido en [`.github/workflows/official-data-pipeline.yml`](../.github/workflows/official-data-pipeline.yml), y corre diariamente con cron `17 11 * * *` además de admitir `workflow_dispatch`.
 
+Las ejecuciones que pueden mutar (cron y `publish=true`) comparten un único grupo de concurrency y nunca se solapan. Los dry runs usan un grupo propio por ref: GitHub mantiene una sola ejecución pendiente por grupo y cancela la anterior, así que compartir el grupo permitiría que un dry run manual desplazara en silencio una ejecución de producción encolada.
+
 > La publicación automatizada sólo debe activarse en producción después de habilitar release immutability y las protecciones de `main`. El modo manual `workflow_dispatch` usa `publish=false` por defecto para permitir un dry-run sin mutaciones.
 
 ## 1. Tests y entorno reproducible
@@ -67,11 +69,11 @@ release/
 
 Los cinco archivos distintos de `SHA256SUMS` deben estar cubiertos por checksums. `official-sources.tar.gz` conserva los snapshots capturados y `source_capture.json` necesarios para auditar el build.
 
-Antes de cualquier mutación de GitHub Release, `verify_publication_bundle()` exige que el directorio contenga exactamente los six assets, valida manifest/schema/procedencia y vuelve a comprobar hashes.
+Antes de cualquier mutación de GitHub Release, `certify_bundle()` exige que el directorio contenga exactamente los six assets, valida manifest/schema/procedencia, abre el DuckDB público, comprueba el archive de fuentes (incluido el ledger Diputados) y vuelve a comprobar hashes.
 
 ### Artifact attestation
 
-Cuando un build cambiado y validado entra realmente al job `publish`, GitHub Actions crea una sola **artifact attestation** de provenance SLSA sobre esos mismos seis archivos públicos. El paso usa la acción first-party `actions/attest`, autenticación OIDC de GitHub y sólo se ejecuta después de que `verify_publication_bundle()` haya aceptado el artifact descargado.
+Cuando un build cambiado y validado entra realmente al job `publish`, GitHub Actions crea una sola **artifact attestation** de provenance SLSA sobre esos mismos seis archivos públicos. El paso usa la acción first-party `actions/attest`, autenticación OIDC de GitHub y sólo se ejecuta después de que `certify_bundle()` haya aceptado el artifact descargado.
 
 Antes de ejecutar el publisher, cada subject se verifica contra este repositorio y contra el workflow firmante exacto:
 
@@ -102,7 +104,9 @@ El job `publish` sólo puede ejecutarse cuando:
 3. el ref es `refs/heads/main`;
 4. la ejecución es programada o un `workflow_dispatch` confiable usa `publish=true`.
 
-El publisher descarga por nombre exacto el artifact `arancel-mx-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}`, ejecuta de nuevo `verify_publication_bundle()`, genera y verifica la attestation de los seis assets, y sólo entonces crea una GitHub Release en estado **draft** para el tag `data-YYYY.MM.DD`.
+El publisher descarga por nombre exacto el artifact que el build registró (`github_artifact_name` del manifest, con la forma `arancel-mx-<run_id>-<run_attempt>` del intento que lo produjo), ejecuta de nuevo `certify_bundle()`, genera y verifica la attestation de los seis assets, y sólo entonces crea una GitHub Release en estado **draft** para el tag `data-YYYY.MM.DD`.
+
+Ambos extremos del handoff usan el nombre registrado, no `github.run_attempt`: al re-ejecutar sólo el job fallido, `build-and-verify` no vuelve a subir el artifact, así que derivar el nombre del número de intento haría fallar la descarga y obligaría a repetir el build completo.
 
 Los six assets se suben al draft y se verifican remotamente por tamaño y digest cuando GitHub provee digest; si no, se descargan de nuevo y se recalcula SHA256. Sólo entonces el draft se hace público. Después de publicar, la release se vuelve a consultar y verificar.
 
@@ -116,10 +120,12 @@ Si ocurre un segundo cambio válido el mismo día y ya existe `data-YYYY.MM.DD`,
 
 **Cualquier falla bloquea la publicación.** Los pasos principales escriben JSON de diagnóstico antes de devolver un código distinto de cero. El workflow extrae mensajes acotados y sin secretos, y luego falla explícitamente el job.
 
+Esa extracción es una frontera de confianza: los outputs del job `build-and-verify` deciden si `publish` puede ejecutarse. `scripts/workflow_diagnostics.py` es el único código autorizado a escribir outputs del workflow. Valida `status` contra un vocabulario cerrado (`built`, `no_change`, `failed`), acota cada token y mensaje a una sola línea, y rechaza escribir cualquier línea si un valor no es seguro. Un `status` desconocido nunca se propaga: se degrada a `failed` con categoría `invalid_diagnostics`.
+
 El job `notify` es el único con `issues: write`:
 
-- build fallido: crea o actualiza un **GitHub Issue** determinista por stage + failure category;
-- publish fallido, incluida una falla al crear o verificar la attestation: crea o actualiza el GitHub Issue correspondiente;
+- build fallido o cancelado: crea o actualiza un **GitHub Issue** determinista por stage + failure category;
+- publish fallido o cancelado, incluida una falla al crear o verificar la attestation: crea o actualiza el GitHub Issue correspondiente;
 - ejecución posterior saludable: ejecuta **recovery**, comenta y cierra las alertas generadas por la automatización;
 - `no_change` + publisher `skipped` cuenta explícitamente como recovery saludable.
 
@@ -128,6 +134,10 @@ Los Issues del usuario sin el marcador oculto de automatización nunca se cierra
 ## 10. Límites de permisos
 
 El workflow tiene `contents: read` globalmente. El job de build permanece read-only. Sólo `publish` recibe `contents: write`; para A9 ese mismo job recibe además `attestations: write` e `id-token: write`. Sólo `notify` recibe `issues: write`. No se usa PAT, `write-all`, `artifact-metadata: write` ni `pull_request_target`.
+
+Ningún job de este workflow conserva la credencial de checkout: los tres usan `persist-credentials: false` y llegan a GitHub mediante variables de entorno de token explícitas. El job de build es el único que instala `.[dev]`, porque es el único que ejecuta la suite; `publish` y `notify` instalan sólo el runtime, de modo que el job que firma la attestation no carga herramientas de desarrollo.
+
+Los invariantes estructurales de todos los workflows (acciones fijadas por SHA, escrituras siempre dentro de un job, permisos y timeout por job, credenciales de checkout explícitas, y ausencia de interpolación `${{ ... }}` dentro de scripts de shell) se verifican offline en `tests/test_workflow_hardening.py`.
 
 Los binarios, bases DuckDB, snapshots oficiales y bundles de release no se escriben al historial Git.
 
