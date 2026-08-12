@@ -7,6 +7,7 @@ certifi==2026.7.22
 charset-normalizer==3.4.9
 duckdb==1.5.5
 et-xmlfile==2.0.0
+filelock==3.32.0
 idna==3.18
 iniconfig==2.3.0
 numpy==2.4.6
@@ -14,6 +15,7 @@ openpyxl==3.1.5
 packaging==26.3
 pandas==3.0.5
 pillow==12.3.0
+platformdirs==4.11.0
 pluggy==1.6.0
 Pygments==2.20.0
 PyMuPDF==1.28.2
