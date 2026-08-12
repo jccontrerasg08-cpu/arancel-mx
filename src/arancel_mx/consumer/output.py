@@ -7,12 +7,14 @@ from dataclasses import asdict, is_dataclass
 from datetime import date, datetime
 from io import StringIO
 from pathlib import Path
-from typing import Mapping, Sequence
+from typing import Literal, Mapping, Sequence
 
 import json
 
 from arancel_mx.consumer.models import ProvenanceRecord, SearchResult, TariffRecord
 
+
+CsvSchema = Literal["tariff", "search", "provenance", "dataset"]
 
 _TARIFF_FIELDS = (
     "code",
@@ -32,6 +34,7 @@ _TARIFF_FIELDS = (
     "effective_to",
     "is_current",
 )
+_SEARCH_FIELDS = ("score", "match_kind", *_TARIFF_FIELDS)
 _PROVENANCE_FIELDS = (
     "source_document_id",
     "role",
@@ -45,6 +48,13 @@ _PROVENANCE_FIELDS = (
     "effective_from",
     "effective_to",
 )
+_DATASET_FIELDS = ("dataset", "scope")
+_CSV_SCHEMA_FIELDS: dict[CsvSchema, tuple[str, ...]] = {
+    "tariff": _TARIFF_FIELDS,
+    "search": _SEARCH_FIELDS,
+    "provenance": _PROVENANCE_FIELDS,
+    "dataset": _DATASET_FIELDS,
+}
 
 
 def _plain(value: object) -> object:
@@ -80,7 +90,7 @@ def _csv_row(value: object) -> tuple[tuple[str, ...], dict[str, object]]:
     if isinstance(value, SearchResult):
         row = _tariff_row(value.record)
         return (
-            ("score", "match_kind", *_TARIFF_FIELDS),
+            _SEARCH_FIELDS,
             {"score": value.score, "match_kind": value.match_kind, **row},
         )
     if isinstance(value, TariffRecord):
@@ -109,19 +119,23 @@ def _sequence(value: object) -> tuple[object, ...]:
     return (value,)
 
 
-def render_csv(value: object) -> str:
+def render_csv(value: object, *, empty_schema: CsvSchema | None = None) -> str:
     """Render stable CSV headers and LF line endings for supported public values."""
 
     items = _sequence(value)
+    rows: list[dict[str, object]] = []
     if not items:
-        return ""
-    fields, first = _csv_row(items[0])
-    rows = [first]
-    for item in items[1:]:
-        item_fields, row = _csv_row(item)
-        if item_fields != fields:
-            raise TypeError("CSV output sequence contains incompatible public types")
-        rows.append(row)
+        if empty_schema is None:
+            return ""
+        fields = _CSV_SCHEMA_FIELDS[empty_schema]
+    else:
+        fields, first = _csv_row(items[0])
+        rows.append(first)
+        for item in items[1:]:
+            item_fields, row = _csv_row(item)
+            if item_fields != fields:
+                raise TypeError("CSV output sequence contains incompatible public types")
+            rows.append(row)
 
     buffer = StringIO(newline="")
     writer = csv.DictWriter(
@@ -173,13 +187,18 @@ def render_path(path: str | Path) -> str:
     return str(Path(path))
 
 
-def render(value: object, *, format_name: str) -> str:
+def render(
+    value: object,
+    *,
+    format_name: str,
+    empty_csv_schema: CsvSchema | None = None,
+) -> str:
     """Dispatch one public value to the selected stable output format."""
 
     if format_name == "json":
         return render_json(value)
     if format_name == "csv":
-        return render_csv(value)
+        return render_csv(value, empty_schema=empty_csv_schema)
     if format_name == "table":
         return render_table(value)
     raise ValueError(f"unsupported output format: {format_name}")
