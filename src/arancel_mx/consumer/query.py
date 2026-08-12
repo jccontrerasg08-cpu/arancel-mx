@@ -8,7 +8,8 @@ import unicodedata
 from typing import Iterable
 
 from arancel_mx.consumer.errors import InvalidCodeError, QueryError, RecordNotFoundError
-from arancel_mx.consumer.models import ProvenanceRecord, SearchResult, TariffRecord
+from arancel_mx.consumer.hs_sections import section_for_chapter
+from arancel_mx.consumer.models import Ficha, ProvenanceRecord, SearchResult, TariffRecord
 
 
 _CODE_LENGTHS = {2, 4, 6, 8, 10}
@@ -28,6 +29,21 @@ _ROW_SELECT = """
            effective_from, effective_to, is_current
     FROM arancel_mx
 """
+
+
+def format_code(code: str) -> str:
+    """Format a normalized 2/4/6/8/10-digit code the way TIGIE browsers display it."""
+
+    digits = normalize_code(code)
+    if len(digits) == 2:
+        return digits
+    if len(digits) == 4:
+        return f"{digits[:2]}.{digits[2:]}"
+    if len(digits) == 6:
+        return f"{digits[:4]}.{digits[4:]}"
+    if len(digits) == 8:
+        return f"{digits[:4]}.{digits[4:6]}.{digits[6:]}"
+    return f"{digits[:4]}.{digits[4:6]}.{digits[6:8]} {digits[8:]}"
 
 
 def normalize_code(value: str) -> str:
@@ -173,6 +189,37 @@ def parent(connection, code: str) -> TariffRecord | None:
     if record.parent_code is None:
         return None
     return lookup(connection, record.parent_code)
+
+
+def _ancestor_codes(code: str) -> tuple[str, ...]:
+    return tuple(code[:width] for width in (2, 4, 6, 8, 10) if width <= len(code))
+
+
+def ficha(connection, code: str) -> Ficha:
+    """Return the official hierarchy card for one code (chapter → NICO)."""
+
+    record = lookup(connection, code)
+    hierarchy = tuple(lookup(connection, ancestor) for ancestor in _ancestor_codes(record.code))
+    return Ficha(
+        record=record,
+        formatted_code=format_code(record.code),
+        section=section_for_chapter(record.code[:2]),
+        hierarchy=hierarchy,
+        children=children(connection, record.code),
+    )
+
+
+def chapters(connection) -> tuple[TariffRecord, ...]:
+    """Return current HS2 chapters, sorted by code."""
+
+    rows = connection.execute(
+        _ROW_SELECT + " WHERE level = 'hs2' AND is_current = TRUE ORDER BY code ASC"
+    ).fetchall()
+    records = tuple(_row_to_tariff_record(row) for row in rows)
+    codes = [record.code for record in records]
+    if len(codes) != len(set(codes)):
+        raise QueryError("multiple current records found for one HS2 chapter")
+    return records
 
 
 def children(connection, code: str) -> tuple[TariffRecord, ...]:
