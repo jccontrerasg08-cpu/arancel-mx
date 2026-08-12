@@ -154,7 +154,7 @@ def _read_json(path: str) -> Any:
 
 
 def _update_config(namespace: argparse.Namespace) -> object:
-    update_config = _maintainer_attr("arancel_mx.pipeline.update", "UpdateConfig")
+    update_config_cls = _maintainer_attr("arancel_mx.pipeline.update", "UpdateConfig")
 
     options: dict[str, object] = {
         "state_path": Path(namespace.state_path),
@@ -162,7 +162,7 @@ def _update_config(namespace: argparse.Namespace) -> object:
     }
     if namespace.ledger_url:
         options["ledger_url"] = namespace.ledger_url
-    return _call_maintainer(update_config, **options)
+    return update_config_cls(**options)
 
 
 def _dispatch(namespace: argparse.Namespace) -> object:
