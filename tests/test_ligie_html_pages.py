@@ -129,6 +129,30 @@ def test_snice_validators_accept_entity_encoded_legacy_html() -> None:
     ]
 
 
+def test_snice_validators_accept_frame_and_script_embedded_consult_paths() -> None:
+    biblioteca_html = (
+        "<!doctype html><html><frameset>"
+        "<frame src='cp.consulta.fracciones.arancelarias.html'>"
+        "</frameset></html>"
+    )
+    classifier_html = (
+        "<!doctype html><html><head>"
+        "<script>var app='hce.mi.fraccion.arancelaria.app.html';</script>"
+        "</head><body><p>SNICE LIGIE</p></body></html>"
+    )
+    assert fracciones_arancelarias_consult_urls(biblioteca_html, SNICE_BIBLIOTECA_JURIDICA_URL)
+    validate_ligie_html_page(
+        "snice_biblioteca_juridica",
+        "<html><body><h1>LIGIE Biblioteca Jur&iacute;dica</h1></body></html>",
+        base_url=SNICE_BIBLIOTECA_JURIDICA_URL,
+    )
+    validate_ligie_html_page(
+        "snice_individual_classifier",
+        classifier_html,
+        base_url=SNICE_INDIVIDUAL_CLASSIFIER_URL,
+    )
+
+
 def test_biblioteca_juridica_fixture_exposes_individual_fraction_consult_link() -> None:
     html = (FIXTURES / "snice" / "ligie.info22.ligiebibjur.html").read_text(encoding="utf-8")
     consult_urls = fracciones_arancelarias_consult_urls(html, SNICE_BIBLIOTECA_JURIDICA_URL)
