@@ -43,7 +43,7 @@ jobs:
           mkdir -p docs
           CASTS=(docs/*.cast)
           if [ ! -e "${CASTS[0]}" ]; then
-            echo "No .cast recordings found in docs; nothing to generate."
+            echo "::warning::No .cast recordings found in docs, so no asset was regenerated. Commit a recording before dispatching this workflow."
             exit 0
           fi
           for f in docs/*.cast; do

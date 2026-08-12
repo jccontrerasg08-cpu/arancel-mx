@@ -102,5 +102,8 @@ jobs:
           python scripts/certify_package_install.py dist/*.whl
           python scripts/certify_package_install.py dist/*.tar.gz
 
-      - name: Check whitespace
-        run: git diff --check
+      # --exit-code makes this fail on any modification, not only on a whitespace
+      # error inside one: on a clean checkout the tests and build must leave every
+      # tracked file untouched.
+      - name: Verify the build left tracked files unchanged
+        run: git diff --check --exit-code
