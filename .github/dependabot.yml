@@ -1,7 +1,7 @@
 version: 2
 updates:
   # "/" covers pyproject.toml (public compatibility ranges); "/requirements" covers
-  # production-build.txt, the exact pins every official build and release uses.
+  # production-build.txt, the exact pins every official build and release installs.
   - package-ecosystem: "pip"
     directories:
       - "/"
@@ -9,11 +9,25 @@ updates:
     schedule:
       interval: weekly
       day: monday
+    # A bump usually touches the public range and the exact pin, and the pull
+    # request template requires both in the same change, so group by dependency
+    # instead of opening one pull request per directory.
+    groups:
+      python:
+        group-by: dependency-name
+        patterns:
+          - "*"
+    # Give a freshly published version time to be found compromised before it is
+    # proposed for the official build. Security updates ignore this delay.
+    cooldown:
+      default-days: 7
     labels:
       - dependencies
       - python
     open-pull-requests-limit: 5
 
+  # Left ungrouped on purpose: each action SHA bump is a supply-chain change that
+  # deserves its own review.
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:

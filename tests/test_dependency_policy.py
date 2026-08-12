@@ -115,3 +115,13 @@ def test_dependabot_watches_the_exact_production_constraints_file():
     assert '- "/"' in pip_block
     assert f'- "/{CONSTRAINTS.parent.name}"' in pip_block
     assert 'directory: "/"' in config[config.index('package-ecosystem: "github-actions"') :]
+
+
+def test_dependabot_keeps_the_range_and_the_pin_in_one_reviewed_pull_request():
+    config = DEPENDABOT.read_text(encoding="utf-8")
+    pip_block = config[config.index('package-ecosystem: "pip"') : config.index(
+        'package-ecosystem: "github-actions"'
+    )]
+
+    assert "group-by: dependency-name" in pip_block
+    assert re.search(r"cooldown:\n\s+default-days: \d+", pip_block)
