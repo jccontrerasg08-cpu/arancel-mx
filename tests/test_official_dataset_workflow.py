@@ -24,12 +24,18 @@ def _workflow() -> str:
     return WORKFLOW.read_text(encoding="utf-8")
 
 
+def _job_start(workflow: str, job: str) -> int:
+    # Anchor on the job key itself; `publish` is also the name of a workflow input.
+    match = re.search(rf"^  {re.escape(job)}:$", workflow, re.MULTILINE)
+    assert match is not None, job
+    return match.start()
+
+
 def _job_block(workflow: str, job: str, next_job: str | None = None) -> str:
-    start = workflow.index(f"  {job}:")
+    start = _job_start(workflow, job)
     if next_job is None:
         return workflow[start:]
-    end = workflow.index(f"  {next_job}:", start + 1)
-    return workflow[start:end]
+    return workflow[start : _job_start(workflow, next_job)]
 
 
 def test_autonomous_workflow_replaces_legacy_weekly_workflow():
@@ -40,7 +46,7 @@ def test_autonomous_workflow_replaces_legacy_weekly_workflow():
     assert "workflow_dispatch:" in workflow
     assert "schedule:" in workflow
     assert 'cron: "17 11 * * *"' in workflow
-    assert "group: arancel-mx-official-data-production" in workflow
+    assert "'arancel-mx-official-data-production'" in workflow
     assert "cancel-in-progress: false" in workflow
     assert re.search(r"^permissions:\n\s+contents: read$", workflow, re.MULTILINE)
     assert "pull_request:" not in workflow
@@ -72,7 +78,7 @@ def test_build_job_is_read_only_constrained_tested_and_fail_closed():
         "scripts/run_official_pipeline.py",
         "out/pipeline-result.json",
         "actions/upload-artifact@",
-        "arancel-mx-${{ github.run_id }}-${{ github.run_attempt }}",
+        "name: ${{ steps.pipeline_result.outputs.artifact_name }}",
     )
     forbidden = ("contents: write", "issues: write", "secrets.")
 
@@ -96,9 +102,40 @@ def test_only_publisher_has_contents_write_and_it_requires_built_trusted_main():
     assert "needs.build-and-verify.outputs.status == 'built'" in publish
     assert "github.ref == 'refs/heads/main'" in publish
     assert "actions/download-artifact@" in publish
-    assert "arancel-mx-${{ github.run_id }}-${{ github.run_attempt }}" in publish
-    assert "verify_publication_bundle" in publish
+    assert "name: ${{ needs.build-and-verify.outputs.artifact_name }}" in publish
+    assert "certify_bundle" in publish
     assert "python -m scripts.publish_release" in publish
+
+
+def test_artifact_name_survives_a_publish_only_rerun():
+    workflow = _workflow()
+    build = _job_block(workflow, "build-and-verify", "publish")
+    publish = _job_block(workflow, "publish", "notify")
+
+    # github.run_attempt increments on a re-run, and re-running only the failed
+    # publisher does not re-upload from the already successful build, so neither end
+    # of the handoff may derive the artifact name from the attempt number.
+    assert "artifact_name: ${{ steps.pipeline_result.outputs.artifact_name }}" in build
+    assert "name: ${{ steps.pipeline_result.outputs.artifact_name }}" in build
+    assert "name: ${{ needs.build-and-verify.outputs.artifact_name }}" in publish
+    assert "github.run_attempt" not in publish
+
+
+def test_a_cancelled_production_job_still_raises_an_alert():
+    notify = _job_block(_workflow(), "notify")
+
+    assert "needs.build-and-verify.result == 'cancelled'" in notify
+    assert "needs.publish.result == 'cancelled'" in notify
+
+
+def test_dry_runs_cannot_displace_a_queued_production_run():
+    workflow = _workflow()
+    concurrency = workflow[workflow.index("concurrency:") : workflow.index("jobs:")]
+
+    assert "'arancel-mx-official-data-production'" in concurrency
+    assert "arancel-mx-official-data-dry-run-{0}" in concurrency
+    assert "github.event_name == 'schedule' || inputs.publish == true" in concurrency
+    assert "cancel-in-progress: false" in concurrency
 
 
 def test_publisher_is_only_attestation_signer_and_uses_pinned_first_party_action():
@@ -161,7 +198,7 @@ def test_attestation_is_verified_before_existing_release_publisher():
     )
     assert verified_names == PUBLIC_ATTESTATION_NAMES
 
-    assert publish.index("Independently verify publication bundle") < publish.index(
+    assert publish.index("Independently certify publication bundle") < publish.index(
         "Generate build provenance attestation"
     ) < publish.index("Verify build provenance attestation") < publish.index(
         "Publish immutable verified release"

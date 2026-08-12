@@ -156,12 +156,36 @@ class CleanupFailureGitHub(FakeGitHub):
 
 
 def patch_local_verifier(monkeypatch, events, value=None):
-    def verify(path):
-        events.append("local_verify")
+    class Report:
+        passed = True
+        checks = ("publication_bundle",)
+        row_count = 1
+
+    def certify(path):
+        events.append("bundle_certify")
+        assert path.name == "release"
+        return Report()
+
+    def load_manifest(path):
+        events.append("load_manifest")
         assert path.name == "release"
         return value or manifest()
 
-    monkeypatch.setattr(publisher, "verify_publication_bundle", verify)
+    monkeypatch.setattr(publisher, "certify_bundle", certify)
+    monkeypatch.setattr(publisher, "_load_certified_manifest", load_manifest)
+
+
+def test_bundle_certification_failure_is_structured_and_fails_closed(tmp_path, monkeypatch):
+    client = FakeGitHub()
+
+    def failing_certify(path):
+        raise ValueError("hash mismatch")
+
+    monkeypatch.setattr(publisher, "certify_bundle", failing_certify)
+    with pytest.raises(PublicationError) as exc_info:
+        publish_release(client, bundle(tmp_path), COMMIT)
+    assert exc_info.value.category == "bundle_certification"
+    assert client.mutations == []
 
 
 @pytest.mark.parametrize(
@@ -183,7 +207,7 @@ def test_existing_release_or_tag_fails_closed_before_any_mutation(
 
     assert raised.value.category == "release_tag_collision"
     assert client.mutations == []
-    assert events[0] == "local_verify"
+    assert events[0] == "bundle_certify"
 
 
 def test_same_date_second_change_never_overwrites_existing_release(tmp_path, monkeypatch):
@@ -217,7 +241,8 @@ def test_success_is_verify_then_draft_upload_remote_verify_and_publish(tmp_path,
         "release_id": 10,
     }
     assert events == [
-        "local_verify",
+        "bundle_certify",
+        "load_manifest",
         "check_release",
         "check_tag",
         "create_draft",

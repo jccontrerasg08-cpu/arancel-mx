@@ -41,6 +41,11 @@ def _host_allowed(url: str, allowed_hosts: tuple[str, ...]) -> bool:
     return bool(host) and host in {value.lower() for value in allowed_hosts}
 
 
+def _require_https(url: str) -> None:
+    if urlparse(url).scheme.lower() != "https":
+        raise ValueError(f"official document URL must use https: {url}")
+
+
 def _normalized_media_type(value: object) -> str:
     return str(value or "").split(";", 1)[0].strip().lower()
 
@@ -113,6 +118,7 @@ def fetch_official_document(
         raise ValueError("timeout_s must be positive")
     if max_bytes < 1:
         raise ValueError("max_bytes must be positive")
+    _require_https(url)
     if not _host_allowed(url, allowed_hosts):
         raise ValueError(f"requested host is not allowed: {url}")
 
@@ -120,6 +126,7 @@ def fetch_official_document(
     try:
         response.raise_for_status()
         final_url = str(response.url)
+        _require_https(final_url)
         if not _host_allowed(final_url, allowed_hosts):
             raise ValueError(f"redirected host is not allowed: {final_url}")
 

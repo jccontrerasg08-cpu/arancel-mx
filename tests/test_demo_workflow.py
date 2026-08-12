@@ -13,6 +13,34 @@ def _workflow() -> str:
     return WORKFLOW.read_text(encoding="utf-8")
 
 
+def _top_level_permissions(workflow: str) -> dict[str, str]:
+    """Return the workflow-level permissions mapping (the block before ``jobs:``)."""
+
+    preamble = workflow.split("\njobs:", 1)[0]
+    values: dict[str, str] = {}
+    in_permissions = False
+    for line in preamble.splitlines():
+        if line.startswith("permissions:"):
+            in_permissions = True
+            inline = line.partition(":")[2].strip()
+            if inline:
+                key, _, value = inline.partition(":")
+                values[key.strip()] = value.split("#", 1)[0].strip()
+                in_permissions = False
+            continue
+        if not in_permissions:
+            continue
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        if line[:1] not in {" ", "\t"}:
+            break
+        stripped = line.split("#", 1)[0].strip()
+        key, _, value = stripped.partition(":")
+        if key and value:
+            values[key.strip()] = value.strip()
+    return values
+
+
 def test_demo_workflow_is_manual_pr_based_and_least_privilege():
     workflow = _workflow()
 
@@ -20,14 +48,30 @@ def test_demo_workflow_is_manual_pr_based_and_least_privilege():
     assert "schedule:" not in workflow
     assert "pull_request:" not in workflow
     assert "pull_request_target:" not in workflow
-    assert re.search(r"^\s+contents: write$", workflow, re.MULTILINE)
-    assert re.search(r"^\s+pull-requests: write$", workflow, re.MULTILINE)
+    assert re.search(r"^\s+contents: write(?: #.*)?$", workflow, re.MULTILINE)
+    assert re.search(r"^\s+pull-requests: write(?: #.*)?$", workflow, re.MULTILINE)
+    top_level = _top_level_permissions(workflow)
+    assert top_level.get("contents") == "read"
+    assert "write" not in top_level.values()
     assert 'branch="automation/demo-${GITHUB_RUN_ID}"' in workflow
     assert 'git push origin "$branch"' in workflow
     assert "gh pr create" in workflow
     assert "--base main" in workflow
     assert 'GH_TOKEN: ${{ github.token }}' in workflow
     assert "secrets.GITHUB_TOKEN" not in workflow
+
+
+def test_top_level_permissions_ignore_job_scoped_write() -> None:
+    workflow = (
+        "permissions:\n"
+        "  contents: read\n"
+        "jobs:\n"
+        "  generate:\n"
+        "    permissions:\n"
+        "      contents: write\n"
+        "      pull-requests: write\n"
+    )
+    assert _top_level_permissions(workflow) == {"contents": "read"}
 
 
 def test_demo_workflow_pins_actions_node_and_svg_term_cli():

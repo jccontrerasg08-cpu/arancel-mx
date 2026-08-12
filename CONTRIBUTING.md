@@ -27,6 +27,17 @@ python -m pytest -q
 5. Ejecuta `python -m pytest -q`, `python -m build` y `git diff --check`.
 6. Actualiza la documentación cuando cambien interfaces, esquema o proceso de publicación.
 
+## Cambios en GitHub Actions
+
+Un cambio de workflow es un cambio de producción: el pipeline oficial publica datos y firma provenance. Mantén permisos mínimos por job, acciones fijadas por SHA completo con comentario de versión, y valores dinámicos pasados por `env:` en lugar de interpolarlos dentro de un script de shell.
+
+El contrato estructural se verifica offline con `python -m pytest tests/test_workflow_hardening.py -q`. Antes de abrir el pull request conviene además auditar con las herramientas estándar del ecosistema:
+
+```bash
+zizmor .github/workflows/
+actionlint
+```
+
 No incluyas credenciales, bases locales, descargas originales no revisadas, datos personales ni rutas absolutas de tu equipo. Los artefactos generados y descargas pertenecen a rutas ignoradas por Git.
 
 Al enviar una contribución aceptas que se publique bajo Apache-2.0 conforme a la sección 5 de la licencia. Para vulnerabilidades, sigue [SECURITY.md](SECURITY.md) y no abras un issue público.

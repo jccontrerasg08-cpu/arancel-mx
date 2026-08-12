@@ -165,6 +165,55 @@ def _legal_media_types(evidence: RequiredDofEvidence) -> tuple[str, ...]:
     return tuple(media_types)
 
 
+def _capture_ledger(
+    fetched: FetchedDocument,
+    config: OfficialDatasetConfig,
+) -> CapturedOfficialSource:
+    """Preserve the exact Diputados ledger bytes that drive legal reconciliation."""
+    retrieved_at = _retrieval_timestamp(fetched)
+    filename = _filename(fetched.final_url)
+    metadata = {
+        "source_id": "diputados_ligie",
+        "kind": "legal_ledger",
+        "observed_at": config.effective_as_of.isoformat(),
+        "retrieved_at": retrieved_at.isoformat().replace("+00:00", "Z"),
+        "source_url": fetched.final_url,
+        "filename": filename,
+        "media_type": fetched.media_type,
+        "title": "LIGIE registered legal ledger",
+    }
+    capture = capture_document(fetched.content, metadata, config.work_dir / "raw")
+    source_id = _source_document_id(
+        "diputados_ligie:legal_ledger",
+        fetched.final_url,
+        capture.sha256,
+    )
+    authority, venue = SOURCE_AUTHORITY["diputados_ligie"]
+    source_document: dict[str, object] = {
+        "source_document_id": source_id,
+        "authority": authority,
+        "publication_venue": venue,
+        "title": "LIGIE registered legal ledger",
+        "source_url": fetched.final_url,
+        "media_type": fetched.media_type,
+        "sha256": capture.sha256,
+        "local_path": str(capture.path),
+        "published_at": None,
+        "effective_from": None,
+        "effective_to": None,
+        "observed_at": config.effective_as_of,
+        "retrieved_at": retrieved_at,
+    }
+    return CapturedOfficialSource(
+        dataset_key="diputados_ligie",
+        document_role="legal_ledger",
+        title="LIGIE registered legal ledger",
+        fetched=fetched,
+        capture=capture,
+        source_document=source_document,
+    )
+
+
 def _capture_legal_evidence(
     evidence: RequiredDofEvidence,
     config: OfficialDatasetConfig,
@@ -280,6 +329,7 @@ def capture_official_inputs(
         ("text/html",),
         timeout_s=config.timeout_s,
     )
+    ledger_source = _capture_ledger(ledger_fetch, config)
     ledger = parse_ligie_ledger(
         decode_fetched_text(ledger_fetch),
         ledger_fetch.final_url,
@@ -322,6 +372,7 @@ def capture_official_inputs(
             config=config,
             session=client,
         ),
+        ledger_source,
         _capture_source(
             dataset_key="diputados_ligie",
             document_role="consolidated_text",
@@ -364,25 +415,37 @@ def write_release_sources(
         raise FileExistsError(f"Release source directory already exists: {source_dir}")
     source_dir.mkdir(parents=True)
 
-    names: dict[str, str] = {}
-    for item in captured:
+    def release_filename(item: CapturedOfficialSource) -> str:
         suffix = Path(urlparse(item.fetched.final_url).path).suffix.lower()
         if item.dataset_key == "ligie":
-            names[item.dataset_key] = f"ligie{suffix}"
-        elif item.dataset_key == "nico":
-            names[item.dataset_key] = f"nico{suffix}"
-        elif item.dataset_key == "diputados_ligie":
-            names[item.dataset_key] = "ligie-consolidated.pdf"
-        elif item.dataset_key == "dof_law_reform":
-            names[item.dataset_key] = f"dof-law-reform{suffix}"
-        elif item.dataset_key == "dof_tariff_decree":
-            names[item.dataset_key] = f"dof-tariff-decree{suffix}"
-        else:
-            raise ValueError(f"unexpected release source: {item.dataset_key}")
+            return f"ligie{suffix}"
+        if item.dataset_key == "nico":
+            return f"nico{suffix}"
+        if (
+            item.dataset_key == "diputados_ligie"
+            and item.document_role == "legal_ledger"
+        ):
+            return f"ligie-ledger{suffix or '.html'}"
+        if item.dataset_key == "diputados_ligie":
+            return "ligie-consolidated.pdf"
+        if item.dataset_key == "dof_law_reform":
+            return f"dof-law-reform{suffix}"
+        if item.dataset_key == "dof_tariff_decree":
+            return f"dof-tariff-decree{suffix}"
+        raise ValueError(
+            f"unexpected release source: {item.dataset_key}/{item.document_role}"
+        )
 
     rows = []
-    for item in sorted(captured, key=lambda value: value.dataset_key):
-        filename = names[item.dataset_key]
+    used_names: set[str] = set()
+    for item in sorted(
+        captured,
+        key=lambda value: (value.dataset_key, value.document_role),
+    ):
+        filename = release_filename(item)
+        if filename in used_names:
+            raise ValueError(f"duplicate release source filename: {filename}")
+        used_names.add(filename)
         target = source_dir / filename
         shutil.copyfile(item.capture.path, target)
         source_document = item.source_document

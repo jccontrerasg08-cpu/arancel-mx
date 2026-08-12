@@ -19,11 +19,17 @@ Expected repository boundary:
 ```text
 default GITHUB_TOKEN: contents read
 Official data pipeline / build-and-verify: contents read
-Official data pipeline / publish: contents write
+Official data pipeline / publish: contents write + attestations write + id-token write
 Official data pipeline / notify: contents read + issues write
-generate-demo: contents write + pull-requests write
+generate-demo / generate: contents write + pull-requests write
 CI job test: contents read
 ```
+
+Cada escritura vive dentro del job que la necesita; ningún workflow concede permisos de escritura a nivel de workflow. El contrato se verifica offline en `tests/test_workflow_hardening.py`, de modo que un cambio que amplíe el alcance falla en `test` antes de llegar a `main`.
+
+### Schedule del pipeline oficial
+
+GitHub deshabilita automáticamente los workflows programados de un repositorio público después de **60 días sin actividad** y notifica al mantenedor. Si el cron `17 11 * * *` deja de ejecutarse, revisa primero **Settings → Actions** y la pestaña **Actions** por el aviso de schedule deshabilitado antes de investigar el pipeline; reactivarlo es un paso manual.
 
 ## 2. Release immutability
 

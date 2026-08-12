@@ -42,6 +42,11 @@ def current_identities():
     return (
         identity("ligie", "ligie_snapshot", "https://www.snice.gob.mx/ligie.xlsx"),
         identity("nico", "nico_snapshot", "https://www.snice.gob.mx/nico.xlsx"),
+        identity(
+            "diputados_ligie",
+            "legal_ledger",
+            "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm",
+        ),
         identity("diputados_ligie", "consolidated_text", "https://www.diputados.gob.mx/LIGIE.pdf"),
         identity("dof_law_reform", "law_reform", "https://www.dof.gob.mx/reform.pdf"),
     )
@@ -83,16 +88,25 @@ def test_legacy_baseline_forces_full_schema_v2_build_instead_of_no_change(
         sources=(
             SimpleNamespace(
                 dataset_key="ligie",
+                document_role="ligie_snapshot",
                 capture=SimpleNamespace(path=Path("/ligie.fixture")),
                 source_document={"source_document_id": "source-ligie"},
             ),
             SimpleNamespace(
                 dataset_key="nico",
+                document_role="nico_snapshot",
                 capture=SimpleNamespace(path=Path("/nico.fixture")),
                 source_document={"source_document_id": "source-nico"},
             ),
             SimpleNamespace(
                 dataset_key="diputados_ligie",
+                document_role="legal_ledger",
+                capture=SimpleNamespace(path=Path("/ledger.fixture")),
+                source_document={"source_document_id": "source-ledger"},
+            ),
+            SimpleNamespace(
+                dataset_key="diputados_ligie",
+                document_role="consolidated_text",
                 capture=SimpleNamespace(path=Path("/diputados.fixture")),
                 source_document={"source_document_id": "source-diputados"},
             ),
