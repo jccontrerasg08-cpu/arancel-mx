@@ -10,11 +10,18 @@ from arancel_mx.consumer.dataset import Dataset
 from arancel_mx.consumer.doctor import doctor_to_dict, render_doctor_human, run_doctor
 from arancel_mx.consumer.errors import DatasetUnavailableError
 from arancel_mx.consumer.manager import DatasetManager
-from arancel_mx.consumer.output import render, render_json, render_path
+from arancel_mx.consumer.output import CsvSchema, render, render_json, render_path
 
 
 _OUTPUT_FORMATS = ("table", "json", "csv")
 _QUERY_ACTIONS = {"lookup", "search", "parent", "children", "provenance"}
+_QUERY_CSV_SCHEMAS: dict[str, CsvSchema] = {
+    "lookup": "tariff",
+    "search": "search",
+    "parent": "tariff",
+    "children": "tariff",
+    "provenance": "provenance",
+}
 
 
 def _positive_int(value: str) -> int:
@@ -204,8 +211,17 @@ def _manager(namespace: argparse.Namespace) -> DatasetManager:
     return DatasetManager(_consumer_config(namespace))
 
 
-def _emit(value: object, *, format_name: str) -> None:
-    text = render(value, format_name=format_name)
+def _emit(
+    value: object,
+    *,
+    format_name: str,
+    empty_csv_schema: CsvSchema | None = None,
+) -> None:
+    text = render(
+        value,
+        format_name=format_name,
+        empty_csv_schema=empty_csv_schema,
+    )
     sys.stdout.write(text)
     if text and not text.endswith("\n"):
         sys.stdout.write("\n")
@@ -227,7 +243,11 @@ def _run_query(namespace: argparse.Namespace) -> int:
         value = dataset.provenance(namespace.code)
     else:
         raise ValueError(f"unsupported consumer query action: {action}")
-    _emit(value, format_name=namespace.format)
+    _emit(
+        value,
+        format_name=namespace.format,
+        empty_csv_schema=_QUERY_CSV_SCHEMAS[action],
+    )
     return 0
 
 
@@ -283,7 +303,11 @@ def _run_data_list(namespace: argparse.Namespace) -> int:
         versions = manager.list_local()
         scope = "local"
     rows = tuple({"dataset": version, "scope": scope} for version in versions)
-    _emit(rows, format_name=namespace.format)
+    _emit(
+        rows,
+        format_name=namespace.format,
+        empty_csv_schema="dataset",
+    )
     return 0
 
 
