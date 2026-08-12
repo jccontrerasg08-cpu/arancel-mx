@@ -175,6 +175,19 @@ def patch_local_verifier(monkeypatch, events, value=None):
     monkeypatch.setattr(publisher, "_load_certified_manifest", load_manifest)
 
 
+def test_bundle_certification_failure_is_structured_and_fails_closed(tmp_path, monkeypatch):
+    client = FakeGitHub()
+
+    def failing_certify(path):
+        raise ValueError("hash mismatch")
+
+    monkeypatch.setattr(publisher, "certify_bundle", failing_certify)
+    with pytest.raises(PublicationError) as exc_info:
+        publish_release(client, bundle(tmp_path), COMMIT)
+    assert exc_info.value.category == "bundle_certification"
+    assert client.mutations == []
+
+
 @pytest.mark.parametrize(
     ("existing_release", "existing_tag"),
     [(True, False), (False, True)],
