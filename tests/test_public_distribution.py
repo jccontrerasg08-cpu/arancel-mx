@@ -170,7 +170,7 @@ def test_readme_preserves_existing_public_information() -> None:
         "https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html",
         "https://www.snice.gob.mx/cs/avi/snice/ligie.notasnac22.html",
         "https://www.snice.gob.mx/cs/avi/snice/ligie.indicaranc22.html",
-        "https://www.dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022",
+        "https://dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022",
         "python -m arancel_mx --help",
         "python -m arancel_mx build --database data/arancel.duckdb --output-dir out/release",
         "python -m arancel_mx check-updates --state-path data/update_state/ligie.json --report-path out/update.json",

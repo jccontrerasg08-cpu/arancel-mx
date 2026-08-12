@@ -24,7 +24,7 @@ class UpdateConfig:
     state_path: Path = Path("data/arancel_mx/update_state/ligie_ledger.json")
     report_path: Path | None = None
     timeout_s: float = 60.0
-    user_agent: str = "arancel-mx/1.0 (+https://github.com/)"
+    user_agent: str = "arancel-mx/1.0 (+https://github.com/jccontrerasg08-cpu/arancel-mx)"
 
 
 @dataclass(frozen=True)

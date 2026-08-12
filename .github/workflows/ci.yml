@@ -40,7 +40,14 @@ jobs:
           python -m pip install -c requirements/production-build.txt -e ".[dev]"
 
       - name: Run tests
+        env:
+          ARANCEL_MX_SKIP_URL_CHECKS: "1"
         run: python -m pytest -q
+
+      - name: Verify documented official URLs are accessible
+        run: |
+          python -m scripts.check_documented_urls --timeout 45
+          python -m scripts.validate_ligie_html_pages --timeout 45
 
       - name: Build distributions
         run: python -m build
