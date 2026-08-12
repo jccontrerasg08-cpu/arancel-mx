@@ -49,12 +49,13 @@ def sha256(path: Path) -> str:
 def _checksum_lines(path: Path) -> dict[str, str]:
     declared: dict[str, str] = {}
     for line in path.read_text(encoding="ascii").splitlines():
-        parts = line.split()
-        if len(parts) != 2 or Path(parts[1]).name != parts[1]:
+        match = re.fullmatch(r"([0-9a-fA-F]{64})  ([A-Za-z0-9_.-]+)", line)
+        if match is None:
             raise ValueError(f"Invalid checksum line: {line}")
-        if parts[1] in declared:
-            raise ValueError(f"Duplicate checksum entry: {parts[1]}")
-        declared[parts[1]] = parts[0]
+        digest, name = match.groups()
+        if name in declared:
+            raise ValueError(f"Duplicate checksum entry: {name}")
+        declared[name] = digest
     return declared
 
 

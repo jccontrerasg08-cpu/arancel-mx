@@ -29,6 +29,11 @@ def identities():
         identity("nico", "nico_snapshot", "https://www.snice.gob.mx/nico.xlsx"),
         identity(
             "diputados_ligie",
+            "legal_ledger",
+            "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm",
+        ),
+        identity(
+            "diputados_ligie",
             "consolidated_text",
             "https://www.diputados.gob.mx/LIGIE.pdf",
         ),
@@ -55,11 +60,17 @@ def config(tmp_path, name="candidate"):
     )
 
 
-def captured_source(dataset_key):
+def captured_source(dataset_key, document_role=None):
+    role = document_role or {
+        "ligie": "ligie_snapshot",
+        "nico": "nico_snapshot",
+        "diputados_ligie": "consolidated_text",
+    }[dataset_key]
     return SimpleNamespace(
         dataset_key=dataset_key,
+        document_role=role,
         capture=SimpleNamespace(path=Path(f"/{dataset_key}.fixture")),
-        source_document={"source_document_id": f"source-{dataset_key}"},
+        source_document={"source_document_id": f"source-{dataset_key}-{role}"},
     )
 
 
@@ -69,7 +80,8 @@ def snapshot(current_identities):
         sources=(
             captured_source("ligie"),
             captured_source("nico"),
-            captured_source("diputados_ligie"),
+            captured_source("diputados_ligie", "legal_ledger"),
+            captured_source("diputados_ligie", "consolidated_text"),
         ),
     )
 
@@ -110,7 +122,7 @@ def test_identical_source_identity_skips_parsing_and_creates_no_release(
         "schema_version": "2",
         "row_count": 123,
         "validation_status": "passed",
-        "source_count": 5,
+        "source_count": 6,
         "output_dir": None,
     }
     assert not build_config.output_dir.exists()

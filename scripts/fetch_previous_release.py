@@ -11,7 +11,6 @@ from pathlib import Path
 import re
 import sys
 import tempfile
-from typing import Any
 
 from arancel_mx.release.metadata import source_identity_from_manifest
 from scripts.github_api import GitHubApi

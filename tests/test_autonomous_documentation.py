@@ -46,7 +46,7 @@ def test_release_process_documents_exact_publication_and_recovery_contract():
         "generated_at",
         "no_change",
         "draft",
-        "verify_publication_bundle",
+        "certify_bundle",
         "six assets",
         "immutable",
         "same-date",

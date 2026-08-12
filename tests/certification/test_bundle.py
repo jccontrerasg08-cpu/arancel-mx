@@ -1,4 +1,5 @@
-import csv
+from datetime import date, datetime
+from decimal import Decimal
 import hashlib
 import io
 import json
@@ -8,68 +9,169 @@ import tarfile
 import pytest
 
 from arancel_mx.certification.bundle import certify_bundle
-from arancel_mx.domain.normalization import PUBLIC_COLUMNS
+from arancel_mx.pipeline.build import export_arancel_release, materialize_arancel
 from arancel_mx.release.package import (
     PUBLIC_RELEASE_ASSETS,
     RELEASE_ARTIFACTS,
     prepare_release_archive,
 )
+from arancel_mx.storage.duckdb import connect, init_tariff_db
 
 
-SOURCE_BYTES = b"official source bytes"
+SOURCE_BYTES = {
+    "ligie.xlsx": b"official ligie workbook",
+    "nico.xlsx": b"official nico workbook",
+    "ligie-ledger.htm": b"<html>official ledger</html>",
+    "ligie-consolidated.pdf": b"%PDF-1.7 consolidated",
+    "dof-law-reform.pdf": b"%PDF-1.7 law reform",
+    "dof-tariff-decree.pdf": b"%PDF-1.7 tariff decree",
+}
+SOURCE_SPECS = (
+    (
+        "ligie",
+        "ligie_snapshot",
+        "ligie.xlsx",
+        "https://www.snice.gob.mx/ligie.xlsx",
+        "source-ligie",
+        "Secretaría de Economía / SNICE",
+        "SNICE",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ),
+    (
+        "nico",
+        "nico_snapshot",
+        "nico.xlsx",
+        "https://www.snice.gob.mx/nico.xlsx",
+        "source-nico",
+        "Secretaría de Economía / SNICE",
+        "SNICE",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ),
+    (
+        "diputados_ligie",
+        "legal_ledger",
+        "ligie-ledger.htm",
+        "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm",
+        "source-ledger",
+        "Cámara de Diputados",
+        "Cámara de Diputados",
+        "text/html",
+    ),
+    (
+        "diputados_ligie",
+        "consolidated_text",
+        "ligie-consolidated.pdf",
+        "https://www.diputados.gob.mx/LeyesBiblio/pdf/LIGIE_2022.pdf",
+        "source-consolidated",
+        "Cámara de Diputados",
+        "Cámara de Diputados",
+        "application/pdf",
+    ),
+    (
+        "dof_law_reform",
+        "law_reform",
+        "dof-law-reform.pdf",
+        "https://www.dof.gob.mx/law-reform.pdf",
+        "source-law-reform",
+        "Diario Oficial de la Federación",
+        "Diario Oficial de la Federación",
+        "application/pdf",
+    ),
+    (
+        "dof_tariff_decree",
+        "tariff_decree",
+        "dof-tariff-decree.pdf",
+        "https://www.dof.gob.mx/tariff-decree.pdf",
+        "source-tariff-decree",
+        "Diario Oficial de la Federación",
+        "Diario Oficial de la Federación",
+        "application/pdf",
+    ),
+)
+SOURCE_DOCUMENT_ID = "source-ligie"
 SOURCE_FILENAME = "ligie.xlsx"
-SOURCE_DOCUMENT_ID = "source-1"
 SOURCE_URL = "https://www.snice.gob.mx/ligie.xlsx"
+
+
+def _sha256_bytes(payload: bytes) -> str:
+    return hashlib.sha256(payload).hexdigest()
 
 
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _source_sha256() -> str:
-    return hashlib.sha256(SOURCE_BYTES).hexdigest()
+def _source_documents() -> list[dict[str, object]]:
+    documents = []
+    for (
+        _dataset_key,
+        _role,
+        filename,
+        url,
+        source_id,
+        authority,
+        venue,
+        media_type,
+    ) in SOURCE_SPECS:
+        documents.append(
+            {
+                "source_document_id": source_id,
+                "authority": authority,
+                "publication_venue": venue,
+                "title": filename,
+                "source_url": url,
+                "media_type": media_type,
+                "sha256": _sha256_bytes(SOURCE_BYTES[filename]),
+                "observed_at": date(2026, 8, 10),
+                "retrieved_at": datetime(2026, 8, 10, 20, 35, 49),
+            }
+        )
+    return documents
 
 
-def _record() -> dict[str, object]:
-    row = {column: None for column in PUBLIC_COLUMNS}
-    row.update(
-        {
-            "record_id": "record-1",
-            "record_version": 1,
-            "is_current": True,
-            "code": "01",
-            "formatted_code": "01",
-            "level": "hs2",
-            "hs2": "01",
-            "name": "Animales vivos",
-            "description": "Animales vivos",
-            "name_is_derived": False,
-            "ligie_version": "LIGIE-2022",
-            "dataset_version": "2026.08.10",
-            "schema_version": "2",
-            "record_hash": "c" * 64,
-            "validity_basis": "legal",
-            "updated_at": "2026-08-10",
-            "observed_at": "2026-08-10",
-            "retrieved_at": "2026-08-10T20:35:49Z",
-            "primary_source_document_id": SOURCE_DOCUMENT_ID,
-            "primary_source_authority": "Secretaría de Economía / SNICE",
-            "primary_source_url": SOURCE_URL,
-            "source_document_ids_json": '["source-1"]',
-            "source_count": 1,
-        }
-    )
-    return row
+def _release_metadata() -> dict[str, object]:
+    return {
+        "registry_version": "2026-08-10",
+        "registry_sha256": "b" * 64,
+        "git_commit_sha": "local",
+        "github_run_id": "local",
+        "github_run_attempt": "local",
+        "github_workflow_ref": "local",
+        "github_artifact_name": "local",
+        "reconciliation": {
+            "publishable": True,
+            "error_codes": [],
+            "discrepancies": [],
+            "legal_document_ids": [
+                "source-law-reform",
+                "source-tariff-decree",
+            ],
+            "proposal_document_ids": [],
+            "indicator_document_ids": [],
+        },
+        "source_identity": [
+            {
+                "dataset_key": dataset_key,
+                "document_role": role,
+                "source_url": url,
+                "sha256": _sha256_bytes(SOURCE_BYTES[filename]),
+                "registry_version": "2026-08-10",
+            }
+            for dataset_key, role, filename, url, *_rest in SOURCE_SPECS
+        ],
+    }
 
 
-def _csv_value(value: object) -> str:
-    if value is None:
-        return ""
-    if value is True:
-        return "true"
-    if value is False:
-        return "false"
-    return str(value)
+def _classification(level: str, code: str, description: str) -> dict[str, object]:
+    return {
+        "level": level,
+        "code": code,
+        "description": description,
+        "ligie_version": "LIGIE-2022",
+        "validity_basis": "observed_snapshot",
+        "updated_at": date(2026, 8, 10),
+        "source_document_id": SOURCE_DOCUMENT_ID,
+    }
 
 
 def _write_checksum_set(release: Path, names: list[str]) -> None:
@@ -77,10 +179,6 @@ def _write_checksum_set(release: Path, names: list[str]) -> None:
         "".join(f"{_sha256(release / name)}  {name}\n" for name in sorted(names)),
         encoding="ascii",
     )
-
-
-def _write_pre_archive_checksums(release: Path) -> None:
-    _write_checksum_set(release, [*RELEASE_ARTIFACTS, "manifest.json"])
 
 
 def _write_publication_checksums(release: Path) -> None:
@@ -103,109 +201,73 @@ def _refresh_manifest_artifact_hashes(release: Path) -> None:
     _write_publication_checksums(release)
 
 
-def _manifest(artifact_hashes: dict[str, str]) -> dict[str, object]:
-    source_sha = _source_sha256()
-    return {
-        "dataset_version": "2026.08.10",
-        "schema_version": "2",
-        "ligie_version": "LIGIE-2022",
-        "effective_as_of": "2026-08-10",
-        "generated_at": "2026-08-10T20:35:47Z",
-        "validation_status": "passed",
-        "row_count": 1,
-        "registry_version": "2026-08-10",
-        "registry_sha256": "b" * 64,
-        "git_commit_sha": "local",
-        "github_run_id": "local",
-        "github_run_attempt": "local",
-        "github_workflow_ref": "local",
-        "github_artifact_name": "local",
-        "level_counts": {
-            "hs2": 1,
-            "hs4": 0,
-            "hs6": 0,
-            "fraccion8": 0,
-            "nico10": 0,
-        },
-        "reconciliation": {
-            "publishable": True,
-            "error_codes": [],
-            "discrepancies": [],
-            "legal_document_ids": [SOURCE_DOCUMENT_ID],
-            "proposal_document_ids": [],
-            "indicator_document_ids": [],
-        },
-        "source_documents": [
-            {
-                "source_document_id": SOURCE_DOCUMENT_ID,
-                "authority": "Secretaría de Economía / SNICE",
-                "publication_venue": "SNICE",
-                "title": "LIGIE",
-                "source_url": SOURCE_URL,
-                "media_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                "sha256": source_sha,
-                "published_at": None,
-                "effective_from": None,
-                "effective_to": None,
-                "observed_at": "2026-08-10",
-                "retrieved_at": "2026-08-10T20:35:49Z",
-            }
-        ],
-        "source_identity": [
-            {
-                "dataset_key": "ligie",
-                "document_role": "ligie_snapshot",
-                "source_url": SOURCE_URL,
-                "sha256": source_sha,
-                "registry_version": "2026-08-10",
-            }
-        ],
-        "artifact_sha256": artifact_hashes,
-    }
-
-
 def _capture() -> list[dict[str, object]]:
-    return [
-        {
-            "dataset_key": "ligie",
-            "document_role": "ligie_snapshot",
-            "filename": SOURCE_FILENAME,
-            "media_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            "sha256": _source_sha256(),
-            "source_document_id": SOURCE_DOCUMENT_ID,
-            "source_url": SOURCE_URL,
-            "published_at": None,
-        }
-    ]
+    rows = []
+    for dataset_key, role, filename, url, source_id, _auth, _venue, media_type in SOURCE_SPECS:
+        rows.append(
+            {
+                "dataset_key": dataset_key,
+                "document_role": role,
+                "filename": filename,
+                "media_type": media_type,
+                "sha256": _sha256_bytes(SOURCE_BYTES[filename]),
+                "source_document_id": source_id,
+                "source_url": url,
+                "published_at": None,
+            }
+        )
+    return rows
 
 
 def _bundle(tmp_path: Path) -> Path:
+    warehouse = init_tariff_db(tmp_path / "warehouse.duckdb")
+    classifications = [
+        _classification("hs2", "01", "Animales vivos"),
+        _classification("hs4", "0101", "Caballos, asnos, mulos y burdéganos"),
+        _classification("hs6", "010121", "Reproductores de raza pura"),
+        _classification("fraccion8", "01012101", "Reproductores de raza pura"),
+        _classification("nico10", "0101210100", "Reproductores de raza pura"),
+    ]
+    rates = [
+        {
+            "code": "01012101",
+            "unit_code": "01",
+            "unit_name": "Cabeza",
+            "igi_text": "15",
+            "igi_kind": "ad_valorem",
+            "igi_value": Decimal("15"),
+            "ige_text": "Ex.",
+            "ige_kind": "exento",
+            "ige_value": Decimal("0"),
+            "ligie_version": "LIGIE-2022",
+            "updated_at": date(2026, 8, 10),
+            "source_document_id": SOURCE_DOCUMENT_ID,
+        }
+    ]
+    release_meta = {
+        "dataset_version": "2026.08.10",
+        "schema_version": "2",
+        "ligie_version": "LIGIE-2022",
+        "effective_as_of": date(2026, 8, 10),
+        "generated_at": datetime(2026, 8, 10, 20, 35, 47),
+        "release_metadata": _release_metadata(),
+    }
+    with connect(warehouse) as connection:
+        materialize_arancel(
+            connection,
+            _source_documents(),
+            classifications,
+            rates,
+            release_meta,
+        )
+
     release = tmp_path / "release"
+    export_arancel_release(warehouse, release)
+
     sources = tmp_path / "sources"
-    release.mkdir()
     sources.mkdir()
-
-    row = _record()
-    with (release / "arancel_mx.csv").open("w", encoding="utf-8", newline="") as stream:
-        writer = csv.writer(stream, lineterminator="\r\n")
-        writer.writerow(PUBLIC_COLUMNS)
-        writer.writerow([_csv_value(row[column]) for column in PUBLIC_COLUMNS])
-    (release / "arancel_mx.json").write_text(
-        json.dumps([row], ensure_ascii=False, separators=(",", ":")) + "\n",
-        encoding="utf-8",
-    )
-    (release / "arancel_mx.duckdb").write_bytes(b"duckdb fixture for bundle-only checks")
-
-    artifact_hashes = {name: _sha256(release / name) for name in RELEASE_ARTIFACTS}
-    manifest_path = release / "manifest.json"
-    manifest_path.write_text(
-        json.dumps(_manifest(artifact_hashes), ensure_ascii=False, separators=(",", ":"))
-        + "\n",
-        encoding="utf-8",
-    )
-    _write_pre_archive_checksums(release)
-
-    (sources / SOURCE_FILENAME).write_bytes(SOURCE_BYTES)
+    for filename, payload in SOURCE_BYTES.items():
+        (sources / filename).write_bytes(payload)
     (sources / "source_capture.json").write_text(
         json.dumps(_capture(), ensure_ascii=False, separators=(",", ":")) + "\n",
         encoding="utf-8",
@@ -231,18 +293,22 @@ def _replace_valid_archive(
     release: Path,
     *,
     capture: list[dict[str, object]] | None = None,
-    source_bytes: bytes = SOURCE_BYTES,
+    source_bytes: dict[str, bytes] | None = None,
 ) -> None:
+    payloads_by_name = dict(SOURCE_BYTES if source_bytes is None else source_bytes)
+    capture_rows = capture or _capture()
+    members: list[tarfile.TarInfo] = []
+    payloads: list[bytes] = []
+    for row in sorted(capture_rows, key=lambda item: str(item["filename"])):
+        filename = str(row["filename"])
+        members.append(tarfile.TarInfo(f"official-sources/{filename}"))
+        payloads.append(payloads_by_name[filename])
     capture_bytes = (
-        json.dumps(capture or _capture(), ensure_ascii=False, separators=(",", ":")) + "\n"
+        json.dumps(capture_rows, ensure_ascii=False, separators=(",", ":")) + "\n"
     ).encode("utf-8")
-    source_info = tarfile.TarInfo(f"official-sources/{SOURCE_FILENAME}")
-    capture_info = tarfile.TarInfo("official-sources/source_capture.json")
-    _replace_archive(
-        release,
-        [source_info, capture_info],
-        [source_bytes, capture_bytes],
-    )
+    members.append(tarfile.TarInfo("official-sources/source_capture.json"))
+    payloads.append(capture_bytes)
+    _replace_archive(release, members, payloads)
 
 
 def test_certify_bundle_accepts_verified_cross_format_bundle(tmp_path: Path):
@@ -251,13 +317,69 @@ def test_certify_bundle_accepts_verified_cross_format_bundle(tmp_path: Path):
     report = certify_bundle(release)
 
     assert report.passed is True
-    assert report.row_count == 1
+    assert report.row_count == 5
     assert set(report.checks) == {
         "publication_bundle",
+        "core_objects",
+        "public_columns",
+        "release_metadata",
+        "row_count",
+        "record_ids",
+        "hierarchy",
+        "value_origin",
         "source_archive",
         "source_provenance",
+        "required_source_roles",
         "csv_json_equivalence",
     }
+
+
+def test_certify_bundle_rejects_missing_legal_ledger_role(tmp_path: Path):
+    release = _bundle(tmp_path)
+    capture = [
+        row
+        for row in _capture()
+        if not (
+            row["dataset_key"] == "diputados_ligie"
+            and row["document_role"] == "legal_ledger"
+        )
+    ]
+    payloads = {
+        filename: payload
+        for filename, payload in SOURCE_BYTES.items()
+        if filename != "ligie-ledger.htm"
+    }
+    _replace_valid_archive(release, capture=capture, source_bytes=payloads)
+
+    manifest_path = release / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["source_documents"] = [
+        document
+        for document in manifest["source_documents"]
+        if document["source_document_id"] != "source-ledger"
+    ]
+    manifest["source_identity"] = [
+        identity
+        for identity in manifest["source_identity"]
+        if identity["document_role"] != "legal_ledger"
+    ]
+    manifest_path.write_text(
+        json.dumps(manifest, ensure_ascii=False, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+    )
+    _refresh_manifest_artifact_hashes(release)
+
+    with pytest.raises(ValueError, match="required official source roles"):
+        certify_bundle(release)
+
+
+def test_certify_bundle_rejects_placeholder_duckdb_bytes(tmp_path: Path):
+    release = _bundle(tmp_path)
+    (release / "arancel_mx.duckdb").write_bytes(b"duckdb fixture for bundle-only checks")
+    _refresh_manifest_artifact_hashes(release)
+
+    with pytest.raises(ValueError, match="DuckDB|readable|open"):
+        certify_bundle(release)
 
 
 def test_certify_bundle_rejects_corrupted_public_asset(tmp_path: Path):
@@ -335,7 +457,9 @@ def test_certify_bundle_rejects_unsafe_archive_members(
 
 def test_certify_bundle_recomputes_archived_source_hashes(tmp_path: Path):
     release = _bundle(tmp_path)
-    _replace_valid_archive(release, source_bytes=b"tampered source")
+    payloads = dict(SOURCE_BYTES)
+    payloads[SOURCE_FILENAME] = b"tampered source"
+    _replace_valid_archive(release, source_bytes=payloads)
 
     with pytest.raises(ValueError, match="source checksum mismatch"):
         certify_bundle(release)

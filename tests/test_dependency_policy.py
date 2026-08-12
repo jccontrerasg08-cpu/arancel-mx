@@ -87,7 +87,6 @@ def test_dependabot_updates_python_and_actions_weekly_without_credentials():
     assert re.search(r"^version:\s*2\s*$", config, re.MULTILINE)
     assert config.count('package-ecosystem: "pip"') == 1
     assert config.count('package-ecosystem: "github-actions"') == 1
-    assert config.count('directory: "/"') == 2
     assert config.count("interval: weekly") == 2
     assert config.count("day: monday") == 2
     assert config.count("open-pull-requests-limit: 5") == 2
@@ -105,3 +104,24 @@ def test_dependabot_updates_python_and_actions_weekly_without_credentials():
         "${{ secrets",
     )
     assert [value for value in forbidden if value in lowered] == []
+
+
+def test_dependabot_watches_the_exact_production_constraints_file():
+    config = DEPENDABOT.read_text(encoding="utf-8")
+    pip_block = config[config.index('package-ecosystem: "pip"') : config.index(
+        'package-ecosystem: "github-actions"'
+    )]
+
+    assert '- "/"' in pip_block
+    assert f'- "/{CONSTRAINTS.parent.name}"' in pip_block
+    assert 'directory: "/"' in config[config.index('package-ecosystem: "github-actions"') :]
+
+
+def test_dependabot_keeps_the_range_and_the_pin_in_one_reviewed_pull_request():
+    config = DEPENDABOT.read_text(encoding="utf-8")
+    pip_block = config[config.index('package-ecosystem: "pip"') : config.index(
+        'package-ecosystem: "github-actions"'
+    )]
+
+    assert "group-by: dependency-name" in pip_block
+    assert re.search(r"cooldown:\n\s+default-days: \d+", pip_block)

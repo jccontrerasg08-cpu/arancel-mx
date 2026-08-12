@@ -5,6 +5,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from pathlib import Path
 
+import duckdb
+
 from arancel_mx.domain.normalization import PUBLIC_COLUMNS
 from arancel_mx.storage.duckdb import connect
 
@@ -223,12 +225,15 @@ def certify_duckdb(
     if not isinstance(manifest, Mapping):
         raise ValueError("manifest must be a mapping")
 
-    with connect(database_path, read_only=True) as connection:
-        _require_core_objects(connection)
-        _require_public_columns(connection)
-        release_count = _require_release_metadata(connection, manifest)
-        _require_row_count(connection, manifest, release_count)
-        _require_record_ids(connection)
-        _require_hierarchy(connection)
-        _require_value_origin(connection)
+    try:
+        with connect(database_path, read_only=True) as connection:
+            _require_core_objects(connection)
+            _require_public_columns(connection)
+            release_count = _require_release_metadata(connection, manifest)
+            _require_row_count(connection, manifest, release_count)
+            _require_record_ids(connection)
+            _require_hierarchy(connection)
+            _require_value_origin(connection)
+    except duckdb.Error as exc:
+        raise ValueError(f"public DuckDB is not readable: {database_path}: {exc}") from exc
     return _CHECKS

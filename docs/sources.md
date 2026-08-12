@@ -55,7 +55,7 @@ Después de capturar y reconciliar, la identidad de las fuentes se compara con e
 
 ## Evidencia preservada
 
-Una release válida incluye `official-sources.tar.gz`, que conserva los bytes oficiales capturados y `source_capture.json`. Los hashes permiten reconstruir exactamente qué snapshots fueron observados en ese build aunque la página oficial cambie después.
+Una release válida incluye `official-sources.tar.gz`, que conserva los bytes oficiales capturados —incluidos el ledger registered de Diputados que ancla la reconciliación legal— y `source_capture.json`. Los hashes permiten reconstruir exactamente qué snapshots fueron observados en ese build aunque la página oficial cambie después.
 
 ## Fixtures offline
 
