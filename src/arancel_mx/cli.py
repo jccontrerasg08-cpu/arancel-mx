@@ -14,7 +14,8 @@ from typing import Any
 import requests
 
 from arancel_mx import __version__
-from arancel_mx.consumer.cli import register_consumer_commands
+from arancel_mx.consumer.cli import register_consumer_commands, run_consumer
+from arancel_mx.consumer.errors import ArancelMXError
 from arancel_mx.pipeline.reconcile import reconcile_legal_instruments
 from arancel_mx.pipeline.update import UpdateConfig, check_for_updates
 from arancel_mx.release.package import build_release, prepare_release_archive
@@ -131,7 +132,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         namespace = parser.parse_args(arguments)
     except SystemExit as exc:
-        # argparse uses SystemExit for help/version as well as syntax errors.  The
+        # argparse uses SystemExit for help/version as well as syntax errors. The
         # console entrypoint can return the same code while remaining easy to test.
         return int(exc.code or 0)
 
@@ -144,8 +145,16 @@ def main(argv: Sequence[str] | None = None) -> int:
             file=sys.stderr,
         )
     try:
+        if hasattr(namespace, "consumer_action"):
+            return run_consumer(namespace)
         _print_json(_dispatch(namespace))
-    except (ValueError, FileNotFoundError, json.JSONDecodeError, requests.RequestException) as error:
+    except (
+        ArancelMXError,
+        ValueError,
+        FileNotFoundError,
+        json.JSONDecodeError,
+        requests.RequestException,
+    ) as error:
         print(f"error: {error}", file=sys.stderr)
         return 2
     return 0
