@@ -282,6 +282,22 @@ def _run_data_update(namespace: argparse.Namespace) -> int:
     return 0
 
 
+def _run_data_verify(namespace: argparse.Namespace) -> int:
+    manager = _manager(namespace)
+    if manager.config.offline and (namespace.online or namespace.bundle):
+        raise DatasetUnavailableError(
+            "online or bundle verification is unavailable in offline mode"
+        )
+    online = bool(namespace.online or namespace.bundle)
+    info = manager.verify(
+        namespace.dataset,
+        online=online,
+        bundle=bool(namespace.bundle),
+    )
+    _emit(info, format_name=namespace.format)
+    return 0
+
+
 def run_consumer(namespace: argparse.Namespace) -> int:
     """Run one parsed consumer command and return its process exit code."""
 
@@ -298,4 +314,6 @@ def run_consumer(namespace: argparse.Namespace) -> int:
         return _run_data_list(namespace)
     if action == "data_update":
         return _run_data_update(namespace)
+    if action == "data_verify":
+        return _run_data_verify(namespace)
     raise ValueError(f"unsupported consumer command: {action}")
