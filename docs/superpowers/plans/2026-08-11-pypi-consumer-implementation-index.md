@@ -1,251 +1,175 @@
 # PyPI Consumer 0.2.0 Implementation Rollout Index
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: use `superpowers:subagent-driven-development` or `superpowers:executing-plans`, with `superpowers:test-driven-development` for every behavior task and `superpowers:verification-before-completion` before each completion claim.
 
-**Goal:** Deliver `arancel-mx 0.2.0` as a consumer-first Python package whose exact wheel/sdist bytes are built once, published to TestPyPI, externally certified, manually approved, then published unchanged to PyPI and externally re-certified.
+**Goal:** Deliver `arancel-mx 0.2.0` as a consumer-first Python package whose exact wheel/sdist bytes are built once, published to TestPyPI, externally certified, manually approved, published unchanged to PyPI, and externally re-certified.
 
-**Architecture:** Keep the existing official-data ETL/release subsystem intact and add a separate consumer boundary under `src/arancel_mx/consumer/`. Consumer code treats immutable `data-*` GitHub Releases as the dataset distribution channel, stores only verified cache state, opens DuckDB read-only, exposes typed models through `Dataset`, and maps implementation failures into documented public exceptions. Packaging/release automation is split into fast PR/main preflight and tag-only publishing/certification workflows.
+**Architecture:** Keep the official-data ETL/release subsystem intact. Add a separate consumer boundary under `src/arancel_mx/consumer/`, keep `data-*` GitHub Releases as the dataset distribution channel, use verified local cache + read-only DuckDB for users, and separate fast deterministic PR/main checks from live tag-only registry certification.
 
-**Tech Stack:** Python 3.11-3.14, `argparse`, `requests`, `duckdb`, `platformdirs`, `filelock`, `pytest`, `setuptools`, `build`, `twine`, `check-wheel-contents`, GitHub Actions, TestPyPI/PyPI Trusted Publishing OIDC.
+**Planning baseline:** protected `main` commit `ae64617d2c6e9483c2485cffd5d5eed18ca6ed21`.
 
-## Global Constraints
+## Non-negotiable constraints
 
-- Normative design: `docs/superpowers/specs/2026-08-11-pypi-consumer-distribution-and-external-certification-design.md` plus `docs/superpowers/specs/2026-08-11-pypi-consumer-distribution-design-self-review-addendum.md`.
-- Planning baseline: protected `main` commit `ae64617d2c6e9483c2485cffd5d5eed18ca6ed21`.
-- Current package metadata baseline: `arancel-mx 0.1.0`, Python `>=3.11`.
-- Target production package: `arancel-mx 0.2.0`.
-- Package tags: `pkg-v0.2.0rcN` for TestPyPI-only candidates, `pkg-v0.2.0` for the production candidate.
-- Dataset tags remain independent: `data-YYYY.MM.DD`.
-- Never create a GitHub Release for `pkg-v*`; GitHub `releases/latest` must remain the latest public data release.
-- Current verified data baseline for deterministic external-smoke expectations: `data-2026.08.11`, immutable, six release assets.
-- The wheel never embeds the large tariff database.
-- Public consumer databases are opened read-only.
+- Code package and dataset versions remain independent.
+- Package target: `arancel-mx 0.2.0`.
+- Package tags: `pkg-v0.2.0rcN` and `pkg-v0.2.0`.
+- Dataset tags remain `data-YYYY.MM.DD`.
+- Never create a GitHub Release for `pkg-v*`; `/releases/latest` must continue resolving to the newest public `data-*` release.
+- Wheel never embeds the large DuckDB dataset.
+- Consumer DuckDB is read-only.
 - Offline mode performs zero network access.
-- A failed or partial download never acquires verified-cache state.
-- GitHub API asset digests are verified whenever a valid `sha256:<hex>` digest is present; a missing digest is represented explicitly as unavailable and does not count as a successful API-digest check; malformed/present-but-mismatched digests fail closed.
-- CLI flags override environment variables; environment variables override defaults.
-- Public stable surface for 0.2.x: `Dataset`, `TariffRecord`, `SearchResult`, `ProvenanceRecord`, `DatasetInfo`, documented exceptions, documented method signatures.
-- Maintainer commands `build`, `check-updates`, deprecated read-only `update`, `reconcile`, `release` remain available.
-- `doctor` exit codes: `0=HEALTHY`, `1=DEGRADED`, `2=UNHEALTHY`.
-- Blocking external matrix: Ubuntu x64, Windows x64, macOS ARM64, macOS Intel x CPython 3.11, 3.12, 3.13, 3.14.
-- Runner labels verified during planning: `macos-15` is ARM64 and `macos-15-intel` is x64; re-check immediately before workflow implementation.
-- TestPyPI/PyPI publishing uses Trusted Publishing/OIDC; `id-token: write` exists only on publishing jobs.
-- Production PyPI environment requires manual approval.
-- No permanent `PYPI_TOKEN`, `TEST_PYPI_TOKEN`, `.pypirc` password, username/password, or long-lived package credential is introduced.
-- External consumer jobs do not checkout repository source and clear `PYTHONPATH` and `PYTHONHOME`.
-- Third-party Actions are pinned by full commit SHA.
-- Current PyPA publisher action observed during planning: `pypa/gh-action-pypi-publish` release `v1.14.2`, commit `dc37677b2e1c63e2034f94d8a5b11f265b73ba33`; implementation task re-resolves and verifies the exact full SHA before writing the workflow.
-- TDD order for every behavior task: failing focused test -> observe expected failure -> minimal implementation -> focused pass -> relevant suite pass -> commit.
-- No live TestPyPI/PyPI mutation occurs until all deterministic implementation/preflight plans are complete and green.
+- Failed/partial downloads never become verified cache.
+- Public stable 0.2.x surface: `Dataset`, public immutable models, documented exceptions, documented method signatures.
+- Existing maintainer commands remain available.
+- `doctor`: `0=HEALTHY`, `1=DEGRADED`, `2=UNHEALTHY`.
+- Blocking release matrix: Ubuntu x64, Windows x64, macOS ARM64, macOS Intel x CPython 3.11, 3.12, 3.13, 3.14.
+- TestPyPI/PyPI use Trusted Publishing/OIDC.
+- `id-token: write` only on publishing jobs.
+- Production `pypi` environment requires human approval.
+- No permanent PyPI/TestPyPI upload token.
+- External consumer certification jobs do not checkout repository source.
+- Every third-party GitHub Action is pinned to a reviewed full 40-character commit SHA.
+- Tests verify full-SHA pinning and approved action identity. They do not redundantly hardcode the previous SHA in a way that makes a legitimate reviewed upgrade fail solely because the test still expects the old pin.
+- No live TestPyPI/PyPI mutation until deterministic implementation/preflight is complete and green.
 
----
+## Normative design
 
-## Rollout files and responsibility
+Implementation must conform to:
+
+- `docs/superpowers/specs/2026-08-11-pypi-consumer-distribution-and-external-certification-design.md`
+- `docs/superpowers/specs/2026-08-11-pypi-consumer-distribution-design-self-review-addendum.md`
+
+If a plan conflicts with the approved spec, the spec wins unless an explicit new design decision is reviewed and documented.
+
+## Plan map
 
 ### Plan A: Consumer core
 
 `docs/superpowers/plans/2026-08-11-pypi-consumer-core.md`
 
 Owns:
-
-- public exceptions and immutable models;
-- version source of truth at runtime;
+- public exception hierarchy;
+- immutable public models;
+- runtime package version;
 - configuration precedence;
-- release discovery and six-asset validation;
-- streamed downloads/retries;
-- cache layout, file locking, atomic promotion, verified metadata;
-- manifest/checksum/API-digest/schema/DuckDB verification;
-- `Dataset.latest()`, `Dataset.version()`, `Dataset.open()`;
-- lookup, search, hierarchy, provenance;
-- offline semantics;
-- package-upgrade/cache-reuse deterministic tests.
+- exact `data-*` release discovery;
+- six-asset remote contract;
+- HTTP streaming/retries;
+- cache layout, locking, `.part`, atomic promotion, `verified.json` last;
+- manifest/SHA/API-digest/schema/DuckDB integrity;
+- `Dataset.latest()`, `.version()`, `.open()`;
+- lookup/search/parent/children/provenance;
+- strict offline behavior;
+- cache reuse/upgrade compatibility.
 
-### Plan B: Consumer CLI and doctor
+### Plan B: Consumer CLI + doctor
 
 `docs/superpowers/plans/2026-08-11-pypi-consumer-cli-doctor.md`
 
 Owns:
+- consumer parser composition while preserving maintainer commands;
+- deterministic JSON/CSV/table output;
+- `lookup`, `search`, `parent`, `children`, `provenance`;
+- `data status/download/update/list/path/verify`;
+- `doctor` checks, human/JSON format and exit codes;
+- expected-error boundary;
+- deterministic CLI end-to-end fixture;
+- Spanish/English consumer docs.
 
-- `doctor` human/JSON report and exit codes;
-- `data status/download/update/list/path/verify` exact semantics;
-- `lookup/search/parent/children/provenance` CLI commands;
-- deterministic JSON/CSV/table rendering;
-- stderr/stdout discipline;
-- maintainer-command regression coverage;
-- consumer-first README/docs in Spanish and English.
+### Plan C: Package certification + PR/main preflight
 
-### Plan C: Package quality and PR/main preflight
-
-`docs/superpowers/plans/2026-08-11-pypi-package-preflight.md`
+`docs/superpowers/plans/2026-08-11-pypi-package-certification.md`
 
 Owns:
-
-- public package metadata, project URLs, classifiers and typing marker;
-- `CHANGELOG.md`;
-- wheel/sdist package-content contracts;
+- single package-version source;
+- complete PyPI metadata;
+- consumer vs maintainer dependency split;
+- `py.typed` and typing contract;
+- changelog and PyPI README content;
+- wheel/sdist content contracts;
 - `twine check`, `check-wheel-contents`, `pip check`;
-- clean wheel/sdist install probes;
-- minimum/latest dependency certification;
-- Python 3.11-3.14 support evidence;
-- Linux edge matrix plus Windows/macOS consumer smoke;
+- clean wheel installation;
+- isolated sdist rebuild/install;
+- dependency floor/latest certification;
+- upgrade-safe full-SHA GitHub Action policy;
 - `.github/workflows/python-package-preflight.yml`;
-- atomic update of pinned Action SHAs and their workflow-contract tests.
+- Python 3.11-3.14 support evidence;
+- deterministic local package preflight script.
 
-### Plan D: TestPyPI, external certification and PyPI promotion
+### Plan D: TestPyPI -> external certification -> PyPI
 
 `docs/superpowers/plans/2026-08-11-testpypi-pypi-publication.md`
 
 Owns:
-
-- tag/main/version validation;
-- build-once wheel/sdist artifact and SHA256 manifest;
-- source-free external probe;
+- package tag/version validation;
+- proof tag == protected green main tip;
+- build-once distribution hashes;
+- source-free certification artifact;
 - TestPyPI OIDC publication;
 - digest-verified TestPyPI roundtrip;
-- full 16-cell OS/Python matrix;
-- pip/pipx/uv and wheel/sdist modes;
-- final manual `pypi` environment approval;
-- same-byte PyPI upload;
+- blocking 16-cell OS/Python matrix;
+- pip/pipx/uv + wheel/sdist install modes;
+- destructive external tests;
+- manual `pypi` environment gate;
+- same-byte PyPI publication;
 - post-PyPI matrix;
-- package alert/yank/patch response contract;
-- manual UI/account prerequisites before first external run.
-
----
-
-## Locked file map before implementation
-
-### New production files
-
-```text
-src/arancel_mx/consumer/__init__.py
-src/arancel_mx/consumer/errors.py
-src/arancel_mx/consumer/models.py
-src/arancel_mx/consumer/config.py
-src/arancel_mx/consumer/release_api.py
-src/arancel_mx/consumer/http.py
-src/arancel_mx/consumer/cache.py
-src/arancel_mx/consumer/integrity.py
-src/arancel_mx/consumer/query.py
-src/arancel_mx/consumer/manager.py
-src/arancel_mx/consumer/dataset.py
-src/arancel_mx/consumer/doctor.py
-src/arancel_mx/consumer/output.py
-src/arancel_mx/consumer/cli.py
-src/arancel_mx/py.typed
-scripts/validate_package_release.py
-scripts/external_consumer_probe.py
-.github/workflows/python-package-preflight.yml
-.github/workflows/publish-python-package.yml
-CHANGELOG.md
-```
-
-### Existing production files intentionally modified
-
-```text
-src/arancel_mx/__init__.py
-src/arancel_mx/cli.py
-pyproject.toml
-README.md
-README.en.md
-docs/python-api.md
-docs/cli.md
-docs/getting-started.md
-docs/dataset.md
-docs/release-process.md
-.github/workflows/ci.yml
-requirements/production-build.txt
-```
-
-`official-data-pipeline.yml`, dataset parsers, legal-source ingestion, reconciliation and the public data schema are not redesigned by this project.
-
-### New deterministic test files
-
-```text
-tests/consumer/conftest.py
-tests/consumer/test_public_api.py
-tests/consumer/test_config.py
-tests/consumer/test_release_api.py
-tests/consumer/test_http.py
-tests/consumer/test_cache.py
-tests/consumer/test_integrity.py
-tests/consumer/test_query.py
-tests/consumer/test_dataset.py
-tests/consumer/test_manager.py
-tests/consumer/test_offline.py
-tests/consumer/test_doctor.py
-tests/consumer/test_output.py
-tests/consumer/test_cli.py
-tests/consumer/test_upgrade_cache.py
-tests/consumer/test_faults.py
-tests/package/test_metadata.py
-tests/package/test_distribution_contents.py
-tests/package/test_clean_install.py
-tests/package/test_preflight_workflow.py
-tests/package/test_publish_workflow.py
-tests/package/test_release_validation.py
-tests/package/test_external_probe.py
-```
-
-Existing regression files retained and extended where ownership is already established:
-
-```text
-tests/test_cli.py
-tests/test_public_distribution.py
-tests/test_dependency_policy.py
-tests/test_import_boundaries.py
-tests/certification/test_consumer.py
-tests/certification/test_package_install.py
-tests/certification/test_workflow_contract.py
-```
-
----
+- package alert/yank/patch response policy;
+- RC lifecycle;
+- manual account/environment/Trusted Publisher setup;
+- package-name preflight;
+- package provenance/attestation evidence.
 
 ## Implementation PR sequence
 
-Each numbered PR is independently reviewable and mergeable only after its own required checks are green.
+1. Consumer errors/models/version/config.
+2. Exact release resolver and remote asset contract.
+3. HTTP streaming + verified atomic cache transaction.
+4. Integrity validation: manifest/checksum/API digest/schema/DuckDB.
+5. Query engine + public `Dataset` facade.
+6. Offline + manager semantics and cache reuse.
+7. Consumer CLI + deterministic output.
+8. Doctor + support/error contract.
+9. Consumer documentation.
+10. Package metadata/dependency split/typing/changelog.
+11. Wheel + sdist clean certification and build tooling.
+12. Cross-platform PR/main package preflight.
+13. Release validation/build-once/hash/source-free probe tooling.
+14. Publish workflow contract, still deterministic/no live registry.
+15. Prepare and merge `0.2.0rc1` version change on protected main.
+16. First live TestPyPI candidate and external certification.
+17. Fixes produce `rc2+`; uploaded versions are never overwritten.
+18. Prepare final `0.2.0` on protected green main.
+19. Final exact-byte TestPyPI certification.
+20. Human approval of `pypi` environment.
+21. Same-byte PyPI publication.
+22. Post-PyPI full external certification.
 
-1. **Consumer types/config boundary**: errors, models, runtime package version, config precedence.
-2. **Release resolver**: exact `data-*` discovery, six-asset contract, API digest metadata.
-3. **HTTP/cache transaction**: streaming/retry, locking, `.part`, atomic promotion, `verified.json` last.
-4. **Integrity gate**: checksums, manifest, API digest, DuckDB structural/release metadata validation.
-5. **Query engine + `Dataset`**: lookup/search/parent/children/provenance/connect/open/latest/version.
-6. **Offline + manager semantics**: download/update/status/list/path/verify and cache reuse.
-7. **Consumer CLI + output**: all user commands and deterministic formats while preserving maintainer commands.
-8. **Doctor + support contract**: health states, JSON, secret-redaction, exit codes.
-9. **Consumer docs**: Spanish/English onboarding and package-vs-dataset distinction.
-10. **Packaging quality**: metadata, `py.typed`, changelog, wheel/sdist inspections, dependency checks.
-11. **Cross-platform PR preflight**: Python edge matrix and Windows/macOS smoke.
-12. **Release validation/build-once tooling**: tag/main/version checks, digests, external probe.
-13. **Publish workflow contract**: TestPyPI -> matrix -> manual PyPI -> post-PyPI architecture, still tested only with deterministic workflow tests.
-14. **Release-candidate preparation**: explicit version change to `0.2.0rc1` only after Plans A-C and deterministic Plan D tasks are green.
-15. **First live TestPyPI run**: external boundary begins here; no production PyPI action.
-16. **Candidate fixes**: any source change produces `0.2.0rc2+`; never overwrite an uploaded candidate.
-17. **Final version preparation**: set `project.version = "0.2.0"`, merge green to protected `main`, create `pkg-v0.2.0` at exact green main tip.
-18. **Final TestPyPI certification**: exact final bytes pass all blocking gates.
-19. **Manual production approval**: approve GitHub `pypi` environment only after final certification.
-20. **PyPI + post-PyPI certification**: publish original build bytes and verify exact-version external installs.
+## TDD execution rule for every behavior task
 
----
+Every implementation task follows this exact local sequence:
+
+```text
+1. write one focused failing test
+2. run it and confirm the expected failure reason
+3. implement the minimum behavior
+4. rerun focused test to green
+5. run the relevant subsystem suite
+6. run broader regression suite when boundary changed
+7. commit with one responsibility
+```
+
+No task is marked complete because code merely looks correct.
 
 ## Stage gates
 
-### Gate 0: Planning-only baseline
+### Gate 0: planning
 
-Required before code:
+- design merged;
+- implementation branch contains docs only;
+- current main baseline recorded;
+- no registry mutation.
 
-```text
-main == ae64617d2c6e9483c2485cffd5d5eed18ca6ed21 at plan creation
-design PR merged
-design + addendum present
-latest data release resolves to immutable data-2026.08.11 at plan creation
-planning branch contains docs only
-```
-
-If `main` advances before execution, execution begins by rebasing/refreshing the implementation branch and re-running the baseline tests. The plan is not force-applied to a stale tree.
-
-### Gate 1: Deterministic consumer implementation
-
-Run:
+### Gate 1: deterministic consumer implementation
 
 ```bash
 python -m pytest tests/consumer tests/test_cli.py tests/certification/test_consumer.py -q
@@ -253,85 +177,75 @@ python -m pytest -q
 python -m build
 ```
 
-Expected: zero failures and successful build. No registry access required.
-
-### Gate 2: Package preflight
-
-Run:
+### Gate 2: package preflight
 
 ```bash
 python -m build
-python -m twine check dist/*
+twine check dist/*
 check-wheel-contents dist/*.whl
 python -m pytest tests/package -q
+python scripts/package_preflight.py
 ```
 
-Then PR/main GitHub Actions must prove Linux plus required Windows/macOS smoke jobs.
+plus Linux/Windows/macOS preflight jobs green.
 
-### Gate 3: Publication workflow deterministic certification
+### Gate 3: publication workflow deterministic contract
 
-Before a `pkg-v*` tag can be considered usable, tests must prove:
+Tests must prove:
+- tag/version equality;
+- tag SHA == current protected main SHA;
+- mandatory main checks green;
+- build once;
+- immutable distribution hashes;
+- TestPyPI precedes external matrix;
+- external matrix precedes production environment;
+- RC path cannot publish production PyPI;
+- PyPI uses original build artifact;
+- post-PyPI depends on successful production upload;
+- no source checkout in external jobs;
+- least-privilege OIDC permissions.
+
+### Gate 4: live TestPyPI
+
+The first external certification boundary begins with `0.2.0rc1`. Until the real TestPyPI candidate has passed its live matrix, status is not `externally-certified`.
+
+### Gate 5: production
+
+`0.2.0` is `production-certified` only after:
+1. final bytes pass TestPyPI roundtrip and all blocking gates;
+2. human approves `pypi` environment;
+3. same bytes publish to PyPI;
+4. exact-version installs from PyPI pass post-publication matrix.
+
+## Repository cleanup status before implementation
+
+The planning baseline has intentionally been reduced to three branches:
 
 ```text
-tag regex and version equality
-package tag SHA == protected main SHA
-mandatory main checks green
-build once
-artifact digests recorded
-TestPyPI before external matrix
-external matrix before production approval
-production approval before PyPI
-RC path cannot reach PyPI
-post-PyPI depends on successful PyPI publish
-id-token: write only in publisher jobs
-no source checkout in external consumer jobs
+main
+docs/pypi-consumer-implementation-plan
+feat/audit-14-20-24-docs-vucem
 ```
 
-### Gate 4: External testing begins
+The preserved `feat/audit-14-20-24-docs-vucem` branch contains unrelated future work and must not be merged wholesale into this package rollout. Extract future pieces through small focused PRs.
 
-The first real external step is `0.2.0rc1` publication to **TestPyPI**. Until Gate 3 is green, the project is not described as externally certified.
+Dependabot PRs #6, #7 and #8 were closed rather than merged. Their branches are no longer part of the active branch inventory. Action upgrades will be revisited in Plan C as reviewed, atomic workflow-pin changes against the then-current main baseline.
 
-### Gate 5: Production
+## Status vocabulary
 
-`0.2.0` is called production-certified only after exact final TestPyPI bytes pass the full matrix, the human approves `pypi`, the same bytes are published to PyPI, and the post-PyPI matrix passes.
-
----
-
-## Dependabot PR policy during this rollout
-
-Open Dependabot PRs that change full Action SHAs are not blindly merged because this repository deliberately tests exact workflow pins. A major Action bump must change both the workflow and the contract test in the same reviewed PR.
-
-Current PRs #6 (`setup-python 7`) and #8 (`checkout 7.0.1`) fail because `tests/test_public_distribution.py` still requires the existing full SHAs; that failure is intentional evidence that the workflow contract changed without its policy test. PR #7 (`setup-node 7`) passed its current test surface but remains a major pin change and is deferred to the same atomic action-pin task.
-
-During Plan C, resolve these three PRs as follows:
+Use exactly this progression:
 
 ```text
-1. re-verify current upstream Action release and full commit SHA;
-2. update every affected workflow in one focused PR;
-3. update exact-SHA contract tests in the same commit series;
-4. run full CI;
-5. close any superseded Dependabot PR instead of merging stale single-pin branches;
-6. let Dependabot recreate future updates against the new baseline.
+design-approved
+implementation-plan-approved
+implementation-complete
+deterministic-ci-verified
+testpypi-configured
+rc-externally-certified
+final-testpypi-certified
+pypi-published
+post-pypi-certified
+0.2.0-production-certified
 ```
 
-This avoids weakening the SHA-pinning security test merely to make Dependabot green.
-
----
-
-## Completion definition
-
-Do not collapse states. Use exactly this progression in status reporting:
-
-```text
-design approved
--> implementation plan approved
--> implementation complete
--> deterministic CI verified
--> TestPyPI configured
--> release candidate externally certified
--> final 0.2.0 TestPyPI externally certified
--> manual production approval
--> PyPI published
--> post-PyPI externally certified
--> 0.2.0 production-certified
-```
+Do not report a later state before the corresponding real gate has succeeded.
