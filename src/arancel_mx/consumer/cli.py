@@ -172,13 +172,6 @@ def register_consumer_commands(
     )
 
 
-def _selected_dataset(namespace: argparse.Namespace) -> Dataset:
-    options = {"offline": namespace.offline}
-    if namespace.dataset:
-        return Dataset.version(namespace.dataset, **options)
-    return Dataset.latest(**options)
-
-
 def _consumer_config(namespace: argparse.Namespace):
     options: dict[str, object] = {}
     if getattr(namespace, "dataset", None) is not None:
@@ -191,6 +184,19 @@ def _consumer_config(namespace: argparse.Namespace):
         raise DatasetUnavailableError(
             f"invalid consumer configuration: {exc}"
         ) from exc
+
+
+def _selected_dataset(namespace: argparse.Namespace) -> Dataset:
+    config = _consumer_config(namespace)
+    options = {
+        "offline": config.offline,
+        "cache_dir": config.cache_dir,
+        "timeout": config.timeout,
+    }
+    selected = namespace.dataset or config.dataset
+    if selected:
+        return Dataset.version(selected, **options)
+    return Dataset.latest(**options)
 
 
 def _manager(namespace: argparse.Namespace) -> DatasetManager:
