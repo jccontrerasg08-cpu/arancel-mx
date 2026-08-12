@@ -20,7 +20,10 @@ def _populate_verified_cache(
     *,
     tag: str | None = None,
 ) -> Path:
-    releases, bundles = _two_releases(tmp_path)
+    fixture_key = tag or "latest"
+    fixture_root = tmp_path / ".offline-fixtures" / fixture_key
+    fixture_root.mkdir(parents=True, exist_ok=True)
+    releases, bundles = _two_releases(fixture_root)
     client = FakeReleaseClient(releases)
     downloader = DownloadHarness(bundles)
     monkeypatch.setattr(manager_module, "GitHubReleaseClient", lambda session, timeout: client)
