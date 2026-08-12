@@ -4,7 +4,7 @@ from datetime import date
 import json
 from pathlib import Path
 
-from arancel_mx.consumer.models import SearchResult, TariffRecord
+from arancel_mx.consumer.models import Ficha, HsSection, SearchResult, TariffRecord
 from arancel_mx.consumer.output import render_csv, render_json, render_path, render_table
 
 
@@ -92,3 +92,96 @@ def test_path_output_is_plain_text_only(tmp_path: Path) -> None:
     assert render_path(path) == str(path)
     assert not render_path(path).startswith("{")
     assert "path=" not in render_path(path)
+
+
+def _ficha() -> Ficha:
+    record = _record()
+    return Ficha(
+        record=record,
+        formatted_code="0101.21.01",
+        section=HsSection("I", "Animales vivos y productos del reino animal", "01", "05"),
+        hierarchy=(
+            TariffRecord(
+                code="01",
+                level="hs2",
+                description="Animales vivos",
+                unit_name=None,
+                igi_text=None,
+                igi_kind=None,
+                igi_value=None,
+                ige_text=None,
+                ige_kind=None,
+                ige_value=None,
+                parent_code=None,
+                dataset_version="2026.08.11",
+                schema_version="2",
+                effective_from=None,
+                effective_to=None,
+                is_current=True,
+            ),
+            record,
+        ),
+        children=(),
+    )
+
+
+def test_ficha_json_includes_section_source_and_hierarchy() -> None:
+    payload = json.loads(render_json(_ficha()))
+    assert payload["formatted_code"] == "0101.21.01"
+    assert payload["section"]["roman"] == "I"
+    assert payload["section"]["source"] == "hs_section_grouping"
+    assert payload["hierarchy"][0]["code"] == "01"
+
+
+def test_ficha_csv_has_stable_headers() -> None:
+    text = render_csv((_ficha(),))
+    assert text.splitlines()[0] == (
+        "section_roman,section_name,code,formatted_code,level,description,"
+        "unit_name,igi_text,igi_kind,igi_value,ige_text,ige_kind,ige_value,"
+        "parent_code,dataset_version,schema_version"
+    )
+    assert text.splitlines()[1].startswith("I,Animales vivos")
+
+
+def test_ficha_table_is_a_human_card() -> None:
+    text = render_table(_ficha())
+    assert "0101.21.01" in text
+    assert "Sección" in text
+    assert "Capítulo" in text
+    assert "Fracción" in text
+    assert "IGI" in text
+    assert "fraccion8" not in text
+    assert "hs2" not in text
+
+
+def test_ficha_table_lists_direct_children() -> None:
+    nico = TariffRecord(
+        code="0101210100",
+        level="nico10",
+        description="Reproductores de raza pura.",
+        unit_name="Cbza",
+        igi_text="10",
+        igi_kind="ad_valorem",
+        igi_value=10.0,
+        ige_text="Ex.",
+        ige_kind="exento",
+        ige_value=0.0,
+        parent_code="01012101",
+        dataset_version="2026.08.11",
+        schema_version="2",
+        effective_from=None,
+        effective_to=None,
+        is_current=True,
+    )
+    card = _ficha()
+    card = Ficha(
+        record=card.record,
+        formatted_code=card.formatted_code,
+        section=card.section,
+        hierarchy=card.hierarchy,
+        children=(nico,),
+    )
+    text = render_table(card)
+    assert "Hijos" in text
+    assert "NICO" in text
+    assert "0101.21.01 00" in text
