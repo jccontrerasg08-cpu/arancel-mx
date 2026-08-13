@@ -36,6 +36,7 @@ def test_consumer_guide_documents_offline_formats_and_version_pinning() -> None:
         "dataset version",
         "--dataset data-YYYY.MM.DD",
         "--offline",
+        "--no-offline",
         "ARANCEL_MX_OFFLINE",
         "ARANCEL_MX_DATASET",
         "--format json",

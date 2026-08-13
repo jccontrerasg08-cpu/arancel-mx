@@ -86,3 +86,11 @@ def test_consumer_common_parser_options_are_present() -> None:
     assert data.dataset == "data-2026.08.11"
     assert data.online is True
     assert data.bundle is True
+
+
+def test_no_offline_flag_overrides_store_true_semantics() -> None:
+    parser = build_parser()
+    online = parser.parse_args(["lookup", "01012101", "--no-offline"])
+    assert online.offline is False
+    omitted = parser.parse_args(["lookup", "01012101"])
+    assert omitted.offline is None

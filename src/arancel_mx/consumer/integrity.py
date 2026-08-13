@@ -187,6 +187,22 @@ def validate_duckdb(
                 f"supported={sorted(SUPPORTED_SCHEMA_VERSIONS)}"
             )
 
+        duplicate_current = conn.execute(
+            """
+            SELECT COUNT(*) FROM (
+                SELECT code
+                FROM arancel_mx
+                WHERE is_current
+                GROUP BY code
+                HAVING COUNT(*) > 1
+            )
+            """
+        ).fetchone()[0]
+        if duplicate_current:
+            raise DatasetIntegrityError(
+                "arancel_mx contains multiple current rows for the same code"
+            )
+
         return DatasetInfo(
             dataset_version=dataset_version,
             schema_version=schema_version,

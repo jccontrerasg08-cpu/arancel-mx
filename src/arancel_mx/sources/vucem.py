@@ -90,9 +90,9 @@ def _find_fraction_row(
         for row in table:
             if not row:
                 continue
-            joined = " ".join(row)
-            if _normalize_code(joined).startswith(code):
-                description = row[1] if len(row) > 1 else joined
+            first = _normalize_code(row[0])
+            if first == code:
+                description = row[1] if len(row) > 1 else " ".join(row)
                 import_duty = row[2] if len(row) > 2 else None
                 export_duty = row[3] if len(row) > 3 else None
                 return description, import_duty, export_duty

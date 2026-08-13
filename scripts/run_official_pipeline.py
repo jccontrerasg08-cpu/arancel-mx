@@ -8,6 +8,7 @@ from datetime import date, datetime, timezone
 import json
 import os
 from pathlib import Path
+import re
 import sys
 import tempfile
 from typing import Any, Callable
@@ -24,6 +25,7 @@ from arancel_mx.pipeline.official_dataset import (
 
 MAX_DIAGNOSTIC_LENGTH = 1200
 _SECRET_KEY_MARKERS = ("TOKEN", "SECRET", "PASSWORD", "PRIVATE_KEY", "API_KEY")
+_DATASET_VERSION = re.compile(r"^\d{4}\.\d{2}\.\d{2}$")
 
 
 def _sanitize_message(message: object) -> str:
@@ -213,6 +215,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def _config_from_args(args: argparse.Namespace) -> OfficialDatasetConfig:
+    if not _DATASET_VERSION.fullmatch(args.dataset_version):
+        raise ValueError("dataset-version must use YYYY.MM.DD")
     if args.timeout <= 0:
         raise ValueError("timeout must be positive")
     try:

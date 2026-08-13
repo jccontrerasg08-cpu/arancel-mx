@@ -27,6 +27,16 @@ def test_identical_capture_is_idempotent(tmp_path):
     )
 
 
+def test_identical_capture_ignores_retrieved_at_drift(tmp_path):
+    first = capture_document(b"one", {**META, "retrieved_at": "2026-08-09T12:00:00Z"}, tmp_path)
+    second = capture_document(b"one", {**META, "retrieved_at": "2026-08-09T18:00:00Z"}, tmp_path)
+
+    assert first.path == second.path
+    assert first.sha256 == second.sha256
+    assert first.metadata["retrieved_at"] == "2026-08-09T12:00:00Z"
+    assert second.metadata["retrieved_at"] == "2026-08-09T12:00:00Z"
+
+
 def test_parse_reuse_requires_the_complete_identity():
     previous = {
         "source_sha256": "abc",

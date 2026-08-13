@@ -20,6 +20,20 @@ def test_parse_fraction_sheet_extracts_tariff_fields() -> None:
     assert sheet.nico_rows[0][0] == "00"
 
 
+def test_fraction_sheet_ignores_nico_prefix_false_positives() -> None:
+    html = """
+    <table>
+      <tr><th>Fracción</th><th>Descripción</th><th>IGI</th><th>IGE</th></tr>
+      <tr><td>9001400200</td><td>NICO row</td><td>Ex.</td><td>Ex.</td></tr>
+    </table>
+    """
+    with pytest.raises(ValueError, match="missing a tariff row"):
+        parse_fraction_sheet(
+            html,
+            base_url="https://www.ventanillaunica.gob.mx/Clasificador/data/buildHojas1/90014002.html",
+        )
+
+
 def test_fraction_sheet_url_rejects_invalid_codes() -> None:
     with pytest.raises(ValueError, match="8 digits"):
         fraction_sheet_url("9001")

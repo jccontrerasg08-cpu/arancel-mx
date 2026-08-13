@@ -123,6 +123,32 @@ def test_checksum_failure_gets_specific_category(tmp_path):
     assert result["failure_category"] == "checksum"
 
 
+def test_invalid_dataset_version_fails_in_configuration(tmp_path, capsys):
+    from scripts.run_official_pipeline import main
+
+    exit_code = main(
+        [
+            "--work-dir",
+            str(tmp_path / "work"),
+            "--output-dir",
+            str(tmp_path / "release"),
+            "--effective-as-of",
+            "2026-08-10",
+            "--dataset-version",
+            "2026-8-10",
+            "--result-path",
+            str(result_file(tmp_path)),
+        ]
+    )
+    payload = json.loads(result_file(tmp_path).read_text(encoding="utf-8"))
+
+    assert exit_code == 2
+    assert payload["status"] == "failed"
+    assert payload["stage"] == "configuration"
+    assert "dataset-version" in payload["message"]
+    assert "dataset-version" in capsys.readouterr().out
+
+
 def test_unexpected_error_is_sanitized_and_never_contains_environment_secrets(
     tmp_path, monkeypatch
 ):

@@ -55,7 +55,7 @@ arancel-mx doctor --offline --json
 
 Offline mode is strict. It uses verified local data only and does not fall back to a network request. If the requested dataset is unavailable or fails local verification, the command fails instead of downloading another release.
 
-Offline mode can also be enabled for a process or shell with `ARANCEL_MX_OFFLINE=1`.
+Offline mode can also be enabled for a process or shell with `ARANCEL_MX_OFFLINE=1`. Explicit CLI flags take precedence: `--no-offline` forces network access even when that environment variable is set.
 
 ## Machine-readable output
 
