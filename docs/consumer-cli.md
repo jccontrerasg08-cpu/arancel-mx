@@ -2,7 +2,7 @@
 
 `arancel-mx` exposes a consumer-first command line for downloading, verifying, querying, and diagnosing published Mexican tariff datasets without cloning the repository.
 
-> The consumer CLI is implemented in the package now. The `pip install arancel-mx` command below is the public installation path once the distribution is published to PyPI. Until that publication happens, contributors should use the editable development install documented in the README.
+> The consumer CLI is implemented in the package now. `pip install arancel-mx` is the current public install path. Contributors working from a checkout should use the editable development install documented in the README.
 
 ## Install and first run
 

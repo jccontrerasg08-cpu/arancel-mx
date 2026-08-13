@@ -4,10 +4,10 @@ This document describes the public Python distribution independently from the ta
 
 ## Consumer installation
 
-The intended public installation path after the package passes TestPyPI and production publication gates is:
+`arancel-mx==0.2.0` is published on PyPI. The current public installation path is:
 
 ```bash
-pip install arancel-mx
+pip install arancel-mx==0.2.0
 ```
 
 The base install is intentionally consumer-focused. The dataset is not embedded in the wheel or sdist. Published tariff data remains in immutable GitHub Releases named `data-YYYY.MM.DD` and is downloaded only when the user requests managed data.
@@ -132,4 +132,4 @@ The wheel and sdist promoted to PyPI must be the exact bytes certified through T
 
 A package version is not considered ready merely because `python -m build` succeeds. The release sequence also requires distribution-content validation, dependency checks, clean installs outside the source checkout, Python/OS compatibility matrices, TestPyPI installation by exact version, real dataset download/integrity/query checks, strict offline retesting, manual approval for the `pypi` environment, and post-publication installation from PyPI.
 
-Until those gates pass, documentation may show the intended `pip install arancel-mx` contract but must not claim that the candidate has already been published.
+Trusted Publishing uploaded `arancel-mx==0.2.0` on 2026-08-12. The 2026-08-11 design's full external OS/Python matrix was not a blocking gate for that upload. A later `0.2.1+` would be required to treat that matrix as a release gate, because the 0.2.0 filenames are already on PyPI.

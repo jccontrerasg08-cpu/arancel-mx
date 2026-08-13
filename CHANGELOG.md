@@ -2,7 +2,7 @@
 
 All notable changes to the Python package are documented here. Dataset releases have an independent `data-YYYY.MM.DD` lifecycle in GitHub Releases and are not duplicated as package versions.
 
-## [0.2.0] - Unreleased package candidate
+## [0.2.0] - 2026-08-12
 
 ### Added
 
@@ -25,4 +25,4 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Release status
 
-This section describes the package candidate being certified. It does not mean `arancel-mx==0.2.0` is already available on PyPI. TestPyPI certification, external install matrices, production approval, and post-publish verification remain release gates.
+Trusted Publishing uploaded `arancel-mx==0.2.0` to PyPI on 2026-08-12. The original 2026-08-11 design's full external OS/Python matrix was not a blocking gate for that upload. A later `0.2.1+` would be required to treat that matrix as a release gate.

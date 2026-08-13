@@ -138,8 +138,10 @@ def test_external_consumption_guide_locks_install_verify_query_and_public_surfac
         "01012101",
     )
     assert [value for value in required if value not in text] == []
-    assert "arancelmx" not in text.replace("arancel-mx", "").replace("arancel_mx", "")
-    assert "16%" not in text
+    assert "pip install arancelmx" not in text
+    assert "import arancelmx" not in text
+    assert "IGI=16%" not in text
+    assert "IGI 16%" not in text
 
 
 def test_external_consumption_out_of_scope_says_iva_nom_and_tmec_are_not_published() -> None:

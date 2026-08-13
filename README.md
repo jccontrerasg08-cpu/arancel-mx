@@ -18,7 +18,7 @@ Herramientas abiertas en Python para capturar, normalizar, reconciliar y publica
 [![DuckDB](https://img.shields.io/badge/DuckDB-embedded-FFF000?logo=duckdb&logoColor=000)](https://duckdb.org/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-**[Instalación](#instalación)** · **[CLI](#uso-rápido-cli)** · **[Python](#uso-desde-python)** · **[Datos](#modelo-de-datos)** · **[Fuentes](#fuentes-oficiales)** · **[Automatización](#pipeline-oficial-autónomo)** · **[Certificación](docs/production-certification.md)** · **[Contribuir](#contribución)**
+**[Instalación](#instalación)** · **[CLI](#uso-rápido-cli)** · **[Python](#uso-desde-python)** · **[Consumo externo](docs/external-consumption.md)** · **[Datos](#modelo-de-datos)** · **[Fuentes](#fuentes-oficiales)** · **[Automatización](#pipeline-oficial-autónomo)** · **[Certificación](docs/production-certification.md)** · **[Contribuir](#contribución)**
 
 </div>
 
@@ -148,15 +148,15 @@ Requiere Python 3.11 o superior.
 
 ### Consumo del dataset publicado
 
-La distribución pública está preparada para instalarse desde PyPI con el siguiente contrato cuando se publique el paquete:
+`arancel-mx==0.2.0` está publicado en PyPI (carga del 2026-08-12 vía Trusted Publishing). La matriz externa completa de SO/Python del diseño 2026-08-11 no fue un gate bloqueante de esa carga. La guía canónica para aplicaciones aguas abajo es [`docs/external-consumption.md`](docs/external-consumption.md).
 
 ```bash
-pip install arancel-mx
+pip install arancel-mx==0.2.0
 arancel-mx --version
 arancel-mx doctor
 ```
 
-El paquete y los datasets se versionan por separado. `arancel-mx --version` muestra la versión del paquete Python; cada dataset usa una release inmutable `data-YYYY.MM.DD`.
+El paquete y los datasets se versionan por separado. Fijar el paquete no fija el dataset. `arancel-mx --version` muestra la versión del paquete Python; cada dataset usa una release inmutable `data-YYYY.MM.DD`.
 
 ### Desarrollo del repositorio
 
@@ -176,6 +176,10 @@ Los builds oficiales y CI usan el entorno reproducible definido por `requirement
 python -m pip install pip==26.2.1
 python -m pip install -c requirements/production-build.txt -e ".[dev]"
 ```
+
+## Consumo externo
+
+Las aplicaciones aguas abajo deben fijar, instalar, verificar y consultar `arancel-mx` como paquete de datos. La guía canónica es [`docs/external-consumption.md`](docs/external-consumption.md).
 
 ## Uso rápido CLI
 
@@ -423,7 +427,7 @@ Ver [`SECURITY.md`](SECURITY.md), [`CONTRIBUTING.md`](CONTRIBUTING.md) y [`docs/
 | Certificación live de release/Issue write-boundaries | Disponible |
 | API de búsqueda estable | Disponible |
 | Ficha TIGIE (`ficha` / `chapters`) | Disponible |
-| Publicación en PyPI | Roadmap |
+| Publicación en PyPI | Publicado: `arancel-mx==0.2.0` |
 
 ## Contribución
 
