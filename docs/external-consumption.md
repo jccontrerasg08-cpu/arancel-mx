@@ -172,7 +172,7 @@ La redistribución de bytes oficiales capturados en `official-sources.tar.gz` es
 
 `arancel-mx` **no constituye asesoría legal**. Consulta las publicaciones oficiales y, cuando corresponda, profesionales especializados.
 
-Véanse [`LICENSE`](../LICENSE) y [`NOTICE`](../NOTICE).
+Véanse [`LICENSE`](../LICENSE), [`NOTICE`](../NOTICE) y [`TERMS.md`](../TERMS.md).
 
 ## Documentación relacionada
 

@@ -50,4 +50,4 @@ actionlint
 
 No incluyas credenciales, bases locales, descargas originales no revisadas, datos personales ni rutas absolutas de tu equipo. Los artefactos generados y descargas pertenecen a rutas ignoradas por Git.
 
-Al enviar una contribución aceptas que se publique bajo Apache-2.0 conforme a la sección 5 de la licencia. Para vulnerabilidades, sigue [SECURITY.md](SECURITY.md) y no abras un issue público.
+Al enviar una contribución aceptas que se publique bajo Apache-2.0 conforme a la sección 5 de la licencia. Los términos de uso, atribución y excepciones están en [TERMS.md](TERMS.md). Para un release público, usa [opensource-checklist.md](opensource-checklist.md). Para vulnerabilidades, sigue [SECURITY.md](SECURITY.md) y no abras un issue público.

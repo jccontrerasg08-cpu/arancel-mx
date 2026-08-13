@@ -118,6 +118,8 @@ def test_open_source_governance_files_are_present() -> None:
     required = (
         "LICENSE",
         "NOTICE",
+        "TERMS.md",
+        "opensource-checklist.md",
         "CONTRIBUTING.md",
         "SECURITY.md",
         "CODE_OF_CONDUCT.md",
@@ -146,6 +148,8 @@ def test_readme_describes_the_focused_public_project() -> None:
         "python -m arancel_mx",
         "contributing.md",
         "security.md",
+        "terms.md",
+        "opensource-checklist.md",
         "no constituye asesoría legal",
         "fuentes oficiales",
         "## alcance",
@@ -293,3 +297,44 @@ def test_ci_workflow_builds_package_without_secrets_or_network_updates() -> None
 
     assert [value for value in required if value not in workflow] == []
     assert [value for value in forbidden if value in workflow] == []
+
+
+def test_terms_describe_apache_and_official_source_exceptions() -> None:
+    terms = (ROOT / "TERMS.md").read_text(encoding="utf-8").lower()
+    required = (
+        "apache-2.0",
+        "license",
+        "notice",
+        "diputados",
+        "diario oficial de la federación",
+        "snice",
+        "asesoría legal",
+        "pyproject.toml",
+        "official-sources.tar.gz",
+    )
+
+    assert [value for value in required if value not in terms] == []
+    assert "cc0" not in terms
+
+
+def test_open_source_checklist_is_issue_ready_and_project_specific() -> None:
+    text = (ROOT / "opensource-checklist.md").read_text(encoding="utf-8")
+    required = (
+        "TERMS.md",
+        "CHANGELOG.md",
+        "CONTRIBUTING.md",
+        "pyproject.toml",
+        "requirements/production-build.txt",
+        "GitHub Actions",
+        "- [ ]",
+        "docs/demo.gif",
+        "docs/consumer-cli.md",
+        "docs/external-consumption.md",
+        "tests/test_public_distribution.py",
+    )
+
+    assert [value for value in required if value not in text] == []
+    assert "TravisCI" not in text
+    assert "public domain release" not in text.lower()
+    assert "Clouseau" not in text
+    assert "CFPB-specific" not in text
