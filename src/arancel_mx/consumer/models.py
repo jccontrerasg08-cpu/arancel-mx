@@ -9,6 +9,13 @@ from typing import Literal
 
 @dataclass(frozen=True, slots=True)
 class TariffRecord:
+    """Current public tariff row returned by ``Dataset.lookup``.
+
+    JSON/wire aliases: ``fraction8`` ↔ ``fraccion8``, ``classification10`` ↔ ``nico10``.
+    A 10-digit ``fraction`` field is invalid in downstream apps; this record uses
+    ``fraccion8`` + ``nico2``.
+    """
+
     code: str
     level: str
     description: str
@@ -25,6 +32,14 @@ class TariffRecord:
     effective_from: date | None
     effective_to: date | None
     is_current: bool
+    hs2: str | None = None
+    hs4: str | None = None
+    hs6: str | None = None
+    fraccion8: str | None = None
+    nico2: str | None = None
+    nico10: str | None = None
+    ligie_version: str | None = None
+    validity_basis: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
