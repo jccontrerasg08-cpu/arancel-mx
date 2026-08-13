@@ -13,7 +13,11 @@ from typing import Iterator, Literal
 
 from filelock import FileLock
 
-from arancel_mx.consumer.errors import DatasetIntegrityError, DatasetUnavailableError
+from arancel_mx.consumer.errors import (
+    DatasetIntegrityError,
+    DatasetUnavailableError,
+    DatasetVersionNotFoundError,
+)
 
 
 _DATA_TAG_RE = re.compile(r"^data-\d{4}\.\d{2}\.\d{2}$")
@@ -59,7 +63,7 @@ class VerifiedMetadata:
 
 def _validate_tag(tag: str) -> str:
     if not isinstance(tag, str) or _DATA_TAG_RE.fullmatch(tag) is None:
-        raise DatasetIntegrityError(f"invalid data release tag: {tag}")
+        raise DatasetVersionNotFoundError(f"invalid data release tag: {tag}")
     return tag
 
 

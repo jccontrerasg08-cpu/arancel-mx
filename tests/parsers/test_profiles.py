@@ -132,6 +132,37 @@ def test_ambiguous_profile_fails_closed_with_candidate_locations(tmp_path):
     assert "Datos!3" in message
 
 
+def test_resolves_english_import_export_two_row_tariff_header(tmp_path):
+    path = tmp_path / "english-ligie.xlsx"
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "FA"
+    sheet.append(["Fracción Arancelaria", "Descripción", "Unidad de Medida", "Arancel %", None])
+    sheet.append([None, None, None, "Import", "Export"])
+    sheet.append(["0101.21.01", "Reproductores", "Cbza", "10", "Ex."])
+    workbook.save(path)
+
+    resolved = resolve_workbook_profile(probe_workbook(path), "ligie_snapshot")
+
+    assert resolved.profile.data_row == 3
+    assert resolved.profile.columns["igi"] == "Import"
+    assert resolved.profile.columns["ige"] == "Export"
+
+
+def test_unresolved_two_row_tariff_header_fails_closed(tmp_path):
+    path = tmp_path / "unknown-subheader.xlsx"
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "FA"
+    sheet.append(["Fracción Arancelaria", "Descripción", "Unidad de Medida", "Arancel %", None])
+    sheet.append([None, None, None, "Entrada", "Salida"])
+    sheet.append(["0101.21.01", "Reproductores", "Cbza", "10", "Ex."])
+    workbook.save(path)
+
+    with pytest.raises(ValueError, match="unresolved two-row tariff header"):
+        resolve_workbook_profile(probe_workbook(path), "ligie_snapshot")
+
+
 def test_unknown_profile_fails_closed(tmp_path):
     path = make_workbook(tmp_path, "unknown.xlsx", [["foo", "bar"], ["1", "2"]])
 

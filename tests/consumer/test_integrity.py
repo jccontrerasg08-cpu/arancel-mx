@@ -293,3 +293,36 @@ def test_managed_cache_validation_reports_release_verified_true(consumer_duckdb:
     assert info.source == "managed-cache"
     assert info.release_verified is True
     assert info.github_digest_state == "verified"
+
+
+def test_validate_duckdb_rejects_duplicate_current_codes(tmp_path: Path) -> None:
+    path = create_consumer_duckdb(tmp_path / "duplicate.duckdb")
+    conn = duckdb.connect(str(path))
+    try:
+        conn.execute(
+            """
+            INSERT INTO canonical_record
+            SELECT 'r-frac-dup' AS record_id, * EXCLUDE (record_id)
+            FROM canonical_record
+            WHERE record_id = 'r-frac'
+            """
+        )
+        conn.execute(
+            """
+            INSERT INTO record_provenance
+            SELECT 'r-frac-dup', source_document_id, role, is_primary
+            FROM record_provenance
+            WHERE record_id = 'r-frac'
+            """
+        )
+    finally:
+        conn.close()
+
+    with pytest.raises(DatasetIntegrityError, match="multiple current rows"):
+        validate_duckdb(
+            path,
+            manifest=None,
+            expected_tag=None,
+            release_verified=False,
+            github_digest_state="not_applicable",
+        )

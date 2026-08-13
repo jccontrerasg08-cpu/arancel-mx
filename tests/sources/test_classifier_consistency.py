@@ -27,6 +27,16 @@ def test_parse_siicex_fraction_document_extracts_tariff_fields() -> None:
     assert document.export_duty == "Ex."
 
 
+def test_fraction_row_requires_an_exact_code_match() -> None:
+    html = """
+    <table>
+      <tr><td>Fracción:</td><td>0190014002</td><td>otra fracción</td></tr>
+    </table>
+    """
+    with pytest.raises(ValueError, match="missing a tariff row"):
+        parse_fraction_document(html, expected_code="90014002")
+
+
 def test_vucem_and_siicex_reference_fraction_fixtures_match() -> None:
     vucem_html = (
         Path(__file__).resolve().parents[1] / "fixtures" / "vucem" / "buildHojas1.90014002.html"

@@ -68,11 +68,11 @@ def _fraction_row(
             label = _fold(row[0])
             if "fraccion" in label or "hts code" in label or "codigo" in label:
                 fraction_code = normalize_fraction_code(row[1])
-                if fraction_code.endswith(code):
+                if fraction_code == code:
                     description = row[2] if len(row) > 2 else row[-1]
                     return code, description
             joined = " ".join(row)
-            if normalize_fraction_code(joined).endswith(code) and "fraccion" in _fold(joined):
+            if normalize_fraction_code(joined) == code and "fraccion" in _fold(joined):
                 description = row[-1]
                 return code, description
     return None

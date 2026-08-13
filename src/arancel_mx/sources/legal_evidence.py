@@ -26,7 +26,7 @@ def _eligible_link(link: LedgerLink, published_at: date) -> bool:
     return (
         link.role == "dof"
         and bool(link.url.strip())
-        and (link.displayed_date is None or link.displayed_date == published_at)
+        and link.displayed_date == published_at
     )
 
 
