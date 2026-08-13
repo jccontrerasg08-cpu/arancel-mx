@@ -281,14 +281,14 @@ def build_official_dataset(
     diputados_source = _required_source(
         snapshot, "diputados_ligie", "consolidated_text"
     )
+
+    ligie_profile = resolve_workbook_profile(
+        probe_workbook(ligie_source.capture.path), "ligie_snapshot"
+    )
     notes_source = _required_source(snapshot, "national_notes", "national_notes")
     national_notes = parse_national_notes_html(
         decode_fetched_text(notes_source.fetched),
         str(notes_source.source_document["source_document_id"]),
-    )
-
-    ligie_profile = resolve_workbook_profile(
-        probe_workbook(ligie_source.capture.path), "ligie_snapshot"
     )
     ligie_staging = parse_ligie_workbook(
         ligie_source.capture.path,
