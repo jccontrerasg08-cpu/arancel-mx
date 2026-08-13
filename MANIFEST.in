@@ -6,6 +6,10 @@ include NOTICE
 include pyproject.toml
 include docs/package-release.md
 include docs/consumer-cli.md
+include docs/external-consumption.md
+include docs/data-model.md
+include docs/release-process.md
+include docs/sources.md
 
 prune tests
 prune data

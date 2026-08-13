@@ -11,10 +11,11 @@ from typing import Literal, Mapping, Sequence
 
 import json
 
-from arancel_mx.consumer.models import ProvenanceRecord, SearchResult, TariffRecord
+from arancel_mx.consumer.models import CompareRow, Ficha, ProvenanceRecord, SearchResult, TariffRecord
+from arancel_mx.consumer.query import format_code
 
 
-CsvSchema = Literal["tariff", "search", "provenance", "dataset"]
+CsvSchema = Literal["tariff", "search", "provenance", "dataset", "ficha", "compare"]
 
 _TARIFF_FIELDS = (
     "code",
@@ -48,12 +49,42 @@ _PROVENANCE_FIELDS = (
     "effective_from",
     "effective_to",
 )
+_FICHA_FIELDS = (
+    "section_roman",
+    "section_name",
+    "code",
+    "formatted_code",
+    "level",
+    "description",
+    "unit_name",
+    "igi_text",
+    "igi_kind",
+    "igi_value",
+    "ige_text",
+    "ige_kind",
+    "ige_value",
+    "parent_code",
+    "dataset_version",
+    "schema_version",
+)
 _DATASET_FIELDS = ("dataset", "scope")
+_COMPARE_FIELDS = (
+    "code",
+    "level",
+    "field",
+    "dataset",
+    "other",
+    "other_source",
+    "match",
+    "note",
+)
 _CSV_SCHEMA_FIELDS: dict[CsvSchema, tuple[str, ...]] = {
     "tariff": _TARIFF_FIELDS,
     "search": _SEARCH_FIELDS,
     "provenance": _PROVENANCE_FIELDS,
     "dataset": _DATASET_FIELDS,
+    "ficha": _FICHA_FIELDS,
+    "compare": _COMPARE_FIELDS,
 }
 
 
@@ -82,6 +113,63 @@ def render_json(value: object) -> str:
     )
 
 
+_LEVEL_LABELS = {
+    "hs2": "Capítulo",
+    "hs4": "Partida",
+    "hs6": "Subpartida",
+    "fraccion8": "Fracción",
+    "nico10": "NICO",
+}
+
+
+def _ficha_row(ficha: Ficha) -> dict[str, object]:
+    record = ficha.record
+    section = ficha.section
+    return {
+        "section_roman": None if section is None else section.roman,
+        "section_name": None if section is None else section.name,
+        "code": record.code,
+        "formatted_code": ficha.formatted_code,
+        "level": record.level,
+        "description": record.description,
+        "unit_name": record.unit_name,
+        "igi_text": record.igi_text,
+        "igi_kind": record.igi_kind,
+        "igi_value": record.igi_value,
+        "ige_text": record.ige_text,
+        "ige_kind": record.ige_kind,
+        "ige_value": record.ige_value,
+        "parent_code": record.parent_code,
+        "dataset_version": record.dataset_version,
+        "schema_version": record.schema_version,
+    }
+
+
+def _render_ficha_table(ficha: Ficha) -> str:
+    record = ficha.record
+    lines = [
+        f"{'Código':<12}{ficha.formatted_code}",
+        f"{'Nivel':<12}{_LEVEL_LABELS.get(record.level, record.level)}",
+    ]
+    if ficha.section is not None:
+        lines.append(f"{'Sección':<12}{ficha.section.roman}  {ficha.section.name}")
+    for node in ficha.hierarchy:
+        label = _LEVEL_LABELS.get(node.level, node.level)
+        lines.append(f"{label:<12}{format_code(node.code)}  {node.description}")
+    if record.unit_name:
+        lines.append(f"{'UM':<12}{record.unit_name}")
+    if record.igi_text:
+        lines.append(f"{'IGI':<12}{record.igi_text}")
+    if record.ige_text:
+        lines.append(f"{'IGE':<12}{record.ige_text}")
+    if ficha.children:
+        lines.append(f"{'Hijos':<12}{len(ficha.children)}")
+        for child in ficha.children:
+            label = _LEVEL_LABELS.get(child.level, child.level)
+            lines.append(f"{label:<12}{format_code(child.code)}  {child.description}")
+    return "\n".join(lines)
+
+
 def _tariff_row(record: TariffRecord) -> dict[str, object]:
     return {field: _plain(getattr(record, field)) for field in _TARIFF_FIELDS}
 
@@ -93,6 +181,10 @@ def _csv_row(value: object) -> tuple[tuple[str, ...], dict[str, object]]:
             _SEARCH_FIELDS,
             {"score": value.score, "match_kind": value.match_kind, **row},
         )
+    if isinstance(value, Ficha):
+        return _FICHA_FIELDS, {key: _plain(item) for key, item in _ficha_row(value).items()}
+    if isinstance(value, CompareRow):
+        return _COMPARE_FIELDS, {field: _plain(getattr(value, field)) for field in _COMPARE_FIELDS}
     if isinstance(value, TariffRecord):
         return _TARIFF_FIELDS, _tariff_row(value)
     if isinstance(value, ProvenanceRecord):
@@ -153,6 +245,8 @@ def render_csv(value: object, *, empty_schema: CsvSchema | None = None) -> str:
 def render_table(value: object) -> str:
     """Render a compact human table; this is intentionally not a machine contract."""
 
+    if isinstance(value, Ficha):
+        return _render_ficha_table(value)
     items = _sequence(value)
     if not items:
         return "No results."
@@ -179,12 +273,6 @@ def render_table(value: object) -> str:
         for row in display_rows
     ]
     return "\n".join([header, separator, *body])
-
-
-def render_path(path: str | Path) -> str:
-    """Return only the platform-native path string."""
-
-    return str(Path(path))
 
 
 def render(

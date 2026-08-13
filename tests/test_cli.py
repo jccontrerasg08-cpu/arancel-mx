@@ -7,7 +7,7 @@ from arancel_mx.cli import build_parser, main
 def test_parser_exposes_tariff_command_families():
     help_text = build_parser().format_help()
 
-    for command in ("build", "check-updates", "update", "reconcile", "release"):
+    for command in ("build", "check-updates", "reconcile", "release"):
         assert command in help_text
 
 
@@ -48,25 +48,6 @@ def test_check_updates_delegates_once_with_typed_config_and_is_read_only(
     assert state.read_text(encoding="utf-8") == '{"accepted":"old"}\n'
 
 
-def test_update_is_deprecated_read_only_alias(tmp_path, monkeypatch, capsys):
-    calls = []
-    state = tmp_path / "state.json"
-    state.write_text('{"accepted":"old"}\n', encoding="utf-8")
-
-    class Plan:
-        def to_dict(self):
-            return {"status": "no_change"}
-
-    monkeypatch.setattr(cli, "check_for_updates", lambda config: calls.append(config) or Plan())
-
-    assert main(["update", "--state-path", str(state)]) == 0
-    assert calls[0].state_path == state
-    captured = capsys.readouterr()
-    assert json.loads(captured.out) == {"status": "no_change"}
-    assert "use check-updates" in captured.err.lower()
-    assert state.read_text(encoding="utf-8") == '{"accepted":"old"}\n'
-
-
 def test_reconcile_reads_json_and_delegates_once(tmp_path, monkeypatch, capsys):
     paths = [tmp_path / name for name in ("ledger.json", "dof.json", "snice.json")]
     for path in paths:
@@ -98,3 +79,26 @@ def test_expected_validation_error_returns_two(tmp_path, monkeypatch, capsys):
 
     assert result == 2
     assert capsys.readouterr().err == "error: invalid release\n"
+
+
+def test_build_without_maintainer_extra_is_actionable(monkeypatch, capsys, tmp_path):
+    class BlockedImportlib:
+        def import_module(self, name, package=None):
+            raise ModuleNotFoundError("No module named 'openpyxl'", name="openpyxl")
+
+    monkeypatch.setattr(cli, "importlib", BlockedImportlib())
+
+    result = main(
+        [
+            "build",
+            "--database",
+            str(tmp_path / "db"),
+            "--output-dir",
+            str(tmp_path / "out"),
+        ]
+    )
+
+    assert result == 2
+    err = capsys.readouterr().err
+    assert "arancel-mx[maintainer]" in err
+    assert "openpyxl" in err

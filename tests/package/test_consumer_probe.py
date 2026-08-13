@@ -30,7 +30,7 @@ def test_probe_rejects_import_from_forbidden_checkout_root(tmp_path: Path) -> No
             sys.executable,
             str(PROBE),
             "--expected-version",
-            "0.2.0",
+            "0.2.1",
             "--forbid-root",
             str(ROOT),
         ],
@@ -66,7 +66,7 @@ def test_probe_reports_version_mismatch_explicitly(tmp_path: Path) -> None:
     assert payload["status"] == "error"
     assert payload["check"] == "version"
     assert payload["expected_version"] == "99.99.99"
-    assert payload["actual_version"] == "0.2.0"
+    assert payload["actual_version"] == "0.2.1"
 
 
 def test_probe_succeeds_from_fresh_working_directory_with_wheel_install(tmp_path: Path) -> None:
@@ -78,7 +78,7 @@ def test_probe_succeeds_from_fresh_working_directory_with_wheel_install(tmp_path
         capture_output=True,
         text=True,
     )
-    wheel = next(dist.glob("arancel_mx-0.2.0-*.whl"))
+    wheel = next(dist.glob("arancel_mx-0.2.1-*.whl"))
 
     environment = tmp_path / "venv"
     venv.EnvBuilder(with_pip=True, clear=True).create(environment)
@@ -99,7 +99,7 @@ def test_probe_succeeds_from_fresh_working_directory_with_wheel_install(tmp_path
             str(python),
             str(PROBE),
             "--expected-version",
-            "0.2.0",
+            "0.2.1",
             "--forbid-root",
             str(ROOT),
         ],
@@ -112,6 +112,6 @@ def test_probe_succeeds_from_fresh_working_directory_with_wheel_install(tmp_path
     assert completed.returncode == 0, completed.stderr + completed.stdout
     payload = json.loads(completed.stdout)
     assert payload["status"] == "ok"
-    assert payload["version"] == "0.2.0"
+    assert payload["version"] == "0.2.1"
     assert payload["import_origin"]
     assert not Path(payload["import_origin"]).resolve().is_relative_to(ROOT.resolve())

@@ -14,6 +14,7 @@ from arancel_mx.consumer.errors import (
     DatasetIntegrityError,
     DatasetVersionNotFoundError,
 )
+from arancel_mx.release.package import PUBLIC_RELEASE_ASSETS
 
 
 _REPOSITORY = "jccontrerasg08-cpu/arancel-mx"
@@ -23,16 +24,7 @@ _API_DIGEST_RE = re.compile(r"^sha256:([0-9a-fA-F]{64})$")
 _MAX_LIST_PAGES = 10
 _PAGE_SIZE = 100
 
-EXPECTED_ASSETS = frozenset(
-    {
-        "arancel_mx.duckdb",
-        "arancel_mx.csv",
-        "arancel_mx.json",
-        "manifest.json",
-        "SHA256SUMS",
-        "official-sources.tar.gz",
-    }
-)
+EXPECTED_ASSETS = frozenset(PUBLIC_RELEASE_ASSETS)
 
 
 @dataclass(frozen=True, slots=True)

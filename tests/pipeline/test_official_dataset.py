@@ -149,7 +149,7 @@ class FakeSession:
         self.responses = responses
         self.requested = []
 
-    def get(self, url, timeout=None, stream=False):
+    def get(self, url, timeout=None, stream=False, allow_redirects=True):
         self.requested.append(url)
         if url not in self.responses:
             raise AssertionError(f"unexpected network URL: {url}")

@@ -18,7 +18,6 @@ SCRIPT = ROOT / "scripts" / "dependency_compatibility_probe.py"
 EXPECTED_FLOORS = {
     "duckdb": "1.1.0",
     "filelock": "3.16.0",
-    "platformdirs": "4.3.0",
     "requests": "2.32.0",
 }
 
@@ -40,7 +39,7 @@ def _build_wheel(tmp_path: Path) -> Path:
         capture_output=True,
         text=True,
     )
-    return next(dist.glob("arancel_mx-0.2.0-*.whl"))
+    return next(dist.glob("arancel_mx-0.2.1-*.whl"))
 
 
 def _dataset(tmp_path: Path) -> Path:
@@ -60,7 +59,7 @@ def _run_probe(tmp_path: Path, *, mode: str) -> dict[str, object]:
             "--mode",
             mode,
             "--expected-version",
-            "0.2.0",
+            "0.2.1",
             "--dataset",
             str(_dataset(tmp_path)),
         ],

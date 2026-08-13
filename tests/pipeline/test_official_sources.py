@@ -56,7 +56,7 @@ class FakeSession:
         self.responses = responses
         self.requested = []
 
-    def get(self, url, timeout=None, stream=False):
+    def get(self, url, timeout=None, stream=False, allow_redirects=True):
         self.requested.append((url, timeout))
         if url not in self.responses:
             raise AssertionError(f"unexpected network URL: {url}")
@@ -185,6 +185,29 @@ def test_release_sources_preserve_required_dof_evidence(tmp_path):
         "nico.xlsx",
         "source_capture.json",
     ]
+
+
+def test_write_release_sources_rejects_unknown_diputados_role(tmp_path):
+    build_config = config(tmp_path)
+    snapshot = capture_official_inputs(build_config, session=fake_session())
+    mutated = tuple(
+        replace(source, document_role="unexpected_role")
+        if (
+            source.dataset_key == "diputados_ligie"
+            and source.document_role == "consolidated_text"
+        )
+        else source
+        for source in snapshot.sources
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=r"unexpected release source: diputados_ligie/unexpected_role",
+    ):
+        write_release_sources(build_config, mutated)
+
+    source_dir = build_config.work_dir / "release-sources"
+    assert not (source_dir / "ligie-consolidated.pdf").exists()
 
 
 def test_capture_official_inputs_uses_one_configured_timeout_for_every_request(tmp_path):

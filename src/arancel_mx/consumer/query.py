@@ -8,7 +8,9 @@ import unicodedata
 from typing import Iterable
 
 from arancel_mx.consumer.errors import InvalidCodeError, QueryError, RecordNotFoundError
-from arancel_mx.consumer.models import ProvenanceRecord, SearchResult, TariffRecord
+from arancel_mx.consumer.hs_sections import section_for_chapter
+from arancel_mx.consumer.models import Ficha, ProvenanceRecord, SearchResult, TariffRecord
+from arancel_mx.domain.normalization import format_normalized_code
 
 
 _CODE_LENGTHS = {2, 4, 6, 8, 10}
@@ -25,9 +27,17 @@ _ROW_SELECT = """
            igi_text, igi_kind, igi_value,
            ige_text, ige_kind, ige_value,
            dataset_version, schema_version,
-           effective_from, effective_to, is_current
+           effective_from, effective_to, is_current,
+           hs2, hs4, hs6, fraccion8, nico2, nico10,
+           ligie_version, validity_basis
     FROM arancel_mx
 """
+
+
+def format_code(code: str) -> str:
+    """Format a normalized 2/4/6/8/10-digit code the way TIGIE browsers display it."""
+
+    return format_normalized_code(normalize_code(code))
 
 
 def normalize_code(value: str) -> str:
@@ -52,6 +62,12 @@ def _as_float(value: object) -> float | None:
     if isinstance(value, Decimal):
         return float(value)
     return float(value)
+
+
+def _as_optional_str(value: object) -> str | None:
+    if value is None:
+        return None
+    return str(value)
 
 
 def _parent_code(code: str) -> str | None:
@@ -79,6 +95,14 @@ def _row_to_tariff_record(row: Iterable[object]) -> TariffRecord:
         effective_from=values[12],  # DuckDB returns datetime.date for DATE columns.
         effective_to=values[13],
         is_current=bool(values[14]),
+        hs2=_as_optional_str(values[15]),
+        hs4=_as_optional_str(values[16]),
+        hs6=_as_optional_str(values[17]),
+        fraccion8=_as_optional_str(values[18]),
+        nico2=_as_optional_str(values[19]),
+        nico10=_as_optional_str(values[20]),
+        ligie_version=_as_optional_str(values[21]),
+        validity_basis=_as_optional_str(values[22]),
     )
 
 
@@ -173,6 +197,37 @@ def parent(connection, code: str) -> TariffRecord | None:
     if record.parent_code is None:
         return None
     return lookup(connection, record.parent_code)
+
+
+def _ancestor_codes(code: str) -> tuple[str, ...]:
+    return tuple(code[:width] for width in (2, 4, 6, 8, 10) if width <= len(code))
+
+
+def ficha(connection, code: str) -> Ficha:
+    """Return the official hierarchy card for one code (chapter → NICO)."""
+
+    record = lookup(connection, code)
+    hierarchy = tuple(lookup(connection, ancestor) for ancestor in _ancestor_codes(record.code))
+    return Ficha(
+        record=record,
+        formatted_code=format_code(record.code),
+        section=section_for_chapter(record.code[:2]),
+        hierarchy=hierarchy,
+        children=children(connection, record.code),
+    )
+
+
+def chapters(connection) -> tuple[TariffRecord, ...]:
+    """Return current HS2 chapters, sorted by code."""
+
+    rows = connection.execute(
+        _ROW_SELECT + " WHERE level = 'hs2' AND is_current = TRUE ORDER BY code ASC"
+    ).fetchall()
+    records = tuple(_row_to_tariff_record(row) for row in rows)
+    codes = [record.code for record in records]
+    if len(codes) != len(set(codes)):
+        raise QueryError("multiple current records found for one HS2 chapter")
+    return records
 
 
 def children(connection, code: str) -> tuple[TariffRecord, ...]:

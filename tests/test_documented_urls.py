@@ -1,0 +1,180 @@
+from __future__ import annotations
+
+import os
+from pathlib import Path
+
+import pytest
+import requests
+
+from scripts.check_documented_urls import (
+    EXTRA_DOCUMENTED_URLS,
+    MARKDOWN_LINK_PATTERN,
+    README_RELEASE_URLS,
+    _RETRY_PAUSE,
+    build_session,
+    check_reachable,
+    documented_public_urls,
+    extract_bare_http_urls,
+    fetch_html_body,
+    is_parseable_url,
+    probe_documented_urls,
+    registered_public_urls,
+    sanitize_documented_url,
+)
+
+
+ROOT = Path(__file__).resolve().parents[1]
+README_PATHS = (ROOT / "README.md", ROOT / "README.en.md")
+
+
+def test_registered_public_urls_are_https_and_unique() -> None:
+    urls = registered_public_urls()
+    assert urls
+    assert len(urls) == len(set(urls))
+    assert all(is_parseable_url(url) for url in urls)
+
+
+def test_documented_public_urls_include_registry_readme_and_governance_links() -> None:
+    documented = set(documented_public_urls())
+    for url in registered_public_urls():
+        assert url in documented
+    for url in EXTRA_DOCUMENTED_URLS:
+        assert url in documented
+    for url in README_RELEASE_URLS:
+        assert url in documented
+
+
+def test_documented_public_urls_have_no_trailing_punctuation() -> None:
+    for url in documented_public_urls():
+        assert url == sanitize_documented_url(url), f"trailing punctuation in documented URL: {url!r}"
+
+
+def test_sanitize_documented_url_strips_trailing_colons_and_commas() -> None:
+    assert (
+        sanitize_documented_url(
+            "https://www.ventanillaunica.gob.mx/vucem/clasificador.html:"
+        )
+        == "https://www.ventanillaunica.gob.mx/vucem/clasificador.html"
+    )
+    assert sanitize_documented_url("https://example.com/path,") == "https://example.com/path"
+
+
+def _official_sources_section(text: str) -> str:
+    lowered = text.lower()
+    for heading in ("## fuentes oficiales", "## official sources"):
+        if heading in lowered:
+            start = lowered.index(heading)
+            section = text[start + len(heading) :]
+            if "\n## " in section:
+                section = section.split("\n## ", 1)[0]
+            return section
+    raise AssertionError("README is missing an official sources section")
+
+
+def test_readme_official_sources_use_parseable_markdown_links() -> None:
+    for readme_path in README_PATHS:
+        text = readme_path.read_text(encoding="utf-8")
+        section = _official_sources_section(text)
+        linked_urls = {
+            match.group(1)
+            for match in MARKDOWN_LINK_PATTERN.finditer(section)
+            if match.group(1).startswith("https://")
+        }
+        bare_urls = {
+            url
+            for url in extract_bare_http_urls(section)
+            if url.startswith("https://")
+        }
+        assert bare_urls == set(), (
+            f"{readme_path.name} must expose official source URLs as markdown links, "
+            f"not bare text: {sorted(bare_urls)}"
+        )
+        assert linked_urls, f"{readme_path.name} must document at least one official HTTPS link"
+        assert all(is_parseable_url(url) for url in linked_urls)
+
+
+def test_fetch_html_body_pauses_between_connection_retries(monkeypatch: pytest.MonkeyPatch) -> None:
+    sleeps: list[float] = []
+    calls = {"n": 0}
+
+    class _Response:
+        status_code = 200
+        url = "https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html"
+        text = "<html><body>" + ("LIGIE " * 80) + "</body></html>"
+
+        def raise_for_status(self) -> None:
+            return None
+
+    class _Session:
+        def get(self, url: str, **kwargs: object) -> _Response:
+            calls["n"] += 1
+            if calls["n"] < 3:
+                raise requests.ConnectionError("Network is unreachable")
+            return _Response()
+
+    monkeypatch.setattr("scripts.check_documented_urls.time.sleep", sleeps.append)
+    status, final_url, _html = fetch_html_body(
+        _Session(),  # type: ignore[arg-type]
+        "https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html",
+        timeout=5,
+    )
+
+    assert calls["n"] == 3
+    assert sleeps == list(_RETRY_PAUSE)
+    assert status == 200
+    assert final_url.endswith("ligie.info22.html")
+
+
+def test_probe_retries_only_urls_that_failed_the_first_pass(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr("scripts.check_documented_urls.time.sleep", lambda _seconds: None)
+    seen: list[str] = []
+
+    class _Response:
+        status_code = 200
+        url = "https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html"
+        text = "<html><body>" + ("LIGIE " * 80) + "</body></html>"
+
+        def raise_for_status(self) -> None:
+            return None
+
+    class _Session:
+        def get(self, url: str, **kwargs: object) -> _Response:
+            seen.append(url)
+            if url.endswith("ligie.info22.html") and seen.count(url) <= 3:
+                raise requests.Timeout("Read timed out.")
+            response = _Response()
+            response.url = url
+            return response
+
+    urls = (
+        "https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html",
+        "https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html",
+    )
+    session = _Session()
+    remaining = probe_documented_urls(session, urls, timeout=5)  # type: ignore[arg-type]
+    assert remaining == [urls[1]]
+    remaining = probe_documented_urls(session, remaining, timeout=5)  # type: ignore[arg-type]
+    assert remaining == []
+    assert seen.count(urls[0]) == 1
+    assert seen.count(urls[1]) == 4
+    output = capsys.readouterr().out
+    assert "FAIL" in output
+    assert "OK [200]" in output
+
+
+@pytest.mark.skipif(
+    os.getenv("ARANCEL_MX_SKIP_URL_CHECKS") == "1",
+    reason="documented URL reachability checks disabled",
+)
+def test_documented_public_urls_are_reachable() -> None:
+    session = build_session()
+    failures: list[str] = []
+    for url in documented_public_urls():
+        try:
+            status, _final_url = check_reachable(session, url, timeout=30.0)
+            assert 200 <= status < 400
+        except requests.RequestException as exc:
+            failures.append(f"{url}: {exc}")
+    assert failures == []

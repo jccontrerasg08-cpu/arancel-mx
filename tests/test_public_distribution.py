@@ -25,16 +25,8 @@ def test_private_paths_are_not_distributed() -> None:
     assert [path for path in private_paths if (ROOT / path).exists()] == []
 
 
-def test_public_engineering_specs_are_distributed() -> None:
-    required = (
-        "docs/superpowers/specs/2026-08-10-production-hardening-automation-design.md",
-        "docs/superpowers/plans/2026-08-10-production-hardening-index.md",
-        "docs/superpowers/plans/2026-08-10-core-data-correctness.md",
-        "docs/superpowers/plans/2026-08-10-autonomous-release-alerts.md",
-        "docs/superpowers/plans/2026-08-10-repository-supply-chain-hardening.md",
-    )
-
-    assert [path for path in required if not (ROOT / path).is_file()] == []
+def test_shipped_engineering_specs_are_not_kept_in_tree() -> None:
+    assert not (ROOT / "docs/superpowers").exists()
 
 
 def test_generated_and_local_paths_are_ignored() -> None:
@@ -170,7 +162,7 @@ def test_readme_preserves_existing_public_information() -> None:
         "https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html",
         "https://www.snice.gob.mx/cs/avi/snice/ligie.notasnac22.html",
         "https://www.snice.gob.mx/cs/avi/snice/ligie.indicaranc22.html",
-        "https://www.dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022",
+        "https://dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022",
         "python -m arancel_mx --help",
         "python -m arancel_mx build --database data/arancel.duckdb --output-dir out/release",
         "python -m arancel_mx check-updates --state-path data/update_state/ligie.json --report-path out/update.json",

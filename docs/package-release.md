@@ -4,10 +4,10 @@ This document describes the public Python distribution independently from the ta
 
 ## Consumer installation
 
-The intended public installation path after the package passes TestPyPI and production publication gates is:
+`arancel-mx==0.2.0` is published on PyPI. The checkout declares `project.version` `0.2.1`; that version is not on PyPI until `pkg-v0.2.1` passes TestPyPI and the OS/Python matrix. Downstream apps keep pinning the published wheel:
 
 ```bash
-pip install arancel-mx
+pip install arancel-mx==0.2.0
 ```
 
 The base install is intentionally consumer-focused. The dataset is not embedded in the wheel or sdist. Published tariff data remains in immutable GitHub Releases named `data-YYYY.MM.DD` and is downloaded only when the user requests managed data.
@@ -31,6 +31,8 @@ arancel-mx --version
 arancel-mx doctor
 arancel-mx data download
 arancel-mx lookup 01012101
+arancel-mx ficha 01012101
+arancel-mx compare 01012101
 arancel-mx search "refrigeradores"
 ```
 
@@ -56,6 +58,8 @@ from arancel_mx import Dataset
 # Resolve one exact latest data release, verify it, cache it, and open read-only.
 db = Dataset.latest()
 record = db.lookup("01012101")
+card = db.ficha("01012101")
+rows = db.compare("01012101")  # Dataset.compare vs VUCEM; informative, not legal identity
 results = db.search("refrigeradores", limit=20)
 children = db.children("0101")
 sources = db.provenance("01012101")
@@ -81,7 +85,9 @@ db = Dataset.open("/path/to/arancel_mx.duckdb")
 
 ## Package and data versions are independent
 
-The Python distribution uses PEP 440 package versions such as `0.2.0`. Tariff datasets use immutable date tags such as `data-2026.08.11`.
+The Python distribution uses PEP 440 package versions such as `0.2.0` (PyPI) and in-tree `0.2.1`. Tariff datasets use immutable date tags such as `data-2026.08.11` (`/releases/latest` currently). The PyPI project page long description is frozen at the `0.2.0` upload until `pkg-v0.2.1`.
+
+Verified datasets are cached under `XDG_CACHE_HOME/arancel-mx`, `~/Library/Caches/arancel-mx` on macOS, `%LOCALAPPDATA%/arancel-mx/Cache` on Windows, or `~/.cache/arancel-mx`. Override with `ARANCEL_MX_CACHE_DIR`. The consumer extra does not depend on `platformdirs`.
 
 A package change does not create a new tariff dataset. A new tariff dataset does not require rebuilding the Python wheel. This separation keeps software compatibility independent from legal/data update cadence.
 
@@ -132,4 +138,4 @@ The wheel and sdist promoted to PyPI must be the exact bytes certified through T
 
 A package version is not considered ready merely because `python -m build` succeeds. The release sequence also requires distribution-content validation, dependency checks, clean installs outside the source checkout, Python/OS compatibility matrices, TestPyPI installation by exact version, real dataset download/integrity/query checks, strict offline retesting, manual approval for the `pypi` environment, and post-publication installation from PyPI.
 
-Until those gates pass, documentation may show the intended `pip install arancel-mx` contract but must not claim that the candidate has already been published.
+Trusted Publishing uploaded `arancel-mx==0.2.0` on 2026-08-12. The 2026-08-11 design's full external OS/Python matrix was not a blocking gate for that upload. `0.2.1` treats Ubuntu/Windows/macOS × CPython 3.11, 3.12, and 3.13 as a blocking publish gate after TestPyPI (`external-certification-matrix` in `publish-python-package.yml`). CPython 3.14 and extra install modes (pipx/uv) are not claimed.

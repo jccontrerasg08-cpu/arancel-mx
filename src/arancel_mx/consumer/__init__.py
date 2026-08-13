@@ -13,10 +13,19 @@ from arancel_mx.consumer.errors import (
     QueryError,
     RecordNotFoundError,
 )
-from arancel_mx.consumer.models import DatasetInfo, ProvenanceRecord, SearchResult, TariffRecord
+from arancel_mx.consumer.models import (
+    CompareRow,
+    DatasetInfo,
+    Ficha,
+    HsSection,
+    ProvenanceRecord,
+    SearchResult,
+    TariffRecord,
+)
 
 __all__ = [
     "ArancelMXError",
+    "CompareRow",
     "Dataset",
     "DatasetDownloadError",
     "DatasetError",
@@ -25,6 +34,8 @@ __all__ = [
     "DatasetSchemaError",
     "DatasetUnavailableError",
     "DatasetVersionNotFoundError",
+    "Ficha",
+    "HsSection",
     "InvalidCodeError",
     "ProvenanceRecord",
     "QueryError",

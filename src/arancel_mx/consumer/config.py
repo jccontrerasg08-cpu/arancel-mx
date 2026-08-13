@@ -5,9 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 import os
 from pathlib import Path
+import sys
 from typing import Final
-
-import platformdirs
 
 
 _DEFAULT_TIMEOUT: Final[float] = 30.0
@@ -24,6 +23,19 @@ class ConsumerConfig:
     dataset: str | None
     offline: bool
     timeout: float
+
+
+def _default_cache_dir() -> Path:
+    xdg = os.environ.get("XDG_CACHE_HOME")
+    if xdg and xdg.strip():
+        return Path(xdg) / "arancel-mx"
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Caches" / "arancel-mx"
+    if sys.platform == "win32":
+        base = os.environ.get("LOCALAPPDATA")
+        root = Path(base) if base and base.strip() else Path.home() / "AppData" / "Local"
+        return root / "arancel-mx" / "Cache"
+    return Path.home() / ".cache" / "arancel-mx"
 
 
 def _environment(name: str) -> str | None:
@@ -71,9 +83,7 @@ def resolve_config(
     if cache_dir is _MISSING or cache_dir is None:
         cache_environment = _environment("ARANCEL_MX_CACHE_DIR")
         if cache_environment is None:
-            resolved_cache_dir = Path(
-                platformdirs.user_cache_dir(appname="arancel-mx", appauthor=False)
-            )
+            resolved_cache_dir = _default_cache_dir()
         else:
             resolved_cache_dir = Path(cache_environment)
     else:

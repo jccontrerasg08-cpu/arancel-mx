@@ -10,7 +10,11 @@ import time
 
 import pytest
 
-from arancel_mx.consumer.errors import DatasetIntegrityError, DatasetUnavailableError
+from arancel_mx.consumer.errors import (
+    DatasetIntegrityError,
+    DatasetUnavailableError,
+    DatasetVersionNotFoundError,
+)
 from arancel_mx.consumer.cache import DatasetCache, VerifiedMetadata
 import arancel_mx.consumer.cache as cache_module
 
@@ -69,7 +73,7 @@ def test_paths_isolate_each_data_version(tmp_path: Path) -> None:
 
 def test_paths_reject_invalid_tag(tmp_path: Path) -> None:
     cache = DatasetCache(tmp_path)
-    with pytest.raises(DatasetIntegrityError, match="data release tag"):
+    with pytest.raises(DatasetVersionNotFoundError, match="data release tag"):
         cache.paths("latest")
 
 

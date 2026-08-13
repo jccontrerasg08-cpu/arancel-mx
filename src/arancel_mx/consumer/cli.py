@@ -10,17 +10,29 @@ from arancel_mx.consumer.dataset import Dataset
 from arancel_mx.consumer.doctor import doctor_to_dict, render_doctor_human, run_doctor
 from arancel_mx.consumer.errors import DatasetUnavailableError
 from arancel_mx.consumer.manager import DatasetManager
-from arancel_mx.consumer.output import CsvSchema, render, render_json, render_path
+from arancel_mx.consumer.output import CsvSchema, render, render_json
 
 
 _OUTPUT_FORMATS = ("table", "json", "csv")
-_QUERY_ACTIONS = {"lookup", "search", "parent", "children", "provenance"}
+_QUERY_ACTIONS = {
+    "lookup",
+    "search",
+    "parent",
+    "children",
+    "provenance",
+    "ficha",
+    "chapters",
+    "compare",
+}
 _QUERY_CSV_SCHEMAS: dict[str, CsvSchema] = {
     "lookup": "tariff",
     "search": "search",
     "parent": "tariff",
     "children": "tariff",
     "provenance": "provenance",
+    "ficha": "ficha",
+    "chapters": "tariff",
+    "compare": "compare",
 }
 
 
@@ -37,7 +49,7 @@ def _positive_int(value: str) -> int:
 def _add_offline(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--offline",
-        action="store_true",
+        action=argparse.BooleanOptionalAction,
         default=None,
         help="Use verified local data only and make no network requests",
     )
@@ -181,6 +193,23 @@ def register_consumer_commands(
         "provenance",
         help_text="Muestra las fuentes trazables de un código",
     )
+    _add_query_command(
+        subparsers,
+        "ficha",
+        help_text="Muestra la ficha jerárquica (capítulo → fracción/NICO) de un código",
+    )
+    _add_query_command(
+        subparsers,
+        "compare",
+        help_text="Compara HS6, MX8 o NICO del dataset GitHub con VUCEM (informativo)",
+    )
+    chapters = subparsers.add_parser(
+        "chapters",
+        help="Lista los capítulos HS2 vigentes",
+    )
+    _add_dataset_selection(chapters)
+    _add_output_format(chapters)
+    chapters.set_defaults(consumer_action="chapters")
 
 
 def _consumer_config(namespace: argparse.Namespace):
@@ -241,6 +270,14 @@ def _run_query(namespace: argparse.Namespace) -> int:
         value = dataset.children(namespace.code)
     elif action == "provenance":
         value = dataset.provenance(namespace.code)
+    elif action == "ficha":
+        value = dataset.ficha(namespace.code)
+    elif action == "compare":
+        value = dataset.compare(
+            namespace.code, fetch=namespace.offline is not True
+        )
+    elif action == "chapters":
+        value = dataset.chapters()
     else:
         raise ValueError(f"unsupported consumer query action: {action}")
     _emit(
@@ -260,7 +297,7 @@ def _run_data_download(namespace: argparse.Namespace) -> int:
 
 def _run_data_path(namespace: argparse.Namespace) -> int:
     path = _manager(namespace).selected_path(namespace.dataset)
-    sys.stdout.write(render_path(path) + "\n")
+    sys.stdout.write(str(path) + "\n")
     return 0
 
 

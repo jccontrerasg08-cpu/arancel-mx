@@ -39,8 +39,21 @@ jobs:
           python -m pip install pip==26.2.1
           python -m pip install -c requirements/production-build.txt -e ".[dev]"
 
+      - name: Lint with Ruff
+        run: python -m ruff check src tests scripts
+
+      - name: Type-check public consumer API
+        run: python -m mypy src/arancel_mx/consumer src/arancel_mx/__init__.py
+
       - name: Run tests
-        run: python -m pytest -q
+        env:
+          ARANCEL_MX_SKIP_URL_CHECKS: "1"
+        run: python -m pytest -q --cov=arancel_mx --cov-report=term-missing
+
+      - name: Verify documented official URLs are accessible
+        run: |
+          python -m scripts.check_documented_urls --timeout 45
+          python -m scripts.validate_ligie_html_pages --timeout 45
 
       - name: Build distributions
         run: python -m build

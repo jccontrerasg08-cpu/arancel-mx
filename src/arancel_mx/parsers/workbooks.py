@@ -2,11 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Mapping
-
-import pandas as pd
-
-from arancel_mx.domain.normalization import normalize_code, parse_duty
+from typing import Any, Iterator, Mapping
 
 
 @dataclass(frozen=True)
@@ -46,40 +42,90 @@ def _excel_engine(path: Path) -> str:
     raise ValueError(f"unsupported workbook format: {path.suffix}")
 
 
+def _cell(value: object) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, bool):
+        return str(value)
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
+    if isinstance(value, int):
+        return str(value)
+    return str(value)
+
+
+def _iter_openpyxl_rows(
+    path: Path, sheet_name: str | None = None, max_rows: int | None = None
+) -> Iterator[tuple[str, list[str]]]:
+    from openpyxl import load_workbook
+
+    workbook = load_workbook(path, read_only=True, data_only=True)
+    try:
+        names = (sheet_name,) if sheet_name is not None else tuple(workbook.sheetnames)
+        for name in names:
+            kwargs: dict[str, Any] = {"values_only": True}
+            if max_rows is not None:
+                kwargs["max_row"] = max_rows
+            for row in workbook[name].iter_rows(**kwargs):
+                yield name, [_cell(item) for item in row]
+    finally:
+        workbook.close()
+
+
+def _iter_xlrd_rows(
+    path: Path, sheet_name: str | None = None, max_rows: int | None = None
+) -> Iterator[tuple[str, list[str]]]:
+    import xlrd
+
+    book = xlrd.open_workbook(str(path))
+    names = (sheet_name,) if sheet_name is not None else tuple(book.sheet_names())
+    for name in names:
+        sheet = book.sheet_by_name(name)
+        limit = sheet.nrows if max_rows is None else min(sheet.nrows, max_rows)
+        for row_index in range(limit):
+            yield name, [_cell(sheet.cell_value(row_index, column)) for column in range(sheet.ncols)]
+
+
+def _iter_rows(
+    path: Path, sheet_name: str | None = None, max_rows: int | None = None
+) -> Iterator[tuple[str, list[str]]]:
+    if _excel_engine(path) == "openpyxl":
+        yield from _iter_openpyxl_rows(path, sheet_name, max_rows=max_rows)
+        return
+    yield from _iter_xlrd_rows(path, sheet_name, max_rows=max_rows)
+
+
 def probe_workbook(path: Path, sample_rows: int = 20, sample_columns: int = 30) -> WorkbookProbe:
     if sample_rows < 1 or sample_columns < 1:
         raise ValueError("workbook probe bounds must be positive")
-    engine = _excel_engine(path)
-    with pd.ExcelFile(path, engine=engine) as workbook:
-        samples = {}
-        for sheet in workbook.sheet_names:
-            frame = pd.read_excel(
-                workbook,
-                sheet_name=sheet,
-                header=None,
-                nrows=sample_rows,
-                dtype=object,
-                keep_default_na=False,
-            )
-            samples[sheet] = tuple(
-                tuple(row[:sample_columns])
-                for row in frame.itertuples(index=False, name=None)
-            )
-        return WorkbookProbe(tuple(workbook.sheet_names), samples)
+    samples: dict[str, list[tuple[Any, ...]]] = {}
+    order: list[str] = []
+    for name, row in _iter_rows(path, max_rows=sample_rows):
+        if name not in samples:
+            order.append(name)
+            samples[name] = []
+        samples[name].append(tuple(row[:sample_columns]))
+    return WorkbookProbe(tuple(order), {name: tuple(rows) for name, rows in samples.items()})
 
 
-def _apply_forward_fill(frame: pd.DataFrame, profile: WorkbookProfile) -> pd.DataFrame:
+def _apply_forward_fill(rows: list[dict[str, str]], profile: WorkbookProfile) -> list[dict[str, str]]:
     for logical in profile.forward_fill:
         if logical not in profile.columns:
             raise ValueError(f"forward_fill column is not registered: {logical}")
-        column = logical if profile.column_indices else profile.columns[logical]
-        frame[column] = frame[column].replace("", pd.NA).ffill().fillna("")
-    return frame
+        last = ""
+        for raw in rows:
+            value = raw[logical]
+            if str(value).strip():
+                last = value
+            elif last:
+                raw[logical] = last
+    return rows
 
 
-def _read_profile(path: Path, profile: WorkbookProfile) -> pd.DataFrame:
+def _read_profile(path: Path, profile: WorkbookProfile) -> list[dict[str, str]]:
     if profile.header_row < 1:
         raise ValueError("header_row is one-based")
+    matrix = [row for _name, row in _iter_rows(path, profile.sheet)]
 
     if profile.column_indices:
         if set(profile.column_indices) != set(profile.columns):
@@ -89,39 +135,35 @@ def _read_profile(path: Path, profile: WorkbookProfile) -> pd.DataFrame:
         data_row = profile.data_row or profile.header_row + 1
         if data_row <= profile.header_row:
             raise ValueError("data_row must follow header_row")
-        source = pd.read_excel(
-            path,
-            sheet_name=profile.sheet,
-            header=None,
-            skiprows=data_row - 1,
-            dtype=str,
-            keep_default_na=False,
-            engine=_excel_engine(path),
-        )
-        if profile.column_indices and max(profile.column_indices.values()) >= len(source.columns):
+        width = max((len(row) for row in matrix), default=0)
+        if max(profile.column_indices.values()) >= width:
             raise ValueError("registered workbook column position is out of bounds")
-        frame = pd.DataFrame(
-            {
-                logical: source.iloc[:, index]
-                for logical, index in profile.column_indices.items()
-            }
-        )
-        return _apply_forward_fill(frame, profile)
+        start = data_row - 1
+        rows = []
+        for row in matrix[start:]:
+            padded = row + [""] * (width - len(row))
+            rows.append({logical: padded[index] for logical, index in profile.column_indices.items()})
+        return _apply_forward_fill(rows, profile)
 
     headers = list(dict.fromkeys(profile.columns.values()))
-    frame = pd.read_excel(
-        path,
-        sheet_name=profile.sheet,
-        header=profile.header_row - 1,
-        usecols=headers,
-        dtype=str,
-        keep_default_na=False,
-        engine=_excel_engine(path),
-    )
-    missing = set(headers).difference(frame.columns)
+    header_idx = profile.header_row - 1
+    if header_idx >= len(matrix):
+        raise ValueError(f"missing registered workbook columns: {sorted(headers)}")
+    header_to_index: dict[str, int] = {}
+    for index, cell in enumerate(matrix[header_idx]):
+        if cell and cell not in header_to_index:
+            header_to_index[cell] = index
+    missing = set(headers).difference(header_to_index)
     if missing:
         raise ValueError(f"missing registered workbook columns: {sorted(missing)}")
-    return _apply_forward_fill(frame, profile)
+    rows = []
+    for row in matrix[header_idx + 1 :]:
+        raw = {}
+        for logical, header in profile.columns.items():
+            index = header_to_index[header]
+            raw[logical] = row[index] if index < len(row) else ""
+        rows.append(raw)
+    return _apply_forward_fill(rows, profile)
 
 
 def _rows(path: Path, source: Mapping[str, Any], profile: WorkbookProfile):
@@ -130,19 +172,21 @@ def _rows(path: Path, source: Mapping[str, Any], profile: WorkbookProfile):
         raise ValueError("source_document_id is required")
     frame = _read_profile(path, profile)
     first_data_row = profile.data_row or profile.header_row + 1
-    for offset, values in enumerate(frame.to_dict(orient="records")):
-        if profile.column_indices:
-            raw = {logical: values[logical] for logical in profile.columns}
-        else:
-            raw = {logical: values[header] for logical, header in profile.columns.items()}
+    for offset, raw in enumerate(frame):
         if not any(str(value).strip() for value in raw.values()):
             continue
+        if profile.section_column:
+            section_value = str(raw.get(profile.section_column, "")).strip()
+            if profile.allowed_sections and section_value not in profile.allowed_sections:
+                continue
         yield source_document_id, first_data_row + offset, raw
 
 
 def parse_ligie_workbook(
     path: Path, source: Mapping[str, Any], profile: WorkbookProfile
 ) -> list[StagingRow]:
+    from arancel_mx.domain.normalization import normalize_code, parse_duty
+
     result = []
     for source_id, row_number, raw in _rows(path, source, profile):
         try:
@@ -170,6 +214,8 @@ def parse_ligie_workbook(
 def parse_nico_workbook(
     path: Path, source: Mapping[str, Any], profile: WorkbookProfile
 ) -> list[StagingRow]:
+    from arancel_mx.domain.normalization import normalize_code
+
     result = []
     for source_id, row_number, raw in _rows(path, source, profile):
         if "nico10" in raw:

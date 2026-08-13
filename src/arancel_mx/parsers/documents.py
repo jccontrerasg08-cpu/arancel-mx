@@ -3,28 +3,63 @@
 from __future__ import annotations
 
 from datetime import date
+from html import unescape
 import hashlib
 from pathlib import Path
 import re
-import unicodedata
 
 import pymupdf
-import pandas as pd
 
-from arancel_mx.domain.normalization import canonical_json, code_level, normalize_code
+from arancel_mx.domain.normalization import canonical_json, code_level, fold_text, normalize_code
 
 
 def _text(value: object) -> str:
-    if value is None or pd.isna(value):
+    if value is None:
         return ""
     return " ".join(str(value).split())
 
 
 def _fold(value: object) -> str:
-    normalized = unicodedata.normalize("NFKD", _text(value))
-    return "".join(
-        char for char in normalized if not unicodedata.combining(char)
-    ).upper()
+    return fold_text(value).upper()
+
+
+_CHAPTER_HEADING = re.compile(r"Cap[ií]tulo\s+(\d{1,2})\b", re.IGNORECASE)
+_NOTE_START = re.compile(r"(?m)^\s*(\d+)\.\s+")
+
+
+def parse_national_notes_html(html: str, source_document_id: str) -> list[dict]:
+    """Extract numbered LIGIE national notes from SNICE-style HTML."""
+    if not source_document_id:
+        raise ValueError("source_document_id is required")
+    stripped = re.sub(r"(?is)<(script|style).*?</\1>", " ", html)
+    stripped = re.sub(r"(?i)<br\s*/?>", "\n", stripped)
+    stripped = re.sub(r"(?i)</(p|div|h[1-6]|li|tr)>", "\n", stripped)
+    text = unescape(re.sub(r"<[^>]+>", " ", stripped))
+    text = re.sub(r"[ \t]+", " ", text)
+    text = re.sub(r"\n{2,}", "\n", text)
+    rows: list[dict] = []
+    chapter: str | None = None
+    for block in re.split(r"(?m)(?=^[ \t]*Cap[ií]tulo\s+\d{1,2}\b)", text, flags=re.IGNORECASE):
+        heading = _CHAPTER_HEADING.search(block)
+        if heading:
+            chapter = heading.group(1).zfill(2)
+        starts = list(_NOTE_START.finditer(block))
+        for index, match in enumerate(starts):
+            end = starts[index + 1].start() if index + 1 < len(starts) else len(block)
+            body = " ".join(block[match.end() : end].split())
+            if not body:
+                raise ValueError("national note is missing text")
+            rows.append(
+                {
+                    "chapter": chapter,
+                    "note_number": match.group(1),
+                    "text": body,
+                    "source_document_id": source_document_id,
+                }
+            )
+    if not rows:
+        raise ValueError("national notes HTML contains no numbered notes")
+    return rows
 
 
 def _identifier(prefix: str, values: list[object]) -> str:
@@ -85,12 +120,19 @@ def parse_ligie_pdf_hierarchy(
     """Extract official HS2/HS4/HS6 labels from the consolidated LIGIE PDF."""
     rows: list[dict] = []
     page_texts: list[str] = []
+    pending_code: str | None = None
+    pending_description: list[str] = []
     with pymupdf.open(path) as document:
         for page in document:
             page_text = page.get_text() or ""
             page_texts.append(page_text)
             for table in page.find_tables().tables:
-                for code, description in _hierarchy_entries_from_table(table.extract()):
+                extracted, pending_code, pending_description = _hierarchy_entries_from_table(
+                    table.extract(),
+                    pending_code=pending_code,
+                    pending_description=pending_description,
+                )
+                for code, description in extracted:
                     rows.append(
                         _classification_row(
                             code,
@@ -101,6 +143,18 @@ def parse_ligie_pdf_hierarchy(
                             effective_from,
                         )
                     )
+    leftover = _text(" ".join(pending_description))
+    if pending_code and leftover:
+        rows.append(
+            _classification_row(
+                pending_code,
+                leftover,
+                source_document_id,
+                ligie_version,
+                published_at,
+                effective_from,
+            )
+        )
     for code, description in _chapter_entries_from_pages(page_texts):
         rows.append(
             _classification_row(
@@ -163,10 +217,21 @@ def _chapter_entries_from_pages(page_texts: list[str]) -> list[tuple[str, str]]:
     return entries
 
 
-def _hierarchy_entries_from_table(table: list[list[object]]) -> list[tuple[str, str]]:
+def _hierarchy_entries_from_table(
+    table: list[list[object]],
+    *,
+    pending_code: str | None = None,
+    pending_description: list[str] | None = None,
+) -> tuple[list[tuple[str, str]], str | None, list[str]]:
+    """Extract HS4/HS6 labels, carrying an unfinished heading across tables/pages.
+
+    Official LIGIE PDFs split long partida text at page boundaries. The next page
+    often starts with the remainder (for example ``molido.``) before a dash
+    grouping row. Empty padding rows must not flush that pending heading.
+    """
+
     entries: list[tuple[str, str]] = []
-    pending_code: str | None = None
-    pending_description: list[str] = []
+    pending_description = list(pending_description or [])
 
     def flush() -> None:
         nonlocal pending_code, pending_description
@@ -215,7 +280,9 @@ def _hierarchy_entries_from_table(table: list[list[object]]) -> list[tuple[str, 
 
         if pending_code:
             cell_values = [cell for _index, cell in cells]
-            if not cells or any(cell in {"-", "--"} for cell in cell_values):
+            if not cells:
+                continue
+            if any(cell in {"-", "--"} for cell in cell_values):
                 flush()
                 continue
             continuations = [
@@ -227,5 +294,6 @@ def _hierarchy_entries_from_table(table: list[list[object]]) -> list[tuple[str, 
             ]
             if continuations:
                 pending_description.append(max(continuations, key=len))
-    flush()
-    return entries
+    if pending_code and not pending_description:
+        pending_code = None
+    return entries, pending_code, pending_description

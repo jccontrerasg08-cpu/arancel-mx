@@ -91,6 +91,7 @@ def _validate_inputs(
     classifications: Sequence[Mapping[str, object]],
     rates: Sequence[Mapping[str, object]],
     release: Mapping[str, object],
+    national_notes: Sequence[Mapping[str, object]] = (),
 ) -> tuple[dict[str, Mapping[str, object]], dict[str, object]]:
     for field in (
         "dataset_version",
@@ -121,7 +122,7 @@ def _validate_inputs(
             _required(document.get(field), f"source_document.{field}")
         by_id[source_id] = document
 
-    for row in [*classifications, *rates]:
+    for row in [*classifications, *rates, *national_notes]:
         source_id = str(_required(row.get("source_document_id"), "row.source_document_id"))
         if source_id not in by_id:
             raise ValueError(f"Unknown source document: {source_id}")
@@ -264,6 +265,41 @@ def _insert_rates(
     )
 
 
+def _insert_national_notes(
+    conn: duckdb.DuckDBPyConnection,
+    notes: Sequence[Mapping[str, object]],
+) -> None:
+    for row in notes:
+        note_number = str(row.get("note_number") or "").strip()
+        text = str(row.get("text") or "").strip()
+        source_id = str(row.get("source_document_id") or "").strip()
+        if not note_number or not text or not source_id:
+            raise ValueError("national notes require note_number, text, and source_document_id")
+        note_id = str(
+            row.get("national_note_id")
+            or hashlib.sha256(canonical_json([row.get("chapter"), note_number]).encode("utf-8")).hexdigest()
+        )
+        conn.execute(
+            "INSERT INTO national_note VALUES (?, ?, ?)",
+            [note_id, row.get("chapter"), note_number],
+        )
+        version_id = str(
+            row.get("national_note_version_id")
+            or hashlib.sha256(canonical_json([note_id, text, source_id]).encode("utf-8")).hexdigest()
+        )
+        conn.execute(
+            "INSERT INTO national_note_version VALUES (?, ?, ?, ?, ?, ?)",
+            [
+                version_id,
+                note_id,
+                text,
+                row.get("effective_from"),
+                row.get("effective_to"),
+                source_id,
+            ],
+        )
+
+
 def _build_view(conn: duckdb.DuckDBPyConnection) -> None:
     conn.execute(
         """
@@ -288,6 +324,14 @@ def _build_view(conn: duckdb.DuckDBPyConnection) -> None:
     columns = [row[0] for row in conn.execute("DESCRIBE arancel_mx").fetchall()]
     if columns != list(PUBLIC_COLUMNS):
         raise ValueError(f"Public view columns do not match contract: {columns}")
+    conn.execute(
+        """CREATE OR REPLACE VIEW arancel_mx_national_notes AS
+           SELECT n.national_note_id, n.chapter, n.note_number,
+                  v.national_note_version_id, v.text, v.effective_from,
+                  v.effective_to, v.source_document_id
+           FROM national_note n
+           JOIN national_note_version v USING (national_note_id)"""
+    )
 
 
 def _validate_database(conn: duckdb.DuckDBPyConnection) -> dict[str, object]:
@@ -394,6 +438,17 @@ def _validate_database(conn: duckdb.DuckDBPyConnection) -> dict[str, object]:
             )
             """
         ).fetchone()[0],
+        "duplicate_current_records": conn.execute(
+            """
+            SELECT COUNT(*) FROM (
+                SELECT code
+                FROM arancel_mx
+                WHERE is_current
+                GROUP BY code
+                HAVING COUNT(*) > 1
+            )
+            """
+        ).fetchone()[0],
         "missing_public_metadata": conn.execute(
             """
             SELECT COUNT(*) FROM arancel_mx
@@ -473,6 +528,7 @@ def materialize_arancel(
     classifications: Sequence[Mapping[str, object]],
     rates: Sequence[Mapping[str, object]],
     release: Mapping[str, object],
+    national_notes: Sequence[Mapping[str, object]] = (),
 ) -> dict[str, object]:
     """Replace canonical data only after the complete candidate validates."""
     documents_by_id, release_metadata = _validate_inputs(
@@ -480,6 +536,7 @@ def materialize_arancel(
         classifications,
         rates,
         release,
+        national_notes,
     )
     records = consolidate_records(list(classifications), list(rates), release)
     rate_source_ids = {str(row["source_document_id"]) for row in rates}
@@ -493,20 +550,13 @@ def materialize_arancel(
     try:
         ensure_tariff_schema(conn)
         conn.execute("DROP VIEW IF EXISTS arancel_mx")
-        for table in (
-            "record_provenance",
-            "canonical_record",
-            "dataset_release",
-            "tariff_rate",
-            "nico",
-            "tariff_fraction",
-            "hs_code",
-            "source_document",
-        ):
+        conn.execute("DROP VIEW IF EXISTS arancel_mx_national_notes")
+        for table in reversed(PUBLIC_INTERNAL_TABLES):
             conn.execute(f"DELETE FROM {table}")
         _insert_sources(conn, source_documents)
         _insert_classifications(conn, classifications)
         _insert_rates(conn, rates)
+        _insert_national_notes(conn, national_notes)
 
         canonical_rows: list[list[object]] = []
         provenance_rows: list[list[object]] = []
@@ -542,7 +592,16 @@ def materialize_arancel(
         _build_view(conn)
         validation = _validate_database(conn)
         row_count = int(conn.execute("SELECT COUNT(*) FROM arancel_mx").fetchone()[0])
-        source_ids_json = canonical_json(sorted(documents_by_id))
+        source_documents_json = canonical_json(
+            [
+                {
+                    key: value
+                    for key, value in documents_by_id[source_id].items()
+                    if key != "local_path"
+                }
+                for source_id in sorted(documents_by_id)
+            ]
+        )
         stored_metadata = dict(release_metadata)
         stored_metadata["level_counts"] = _release_level_counts(conn)
         conn.execute(
@@ -556,7 +615,7 @@ def materialize_arancel(
                 row_count,
                 "passed",
                 canonical_json(validation),
-                source_ids_json,
+                source_documents_json,
                 canonical_json(stored_metadata),
             ],
         )
@@ -632,11 +691,8 @@ def _csv_text(value: object) -> str:
 
 
 def _sha256(path: Path) -> str:
-    digest = hashlib.sha256()
     with path.open("rb") as stream:
-        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
+        return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
 def _create_public_database(source_path: Path, target_path: Path) -> None:
@@ -662,14 +718,6 @@ def _create_public_database(source_path: Path, target_path: Path) -> None:
             conn.execute(f'DROP TABLE "{table}"')
         conn.execute("DETACH upstream")
         _build_view(conn)
-        conn.execute(
-            """CREATE OR REPLACE VIEW arancel_mx_national_notes AS
-               SELECT n.national_note_id, n.chapter, n.note_number,
-                      v.national_note_version_id, v.text, v.effective_from,
-                      v.effective_to, v.source_document_id
-               FROM national_note n
-               JOIN national_note_version v USING (national_note_id)"""
-        )
         conn.execute(
             """CREATE OR REPLACE VIEW nico_proposals AS
                SELECT p.*, b.observed_at, b.published_at, b.source_document_id,

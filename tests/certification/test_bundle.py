@@ -378,7 +378,7 @@ def test_certify_bundle_rejects_placeholder_duckdb_bytes(tmp_path: Path):
     (release / "arancel_mx.duckdb").write_bytes(b"duckdb fixture for bundle-only checks")
     _refresh_manifest_artifact_hashes(release)
 
-    with pytest.raises(ValueError, match="DuckDB|readable|open"):
+    with pytest.raises(ValueError, match=r"public DuckDB is not readable"):
         certify_bundle(release)
 
 

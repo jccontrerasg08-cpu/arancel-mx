@@ -2,18 +2,21 @@
 
 `arancel-mx` exposes a consumer-first command line for downloading, verifying, querying, and diagnosing published Mexican tariff datasets without cloning the repository.
 
-> The consumer CLI is implemented in the package now. The `pip install arancel-mx` command below is the public installation path once the distribution is published to PyPI. Until that publication happens, contributors should use the editable development install documented in the README.
+> The consumer CLI is implemented in the package now. `pip install arancel-mx` is the current public install path. Contributors working from a checkout should use the editable development install documented in the README.
 
 ## Install and first run
 
 Python 3.11 or newer is required.
 
 ```bash
-pip install arancel-mx
+pip install arancel-mx==0.2.0
 arancel-mx --version
 arancel-mx doctor
 arancel-mx data download
 arancel-mx lookup 01012101
+arancel-mx ficha 01012101
+arancel-mx compare 01012101
+arancel-mx chapters
 arancel-mx search "refrigeradores"
 arancel-mx data verify
 ```
@@ -24,8 +27,8 @@ arancel-mx data verify
 
 The package version and dataset version are independent identifiers.
 
-- **package version**: the Python distribution and CLI implementation, reported by `arancel-mx --version`, for example `0.1.0`.
-- **dataset version**: an immutable public tariff-data release named `data-YYYY.MM.DD`, for example `data-2026.08.11`.
+- **package version**: the Python distribution and CLI implementation, reported by `arancel-mx --version`. PyPI currently publishes `0.2.0`. The checkout declares `0.2.1` and is not on PyPI until `pkg-v0.2.1`.
+- **dataset version**: an immutable public tariff-data release named `data-YYYY.MM.DD`. `/releases/latest` currently resolves to `data-2026.08.11`.
 
 Updating the Python package does not silently replace a pinned dataset version. Publishing a new dataset release does not require changing the package version.
 
@@ -53,7 +56,7 @@ arancel-mx doctor --offline --json
 
 Offline mode is strict. It uses verified local data only and does not fall back to a network request. If the requested dataset is unavailable or fails local verification, the command fails instead of downloading another release.
 
-Offline mode can also be enabled for a process or shell with `ARANCEL_MX_OFFLINE=1`.
+Offline mode can also be enabled for a process or shell with `ARANCEL_MX_OFFLINE=1`. Explicit CLI flags take precedence: `--no-offline` forces network access even when that environment variable is set.
 
 ## Machine-readable output
 
@@ -73,6 +76,11 @@ Use `--format json` for structured automation and `--format csv` for row-oriente
 
 ```bash
 arancel-mx lookup 01012101
+arancel-mx ficha 01012101
+arancel-mx compare 010121
+arancel-mx compare 01012101
+arancel-mx compare 0101210100
+arancel-mx chapters
 arancel-mx search "refrigeradores" --limit 20
 arancel-mx parent 01012101
 arancel-mx children 010121
@@ -80,12 +88,25 @@ arancel-mx provenance 01012101
 ```
 
 - `lookup` resolves an exact normalized tariff code.
+- `ficha` returns the SIICEX-style hierarchy card (section grouping, chapter → heading → subheading → fraction/NICO, UM, IGI, IGE) from the verified official dataset only. IGI/IGE are the official `igi_text` / `ige_text` values (for example `10` and `Ex.`), not rewritten percentages. Codes absent from the current official snapshot fail closed.
+- `chapters` lists current HS2 chapters.
 - `search` ranks current records by code or description.
 - `parent` returns the direct parent in the HS2 → HS4 → HS6 → MX8 → NICO10 hierarchy.
 - `children` returns direct children of a code.
 - `provenance` returns the recorded source traceability for the selected code.
+- `compare` diffs one HS6, MX8, or NICO code from the verified GitHub `data-*` dataset against the VUCEM classifier sheet (`buildHojas1/{mx8}.html`). HS6 has no VUCEM page, so children MX8/NICO are compared. VUCEM is informative, not legal identity. `--offline` skips the third-party fetch.
 
 The same normalization and query semantics are shared by the public Python consumer layer and CLI.
+
+```python
+from arancel_mx import Dataset
+
+dataset = Dataset.latest()  # or Dataset.open("arancel_mx.duckdb")
+card = dataset.ficha("01012101")
+print(card.formatted_code, card.record.description, card.record.igi_text)
+for node in card.hierarchy:
+    print(node.level, node.code, node.description)
+```
 
 ## Dataset lifecycle commands
 
@@ -134,6 +155,15 @@ Explicit CLI or API arguments take precedence over environment variables, which 
 | `ARANCEL_MX_DATASET` | Pin an exact `data-YYYY.MM.DD` release |
 | `ARANCEL_MX_OFFLINE` | Enable strict offline mode with `1`, `true`, `yes`, or `on` |
 | `ARANCEL_MX_TIMEOUT` | Set the positive HTTP timeout in seconds |
+
+Default cache root when `ARANCEL_MX_CACHE_DIR` is unset:
+
+- `XDG_CACHE_HOME/arancel-mx` when `XDG_CACHE_HOME` is set
+- macOS: `~/Library/Caches/arancel-mx`
+- Windows: `%LOCALAPPDATA%/arancel-mx/Cache`
+- otherwise: `~/.cache/arancel-mx`
+
+The consumer runtime does not use `platformdirs`.
 
 Invalid consumer configuration fails with an actionable public error instead of being treated as an integrity failure.
 

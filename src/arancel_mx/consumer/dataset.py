@@ -9,7 +9,7 @@ from typing import Any
 from arancel_mx.consumer.config import resolve_config
 from arancel_mx.consumer.integrity import validate_duckdb
 from arancel_mx.consumer.manager import DatasetManager
-from arancel_mx.consumer.models import DatasetInfo, ProvenanceRecord, SearchResult, TariffRecord
+from arancel_mx.consumer.models import CompareRow, DatasetInfo, Ficha, ProvenanceRecord, SearchResult, TariffRecord
 from arancel_mx.consumer import query
 from arancel_mx.storage.duckdb import connect as duckdb_connect
 
@@ -41,27 +41,9 @@ class Dataset:
         return resolve_config(**kwargs)
 
     @classmethod
-    def latest(
+    def _managed(
         cls,
-        *,
-        offline: bool | None = None,
-        cache_dir: str | Path | None = None,
-        timeout: float | None = None,
-    ) -> "Dataset":
-        config = cls._config(
-            offline=offline,
-            cache_dir=cache_dir,
-            timeout=timeout,
-        )
-        manager = DatasetManager(config)
-        path = manager.ensure()
-        info = manager.verify()
-        return cls(path, info)
-
-    @classmethod
-    def version(
-        cls,
-        tag: str,
+        tag: str | None = None,
         *,
         offline: bool | None = None,
         cache_dir: str | Path | None = None,
@@ -76,6 +58,27 @@ class Dataset:
         path = manager.ensure(tag)
         info = manager.verify(tag)
         return cls(path, info)
+
+    @classmethod
+    def latest(
+        cls,
+        *,
+        offline: bool | None = None,
+        cache_dir: str | Path | None = None,
+        timeout: float | None = None,
+    ) -> "Dataset":
+        return cls._managed(offline=offline, cache_dir=cache_dir, timeout=timeout)
+
+    @classmethod
+    def version(
+        cls,
+        tag: str,
+        *,
+        offline: bool | None = None,
+        cache_dir: str | Path | None = None,
+        timeout: float | None = None,
+    ) -> "Dataset":
+        return cls._managed(tag, offline=offline, cache_dir=cache_dir, timeout=timeout)
 
     @classmethod
     def open(cls, path: str | Path) -> "Dataset":
@@ -117,3 +120,25 @@ class Dataset:
     def provenance(self, code: str) -> tuple[ProvenanceRecord, ...]:
         with self.connect() as connection:
             return query.provenance(connection, code)
+
+    def ficha(self, code: str) -> Ficha:
+        with self.connect() as connection:
+            return query.ficha(connection, code)
+
+    def chapters(self) -> tuple[TariffRecord, ...]:
+        with self.connect() as connection:
+            return query.chapters(connection)
+
+    def compare(
+        self,
+        code: str,
+        *,
+        fetch: bool = True,
+        timeout: float = 30,
+        get_sheet=None,
+    ) -> tuple[CompareRow, ...]:
+        from arancel_mx.consumer.compare import compare_code
+
+        return compare_code(
+            self, code, fetch=fetch, timeout=timeout, get_sheet=get_sheet
+        )

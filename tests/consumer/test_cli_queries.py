@@ -7,7 +7,7 @@ import pytest
 
 from arancel_mx.cli import main
 from arancel_mx.consumer.errors import InvalidCodeError
-from arancel_mx.consumer.models import ProvenanceRecord, SearchResult, TariffRecord
+from arancel_mx.consumer.models import CompareRow, Ficha, HsSection, ProvenanceRecord, SearchResult, TariffRecord
 import arancel_mx.consumer.cli as consumer_cli
 
 
@@ -66,6 +66,19 @@ class FakeDataset:
     def children(self, code: str) -> tuple[TariffRecord, ...]:
         return (_record("01012101", "fraccion8"), _record("01012102", "fraccion8"))
 
+    def compare(self, code: str, *, fetch: bool = True, timeout: float = 30, get_sheet=None):
+        return (
+            CompareRow(
+                code="01012101",
+                level="fraccion8",
+                field="igi",
+                dataset="10",
+                other="10",
+                other_source="vucem",
+                match=True,
+            ),
+        )
+
     def provenance(self, code: str) -> tuple[ProvenanceRecord, ...]:
         return (
             ProvenanceRecord(
@@ -82,6 +95,19 @@ class FakeDataset:
                 effective_to=None,
             ),
         )
+
+    def ficha(self, code: str) -> Ficha:
+        record = _record()
+        return Ficha(
+            record=record,
+            formatted_code="0101.21.01",
+            section=HsSection("I", "Animales vivos y productos del reino animal", "01", "05"),
+            hierarchy=(_record("01", "hs2"), record),
+            children=(_record("0101210100", "nico10"),),
+        )
+
+    def chapters(self) -> tuple[TariffRecord, ...]:
+        return (_record("01", "hs2"),)
 
 
 @pytest.fixture(autouse=True)
@@ -184,4 +210,49 @@ def test_empty_provenance_csv_keeps_provenance_schema(monkeypatch, capsys) -> No
     assert main(["provenance", "01012101", "--format", "csv"]) == 0
     output = capsys.readouterr().out
     assert output.startswith("source_document_id,role,is_primary,authority")
+    assert output.count("\n") == 1
+
+
+def test_compare_json_contract(capsys) -> None:
+    assert main(["compare", "01012101", "--format", "json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload[0]["code"] == "01012101"
+    assert payload[0]["other_source"] == "vucem"
+    assert payload[0]["match"] is True
+
+
+def test_ficha_json_contract(capsys) -> None:
+    assert main(["ficha", "01012101", "--format", "json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["formatted_code"] == "0101.21.01"
+    assert payload["record"]["code"] == "01012101"
+    assert payload["section"]["roman"] == "I"
+    assert payload["section"]["source"] == "hs_section_grouping"
+    assert payload["hierarchy"][0]["code"] == "01"
+    assert [child["code"] for child in payload["children"]] == ["0101210100"]
+
+
+def test_ficha_table_uses_spanish_level_labels(capsys) -> None:
+    assert main(["ficha", "01012101"]) == 0
+    text = capsys.readouterr().out
+    assert "Fracción" in text
+    assert "NICO" in text
+    assert "Hijos" in text
+    assert "0101.21.01 00" in text
+    assert "fraccion8" not in text
+    assert "nico10" not in text
+
+
+def test_chapters_json_contract(capsys) -> None:
+    assert main(["chapters", "--format", "json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload[0]["code"] == "01"
+    assert payload[0]["level"] == "hs2"
+
+
+def test_empty_chapters_csv_keeps_tariff_schema(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(FakeDataset, "chapters", lambda self: ())
+    assert main(["chapters", "--format", "csv"]) == 0
+    output = capsys.readouterr().out
+    assert output.startswith("code,level,description")
     assert output.count("\n") == 1

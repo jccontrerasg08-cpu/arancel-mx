@@ -8,5 +8,6 @@
 4. `storage` instala únicamente el esquema DuckDB del dominio arancelario.
 5. `pipeline` materializa, valida, reconcilia y compara actualizaciones.
 6. `release` verifica hashes y prepara archivos locales para una publicación explícitamente aprobada.
+7. `consumer` consulta un DuckDB público ya verificado (`lookup`, `ficha`, `compare`, …). No captura fuentes ni publica releases.
 
-La última versión válida no se sustituye cuando falta evidencia, falla una validación o no coinciden los hashes. Consulta [data-model.md](data-model.md), [sources.md](sources.md) y [release-process.md](release-process.md) para los contratos detallados.
+La última versión válida no se sustituye cuando falta evidencia, falla una validación o no coinciden los hashes. Consulta [data-model.md](data-model.md), [sources.md](sources.md), [consumer-cli.md](consumer-cli.md) y [release-process.md](release-process.md) para los contratos detallados.
