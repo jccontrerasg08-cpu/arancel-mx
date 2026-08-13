@@ -4,6 +4,10 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ## [Unreleased]
 
+### Added
+
+- Documented GitHub review extensions as install-only, `sha256sum -c SHA256SUMS` copy-paste, and `linguist-generated` for `.xls` fixtures.
+
 ### Changed
 
 - Live docs match in-tree `0.2.1` vs PyPI `0.2.0`: cache paths, `compare`, national notes, and the public source tree.

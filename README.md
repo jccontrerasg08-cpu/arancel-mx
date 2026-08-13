@@ -36,9 +36,13 @@ Herramientas abiertas en Python para capturar, normalizar, reconciliar y publica
 [Fuentes oficiales](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/official-sources.tar.gz) ·
 **[Ver release](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest)**
 
-<sub>Los enlaces `/releases/latest/download/...` apuntan automáticamente a los assets de la release pública marcada como más reciente.</sub>
+<sub>Los enlaces `/releases/latest/download/...` apuntan automáticamente a los assets de la release pública marcada como más reciente. GitHub muestra el tamaño de cada asset en esa página; la identidad es `SHA256SUMS`, no el megabyte.</sub>
 
 </div>
+
+```bash
+sha256sum -c SHA256SUMS
+```
 
 ---
 

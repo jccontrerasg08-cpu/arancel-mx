@@ -56,7 +56,7 @@ Orden de verificación para una release `data-YYYY.MM.DD`:
 1. Resolver **un** tag exacto.
 2. `arancel-mx doctor` — instalación, cache, DuckDB y acceso remoto.
 3. `arancel-mx data download` — descarga a estado temporal; no promueve un cache parcial.
-4. Comprobar `SHA256SUMS` contra los bytes descargados.
+4. Comprobar `SHA256SUMS` contra los bytes descargados (`sha256sum -c SHA256SUMS`).
 5. Comprobar `manifest.json` **schema v2** y los hashes de artefactos.
 6. `arancel-mx data verify` — revalida integridad local; `--bundle` cubre el contrato de seis assets.
 
