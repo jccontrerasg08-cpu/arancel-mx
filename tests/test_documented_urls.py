@@ -10,7 +10,6 @@ from scripts.check_documented_urls import (
     EXTRA_DOCUMENTED_URLS,
     MARKDOWN_LINK_PATTERN,
     README_RELEASE_URLS,
-    _RETRY_PAUSE,
     build_session,
     check_reachable,
     documented_public_urls,
@@ -93,36 +92,22 @@ def test_readme_official_sources_use_parseable_markdown_links() -> None:
         assert all(is_parseable_url(url) for url in linked_urls)
 
 
-def test_fetch_html_body_pauses_between_connection_retries(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_fetch_html_body_does_not_stack_connection_retries(monkeypatch: pytest.MonkeyPatch) -> None:
     sleeps: list[float] = []
-    calls = {"n": 0}
-
-    class _Response:
-        status_code = 200
-        url = "https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html"
-        text = "<html><body>" + ("LIGIE " * 80) + "</body></html>"
-
-        def raise_for_status(self) -> None:
-            return None
 
     class _Session:
-        def get(self, url: str, **kwargs: object) -> _Response:
-            calls["n"] += 1
-            if calls["n"] < 3:
-                raise requests.ConnectionError("Network is unreachable")
-            return _Response()
+        def get(self, url: str, **kwargs: object) -> object:
+            raise requests.ConnectionError("Network is unreachable")
 
     monkeypatch.setattr("scripts.check_documented_urls.time.sleep", sleeps.append)
-    status, final_url, _html = fetch_html_body(
-        _Session(),  # type: ignore[arg-type]
-        "https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html",
-        timeout=5,
-    )
+    with pytest.raises(requests.ConnectionError, match="unreachable"):
+        fetch_html_body(
+            _Session(),  # type: ignore[arg-type]
+            "https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html",
+            timeout=5,
+        )
 
-    assert calls["n"] == 3
-    assert sleeps == list(_RETRY_PAUSE)
-    assert status == 200
-    assert final_url.endswith("ligie.info22.html")
+    assert sleeps == []
 
 
 def test_probe_retries_only_urls_that_failed_the_first_pass(
@@ -142,7 +127,7 @@ def test_probe_retries_only_urls_that_failed_the_first_pass(
     class _Session:
         def get(self, url: str, **kwargs: object) -> _Response:
             seen.append(url)
-            if url.endswith("ligie.info22.html") and seen.count(url) <= 3:
+            if url.endswith("ligie.info22.html") and seen.count(url) == 1:
                 raise requests.Timeout("Read timed out.")
             response = _Response()
             response.url = url
@@ -158,7 +143,7 @@ def test_probe_retries_only_urls_that_failed_the_first_pass(
     remaining = probe_documented_urls(session, remaining, timeout=5)  # type: ignore[arg-type]
     assert remaining == []
     assert seen.count(urls[0]) == 1
-    assert seen.count(urls[1]) == 4
+    assert seen.count(urls[1]) == 2
     output = capsys.readouterr().out
     assert "FAIL" in output
     assert "OK [200]" in output

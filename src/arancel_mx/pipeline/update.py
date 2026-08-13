@@ -8,11 +8,10 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any
 
-import requests
-
 from arancel_mx.sources.diputados import (
     LedgerDocument, LedgerLink, LedgerSnapshot, diff_ledgers, parse_ligie_ledger, route_changes,
 )
+from arancel_mx.sources.http import build_official_session
 
 
 DEFAULT_LEDGER_URL = "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm"
@@ -81,7 +80,7 @@ def _atomic_write(path: Path, payload: dict[str, Any]) -> None:
 
 
 def check_for_updates(config: UpdateConfig, client: Any | None = None) -> UpdatePlan:
-    session = client or requests.Session()
+    session = client or build_official_session()
     if hasattr(session, "headers"):
         session.headers["User-Agent"] = config.user_agent
     response = session.get(config.ledger_url, timeout=config.timeout_s)

@@ -1,9 +1,14 @@
 from datetime import timezone
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import threading
 
 import pytest
+import requests
+from urllib3.util.ssl_ import create_urllib3_context
 
 from arancel_mx.sources.http import (
     MAX_REDIRECTS,
+    build_official_session,
     decode_fetched_text,
     fetch_official_document,
 )
@@ -368,3 +373,97 @@ def test_redirect_limit_is_bounded():
 
     assert len(session.requested) == MAX_REDIRECTS + 1
     assert all(url.startswith("https://www.snice.gob.mx/") for url in session.requested)
+
+
+def test_official_session_retry_matches_changedetection_transport_algorithm():
+    session = build_official_session()
+    https_retry = session.get_adapter("https://www.snice.gob.mx/").max_retries
+    http_retry = session.get_adapter("http://www.siicex-caaarem.org.mx/").max_retries
+
+    assert https_retry.total == 6
+    assert https_retry.connect == 6
+    assert https_retry.read == 6
+    assert https_retry.status == 0
+    assert https_retry.backoff_factor == 0.5
+    assert https_retry.raise_on_status is False
+    assert https_retry.allowed_methods == frozenset({"HEAD", "GET", "OPTIONS", "POST"})
+    assert http_retry.total == 6
+    assert http_retry.status == 0
+
+
+def test_official_https_adapter_uses_legacy_government_ciphers(monkeypatch):
+    recorded: dict[str, str] = {}
+    real_context = create_urllib3_context
+
+    def wrapped():
+        context = real_context()
+        original = context.set_ciphers
+
+        def set_ciphers(ciphers):
+            recorded["ciphers"] = ciphers
+            return original(ciphers)
+
+        context.set_ciphers = set_ciphers  # type: ignore[method-assign]
+        return context
+
+    monkeypatch.setattr("arancel_mx.sources.http.create_urllib3_context", wrapped)
+    session = build_official_session()
+    adapter = session.get_adapter("https://www.snice.gob.mx/")
+    adapter.init_poolmanager(1, 1, False)
+    assert recorded["ciphers"] == "DEFAULT:@SECLEVEL=1"
+    assert adapter.max_retries.status == 0
+
+
+def test_official_session_does_not_retry_http_404():
+    class Server(ThreadingHTTPServer):
+        daemon_threads = True
+        request_count = 0
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.server.request_count += 1
+            self.send_response(404)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+
+        def log_message(self, format, *args):
+            return
+
+    server = Server(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        host, port = server.server_address[:2]
+        response = build_official_session().get(f"http://{host}:{port}/missing", timeout=2)
+        assert response.status_code == 404
+        assert server.request_count == 1
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
+def test_fetch_official_document_raises_on_http_404():
+    class NotFound(Response):
+        status_code = 404
+
+        def raise_for_status(self):
+            raise requests.HTTPError("404 Client Error", response=self)
+
+    with pytest.raises(requests.HTTPError, match="404"):
+        fetch_official_document(
+            Session(NotFound("https://www.snice.gob.mx/file.pdf")),
+            "https://www.snice.gob.mx/file.pdf",
+            ALLOWED_SNICE,
+            PDF_TYPES,
+        )
+
+
+def test_documented_url_session_reuses_official_transport_retry():
+    from scripts.check_documented_urls import build_session
+
+    session = build_session()
+    retry = session.get_adapter("https://www.snice.gob.mx/").max_retries
+    assert retry.status == 0
+    assert retry.total == 6
+    assert retry.backoff_factor == 0.5
