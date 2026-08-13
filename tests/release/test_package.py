@@ -1,6 +1,7 @@
 import hashlib
 import json
 import tarfile
+from pathlib import Path
 
 import pytest
 
@@ -308,3 +309,53 @@ def test_failed_latest_copy_leaves_checksums_and_archive_untouched(tmp_path, mon
     assert (release / "SHA256SUMS").read_text(encoding="ascii") == checksums_before
     assert not latest.exists()
     assert list(tmp_path.glob(".latest-*")) == []
+
+
+def test_failed_latest_replace_restores_dirty_checksums(tmp_path, monkeypatch):
+    release, sources = _fixture(tmp_path)
+    checksums_before = (release / "SHA256SUMS").read_bytes()
+    latest = tmp_path / "latest"
+    real_replace = Path.replace
+
+    def replace(self, target):
+        if Path(target).resolve() == latest.resolve():
+            raise OSError("rename failed")
+        return real_replace(self, target)
+
+    monkeypatch.setattr(Path, "replace", replace)
+
+    with pytest.raises(OSError, match="rename failed"):
+        prepare_release_archive(release, sources, latest)
+
+    assert not (release / "official-sources.tar.gz").exists()
+    assert (release / "SHA256SUMS").read_bytes() == checksums_before
+    assert not latest.exists()
+    assert list(tmp_path.glob(".latest-*")) == []
+
+
+def test_staging_removed_if_checksum_restore_fails(tmp_path, monkeypatch):
+    release, sources = _fixture(tmp_path)
+    checksums_path = (release / "SHA256SUMS").resolve()
+    latest = tmp_path / "latest"
+    real_replace = Path.replace
+    real_write_bytes = Path.write_bytes
+
+    def replace(self, target):
+        if Path(target).resolve() == latest.resolve():
+            raise OSError("rename failed")
+        return real_replace(self, target)
+
+    def write_bytes(self, data):
+        if self.resolve() == checksums_path and b"official-sources.tar.gz" not in data:
+            raise OSError("restore failed")
+        return real_write_bytes(self, data)
+
+    monkeypatch.setattr(Path, "replace", replace)
+    monkeypatch.setattr(Path, "write_bytes", write_bytes)
+
+    with pytest.raises(OSError, match="restore failed"):
+        prepare_release_archive(release, sources, latest)
+
+    assert list(tmp_path.glob(".latest-*")) == []
+    assert not latest.exists()
+    assert not (release / "official-sources.tar.gz").exists()

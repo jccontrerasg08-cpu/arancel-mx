@@ -268,15 +268,17 @@ def prepare_release_archive(
         staging.replace(latest_dir)
         staging = None
     except Exception:
-        if archive_tmp.exists():
-            archive_tmp.unlink()
-        if archive_path.exists():
-            archive_path.unlink()
-        checksums_path.write_bytes(original_checksums)
-        if staging is not None and staging.exists():
-            shutil.rmtree(staging, ignore_errors=True)
-        if latest_dir.exists():
-            shutil.rmtree(latest_dir, ignore_errors=True)
+        try:
+            if archive_tmp.exists():
+                archive_tmp.unlink()
+            if archive_path.exists():
+                archive_path.unlink()
+            checksums_path.write_bytes(original_checksums)
+        finally:
+            if staging is not None and staging.exists():
+                shutil.rmtree(staging, ignore_errors=True)
+            if latest_dir.exists():
+                shutil.rmtree(latest_dir, ignore_errors=True)
         raise
     return {
         "dataset_version": manifest["dataset_version"],
