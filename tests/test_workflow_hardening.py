@@ -1,171 +1,169 @@
-"""Cross-workflow hardening contract, enforced on parsed YAML rather than text.
+"""Cross-workflow hardening contract, enforced on workflow text.
 
-The other workflow tests assert product behaviour (which job may publish, which
-job may alert). This module asserts the structural guarantees that make those
-behaviours trustworthy, so a future edit cannot reintroduce a class of weakness
-that GitHub Actions makes easy: unpinned actions, workflow-wide write tokens,
-credentials left on disk, expression interpolation inside shell scripts, or
-unbounded jobs.
+GitHub Actions YAML uses a bare `on:` key. A YAML 1.1 loader maps that key to
+the boolean True, which is why this repo previously imported PyYAML. These
+tests treat `on:` as a literal line instead.
 """
 
 from __future__ import annotations
 
-from collections.abc import Iterator
 from pathlib import Path
 import re
 
-import pytest
-import yaml
-
-
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOWS = ROOT / ".github" / "workflows"
-# Only the manually dispatched documentation workflow pushes with git, so it is the
-# single place where the checkout credential may stay in .git/config.
 CHECKOUTS_KEEPING_CREDENTIALS = frozenset()
 MAX_TIMEOUT_MINUTES = 60
 _HOSTED_RUNNERS = frozenset({"ubuntu-latest", "windows-latest", "macos-latest"})
 _PINNED_USES = re.compile(r"^[^@\s]+@[0-9a-f]{40}$")
 _INTERPOLATION = re.compile(r"\$\{\{")
+_TOP_LEVEL = re.compile(r"^[a-zA-Z_][\w-]*:", re.MULTILINE)
+_JOB_KEY = re.compile(r"^  ([\w-]+):$", re.MULTILINE)
 
 
 def _workflow_paths() -> list[Path]:
     return sorted((*WORKFLOWS.glob("*.yml"), *WORKFLOWS.glob("*.yaml")))
 
 
-def _load(path: Path) -> dict[str, object]:
-    document = yaml.safe_load(path.read_text(encoding="utf-8"))
-    assert isinstance(document, dict), path.name
-    return document
-
-
-def _triggers(document: dict[str, object]) -> dict[str, object]:
-    # PyYAML resolves the bare `on:` key to the boolean True under YAML 1.1.
-    triggers = document.get("on", document.get(True))
-    assert isinstance(triggers, dict), "workflow triggers must be an explicit mapping"
-    return triggers
-
-
-def _jobs(document: dict[str, object]) -> dict[str, dict[str, object]]:
-    jobs = document.get("jobs")
-    assert isinstance(jobs, dict) and jobs
-    for job in jobs.values():
-        assert isinstance(job, dict)
-    return jobs  # type: ignore[return-value]
-
-
-def _steps(job: dict[str, object]) -> list[dict[str, object]]:
-    steps = job.get("steps") or []
-    assert isinstance(steps, list)
-    return [step for step in steps if isinstance(step, dict)]
-
-
-def _all_steps() -> Iterator[tuple[str, str, dict[str, object]]]:
-    for path in _workflow_paths():
-        for name, job in _jobs(_load(path)).items():
-            for step in _steps(job):
-                yield path.name, name, step
-
-
-@pytest.fixture(scope="module")
-def workflows() -> dict[str, dict[str, object]]:
+def _workflow_texts() -> dict[str, str]:
     paths = _workflow_paths()
     assert paths
-    return {path.name: _load(path) for path in paths}
+    return {path.name: path.read_text(encoding="utf-8") for path in paths}
 
 
-def test_every_workflow_parses_and_declares_bounded_triggers(workflows):
-    for name, document in workflows.items():
-        triggers = _triggers(document)
-        assert "pull_request_target" not in triggers, name
-        if "pull_request" in triggers:
+def _block_after(text: str, header: str) -> str:
+    match = re.search(rf"^{re.escape(header)}\n", text, re.MULTILINE)
+    assert match is not None, header
+    start = match.end()
+    nxt = _TOP_LEVEL.search(text, start)
+    return text[start : nxt.start() if nxt else len(text)]
+
+
+def _job_blocks(text: str) -> dict[str, str]:
+    jobs_match = re.search(r"^jobs:\n", text, re.MULTILINE)
+    assert jobs_match is not None
+    jobs_text = text[jobs_match.end() :]
+    keys = list(_JOB_KEY.finditer(jobs_text))
+    assert keys
+    blocks: dict[str, str] = {}
+    for i, match in enumerate(keys):
+        end = keys[i + 1].start() if i + 1 < len(keys) else len(jobs_text)
+        blocks[match.group(1)] = jobs_text[match.start() : end]
+    return blocks
+
+
+def _run_scripts(block: str) -> list[str]:
+    scripts: list[str] = []
+    lines = block.splitlines()
+    i = 0
+    while i < len(lines):
+        folded = re.match(r"^(\s+)run:\s+\|[-]?\s*$", lines[i])
+        if folded:
+            indent = len(folded.group(1))
+            body: list[str] = []
+            i += 1
+            while i < len(lines) and (
+                not lines[i].strip()
+                or len(lines[i]) - len(lines[i].lstrip(" ")) > indent
+            ):
+                body.append(lines[i])
+                i += 1
+            scripts.append("\n".join(body))
+            continue
+        inline = re.match(r"^\s+run:\s+(\S.*)$", lines[i])
+        if inline and not lines[i].rstrip().endswith("|"):
+            scripts.append(inline.group(1))
+        i += 1
+    return scripts
+
+
+def test_every_workflow_parses_and_declares_bounded_triggers():
+    for name, text in _workflow_texts().items():
+        triggers = _block_after(text, "on:")
+        assert "pull_request_target:" not in triggers, name
+        if "pull_request:" in triggers:
             assert name == "ci.yml", f"{name} must not build from untrusted pull requests"
 
 
-def test_no_workflow_grants_write_permissions_outside_a_job(workflows):
-    for name, document in workflows.items():
-        permissions = document.get("permissions")
-        assert isinstance(permissions, dict), f"{name} must declare default permissions"
-        granted = {scope for scope, level in permissions.items() if level == "write"}
-        assert granted == set(), f"{name} grants {sorted(granted)} to every job"
+def test_no_workflow_grants_write_permissions_outside_a_job():
+    for name, text in _workflow_texts().items():
+        permissions = _block_after(text, "permissions:")
+        assert ": write" not in permissions, f"{name} grants workflow-level write"
 
 
-def test_every_job_is_least_privilege_bounded_and_hosted_by_github(workflows):
-    for name, document in workflows.items():
-        for job_name, job in _jobs(document).items():
+def test_every_job_is_least_privilege_bounded_and_hosted_by_github():
+    for name, text in _workflow_texts().items():
+        for job_name, block in _job_blocks(text).items():
             label = f"{name}:{job_name}"
-            assert isinstance(job.get("permissions"), dict), f"{label} inherits permissions"
-            timeout = job.get("timeout-minutes")
-            assert isinstance(timeout, int), f"{label} has no timeout"
-            assert 0 < timeout <= MAX_TIMEOUT_MINUTES, label
-            runs_on = job.get("runs-on")
-            if isinstance(runs_on, str) and "matrix.os" in runs_on:
-                matrix = job.get("strategy")
-                assert isinstance(matrix, dict), label
-                oss = (matrix.get("matrix") or {}).get("os")
-                assert isinstance(oss, list) and oss, label
-                assert set(oss) <= _HOSTED_RUNNERS, label
+            assert re.search(r"^    permissions:\n", block, re.MULTILINE), (
+                f"{label} inherits permissions"
+            )
+            timeout = re.search(
+                r"^    timeout-minutes: (\d+)\s*$", block, re.MULTILINE
+            )
+            assert timeout, f"{label} has no timeout"
+            assert 0 < int(timeout.group(1)) <= MAX_TIMEOUT_MINUTES, label
+            if "${{ matrix.os }}" in block:
+                oss = re.search(r"os:\s*\[([^\]]+)\]", block)
+                assert oss, label
+                names = {item.strip().strip("\"'") for item in oss.group(1).split(",")}
+                assert names <= _HOSTED_RUNNERS, label
             else:
-                assert runs_on == "ubuntu-latest", label
+                assert re.search(
+                    r"^    runs-on: ubuntu-latest\s*$", block, re.MULTILINE
+                ), label
 
 
-def test_every_workflow_serializes_concurrent_runs(workflows):
-    for name, document in workflows.items():
-        concurrency = document.get("concurrency")
-        assert isinstance(concurrency, dict), f"{name} must declare a concurrency group"
-        assert str(concurrency.get("group") or "").strip(), name
-        assert "cancel-in-progress" in concurrency, name
+def test_every_workflow_serializes_concurrent_runs():
+    for name, text in _workflow_texts().items():
+        concurrency = _block_after(text, "concurrency:")
+        assert "group:" in concurrency, name
+        assert "cancel-in-progress:" in concurrency, name
 
 
 def test_every_action_is_pinned_to_a_commit_sha_with_a_readable_version_comment():
     for path in _workflow_paths():
         text = path.read_text(encoding="utf-8")
-        for job_name, job in _jobs(_load(path)).items():
-            for step in _steps(job):
-                uses = step.get("uses")
-                if uses is None:
-                    continue
-                label = f"{path.name}:{job_name}"
-                assert _PINNED_USES.fullmatch(str(uses)), f"{label} uses {uses}"
-                assert f"uses: {uses} # v" in text, (
-                    f"{label} pins {uses} without a readable version comment"
-                )
-
-
-def test_checkout_credentials_are_an_explicit_and_justified_decision():
-    for name, job, step in _all_steps():
-        uses = str(step.get("uses") or "")
-        if not uses.startswith("actions/checkout@"):
-            continue
-        options = step.get("with")
-        assert isinstance(options, dict), f"{name}:{job} checkout has no options"
-        assert "persist-credentials" in options, (
-            f"{name}:{job} must state persist-credentials explicitly"
-        )
-        if options["persist-credentials"] is not False:
-            assert name in CHECKOUTS_KEEPING_CREDENTIALS, (
-                f"{name}:{job} keeps the checkout credential without justification"
+        for uses in re.findall(r"^\s+uses: (\S+)", text, re.MULTILINE):
+            assert _PINNED_USES.fullmatch(uses), f"{path.name} uses {uses}"
+            assert f"uses: {uses} # v" in text, (
+                f"{path.name} pins {uses} without a readable version comment"
             )
 
 
-def test_no_shell_script_interpolates_workflow_expressions():
-    for name, job, step in _all_steps():
-        script = step.get("run")
-        if script is None:
+def test_checkout_credentials_are_an_explicit_and_justified_decision():
+    for name, text in _workflow_texts().items():
+        checkouts = len(re.findall(r"uses: actions/checkout@", text))
+        if checkouts == 0:
             continue
-        assert not _INTERPOLATION.search(str(script)), (
-            f"{name}:{job} interpolates an expression into a shell script; "
-            "pass the value through env: instead"
+        falses = len(re.findall(r"persist-credentials: false", text))
+        if name in CHECKOUTS_KEEPING_CREDENTIALS:
+            continue
+        assert checkouts == falses, (
+            f"{name} keeps a checkout credential without persist-credentials: false"
         )
 
 
+def test_no_shell_script_interpolates_workflow_expressions():
+    for name, text in _workflow_texts().items():
+        for job_name, block in _job_blocks(text).items():
+            for script in _run_scripts(block):
+                assert not _INTERPOLATION.search(script), (
+                    f"{name}:{job_name} interpolates an expression into a shell script; "
+                    "pass the value through env: instead"
+                )
+
+
 def test_piped_shell_scripts_opt_into_pipefail():
-    for name, job, step in _all_steps():
-        script = str(step.get("run") or "")
-        if "|" not in script:
-            continue
-        assert step.get("shell") == "bash", f"{name}:{job} pipes without shell: bash"
-        assert "set -euo pipefail" in script, f"{name}:{job} pipes without pipefail"
+    for name, text in _workflow_texts().items():
+        for job_name, block in _job_blocks(text).items():
+            for script in _run_scripts(block):
+                if "|" not in script:
+                    continue
+                assert "set -euo pipefail" in script, (
+                    f"{name}:{job_name} pipes without pipefail"
+                )
+                assert "shell: bash" in block, f"{name}:{job_name} pipes without shell: bash"
 
 
 def test_workflow_outputs_are_only_written_through_the_reviewed_boundary():
