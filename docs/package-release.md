@@ -59,7 +59,7 @@ from arancel_mx import Dataset
 db = Dataset.latest()
 record = db.lookup("01012101")
 card = db.ficha("01012101")
-rows = db.compare("01012101")  # VUCEM is informative, not legal identity
+rows = db.compare("01012101")  # Dataset.compare vs VUCEM; informative, not legal identity
 results = db.search("refrigeradores", limit=20)
 children = db.children("0101")
 sources = db.provenance("01012101")
