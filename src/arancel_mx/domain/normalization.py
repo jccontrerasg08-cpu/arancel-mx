@@ -510,22 +510,43 @@ def stage_rows(conn: Any, rows: list[Mapping[str, Any]]) -> int:
     return count
 
 
+def _digits(value: object) -> str:
+    return str(value or "").strip()
+
+
 def _staging_problem(role: str, normalized: Mapping[str, Any]) -> tuple[str, str] | None:
-    code_key = "nico10" if "nico" in role and "proposal" not in role else "code"
-    if role in {"ligie_current", "tariff_fraction", "nico_current", "nico_agreement"}:
-        value = str(normalized.get(code_key, ""))
-        expected = 10 if code_key == "nico10" else 8
-        if not value.isdigit() or len(value) != expected:
-            return "ambiguous_code", f"{code_key} must contain exactly {expected} digits"
     allowed = {
         "ligie_current", "tariff_fraction", "nico_current", "nico_agreement",
         "nico_proposal", "national_notes", "weighted_tariff_indicator",
     }
     if role not in allowed:
         return "unknown_document_role", role
+    if not str(normalized.get("source_document_id") or "").strip():
+        return "missing_provenance", "source_document_id is required"
     if role in {"ligie_current", "tariff_fraction", "nico_current", "nico_agreement"}:
-        if not normalized.get("source_document_id"):
-            return "missing_provenance", "source_document_id is required for legal canonical rows"
+        code_key = "nico10" if "nico" in role else "code"
+        value = _digits(normalized.get(code_key))
+        expected = 10 if code_key == "nico10" else 8
+        if not value.isdigit() or len(value) != expected:
+            return "ambiguous_code", f"{code_key} must contain exactly {expected} digits"
+        return None
+    if role == "nico_proposal":
+        if not normalized.get("observed_at"):
+            return "missing_provenance", "observed_at is required for nico_proposal"
+        if len(str(normalized.get("source_sha256") or "").strip()) != 64:
+            return "missing_provenance", "source_sha256 is required for nico_proposal"
+        proposed = _digits(normalized.get("proposed_nico10") or normalized.get("nico10"))
+        if proposed and (not proposed.isdigit() or len(proposed) != 10):
+            return "ambiguous_code", "proposed_nico10 must contain exactly 10 digits"
+        return None
+    if role == "national_notes":
+        if not _digits(normalized.get("note_number")) or not _digits(normalized.get("text")):
+            return "missing_note_text", "national_notes requires note_number and text"
+        return None
+    period = normalized.get("period")
+    hs6 = _digits(normalized.get("hs6"))
+    if not period or len(hs6) != 6 or not hs6.isdigit():
+        return "ambiguous_code", "weighted_tariff_indicator requires period and a 6-digit hs6"
     return None
 
 
@@ -589,15 +610,26 @@ def promote_staging(conn: Any) -> PromotionSummary:
     report = validate_staging(conn)
     if not report.publishable:
         raise ValueError("staging quarantine contains blocking rows")
+    rows = conn.execute(
+        "SELECT staging_row_id, document_role, normalized_json FROM staging_arancel_row "
+        "WHERE row_status='valid' ORDER BY staging_row_id"
+    ).fetchall()
+    conn.execute("BEGIN TRANSACTION")
+    try:
+        summary = _insert_promoted_rows(conn, rows)
+        conn.execute("COMMIT")
+    except Exception:
+        conn.execute("ROLLBACK")
+        raise
+    return summary
+
+
+def _insert_promoted_rows(conn: Any, rows: list[tuple[Any, ...]]) -> PromotionSummary:
     fraction_count = 0
     nico_count = 0
     proposal_count = 0
     note_count = 0
     indicator_count = 0
-    rows = conn.execute(
-        "SELECT staging_row_id, document_role, normalized_json FROM staging_arancel_row "
-        "WHERE row_status='valid' ORDER BY staging_row_id"
-    ).fetchall()
     for staging_id, role, payload in rows:
         row = json.loads(payload)
         if role in {"ligie_current", "tariff_fraction"}:
