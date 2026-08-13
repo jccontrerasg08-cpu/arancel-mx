@@ -387,7 +387,7 @@ LICENSE
 NOTICE
 ```
 
-Engineering design and implementation plans live under `docs/superpowers/` and are intentionally public. Distribution tests scan tracked text for credential patterns and private machine paths. Generated official data, local DuckDB files, `.env` files, and tokens remain outside Git.
+Distribution tests scan tracked text for credential patterns and private machine paths. Generated official data, local DuckDB files, `.env` files, and tokens remain outside Git.
 
 ## Tests
 

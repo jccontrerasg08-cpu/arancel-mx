@@ -10,7 +10,7 @@ from arancel_mx.consumer.dataset import Dataset
 from arancel_mx.consumer.doctor import doctor_to_dict, render_doctor_human, run_doctor
 from arancel_mx.consumer.errors import DatasetUnavailableError
 from arancel_mx.consumer.manager import DatasetManager
-from arancel_mx.consumer.output import CsvSchema, render, render_json, render_path
+from arancel_mx.consumer.output import CsvSchema, render, render_json
 
 
 _OUTPUT_FORMATS = ("table", "json", "csv")
@@ -278,7 +278,7 @@ def _run_data_download(namespace: argparse.Namespace) -> int:
 
 def _run_data_path(namespace: argparse.Namespace) -> int:
     path = _manager(namespace).selected_path(namespace.dataset)
-    sys.stdout.write(render_path(path) + "\n")
+    sys.stdout.write(str(path) + "\n")
     return 0
 
 

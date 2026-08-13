@@ -57,7 +57,7 @@ def test_current_resolver_probe_records_normal_runtime_resolution(tmp_path: Path
     report = json.loads(completed.stdout)
     assert report["status"] == "ok"
     assert report["resolved"]["arancel-mx"] == "0.2.0"
-    for dependency in ("duckdb", "filelock", "platformdirs", "requests"):
+    for dependency in ("duckdb", "filelock", "requests"):
         assert dependency in report["resolved"]
     for heavy in ("pandas", "openpyxl", "pymupdf", "xlrd"):
         assert heavy not in report["resolved"]

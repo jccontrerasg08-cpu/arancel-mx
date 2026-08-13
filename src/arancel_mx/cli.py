@@ -19,7 +19,7 @@ from arancel_mx.consumer.cli import register_consumer_commands, run_consumer
 from arancel_mx.consumer.errors import ArancelMXError
 
 
-COMMANDS = ("build", "check-updates", "update", "reconcile", "release")
+COMMANDS = ("build", "check-updates", "reconcile", "release")
 _MAINTAINER_HINT = (
     "This command needs the maintainer dependencies. "
     "Install them with: pip install 'arancel-mx[maintainer]'"
@@ -115,12 +115,6 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_update_arguments(check_updates)
 
-    update = subparsers.add_parser(
-        "update",
-        help="Alias obsoleto y de solo lectura para check-updates",
-    )
-    _add_update_arguments(update)
-
     reconcile = subparsers.add_parser("reconcile", help="Reconcilia evidencia legal arancelaria")
     reconcile.add_argument("--ledger-json", required=True)
     reconcile.add_argument("--dof-json", required=True)
@@ -168,7 +162,7 @@ def _update_config(namespace: argparse.Namespace) -> object:
 def _dispatch(namespace: argparse.Namespace) -> object:
     if namespace.command == "build":
         return build_release(Path(namespace.database), Path(namespace.output_dir))
-    if namespace.command in {"check-updates", "update"}:
+    if namespace.command == "check-updates":
         return check_for_updates(_update_config(namespace))
     if namespace.command == "reconcile":
         return reconcile_legal_instruments(
@@ -202,11 +196,6 @@ def main(argv: Sequence[str] | None = None) -> int:
     if namespace.command is None:
         parser.print_help()
         return 0
-    if namespace.command == "update":
-        print(
-            "warning: 'update' is a deprecated read-only alias; use check-updates",
-            file=sys.stderr,
-        )
 
     if hasattr(namespace, "consumer_action"):
         try:

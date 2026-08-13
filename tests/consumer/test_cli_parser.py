@@ -20,7 +20,6 @@ def test_parser_exposes_consumer_and_maintainer_commands() -> None:
         "chapters",
         "build",
         "check-updates",
-        "update",
         "reconcile",
         "release",
     ):
@@ -44,21 +43,6 @@ def test_data_requires_nested_subcommand(capsys) -> None:
     captured = capsys.readouterr()
     assert "required" in captured.err.lower()
     assert "status" in captured.err
-
-
-def test_update_alias_warning_is_unchanged(tmp_path, monkeypatch, capsys) -> None:
-    from arancel_mx import cli
-
-    class Plan:
-        def to_dict(self):
-            return {"status": "no_change"}
-
-    state = tmp_path / "state.json"
-    state.write_text("{}\n", encoding="utf-8")
-    monkeypatch.setattr(cli, "check_for_updates", lambda config: Plan())
-
-    assert main(["update", "--state-path", str(state)]) == 0
-    assert "deprecated read-only alias" in capsys.readouterr().err
 
 
 def test_top_level_version_uses_runtime_distribution_metadata(capsys) -> None:

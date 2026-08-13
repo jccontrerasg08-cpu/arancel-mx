@@ -26,6 +26,7 @@ from arancel_mx.consumer.integrity import (
 )
 from arancel_mx.consumer.models import DatasetInfo
 from arancel_mx.consumer.release_api import DataRelease, GitHubReleaseClient
+from arancel_mx.release.package import PUBLIC_RELEASE_ASSETS
 
 
 _MANAGED_ASSETS = (
@@ -33,15 +34,6 @@ _MANAGED_ASSETS = (
     ("SHA256SUMS", "SHA256SUMS.part"),
     ("arancel_mx.duckdb", "arancel_mx.duckdb.part"),
 )
-_BUNDLE_ASSETS = (
-    "arancel_mx.duckdb",
-    "arancel_mx.csv",
-    "arancel_mx.json",
-    "manifest.json",
-    "SHA256SUMS",
-    "official-sources.tar.gz",
-)
-_EXPECTED_ASSET_SET = frozenset(_BUNDLE_ASSETS)
 
 
 class DatasetManager:
@@ -86,10 +78,11 @@ class DatasetManager:
 
     @staticmethod
     def _validate_release_contract(release: DataRelease) -> None:
+        expected = frozenset(PUBLIC_RELEASE_ASSETS)
         actual = frozenset(release.assets_by_name)
-        if actual != _EXPECTED_ASSET_SET:
-            missing = sorted(_EXPECTED_ASSET_SET - actual)
-            extra = sorted(actual - _EXPECTED_ASSET_SET)
+        if actual != expected:
+            missing = sorted(expected - actual)
+            extra = sorted(actual - expected)
             raise DatasetIntegrityError(
                 f"data release {release.tag} asset set mismatch: "
                 f"missing={missing} extra={extra}"
@@ -327,14 +320,14 @@ class DatasetManager:
         try:
             work.mkdir(parents=True, exist_ok=False)
             states: list[str] = []
-            for name in _BUNDLE_ASSETS:
+            for name in PUBLIC_RELEASE_ASSETS:
                 states.append(self._download_asset(release, name, work / name))
 
             sums_path = work / "SHA256SUMS"
             checksums = parse_sha256sums(
                 self._read_text(sums_path, label="SHA256SUMS", encoding="ascii")
             )
-            expected_names = set(_BUNDLE_ASSETS) - {"SHA256SUMS"}
+            expected_names = set(PUBLIC_RELEASE_ASSETS) - {"SHA256SUMS"}
             if set(checksums) != expected_names:
                 raise DatasetIntegrityError(
                     "publication bundle SHA256SUMS coverage is not exact: "

@@ -37,14 +37,12 @@ classifiers = [
 dependencies = [
   "duckdb>=1.1",
   "filelock>=3.16",
-  "platformdirs>=4.3",
   "requests>=2.32",
 ]
 
 [project.optional-dependencies]
 maintainer = [
     "openpyxl>=3.1",
-    "pandas>=2.0",
     "PyMuPDF>=1.24",
     "xlrd>=2.0",
 ]
@@ -53,7 +51,6 @@ dev = [
     "check-wheel-contents>=0.6.3",
     "mypy>=1.0",
     "openpyxl>=3.1",
-    "pandas>=2.0",
     "PyMuPDF>=1.24",
     "pytest>=8.3",
     "pytest-cov>=5.0",

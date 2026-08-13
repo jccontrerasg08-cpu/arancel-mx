@@ -2,6 +2,16 @@
 
 All notable changes to the Python package are documented here. Dataset releases have an independent `data-YYYY.MM.DD` lifecycle in GitHub Releases and are not duplicated as package versions.
 
+## [Unreleased]
+
+### Removed
+
+- Dropped `platformdirs` from the consumer runtime; cache paths use `XDG_CACHE_HOME` / `LOCALAPPDATA` / `~/Library/Caches`.
+- Dropped `pandas` from the maintainer extra; workbooks are read with `openpyxl`/`xlrd`.
+- Removed leftover pandas pins (`numpy`, `python-dateutil`, `six`) from `requirements/production-build.txt`.
+- Removed the deprecated maintainer `update` CLI alias. Use `check-updates`.
+- Removed shipped Superpowers plan/spec files under `docs/superpowers/`. Live contracts remain in `docs/`.
+
 ## [0.2.0] - 2026-08-12
 
 ### Added

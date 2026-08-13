@@ -6,25 +6,20 @@ from datetime import date
 import hashlib
 from pathlib import Path
 import re
-import unicodedata
 
 import pymupdf
-import pandas as pd
 
-from arancel_mx.domain.normalization import canonical_json, code_level, normalize_code
+from arancel_mx.domain.normalization import canonical_json, code_level, fold_text, normalize_code
 
 
 def _text(value: object) -> str:
-    if value is None or pd.isna(value):
+    if value is None:
         return ""
     return " ".join(str(value).split())
 
 
 def _fold(value: object) -> str:
-    normalized = unicodedata.normalize("NFKD", _text(value))
-    return "".join(
-        char for char in normalized if not unicodedata.combining(char)
-    ).upper()
+    return fold_text(value).upper()
 
 
 def _identifier(prefix: str, values: list[object]) -> str:

@@ -6,7 +6,7 @@ from dataclasses import asdict, dataclass
 from datetime import date
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Any, Protocol
+from typing import Any
 
 import requests
 
@@ -36,16 +36,6 @@ class UpdatePlan:
 
     def to_dict(self) -> dict[str, Any]:
         return {"status": self.status, "events": list(self.events), "jobs": list(self.jobs), "snapshot": self.snapshot}
-
-
-@dataclass(frozen=True)
-class UpdateResult:
-    status: str
-    jobs: tuple[str, ...]
-    events: tuple[dict[str, str], ...]
-
-    def to_dict(self) -> dict[str, Any]:
-        return {"status": self.status, "jobs": list(self.jobs), "events": list(self.events)}
 
 
 def _snapshot_dict(snapshot: LedgerSnapshot) -> dict[str, Any]:
@@ -110,33 +100,3 @@ def check_for_updates(config: UpdateConfig, client: Any | None = None) -> Update
     if config.report_path:
         _atomic_write(config.report_path, plan.to_dict())
     return plan
-
-
-class JobRunner(Protocol):
-    """Execution boundary supplied by an application or command adapter."""
-
-    def run_domain(self, name: str) -> object: ...
-
-
-def run_update(
-    config: UpdateConfig,
-    client: Any | None = None,
-    job_runner: JobRunner | None = None,
-) -> UpdateResult:
-    plan = check_for_updates(config, client)
-    if plan.status == "no_change":
-        return UpdateResult("no_change", (), ())
-    if job_runner is None:
-        raise ValueError("A job runner is required when tariff sources changed")
-    runner = job_runner
-    for job in plan.jobs:
-        runner.run_domain(job)
-    _atomic_write(config.state_path, plan.snapshot)
-    return UpdateResult("updated", plan.jobs, plan.events)
-
-
-def update_status(config: UpdateConfig) -> dict[str, Any]:
-    if not config.state_path.exists():
-        return {"status": "uninitialized", "state_path": str(config.state_path)}
-    snapshot = json.loads(config.state_path.read_text(encoding="utf-8"))
-    return {"status": "ready", "state_path": str(config.state_path), "snapshot": snapshot}

@@ -382,7 +382,7 @@ LICENSE
 NOTICE
 ```
 
-El repositorio conserva documentación de ingeniería en `docs/superpowers/` y pruebas de distribución que buscan credenciales y rutas privadas. Los datos generados, snapshots, DuckDB locales y tokens permanecen fuera de Git.
+El repositorio incluye pruebas de distribución que buscan credenciales y rutas privadas. Los datos generados, snapshots, DuckDB locales y tokens permanecen fuera de Git.
 
 ## Pruebas
 

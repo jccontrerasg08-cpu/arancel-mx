@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import re
-import unicodedata
-
+from arancel_mx.domain.normalization import fold_text
 from arancel_mx.sources.vucem import TableParser, normalize_fraction_code
 
 
@@ -34,10 +33,7 @@ class SiicexFractionDocument:
 
 
 def _fold(value: object) -> str:
-    normalized = unicodedata.normalize("NFKD", " ".join(str(value or "").split()))
-    return "".join(
-        char for char in normalized if not unicodedata.combining(char)
-    ).casefold()
+    return fold_text(value).casefold()
 
 
 def _duty_from_tables(tables: list[list[list[str]]]) -> tuple[str | None, str | None]:

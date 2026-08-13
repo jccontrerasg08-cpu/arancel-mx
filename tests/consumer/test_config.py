@@ -18,14 +18,14 @@ def _clear_consumer_env(monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv(name, raising=False)
 
 
-def test_default_cache_uses_platformdirs(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_default_cache_uses_xdg_cache_home(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     _clear_consumer_env(monkeypatch)
-    expected = tmp_path / "platform-cache"
-    monkeypatch.setattr("platformdirs.user_cache_dir", lambda **kwargs: str(expected))
+    expected = tmp_path / "xdg-cache"
+    monkeypatch.setenv("XDG_CACHE_HOME", str(expected))
 
     config = resolve_config()
 
-    assert config.cache_dir == expected
+    assert config.cache_dir == expected / "arancel-mx"
 
 
 def test_explicit_cache_dir_overrides_environment(
