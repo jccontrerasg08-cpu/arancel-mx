@@ -99,6 +99,21 @@ def test_tracked_text_contains_no_credentials_or_private_absolute_paths() -> Non
     assert findings == []
 
 
+def test_xls_fixtures_are_linguist_generated() -> None:
+    attributes = subprocess.check_output(
+        [
+            "git",
+            "check-attr",
+            "linguist-generated",
+            "--",
+            "tests/fixtures/workbooks/ligie-numeric-short-code.xls",
+        ],
+        cwd=ROOT,
+        text=True,
+    )
+    assert "linguist-generated: set" in attributes
+
+
 def test_open_source_governance_files_are_present() -> None:
     required = (
         "LICENSE",

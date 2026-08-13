@@ -36,9 +36,13 @@ Open Python tools to capture, normalize, reconcile, and publish Mexican tariff d
 [Official sources](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/official-sources.tar.gz) ·
 **[View release](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest)**
 
-<sub>The `/releases/latest/download/...` links automatically resolve to assets from the public release currently marked as latest.</sub>
+<sub>The `/releases/latest/download/...` links automatically resolve to assets from the public release currently marked as latest. GitHub lists the size of each asset on that page; identity is `SHA256SUMS`, not the megabyte.</sub>
 
 </div>
+
+```bash
+sha256sum -c SHA256SUMS
+```
 
 ---
 

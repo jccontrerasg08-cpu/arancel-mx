@@ -46,6 +46,26 @@ def test_bilingual_readmes_show_install_and_consumer_first_commands() -> None:
         assert [value for value in required if value not in document] == []
 
 
+def test_bilingual_readmes_document_sha256sum_check_without_pinning_asset_megabytes() -> None:
+    spanish = _read("README.md")
+    english = _read("README.en.md")
+    for document in (spanish, english):
+        assert "sha256sum -c SHA256SUMS" in document
+        assert " MB" not in document
+        assert "MiB" not in document
+    assert "GitHub muestra el tamaño" in spanish
+    assert "GitHub lists the size" in english
+
+
+def test_contributing_lists_github_review_extensions_as_install_only() -> None:
+    text = _read("CONTRIBUTING.md")
+    for name in ("Octotree", "Refined GitHub", "Pretty Pull Requests"):
+        assert name in text
+    lowered = text.lower()
+    assert "instala" in lowered
+    assert "no reimplementa" in lowered
+
+
 def test_consumer_guide_documents_offline_formats_and_version_pinning() -> None:
     guide_path = ROOT / "docs/consumer-cli.md"
     assert guide_path.exists(), "docs/consumer-cli.md must document the public consumer CLI"
@@ -106,6 +126,7 @@ def test_external_consumption_guide_locks_install_verify_query_and_public_surfac
         "arancel-mx data download",
         "arancel-mx data verify",
         "SHA256SUMS",
+        "sha256sum -c SHA256SUMS",
         "schema v2",
         "Dataset.latest()",
         'Dataset.version("data-YYYY.MM.DD")',
