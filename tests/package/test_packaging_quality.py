@@ -13,7 +13,7 @@ def _project() -> dict[str, object]:
 
 def test_quality_tools_are_pinned_for_reproducible_ci() -> None:
     constraints = Path("requirements/production-build.txt").read_text(encoding="utf-8")
-    assert "twine==6.2.0" in constraints
+    assert "twine==7.0.0" in constraints
     assert "check-wheel-contents==0.6.3" in constraints
 
     dev = "\n".join(_project()["optional-dependencies"]["dev"])
