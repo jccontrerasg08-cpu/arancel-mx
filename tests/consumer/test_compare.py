@@ -2,10 +2,11 @@ from pathlib import Path
 
 import pytest
 
+from arancel_mx.consumer import Dataset
 from arancel_mx.consumer.compare import compare_code
 from arancel_mx.consumer.errors import InvalidCodeError
 from arancel_mx.consumer.models import CompareRow, TariffRecord
-from arancel_mx.sources.vucem import VUCEM_SAMPLE_FRACTION_SHEET_URL, parse_fraction_sheet
+from arancel_mx.sources.vucem import VUCEM_SAMPLE_FRACTION_SHEET_URL, fraction_sheet_url, parse_fraction_sheet
 
 
 FIXTURE = (
@@ -149,3 +150,52 @@ def test_compare_row_is_frozen():
     )
     with pytest.raises(Exception):
         row.match = False  # type: ignore[misc]
+
+
+def _vucem_html(code8: str, description: str, igi: str, ige: str) -> str:
+    dotted = f"{code8[:4]}.{code8[4:6]}.{code8[6:]}"
+    return (
+        "<!doctype html><html><body>"
+        f"<h2>Fracción Arancelaria: {dotted} ({code8})</h2>"
+        f"<p>{description}</p>"
+        "<table><tr><th>Fracción</th><th>Descripción</th><th>IGI</th><th>IGE</th></tr>"
+        f"<tr><td>{dotted}</td><td>{description}</td><td>{igi}</td><td>{ige}</td></tr>"
+        "</table>"
+        "<table><tr><th>NICO</th><th>Descripción</th><th>IGI</th><th>IGE</th></tr>"
+        f"<tr><td>00</td><td>{description}</td><td>{igi}</td><td>{ige}</td></tr>"
+        "</table></body></html>"
+    )
+
+
+def _sheet_from_html(html: str):
+    def get_sheet(code: str):
+        return parse_fraction_sheet(html, base_url=fraction_sheet_url(code))
+
+    return get_sheet
+
+
+def test_dataset_compare_hs6_mx8_and_nico_against_matching_vucem(consumer_duckdb: Path):
+    dataset = Dataset.open(consumer_duckdb)
+    html = _vucem_html("01012101", "Reproductores de raza pura", "10", "Ex.")
+    rows = dataset.compare("010121", get_sheet=_sheet_from_html(html))
+    by_key = {(row.code, row.field): row for row in rows}
+
+    assert {row.code for row in rows} == {"010121", "01012101", "0101210100"}
+    assert by_key[("010121", "description")].match is None
+    assert by_key[("01012101", "igi")].dataset == "10"
+    assert by_key[("01012101", "igi")].other == "10"
+    assert by_key[("01012101", "igi")].match is True
+    assert by_key[("01012101", "ige")].match is True
+    assert by_key[("0101210100", "igi")].match is True
+    assert all(row.other_source == "vucem" for row in rows if row.code != "010121")
+
+
+def test_dataset_compare_reports_igi_mismatch(consumer_duckdb: Path):
+    dataset = Dataset.open(consumer_duckdb)
+    html = _vucem_html("01012101", "Reproductores de raza pura", "5", "Ex.")
+    rows = dataset.compare("01012101", get_sheet=_sheet_from_html(html))
+    igi = next(row for row in rows if row.code == "01012101" and row.field == "igi")
+
+    assert igi.dataset == "10"
+    assert igi.other == "5"
+    assert igi.match is False

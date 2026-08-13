@@ -4,6 +4,12 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ## [Unreleased]
 
+### Fixed
+
+- xlrd integral numeric cells stringify without a `.0` suffix, so a 7-digit `.xls` code is rejected instead of publishing a different 8-digit identity.
+- Restored `from arancel_mx.consumer import Dataset` and the other public consumer re-exports.
+- Dependabot no longer requests repository labels that do not exist.
+
 ## [0.2.1] - 2026-08-13
 
 ### Added
