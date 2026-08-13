@@ -9,7 +9,15 @@ from pathlib import PurePosixPath
 import re
 from urllib.parse import urljoin, urlparse
 
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+from urllib3.util.ssl_ import create_urllib3_context
+
 MAX_REDIRECTS = 5
+OFFICIAL_HTTPS_CIPHERS = "DEFAULT:@SECLEVEL=1"
+# changedetection.io content_fetchers/requests.py default REQUESTS_RETRY_MAX_COUNT
+OFFICIAL_TRANSPORT_RETRIES = 6
 _REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
 
 
@@ -102,6 +110,44 @@ def _declared_charset(value: object) -> str | None:
 def _media_type_from_extension(url: str) -> str | None:
     suffix = PurePosixPath(urlparse(url).path).suffix.lower()
     return _EXTENSION_MEDIA_TYPES.get(suffix)
+
+
+class _OfficialHttpsAdapter(HTTPAdapter):
+    """HTTPS to legacy gob.mx hosts with weak DH parameters."""
+
+    def init_poolmanager(self, *args, **kwargs):
+        context = create_urllib3_context()
+        context.set_ciphers(OFFICIAL_HTTPS_CIPHERS)
+        kwargs["ssl_context"] = context
+        return super().init_poolmanager(*args, **kwargs)
+
+
+def _transport_retry() -> Retry:
+    """Retry connect/read failures only. HTTP status codes are not retried.
+
+    Algorithm from changedetection.io ``content_fetchers/requests.py``:
+    ``status=0``, ``backoff_factor=0.5``, connect/read equal to total.
+    """
+
+    return Retry(
+        total=OFFICIAL_TRANSPORT_RETRIES,
+        connect=OFFICIAL_TRANSPORT_RETRIES,
+        read=OFFICIAL_TRANSPORT_RETRIES,
+        status=0,
+        backoff_factor=0.5,
+        allowed_methods=frozenset({"HEAD", "GET", "OPTIONS", "POST"}),
+        raise_on_status=False,
+    )
+
+
+def build_official_session() -> requests.Session:
+    """Session for Diputados/SNICE/DOF capture and CI URL probes."""
+
+    retry = _transport_retry()
+    session = requests.Session()
+    session.mount("https://", _OfficialHttpsAdapter(max_retries=retry))
+    session.mount("http://", HTTPAdapter(max_retries=retry))
+    return session
 
 
 def decode_fetched_text(document: FetchedDocument) -> str:

@@ -8,9 +8,8 @@ import time
 from urllib.parse import urlparse
 
 import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util.ssl_ import create_urllib3_context
 
+from arancel_mx.sources.http import build_official_session
 from arancel_mx.sources.html_pages import (
     OPERATIONAL_HTML_PAGES,
     SNICE_BIBLIOTECA_JURIDICA_URL,
@@ -196,20 +195,9 @@ def check_reachable(session: requests.Session, url: str, *, timeout: float) -> t
     raise last_error
 
 
-class _LegacyGovernmentSslAdapter(HTTPAdapter):
-    """Allow HTTPS to legacy Mexican government hosts with weak DH parameters."""
-
-    def init_poolmanager(self, *args, **kwargs):
-        context = create_urllib3_context()
-        context.set_ciphers("DEFAULT:@SECLEVEL=1")
-        kwargs["ssl_context"] = context
-        return super().init_poolmanager(*args, **kwargs)
-
-
 def build_session() -> requests.Session:
-    session = requests.Session()
+    session = build_official_session()
     session.headers["User-Agent"] = USER_AGENT
-    session.mount("https://", _LegacyGovernmentSslAdapter())
     return session
 
 

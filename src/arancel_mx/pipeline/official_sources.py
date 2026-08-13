@@ -12,8 +12,6 @@ import shutil
 from typing import TYPE_CHECKING, Any, Sequence
 from urllib.parse import urlparse
 
-import requests
-
 from arancel_mx.pipeline.reconcile import (
     ReconciliationReport,
     discover_registered_sources,
@@ -25,6 +23,7 @@ from arancel_mx.sources.capture import CaptureManifest, capture_document
 from arancel_mx.sources.diputados import LedgerSnapshot, parse_ligie_ledger
 from arancel_mx.sources.http import (
     FetchedDocument,
+    build_official_session,
     decode_fetched_text,
     fetch_official_document,
 )
@@ -317,7 +316,7 @@ def capture_official_inputs(
     if config.timeout_s <= 0:
         raise ValueError("timeout_s must be positive")
 
-    client = session or requests.Session()
+    client = session or build_official_session()
     registry = load_source_registry()
     registry_version, registry_sha256 = _registry_metadata(registry)
 
