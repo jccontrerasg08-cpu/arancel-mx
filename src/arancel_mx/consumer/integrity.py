@@ -187,7 +187,7 @@ def validate_duckdb(
                 f"supported={sorted(SUPPORTED_SCHEMA_VERSIONS)}"
             )
 
-        duplicate_current = conn.execute(
+        duplicate_row = conn.execute(
             """
             SELECT COUNT(*) FROM (
                 SELECT code
@@ -197,8 +197,10 @@ def validate_duckdb(
                 HAVING COUNT(*) > 1
             )
             """
-        ).fetchone()[0]
-        if duplicate_current:
+        ).fetchone()
+        if duplicate_row is None:
+            raise DatasetIntegrityError("could not count current duplicate tariff rows")
+        if duplicate_row[0]:
             raise DatasetIntegrityError(
                 "arancel_mx contains multiple current rows for the same code"
             )
