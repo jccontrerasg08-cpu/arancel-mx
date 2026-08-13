@@ -56,9 +56,9 @@ Orden de verificación para una release `data-YYYY.MM.DD`:
 1. Resolver **un** tag exacto.
 2. `arancel-mx doctor` — instalación, cache, DuckDB y acceso remoto.
 3. `arancel-mx data download` — descarga a estado temporal; no promueve un cache parcial.
-4. Comprobar `SHA256SUMS` contra los bytes descargados (`sha256sum -c SHA256SUMS`).
-5. Comprobar `manifest.json` **schema v2** y los hashes de artefactos.
-6. `arancel-mx data verify` — revalida integridad local; `--bundle` cubre el contrato de seis assets.
+4. `arancel-mx data verify --bundle` — revalida integridad local y el contrato de seis assets.
+5. `sha256sum -c SHA256SUMS` sólo si descargaste **todos** los assets de la GitHub Release al mismo directorio. No lo uses sobre el cache de `data download`: `SHA256SUMS` cubre cinco archivos y `data download` no los deja juntos.
+6. Comprobar `manifest.json` **schema v2** (también lo cubre `data verify`).
 
 Los seis assets, ni uno más ni uno menos:
 
