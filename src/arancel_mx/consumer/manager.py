@@ -259,9 +259,10 @@ class DatasetManager:
         """Ensure one selected dataset is locally verified and return its DuckDB path."""
 
         if self.config.offline:
-            selected = self._selected_local_tag(tag)
-            self._validate_cached(selected)
-            return self.cache.paths(selected).duckdb
+            with self.cache.locked():
+                selected = self._selected_local_tag(tag)
+                self._validate_cached(selected)
+                return self.cache.paths(selected).duckdb
 
         # Resolve exactly once. Every following URL is read from this immutable object.
         release = self._resolve_release(tag)
@@ -289,9 +290,10 @@ class DatasetManager:
         return tuple(release.tag for release in releases)
 
     def selected_path(self, tag: str | None = None) -> Path:
-        selected = self._selected_local_tag(tag)
-        self._validate_cached(selected)
-        return self.cache.paths(selected).duckdb
+        with self.cache.locked():
+            selected = self._selected_local_tag(tag)
+            self._validate_cached(selected)
+            return self.cache.paths(selected).duckdb
 
     def _verify_remote_identity(self, release: DataRelease) -> VerifiedMetadata:
         self._validate_release_contract(release)
@@ -358,7 +360,8 @@ class DatasetManager:
         """Verify cached data locally, optionally comparing the exact remote release."""
 
         selected = self._selected_local_tag(tag)
-        info = self._validate_cached(selected)
+        with self.cache.locked():
+            info = self._validate_cached(selected)
         if not online:
             if bundle:
                 raise DatasetUnavailableError(

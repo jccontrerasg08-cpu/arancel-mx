@@ -394,6 +394,17 @@ def _validate_database(conn: duckdb.DuckDBPyConnection) -> dict[str, object]:
             )
             """
         ).fetchone()[0],
+        "duplicate_current_records": conn.execute(
+            """
+            SELECT COUNT(*) FROM (
+                SELECT code
+                FROM arancel_mx
+                WHERE is_current
+                GROUP BY code
+                HAVING COUNT(*) > 1
+            )
+            """
+        ).fetchone()[0],
         "missing_public_metadata": conn.execute(
             """
             SELECT COUNT(*) FROM arancel_mx
@@ -493,16 +504,7 @@ def materialize_arancel(
     try:
         ensure_tariff_schema(conn)
         conn.execute("DROP VIEW IF EXISTS arancel_mx")
-        for table in (
-            "record_provenance",
-            "canonical_record",
-            "dataset_release",
-            "tariff_rate",
-            "nico",
-            "tariff_fraction",
-            "hs_code",
-            "source_document",
-        ):
+        for table in reversed(PUBLIC_INTERNAL_TABLES):
             conn.execute(f"DELETE FROM {table}")
         _insert_sources(conn, source_documents)
         _insert_classifications(conn, classifications)
@@ -542,7 +544,16 @@ def materialize_arancel(
         _build_view(conn)
         validation = _validate_database(conn)
         row_count = int(conn.execute("SELECT COUNT(*) FROM arancel_mx").fetchone()[0])
-        source_ids_json = canonical_json(sorted(documents_by_id))
+        source_documents_json = canonical_json(
+            [
+                {
+                    key: value
+                    for key, value in documents_by_id[source_id].items()
+                    if key != "local_path"
+                }
+                for source_id in sorted(documents_by_id)
+            ]
+        )
         stored_metadata = dict(release_metadata)
         stored_metadata["level_counts"] = _release_level_counts(conn)
         conn.execute(
@@ -556,7 +567,7 @@ def materialize_arancel(
                 row_count,
                 "passed",
                 canonical_json(validation),
-                source_ids_json,
+                source_documents_json,
                 canonical_json(stored_metadata),
             ],
         )

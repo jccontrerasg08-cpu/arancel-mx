@@ -91,6 +91,20 @@ def test_required_dof_evidence_extracts_exact_required_roles_and_deduplicates_ur
     ]
 
 
+def test_undated_dof_link_is_rejected():
+    ledger = snapshot(
+        document(
+            "law_reform",
+            LAW_DATE,
+            LedgerLink("dof", "https://www.diputados.gob.mx/WRONG.pdf", "DOF", None),
+        ),
+        document("tariff_decree", TARIFF_DATE, dof_link(TARIFF_URL, TARIFF_DATE)),
+    )
+
+    with pytest.raises(ValueError, match="missing DOF evidence: law_reform"):
+        required_dof_evidence(ledger)
+
+
 def test_multiple_different_dof_urls_for_same_required_role_are_ambiguous():
     ledger = snapshot(
         document(

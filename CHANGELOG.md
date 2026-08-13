@@ -14,6 +14,15 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ## [0.2.0] - 2026-08-12
 
+### Fixed
+
+- Persist classification effective dates and non-core staging roles into DuckDB instead of dropping them during promotion.
+- Store full source documents in `dataset_release.source_documents_json` and clear stale ancillary tables when rematerializing a release.
+- Reject public datasets that contain more than one current row for the same tariff code.
+- Fail closed on undated DOF ledger links, unresolved two-row LIGIE tariff headers, and inexact SIICEX/VUCEM fraction matches.
+- Keep identical source captures idempotent when only `retrieved_at` changes, and require `YYYY.MM.DD` dataset versions in the official pipeline runner.
+- Treat invalid local cache tags as version-not-found errors, serialize offline cache reads, and let `--no-offline` override `ARANCEL_MX_OFFLINE`.
+
 ### Added
 
 - Public `Dataset` API for exact lookup, text search, hierarchy navigation, provenance, local file opening, and verified managed datasets.

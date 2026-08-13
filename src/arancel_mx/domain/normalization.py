@@ -521,22 +521,43 @@ def stage_rows(conn: Any, rows: list[Mapping[str, Any]]) -> int:
     return count
 
 
+def _digits(value: object) -> str:
+    return str(value or "").strip()
+
+
 def _staging_problem(role: str, normalized: Mapping[str, Any]) -> tuple[str, str] | None:
-    code_key = "nico10" if "nico" in role and "proposal" not in role else "code"
-    if role in {"ligie_current", "tariff_fraction", "nico_current", "nico_agreement"}:
-        value = str(normalized.get(code_key, ""))
-        expected = 10 if code_key == "nico10" else 8
-        if not value.isdigit() or len(value) != expected:
-            return "ambiguous_code", f"{code_key} must contain exactly {expected} digits"
     allowed = {
         "ligie_current", "tariff_fraction", "nico_current", "nico_agreement",
         "nico_proposal", "national_notes", "weighted_tariff_indicator",
     }
     if role not in allowed:
         return "unknown_document_role", role
+    if not str(normalized.get("source_document_id") or "").strip():
+        return "missing_provenance", "source_document_id is required"
     if role in {"ligie_current", "tariff_fraction", "nico_current", "nico_agreement"}:
-        if not normalized.get("source_document_id"):
-            return "missing_provenance", "source_document_id is required for legal canonical rows"
+        code_key = "nico10" if "nico" in role else "code"
+        value = _digits(normalized.get(code_key))
+        expected = 10 if code_key == "nico10" else 8
+        if not value.isdigit() or len(value) != expected:
+            return "ambiguous_code", f"{code_key} must contain exactly {expected} digits"
+        return None
+    if role == "nico_proposal":
+        if not normalized.get("observed_at"):
+            return "missing_provenance", "observed_at is required for nico_proposal"
+        if len(str(normalized.get("source_sha256") or "").strip()) != 64:
+            return "missing_provenance", "source_sha256 is required for nico_proposal"
+        proposed = _digits(normalized.get("proposed_nico10") or normalized.get("nico10"))
+        if proposed and (not proposed.isdigit() or len(proposed) != 10):
+            return "ambiguous_code", "proposed_nico10 must contain exactly 10 digits"
+        return None
+    if role == "national_notes":
+        if not _digits(normalized.get("note_number")) or not _digits(normalized.get("text")):
+            return "missing_note_text", "national_notes requires note_number and text"
+        return None
+    period = normalized.get("period")
+    hs6 = _digits(normalized.get("hs6"))
+    if not period or len(hs6) != 6 or not hs6.isdigit():
+        return "ambiguous_code", "weighted_tariff_indicator requires period and a 6-digit hs6"
     return None
 
 
@@ -570,47 +591,184 @@ def validate_staging(conn: Any) -> ValidationReport:
     return ValidationReport(not quarantined, valid, tuple(quarantined))
 
 
+def _json_date(value: object) -> date | None:
+    if value is None or value == "":
+        return None
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    try:
+        return date.fromisoformat(str(value)[:10])
+    except ValueError as exc:
+        raise ValueError(f"invalid staging date: {value!r}") from exc
+
+
+def _classification_interval(row: Mapping[str, Any]) -> tuple[date | None, date | None]:
+    start = row.get("classification_effective_from", row.get("effective_from"))
+    end = row.get("classification_effective_to", row.get("effective_to"))
+    return _json_date(start), _json_date(end)
+
+
+def _require_source_document_id(row: Mapping[str, Any], role: str) -> str:
+    source_id = str(row.get("source_document_id") or "").strip()
+    if not source_id:
+        raise ValueError(f"{role} requires source_document_id")
+    return source_id
+
+
 def promote_staging(conn: Any) -> PromotionSummary:
     report = validate_staging(conn)
     if not report.publishable:
         raise ValueError("staging quarantine contains blocking rows")
-    fraction_count = 0
-    nico_count = 0
     rows = conn.execute(
         "SELECT staging_row_id, document_role, normalized_json FROM staging_arancel_row "
         "WHERE row_status='valid' ORDER BY staging_row_id"
     ).fetchall()
+    conn.execute("BEGIN TRANSACTION")
+    try:
+        summary = _insert_promoted_rows(conn, rows)
+        conn.execute("COMMIT")
+    except Exception:
+        conn.execute("ROLLBACK")
+        raise
+    return summary
+
+
+def _insert_promoted_rows(conn: Any, rows: list[tuple[Any, ...]]) -> PromotionSummary:
+    fraction_count = 0
+    nico_count = 0
+    proposal_count = 0
+    note_count = 0
+    indicator_count = 0
     for staging_id, role, payload in rows:
         row = json.loads(payload)
         if role in {"ligie_current", "tariff_fraction"}:
             code = row["code"]
-            revision_id = record_id({"fraction": [staging_id, code, row.get("effective_from")]})
+            effective_from, effective_to = _classification_interval(row)
+            revision_id = record_id({"fraction": [staging_id, code, effective_from]})
             conn.execute(
                 """INSERT OR REPLACE INTO tariff_fraction VALUES
                    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 [
                     revision_id, code, code[:2], code[:4], code[:6], row.get("description", ""),
                     row.get("ligie_version", "unknown"), row.get("validity_basis", "unknown"),
-                    row.get("updated_at"), row.get("published_at"), row.get("effective_from"),
-                    row.get("effective_to"), row["source_document_id"],
+                    _json_date(row.get("updated_at")), _json_date(row.get("published_at")),
+                    effective_from, effective_to, _require_source_document_id(row, role),
                 ],
             )
             fraction_count += 1
         elif role in {"nico_current", "nico_agreement"}:
             code = row["nico10"]
-            revision_id = record_id({"nico": [staging_id, code, row.get("effective_from")]})
+            effective_from, effective_to = _classification_interval(row)
+            revision_id = record_id({"nico": [staging_id, code, effective_from]})
             conn.execute(
                 """INSERT OR REPLACE INTO nico VALUES
                    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 [
                     revision_id, code, code[:8], code[8:], row.get("description", ""),
                     row.get("ligie_version", "unknown"), row.get("validity_basis", "unknown"),
-                    row.get("updated_at"), row.get("published_at"), row.get("effective_from"),
-                    row.get("effective_to"), row["source_document_id"],
+                    _json_date(row.get("updated_at")), _json_date(row.get("published_at")),
+                    effective_from, effective_to, _require_source_document_id(row, role),
                 ],
             )
             nico_count += 1
+        elif role == "nico_proposal":
+            source_id = _require_source_document_id(row, role)
+            observed_at = _json_date(row.get("observed_at"))
+            if observed_at is None:
+                raise ValueError("nico_proposal requires observed_at")
+            source_sha256 = str(row.get("source_sha256") or "").strip()
+            if len(source_sha256) != 64:
+                raise ValueError("nico_proposal requires source_sha256")
+            batch_id = str(
+                row.get("proposal_batch_id")
+                or hashlib.sha256(
+                    canonical_json([source_id, observed_at, source_sha256]).encode("utf-8")
+                ).hexdigest()
+            )
+            conn.execute(
+                """INSERT OR REPLACE INTO nico_proposal_batch VALUES (?, ?, ?, ?, ?)""",
+                [
+                    batch_id,
+                    observed_at,
+                    _json_date(row.get("published_at")),
+                    source_id,
+                    source_sha256,
+                ],
+            )
+            proposed = str(row.get("proposed_nico10") or row.get("nico10") or "")
+            conn.execute(
+                """INSERT OR REPLACE INTO nico_proposal VALUES (?, ?, ?, ?, ?, ?, 'proposal')""",
+                [
+                    str(row.get("proposal_id") or staging_id),
+                    batch_id,
+                    proposed or None,
+                    row.get("fraccion8") or (proposed[:8] if len(proposed) >= 8 else None),
+                    row.get("action"),
+                    row.get("description"),
+                ],
+            )
+            proposal_count += 1
+        elif role == "national_notes":
+            source_id = _require_source_document_id(row, role)
+            note_number = str(row.get("note_number") or "").strip()
+            text = str(row.get("text") or "").strip()
+            if not note_number or not text:
+                raise ValueError("national_notes requires note_number and text")
+            note_id = str(
+                row.get("national_note_id")
+                or hashlib.sha256(
+                    canonical_json([row.get("chapter"), note_number]).encode("utf-8")
+                ).hexdigest()
+            )
+            conn.execute(
+                """INSERT OR REPLACE INTO national_note VALUES (?, ?, ?)""",
+                [note_id, row.get("chapter"), note_number],
+            )
+            version_id = str(row.get("national_note_version_id") or staging_id)
+            conn.execute(
+                """INSERT OR REPLACE INTO national_note_version VALUES (?, ?, ?, ?, ?, ?)""",
+                [
+                    version_id,
+                    note_id,
+                    text,
+                    _json_date(row.get("effective_from") or row.get("classification_effective_from")),
+                    _json_date(row.get("effective_to") or row.get("classification_effective_to")),
+                    source_id,
+                ],
+            )
+            note_count += 1
+        elif role == "weighted_tariff_indicator":
+            source_id = _require_source_document_id(row, role)
+            period = _json_date(row.get("period"))
+            hs6 = str(row.get("hs6") or "").strip()
+            if period is None or len(hs6) != 6 or not hs6.isdigit():
+                raise ValueError("weighted_tariff_indicator requires period and a 6-digit hs6")
+            indicator_id = str(row.get("indicator_id") or staging_id)
+            conn.execute(
+                """INSERT OR REPLACE INTO weighted_tariff_indicator
+                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                [
+                    indicator_id,
+                    period,
+                    hs6,
+                    row.get("nmf_weighted_rate"),
+                    row.get("import_value_usd"),
+                    source_id,
+                    row.get("methodology_id"),
+                ],
+            )
+            indicator_count += 1
+        else:
+            raise ValueError(f"staging promotion is not implemented for document role: {role}")
         conn.execute(
             "UPDATE staging_arancel_row SET row_status='promoted' WHERE staging_row_id=?", [staging_id]
         )
-    return PromotionSummary(tariff_fractions=fraction_count, nicos=nico_count)
+    return PromotionSummary(
+        tariff_fractions=fraction_count,
+        nicos=nico_count,
+        proposals=proposal_count,
+        national_notes=note_count,
+        indicators=indicator_count,
+    )

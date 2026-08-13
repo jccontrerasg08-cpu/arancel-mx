@@ -64,8 +64,15 @@ def capture_document(
     payload.update({"path": target.relative_to(raw_root).as_posix(), "sha256": digest, "size": len(content)})
     if manifest_path.exists():
         existing = json.loads(manifest_path.read_text(encoding="utf-8"))
-        if existing != payload:
+        comparable_existing = {
+            key: value for key, value in existing.items() if key != "retrieved_at"
+        }
+        comparable_payload = {
+            key: value for key, value in payload.items() if key != "retrieved_at"
+        }
+        if comparable_existing != comparable_payload:
             raise ValueError(f"capture manifest conflict: {manifest_path}")
+        payload = existing
     else:
         _atomic_json(manifest_path, payload)
     return CaptureManifest(target, manifest_path, digest, payload)

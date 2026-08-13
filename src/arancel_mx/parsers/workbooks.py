@@ -164,6 +164,10 @@ def _rows(path: Path, source: Mapping[str, Any], profile: WorkbookProfile):
     for offset, raw in enumerate(frame):
         if not any(str(value).strip() for value in raw.values()):
             continue
+        if profile.section_column:
+            section_value = str(raw.get(profile.section_column, "")).strip()
+            if profile.allowed_sections and section_value not in profile.allowed_sections:
+                continue
         yield source_document_id, first_data_row + offset, raw
 
 
