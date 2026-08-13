@@ -3,7 +3,7 @@
 **Status:** External research input archived for traceability  
 **Original filename:** `deep-research-report(1).md`  
 **Archived:** 2026-08-13  
-**Normative response:** [`docs/superpowers/specs/2026-08-13-external-consumption-contract-design.md`](../specs/2026-08-13-external-consumption-contract-design.md)
+**Normative response:** [`docs/superpowers/specs/2026-08-13-aduanamap-architecture-master.md`](../specs/2026-08-13-aduanamap-architecture-master.md)
 
 This file is the unmodified research report that motivated the 2026-08-13 design. It is **not** an approved architecture. Several claims are stale or contradict the shipped `arancel-mx` contract (Apache-2.0 license, DuckDB + GitHub Releases, fail-closed publication, no hosted REST API, Docusaurus not Fumadocs). Treat the design spec as the decision record.
 

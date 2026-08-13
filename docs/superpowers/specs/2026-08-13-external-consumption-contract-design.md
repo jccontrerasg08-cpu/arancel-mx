@@ -1,11 +1,12 @@
 # External consumption contract design
 
-**Status:** Draft design pending user review  
+**Status:** Approved 2026-08-13 (user review). Implementation still waits on a writing-plans pass.  
 **Repository:** `jccontrerasg08-cpu/arancel-mx`  
 **Baseline:** `main` at `f576f4615b6b1cbb785541451d7b07f5d91232e1`  
 **Date:** 2026-08-13  
 **Motivating consumer:** AduanaMap (downstream application, not this repository)  
-**Research input:** [`docs/superpowers/research/2026-08-13-deep-research-report.md`](../research/2026-08-13-deep-research-report.md)
+**Research input:** [`docs/superpowers/research/2026-08-13-deep-research-report.md`](../research/2026-08-13-deep-research-report.md)  
+**Architecture index:** [`2026-08-13-aduanamap-architecture-master.md`](./2026-08-13-aduanamap-architecture-master.md) (Block 1)
 
 ## 1. Goal
 
@@ -343,12 +344,15 @@ The spec is implemented when:
 - AduanaMap can be told, in one document, which fields exist, how to verify them, and which customs measures are absent;
 - tests fail if those claims drift.
 
-## 18. Follow-up specs (not this PR)
+## 18. Follow-up specs
 
-After this contract lands, the next design-sized tracks in recommended order are:
+After this contract is implemented, remaining tracks are indexed in the [Architecture Master Spec](./2026-08-13-aduanamap-architecture-master.md).
 
-1. Public documentation IA addendum for Docusaurus (consumer CLI first, not maintainer `build` as the public `cli.md`).
+Designed next (Block 2): [Intelligent Classification Engine / TariffPro Benchmark](./2026-08-13-intelligent-classification-engine-design.md). That engine lives in AduanaMap. It consumes this contract; it does not move classification into `arancel-mx`.
+
+Still later, not designed here:
+
+1. Public documentation IA addendum for Docusaurus.
 2. Optional contributor DevContainer spec.
 3. Optional `0.2.1` PyPI recertification that actually blocks on the 2026-08-11 external matrix.
-
-Those documents are not created by this spec.
+4. Legal-instrument corpus in `arancel-mx` (section/chapter/subheading notes, GIR, complementary rules, populated national notes, NICO annotations) — required before the classifier can fail-closed validate those instruments.
