@@ -27,6 +27,16 @@ python -m pytest -q
 5. Ejecuta `python -m pytest -q`, `python -m build` y `git diff --check`.
 6. Actualiza la documentación cuando cambien interfaces, esquema o proceso de publicación.
 
+## Revisión en GitHub
+
+arancel-mx no reimplementa la UI de GitHub. Para revisar PRs, instala en el navegador:
+
+- [Octotree](https://github.com/ovity/octotree)
+- [Refined GitHub](https://github.com/refined-github/refined-github)
+- [Pretty Pull Requests](https://github.com/brentyates/prettypullrequests)
+
+No abras issues pidiendo esas funciones aquí.
+
 ## Cambios en GitHub Actions
 
 Un cambio de workflow es un cambio de producción: el pipeline oficial publica datos y firma provenance. Mantén permisos mínimos por job, acciones fijadas por SHA completo con comentario de versión, y valores dinámicos pasados por `env:` en lugar de interpolarlos dentro de un script de shell.
