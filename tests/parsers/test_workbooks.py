@@ -68,6 +68,25 @@ def test_probe_stops_reading_after_sample_bound(tmp_path, monkeypatch):
     assert len(probe.samples["Datos"]) == 3
 
 
+def test_probe_stops_reading_xls_after_sample_bound(monkeypatch):
+    book = xlrd.open_workbook(str(XLS_NUMERIC_SHORT))
+    assert book.sheet_by_index(0).nrows > 1
+    seen: list[object] = []
+    original = workbooks._iter_xlrd_rows
+
+    def wrapped(path, sheet_name=None, max_rows=None):
+        assert max_rows == 1
+        for item in original(path, sheet_name, max_rows=max_rows):
+            seen.append(item)
+            yield item
+
+    monkeypatch.setattr(workbooks, "_iter_xlrd_rows", wrapped)
+    probe = probe_workbook(XLS_NUMERIC_SHORT, sample_rows=1)
+
+    assert len(seen) == 1
+    assert len(probe.samples["Datos"]) == 1
+
+
 def test_excel_engine_selects_registered_reader_by_suffix():
     assert workbooks._excel_engine(Path("source.xls")) == "xlrd"
     assert workbooks._excel_engine(Path("source.xlsx")) == "openpyxl"
