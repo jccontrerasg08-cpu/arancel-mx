@@ -22,14 +22,6 @@ class DownloadTask:
     provenance: dict[str, str]
 
 
-def _text(value: object) -> str:
-    return " ".join(str(value or "").split())
-
-
-def _fold(value: object) -> str:
-    return fold_text(value).upper()
-
-
 def _official_host(url: str) -> bool:
     host = (urlparse(url).hostname or "").lower()
     return (
@@ -47,7 +39,7 @@ def _document_links(html: str, base_url: str, context: str) -> list[dict[str, st
             continue
         if not _official_host(url):
             continue
-        searchable = _fold(f"{title} {url}")
+        searchable = fold_text(f"{title} {url}").upper()
         suffix = Path(urlparse(url).path).suffix.lower()
         if suffix in {".xls", ".xlsx"} and "NICO" in searchable:
             kind = "nico"
