@@ -6,7 +6,7 @@ El recorrido de ingesta esperado es:
 
 ```text
 fijar arancel-mx==0.2.0
-  -> pip install arancel-mx
+  -> pip install arancel-mx==0.2.0
   -> arancel-mx doctor
   -> descargar una release exacta data-YYYY.MM.DD
   -> verificar SHA256SUMS + manifest.json + DuckDB

@@ -2,6 +2,8 @@ from pathlib import Path
 
 from arancel_mx.consumer.dataset import Dataset
 
+ROOT = Path(__file__).resolve().parents[2]
+
 
 def test_consumer_fixture_fraction_01012101_keeps_official_igi_literals(
     consumer_duckdb: Path,
@@ -21,7 +23,7 @@ def test_consumer_fixture_fraction_01012101_keeps_official_igi_literals(
 
 
 def test_external_consumption_documents_fixture_golden_literals() -> None:
-    text = Path("docs/external-consumption.md").read_text(encoding="utf-8")
+    text = (ROOT / "docs/external-consumption.md").read_text(encoding="utf-8")
     assert "01012101" in text
     assert "0101210100" in text
     assert "`10`" in text or "igi_text` `10`" in text or 'igi_text` 10' in text
