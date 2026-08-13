@@ -7,7 +7,7 @@ WORKFLOW = ROOT / ".github" / "workflows" / "official-data-pipeline.yml"
 LEGACY_WORKFLOW = ROOT / ".github" / "workflows" / "build-official-dataset.yml"
 ACTION_REF = re.compile(r"^\s*uses:\s*[^@\s]+@([0-9a-f]{40})(?:\s|$)", re.MULTILINE)
 ANY_ACTION = re.compile(r"^\s*uses:\s*[^@\s]+@([^\s#]+)", re.MULTILINE)
-ATTEST_ACTION = "actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d"
+ATTEST_ACTION = "actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6"
 PUBLIC_ATTESTATION_PATHS = (
     "out/release/arancel_mx.duckdb",
     "out/release/arancel_mx.csv",
