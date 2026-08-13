@@ -9,7 +9,7 @@ from .official_sources import (
     capture_official_inputs,
 )
 from .reconcile import reconcile_legal_instruments
-from .update import check_for_updates, run_update, update_status
+from .update import check_for_updates
 
 __all__ = [
     "CapturedOfficialSource",
@@ -22,6 +22,4 @@ __all__ = [
     "materialize_arancel",
     "reconcile_legal_instruments",
     "check_for_updates",
-    "run_update",
-    "update_status",
 ]

@@ -262,12 +262,6 @@ def render_table(value: object) -> str:
     return "\n".join([header, separator, *body])
 
 
-def render_path(path: str | Path) -> str:
-    """Return only the platform-native path string."""
-
-    return str(Path(path))
-
-
 def render(
     value: object,
     *,

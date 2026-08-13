@@ -97,7 +97,7 @@ def test_build_release_delegates_to_deterministic_database_export(tmp_path, monk
     database.write_bytes(b"database")
     expected = {"dataset_version": "2026.08.09"}
     monkeypatch.setattr(
-        "arancel_mx.release.package.export_arancel_release",
+        "arancel_mx.pipeline.build.export_arancel_release",
         lambda source, output: expected if source == database and output == tmp_path / "out" else None,
     )
 

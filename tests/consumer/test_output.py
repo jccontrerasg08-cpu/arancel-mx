@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from datetime import date
 import json
-from pathlib import Path
 
 from arancel_mx.consumer.models import Ficha, HsSection, SearchResult, TariffRecord
-from arancel_mx.consumer.output import render_csv, render_json, render_path, render_table
+from arancel_mx.consumer.output import render_csv, render_json, render_table
 
 
 def _record() -> TariffRecord:
@@ -85,13 +84,6 @@ def test_table_output_handles_none_without_literal_python_repr() -> None:
 
 def test_table_output_empty_sequence_is_explicit() -> None:
     assert render_table(()) == "No results."
-
-
-def test_path_output_is_plain_text_only(tmp_path: Path) -> None:
-    path = tmp_path / "cache con ñ" / "arancel_mx.duckdb"
-    assert render_path(path) == str(path)
-    assert not render_path(path).startswith("{")
-    assert "path=" not in render_path(path)
 
 
 def _ficha() -> Ficha:

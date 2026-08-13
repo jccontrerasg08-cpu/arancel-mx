@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import re
-import unicodedata
 
+from arancel_mx.domain.normalization import fold_text
 from arancel_mx.sources.siicex import SiicexFractionDocument
 from arancel_mx.sources.vucem import VucemFractionSheet
 
@@ -23,10 +23,7 @@ class ClassifierRecord:
 
 
 def _fold(value: object) -> str:
-    normalized = unicodedata.normalize("NFKD", " ".join(str(value or "").split()))
-    return "".join(
-        char for char in normalized if not unicodedata.combining(char)
-    ).casefold()
+    return fold_text(value).casefold()
 
 
 def normalize_duty(value: str | None) -> str:

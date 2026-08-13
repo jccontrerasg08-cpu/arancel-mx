@@ -22,14 +22,11 @@ _REQUIRED_MANIFEST_FIELDS = ("dataset_version", "schema_version", "validation_st
 def sha256_file(path: Path) -> str:
     """Return the SHA-256 digest of a file using bounded-memory reads."""
 
-    digest = hashlib.sha256()
     try:
         with Path(path).open("rb") as stream:
-            for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-                digest.update(chunk)
+            return hashlib.file_digest(stream, "sha256").hexdigest()
     except OSError as exc:
         raise DatasetIntegrityError(f"cannot hash dataset asset: {path}") from exc
-    return digest.hexdigest()
 
 
 def parse_sha256sums(text: str) -> dict[str, str]:

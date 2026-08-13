@@ -10,6 +10,7 @@ from typing import Iterable
 from arancel_mx.consumer.errors import InvalidCodeError, QueryError, RecordNotFoundError
 from arancel_mx.consumer.hs_sections import section_for_chapter
 from arancel_mx.consumer.models import Ficha, ProvenanceRecord, SearchResult, TariffRecord
+from arancel_mx.domain.normalization import format_normalized_code
 
 
 _CODE_LENGTHS = {2, 4, 6, 8, 10}
@@ -36,16 +37,7 @@ _ROW_SELECT = """
 def format_code(code: str) -> str:
     """Format a normalized 2/4/6/8/10-digit code the way TIGIE browsers display it."""
 
-    digits = normalize_code(code)
-    if len(digits) == 2:
-        return digits
-    if len(digits) == 4:
-        return f"{digits[:2]}.{digits[2:]}"
-    if len(digits) == 6:
-        return f"{digits[:4]}.{digits[4:]}"
-    if len(digits) == 8:
-        return f"{digits[:4]}.{digits[4:6]}.{digits[6:]}"
-    return f"{digits[:4]}.{digits[4:6]}.{digits[6:8]} {digits[8:]}"
+    return format_normalized_code(normalize_code(code))
 
 
 def normalize_code(value: str) -> str:

@@ -41,27 +41,9 @@ class Dataset:
         return resolve_config(**kwargs)
 
     @classmethod
-    def latest(
+    def _managed(
         cls,
-        *,
-        offline: bool | None = None,
-        cache_dir: str | Path | None = None,
-        timeout: float | None = None,
-    ) -> "Dataset":
-        config = cls._config(
-            offline=offline,
-            cache_dir=cache_dir,
-            timeout=timeout,
-        )
-        manager = DatasetManager(config)
-        path = manager.ensure()
-        info = manager.verify()
-        return cls(path, info)
-
-    @classmethod
-    def version(
-        cls,
-        tag: str,
+        tag: str | None = None,
         *,
         offline: bool | None = None,
         cache_dir: str | Path | None = None,
@@ -76,6 +58,27 @@ class Dataset:
         path = manager.ensure(tag)
         info = manager.verify(tag)
         return cls(path, info)
+
+    @classmethod
+    def latest(
+        cls,
+        *,
+        offline: bool | None = None,
+        cache_dir: str | Path | None = None,
+        timeout: float | None = None,
+    ) -> "Dataset":
+        return cls._managed(offline=offline, cache_dir=cache_dir, timeout=timeout)
+
+    @classmethod
+    def version(
+        cls,
+        tag: str,
+        *,
+        offline: bool | None = None,
+        cache_dir: str | Path | None = None,
+        timeout: float | None = None,
+    ) -> "Dataset":
+        return cls._managed(tag, offline=offline, cache_dir=cache_dir, timeout=timeout)
 
     @classmethod
     def open(cls, path: str | Path) -> "Dataset":

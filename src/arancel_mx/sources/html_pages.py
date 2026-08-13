@@ -6,10 +6,9 @@ from dataclasses import dataclass
 from html import unescape
 from html.parser import HTMLParser
 import re
-import unicodedata
 from urllib.parse import urljoin, urlparse
 
-from arancel_mx.pipeline.reconcile import discover_registered_sources
+from arancel_mx.domain.normalization import fold_text
 from arancel_mx.sources.diputados import parse_ligie_ledger
 from arancel_mx.sources.registry import RegistryEntry, load_source_registry
 from arancel_mx.sources.siicex import (
@@ -130,10 +129,7 @@ class HtmlAccessTarget:
 
 
 def _fold(value: object) -> str:
-    normalized = unicodedata.normalize("NFKD", " ".join(str(value or "").split()))
-    return "".join(
-        char for char in normalized if not unicodedata.combining(char)
-    ).casefold()
+    return fold_text(value).casefold()
 
 
 def _fold_html(html: str) -> str:
@@ -275,6 +271,8 @@ def validate_snice_discovery_html(
             return None
 
     page_url = base_url or entry.canonical_page
+    from arancel_mx.pipeline.reconcile import discover_registered_sources
+
     discovered = discover_registered_sources(
         {entry.dataset_key: entry},
         _Client(html, page_url),
@@ -452,6 +450,8 @@ def collect_ligie_html_access_targets(
 
             def raise_for_status(self):
                 return None
+
+        from arancel_mx.pipeline.reconcile import discover_registered_sources
 
         discovered = discover_registered_sources({entry.dataset_key: entry}, _Client(html, base_url))
         for document in discovered:

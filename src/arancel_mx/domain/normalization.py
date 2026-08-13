@@ -10,6 +10,7 @@ import hashlib
 import json
 import re
 from typing import Any
+import unicodedata
 
 from arancel_mx.domain.models import PromotionSummary, QuarantinedRow, ValidationReport
 
@@ -160,8 +161,14 @@ def code_level(code: str) -> str:
     return _LEVEL_BY_LENGTH[len(digits)]
 
 
-def format_code(code: str) -> str:
-    digits = normalize_code(code)
+def fold_text(value: object) -> str:
+    """Accent-fold and collapse whitespace for catalog/HTML matching."""
+    text = "" if value is None else " ".join(str(value).split())
+    normalized = unicodedata.normalize("NFKD", text)
+    return "".join(char for char in normalized if not unicodedata.combining(char))
+
+
+def format_normalized_code(digits: str) -> str:
     if len(digits) == 2:
         return digits
     if len(digits) == 4:
@@ -171,6 +178,10 @@ def format_code(code: str) -> str:
     if len(digits) == 8:
         return f"{digits[:4]}.{digits[4:6]}.{digits[6:]}"
     return f"{digits[:4]}.{digits[4:6]}.{digits[6:8]} {digits[8:]}"
+
+
+def format_code(code: str) -> str:
+    return format_normalized_code(normalize_code(code))
 
 
 def _truncate_name(value: str) -> str:

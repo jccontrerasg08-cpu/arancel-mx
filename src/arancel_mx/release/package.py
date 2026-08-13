@@ -39,11 +39,8 @@ _SHA256 = re.compile(r"^[0-9a-fA-F]{64}$")
 
 
 def sha256(path: Path) -> str:
-    digest = hashlib.sha256()
     with path.open("rb") as stream:
-        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
+        return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
 def _checksum_lines(path: Path) -> dict[str, str]:
@@ -199,15 +196,10 @@ def _add_deterministic_file(
         archive.addfile(info, stream)
 
 
-def export_arancel_release(database_path: Path, output_dir: Path) -> dict[str, object]:
-    """Lazy delegation seam that avoids importing the pipeline during package import."""
-    from arancel_mx.pipeline.build import export_arancel_release as _export_arancel_release
-
-    return _export_arancel_release(Path(database_path), Path(output_dir))
-
-
 def build_release(database_path: Path, output_dir: Path) -> dict[str, object]:
     """Create deterministic public artifacts from a validated tariff database."""
+    from arancel_mx.pipeline.build import export_arancel_release
+
     return export_arancel_release(Path(database_path), Path(output_dir))
 
 

@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
-from html.parser import HTMLParser
 from pathlib import PurePosixPath
 import re
 from typing import Any, Mapping, Sequence
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urlparse
 
+from arancel_mx.sources.html_pages import extract_links
 from arancel_mx.sources.registry import RegistryEntry, classify_candidate
 
 
@@ -145,28 +145,6 @@ def reconcile_legal_instruments(
     )
 
 
-class _LinkParser(HTMLParser):
-    def __init__(self) -> None:
-        super().__init__(convert_charrefs=True)
-        self.links: list[tuple[str, str]] = []
-        self.href: str | None = None
-        self.parts: list[str] = []
-
-    def handle_starttag(self, tag: str, attrs) -> None:
-        if tag == "a":
-            self.href = dict(attrs).get("href")
-            self.parts = []
-
-    def handle_data(self, data: str) -> None:
-        if self.href is not None:
-            self.parts.append(data)
-
-    def handle_endtag(self, tag: str) -> None:
-        if tag == "a" and self.href is not None:
-            self.links.append((self.href, " ".join("".join(self.parts).split())))
-            self.href = None
-
-
 def discover_registered_sources(
     registry: Mapping[str, RegistryEntry],
     client: Any,
@@ -180,10 +158,10 @@ def discover_registered_sources(
         response = client.get(entry.canonical_page, timeout=timeout_s)
         if hasattr(response, "raise_for_status"):
             response.raise_for_status()
-        parser = _LinkParser()
-        parser.feed(response.text)
-        for href, title in parser.links:
-            source_url = urljoin(entry.canonical_page, href)
+        for url, title in extract_links(response.text, entry.canonical_page):
+            if title == "iframe":
+                continue
+            source_url = url
             suffix = source_url.rsplit("?", 1)[0].rsplit(".", 1)[-1].lower()
             media_type = {
                 "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

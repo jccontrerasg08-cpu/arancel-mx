@@ -18,7 +18,6 @@ SCRIPT = ROOT / "scripts" / "dependency_compatibility_probe.py"
 EXPECTED_FLOORS = {
     "duckdb": "1.1.0",
     "filelock": "3.16.0",
-    "platformdirs": "4.3.0",
     "requests": "2.32.0",
 }
 

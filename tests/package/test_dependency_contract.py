@@ -6,8 +6,8 @@ import sys
 import tomllib
 
 
-HEAVY_MAINTAINER_DEPS = {"openpyxl", "pandas", "PyMuPDF", "xlrd"}
-CORE_RUNTIME_PREFIXES = {"duckdb", "filelock", "platformdirs", "requests"}
+HEAVY_MAINTAINER_DEPS = {"openpyxl", "PyMuPDF", "xlrd"}
+CORE_RUNTIME_PREFIXES = {"duckdb", "filelock", "requests"}
 
 
 def _project() -> dict[str, object]:

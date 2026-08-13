@@ -4,11 +4,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import hashlib
-from html.parser import HTMLParser
 from pathlib import Path
 import re
-import unicodedata
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urlparse
+
+from arancel_mx.domain.normalization import fold_text
+from arancel_mx.sources.html_pages import extract_links
 
 
 @dataclass(frozen=True)
@@ -19,45 +20,6 @@ class DownloadTask:
     media_type: str
     kind: str
     provenance: dict[str, str]
-
-
-def _text(value: object) -> str:
-    return " ".join(str(value or "").split())
-
-
-def _fold(value: object) -> str:
-    normalized = unicodedata.normalize("NFKD", _text(value))
-    return "".join(
-        char for char in normalized if not unicodedata.combining(char)
-    ).upper()
-
-
-class _LinkParser(HTMLParser):
-    def __init__(self):
-        super().__init__()
-        self.links: list[tuple[str, str]] = []
-        self._href: str | None = None
-        self._text: list[str] = []
-
-    def handle_starttag(
-        self, tag: str, attrs: list[tuple[str, str | None]]
-    ) -> None:
-        if tag.lower() != "a":
-            return
-        self._href = next(
-            (value for name, value in attrs if name.lower() == "href"), None
-        )
-        self._text = []
-
-    def handle_data(self, data: str) -> None:
-        if self._href is not None:
-            self._text.append(data)
-
-    def handle_endtag(self, tag: str) -> None:
-        if tag.lower() == "a" and self._href:
-            self.links.append((self._href, _text(" ".join(self._text))))
-            self._href = None
-            self._text = []
 
 
 def _official_host(url: str) -> bool:
@@ -71,14 +33,13 @@ def _official_host(url: str) -> bool:
 
 
 def _document_links(html: str, base_url: str, context: str) -> list[dict[str, str]]:
-    parser = _LinkParser()
-    parser.feed(html)
     documents: list[dict[str, str]] = []
-    for href, title in parser.links:
-        url = urljoin(base_url, href)
+    for url, title in extract_links(html, base_url):
+        if title == "iframe":
+            continue
         if not _official_host(url):
             continue
-        searchable = _fold(f"{title} {url}")
+        searchable = fold_text(f"{title} {url}").upper()
         suffix = Path(urlparse(url).path).suffix.lower()
         if suffix in {".xls", ".xlsx"} and "NICO" in searchable:
             kind = "nico"
@@ -104,8 +65,6 @@ def _document_links(html: str, base_url: str, context: str) -> list[dict[str, st
 
 
 def _year_pages(html: str, base_url: str, context: str) -> list[str]:
-    parser = _LinkParser()
-    parser.feed(html)
     if context == "nico":
         pattern = re.compile(r"ligie\.nico\d+\.mod(\d{2})\.html$", re.I)
         minimum_year = 22
@@ -115,8 +74,9 @@ def _year_pages(html: str, base_url: str, context: str) -> list[str]:
     else:
         return []
     pages: set[str] = set()
-    for href, _title in parser.links:
-        url = urljoin(base_url, href)
+    for url, title in extract_links(html, base_url):
+        if title == "iframe":
+            continue
         match = pattern.search(urlparse(url).path)
         if _official_host(url) and match and int(match.group(1)) >= minimum_year:
             pages.add(url)
