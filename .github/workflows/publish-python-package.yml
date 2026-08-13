@@ -76,6 +76,13 @@ jobs:
           python -m pip install -c requirements/production-build.txt build twine
       - name: Build distributions once
         run: python -m build
+      - name: Assert distribution version matches the validated tag
+        env:
+          EXPECTED_VERSION: ${{ needs.validate-tag.outputs.version }}
+        run: |
+          test -n "$EXPECTED_VERSION"
+          test -f "dist/arancel_mx-${EXPECTED_VERSION}.tar.gz"
+          ls dist/arancel_mx-"${EXPECTED_VERSION}"-*.whl
       - name: Validate distribution metadata
         run: python -m twine check dist/*
       - name: Record build-once distribution hashes

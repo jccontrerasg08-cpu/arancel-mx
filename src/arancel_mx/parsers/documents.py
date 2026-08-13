@@ -85,12 +85,19 @@ def parse_ligie_pdf_hierarchy(
     """Extract official HS2/HS4/HS6 labels from the consolidated LIGIE PDF."""
     rows: list[dict] = []
     page_texts: list[str] = []
+    pending_code: str | None = None
+    pending_description: list[str] = []
     with pymupdf.open(path) as document:
         for page in document:
             page_text = page.get_text() or ""
             page_texts.append(page_text)
             for table in page.find_tables().tables:
-                for code, description in _hierarchy_entries_from_table(table.extract()):
+                extracted, pending_code, pending_description = _hierarchy_entries_from_table(
+                    table.extract(),
+                    pending_code=pending_code,
+                    pending_description=pending_description,
+                )
+                for code, description in extracted:
                     rows.append(
                         _classification_row(
                             code,
@@ -101,6 +108,18 @@ def parse_ligie_pdf_hierarchy(
                             effective_from,
                         )
                     )
+    leftover = _text(" ".join(pending_description))
+    if pending_code and leftover:
+        rows.append(
+            _classification_row(
+                pending_code,
+                leftover,
+                source_document_id,
+                ligie_version,
+                published_at,
+                effective_from,
+            )
+        )
     for code, description in _chapter_entries_from_pages(page_texts):
         rows.append(
             _classification_row(
@@ -163,10 +182,21 @@ def _chapter_entries_from_pages(page_texts: list[str]) -> list[tuple[str, str]]:
     return entries
 
 
-def _hierarchy_entries_from_table(table: list[list[object]]) -> list[tuple[str, str]]:
+def _hierarchy_entries_from_table(
+    table: list[list[object]],
+    *,
+    pending_code: str | None = None,
+    pending_description: list[str] | None = None,
+) -> tuple[list[tuple[str, str]], str | None, list[str]]:
+    """Extract HS4/HS6 labels, carrying an unfinished heading across tables/pages.
+
+    Official LIGIE PDFs split long partida text at page boundaries. The next page
+    often starts with the remainder (for example ``molido.``) before a dash
+    grouping row. Empty padding rows must not flush that pending heading.
+    """
+
     entries: list[tuple[str, str]] = []
-    pending_code: str | None = None
-    pending_description: list[str] = []
+    pending_description = list(pending_description or [])
 
     def flush() -> None:
         nonlocal pending_code, pending_description
@@ -215,7 +245,9 @@ def _hierarchy_entries_from_table(table: list[list[object]]) -> list[tuple[str, 
 
         if pending_code:
             cell_values = [cell for _index, cell in cells]
-            if not cells or any(cell in {"-", "--"} for cell in cell_values):
+            if not cells:
+                continue
+            if any(cell in {"-", "--"} for cell in cell_values):
                 flush()
                 continue
             continuations = [
@@ -227,5 +259,6 @@ def _hierarchy_entries_from_table(table: list[list[object]]) -> list[tuple[str, 
             ]
             if continuations:
                 pending_description.append(max(continuations, key=len))
-    flush()
-    return entries
+    if pending_code and not pending_description:
+        pending_code = None
+    return entries, pending_code, pending_description

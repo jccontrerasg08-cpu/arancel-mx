@@ -18,7 +18,7 @@ Open Python tools to capture, normalize, reconcile, and publish Mexican tariff d
 [![DuckDB](https://img.shields.io/badge/DuckDB-embedded-FFF000?logo=duckdb&logoColor=000)](https://duckdb.org/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-**[Installation](#installation)** · **[CLI](#quick-cli-usage)** · **[Python](#python-usage)** · **[Data](#data-model)** · **[Sources](#official-sources)** · **[Automation](#official-data-pipeline)** · **[Certification](docs/production-certification.md)** · **[Contributing](#contributing)**
+**[Installation](#installation)** · **[CLI](#quick-cli-usage)** · **[Python](#python-usage)** · **[Downstream ingest](#downstream-ingest)** · **[Data](#data-model)** · **[Sources](#official-sources)** · **[Automation](#official-data-pipeline)** · **[Certification](docs/production-certification.md)** · **[Contributing](#contributing)**
 
 </div>
 
@@ -146,15 +146,15 @@ Python 3.11 or newer is required.
 
 ### Published dataset consumer
 
-The public distribution is prepared for the following PyPI installation contract once the package is published:
+`arancel-mx==0.2.0` is published on PyPI (uploaded 2026-08-12 via Trusted Publishing). The 2026-08-11 design's full external OS/Python matrix was not a blocking gate for that upload.
 
 ```bash
-pip install arancel-mx
+pip install arancel-mx==0.2.0
 arancel-mx --version
 arancel-mx doctor
 ```
 
-The package and datasets are versioned independently. `arancel-mx --version` reports the Python package version; each dataset uses an immutable `data-YYYY.MM.DD` release.
+The package and datasets are versioned independently. Pinning the package does not pin the dataset. `arancel-mx --version` reports the Python package version; each dataset uses an immutable `data-YYYY.MM.DD` release.
 
 ### Repository development
 
@@ -175,6 +175,17 @@ python -m pip install pip==26.2.1
 python -m pip install -c requirements/production-build.txt -e ".[dev]"
 ```
 
+## Downstream ingest
+
+Downstream apps should pin, install, verify, and query `arancel-mx` as an upstream data package. The Spanish source of truth is [`docs/external-consumption.md`](docs/external-consumption.md). Short path:
+
+1. **Install** and pin: `pip install arancel-mx==0.2.0`, then select `--dataset data-YYYY.MM.DD`.
+2. **Verify** with `arancel-mx doctor`, `data download`, `data verify`, `SHA256SUMS`, and manifest schema v2.
+3. **Query** IGI/IGE via CLI or `Dataset` (`lookup`, `ficha`, `provenance`). Display official `igi_text` / `ige_text` literals; do not rewrite them to percentages.
+4. **Out of scope:** IVA, NOM, T-MEC, hosted REST, and hosted Postgres are not published here.
+
+Do not treat a self-ingested copy as upstream truth.
+
 ## Quick CLI usage
 
 The consumer flow starts from published data and does not require cloning the repository:
@@ -183,6 +194,8 @@ The consumer flow starts from published data and does not require cloning the re
 arancel-mx doctor
 arancel-mx data download
 arancel-mx lookup 01012101
+arancel-mx ficha 01012101
+arancel-mx chapters
 arancel-mx search "refrigeradores"
 arancel-mx data verify
 ```
@@ -207,6 +220,8 @@ Pin an exact release with `--dataset data-YYYY.MM.DD`. See [`docs/consumer-cli.m
 | `data path` | Print only the selected DuckDB path |
 | `data verify` | Revalidate local integrity and optionally the remote bundle |
 | `lookup` / `search` | Query by exact code or text |
+| `ficha` | Hierarchy card from chapter → fraction/NICO with UM, IGI, and IGE |
+| `chapters` | List current HS2 chapters |
 | `parent` / `children` | Navigate HS2 → HS4 → HS6 → MX8 → NICO10 |
 | `provenance` | Show documentary traceability for a selected code |
 
@@ -233,12 +248,16 @@ During the 0.x series, `update` remains a deprecated read-only compatibility ali
 ## Python usage
 
 ```python
-import arancel_mx
+from arancel_mx import Dataset
 
-print(arancel_mx.__version__)
+dataset = Dataset.latest()
+card = dataset.ficha("01012101")
+print(card.formatted_code, card.record.description, card.record.igi_text)
+for chapter in dataset.chapters():
+    print(chapter.code, chapter.description)
 ```
 
-The public query API will grow as search and HS6 ↔ MX8 ↔ NICO10 navigation interfaces stabilize. Unimplemented roadmap capabilities are not presented as stable API.
+`Dataset.open("arancel_mx.duckdb")` opens a local file after structural validation. `ficha` and `chapters` read the verified official dataset; they do not scrape SIICEX-CAAAREM or dumps such as tigies-mx.
 
 ## Data model
 
@@ -302,14 +321,14 @@ The versioned registry lives at `src/arancel_mx/sources/source_registry.json`.
 
 Primary registered URLs include:
 
-- Chamber of Deputies, LIGIE: https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm
-- SNICE, LIGIE: https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html
-- SNICE, NICO and NICO proposals: https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html
-- SNICE, National Notes: https://www.snice.gob.mx/cs/avi/snice/ligie.notasnac22.html
-- SNICE, indicators: https://www.snice.gob.mx/cs/avi/snice/ligie.indicaranc22.html
-- Diario Oficial de la Federación, related publication: https://www.dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022
+- [Chamber of Deputies, LIGIE](https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm)
+- [SNICE, LIGIE](https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html)
+- [SNICE, NICO and NICO proposals](https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html)
+- [SNICE, National Notes](https://www.snice.gob.mx/cs/avi/snice/ligie.notasnac22.html)
+- [SNICE, indicators](https://www.snice.gob.mx/cs/avi/snice/ligie.indicaranc22.html)
+- [Diario Oficial de la Federación, related publication](https://dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022)
 
-[`docs/sources.md`](docs/sources.md) explains how the registered Diputados ledger anchors reconciliation and how DOF evidence acts as a blocking publication gate.
+[`docs/sources.md`](docs/sources.md) explains how the registered Diputados ledger anchors reconciliation and how DOF evidence acts as a blocking publication gate. SIICEX-CAAAREM and dumps such as tigies-mx are not official sources.
 
 ## Official process visuals
 
@@ -411,8 +430,9 @@ See [`SECURITY.md`](SECURITY.md), [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CODE_O
 | Verified automatic publication | Available |
 | GitHub Issue alerts and recovery | Available |
 | Live release/Issue write-boundary certification | Available |
-| Stable public search API | Roadmap |
-| PyPI publication | Roadmap |
+| Stable public search API | Available |
+| TIGIE card (`ficha` / `chapters`) | Available |
+| PyPI publication | Published: `arancel-mx==0.2.0` |
 
 ## Contributing
 
@@ -420,4 +440,4 @@ Open-source community contributions are welcome. Review [`CONTRIBUTING.md`](CONT
 
 Source, parser, reconciliation, and release-contract changes should add offline fixtures or tests for the expected behavior. Changes to the official build dependency environment should update `requirements/production-build.txt` in the same PR when appropriate.
 
-[Español](README.md) · [Documentation](docs/) · [Sources](docs/sources.md) · [Certification](docs/production-certification.md) · [Contribute](CONTRIBUTING.md) · [Security](SECURITY.md)
+[Español](README.md) · [Documentation](docs/) · [Downstream ingest](docs/external-consumption.md) · [Sources](docs/sources.md) · [Certification](docs/production-certification.md) · [Contribute](CONTRIBUTING.md) · [Security](SECURITY.md)

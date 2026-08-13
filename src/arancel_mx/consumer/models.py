@@ -9,6 +9,13 @@ from typing import Literal
 
 @dataclass(frozen=True, slots=True)
 class TariffRecord:
+    """Current public tariff row returned by ``Dataset.lookup``.
+
+    JSON/wire aliases: ``fraction8`` ↔ ``fraccion8``, ``classification10`` ↔ ``nico10``.
+    A 10-digit ``fraction`` field is invalid in downstream apps; this record uses
+    ``fraccion8`` + ``nico2``.
+    """
+
     code: str
     level: str
     description: str
@@ -25,6 +32,14 @@ class TariffRecord:
     effective_from: date | None
     effective_to: date | None
     is_current: bool
+    hs2: str | None = None
+    hs4: str | None = None
+    hs6: str | None = None
+    fraccion8: str | None = None
+    nico2: str | None = None
+    nico10: str | None = None
+    ligie_version: str | None = None
+    validity_basis: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -47,6 +62,28 @@ class ProvenanceRecord:
     published_at: date | None
     effective_from: date | None
     effective_to: date | None
+
+
+@dataclass(frozen=True, slots=True)
+class HsSection:
+    """HS/LIGIE section grouping derived from chapter number, not a captured source."""
+
+    roman: str
+    name: str
+    chapter_from: str
+    chapter_to: str
+    source: Literal["hs_section_grouping"] = "hs_section_grouping"
+
+
+@dataclass(frozen=True, slots=True)
+class Ficha:
+    """SIICEX-style tariff card built only from the verified official dataset."""
+
+    record: TariffRecord
+    formatted_code: str
+    section: HsSection | None
+    hierarchy: tuple[TariffRecord, ...]
+    children: tuple[TariffRecord, ...]
 
 
 @dataclass(frozen=True, slots=True)

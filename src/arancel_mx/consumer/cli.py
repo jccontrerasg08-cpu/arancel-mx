@@ -14,13 +14,15 @@ from arancel_mx.consumer.output import CsvSchema, render, render_json, render_pa
 
 
 _OUTPUT_FORMATS = ("table", "json", "csv")
-_QUERY_ACTIONS = {"lookup", "search", "parent", "children", "provenance"}
+_QUERY_ACTIONS = {"lookup", "search", "parent", "children", "provenance", "ficha", "chapters"}
 _QUERY_CSV_SCHEMAS: dict[str, CsvSchema] = {
     "lookup": "tariff",
     "search": "search",
     "parent": "tariff",
     "children": "tariff",
     "provenance": "provenance",
+    "ficha": "ficha",
+    "chapters": "tariff",
 }
 
 
@@ -181,6 +183,18 @@ def register_consumer_commands(
         "provenance",
         help_text="Muestra las fuentes trazables de un código",
     )
+    _add_query_command(
+        subparsers,
+        "ficha",
+        help_text="Muestra la ficha jerárquica (capítulo → fracción/NICO) de un código",
+    )
+    chapters = subparsers.add_parser(
+        "chapters",
+        help="Lista los capítulos HS2 vigentes",
+    )
+    _add_dataset_selection(chapters)
+    _add_output_format(chapters)
+    chapters.set_defaults(consumer_action="chapters")
 
 
 def _consumer_config(namespace: argparse.Namespace):
@@ -241,6 +255,10 @@ def _run_query(namespace: argparse.Namespace) -> int:
         value = dataset.children(namespace.code)
     elif action == "provenance":
         value = dataset.provenance(namespace.code)
+    elif action == "ficha":
+        value = dataset.ficha(namespace.code)
+    elif action == "chapters":
+        value = dataset.chapters()
     else:
         raise ValueError(f"unsupported consumer query action: {action}")
     _emit(

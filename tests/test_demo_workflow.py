@@ -24,8 +24,12 @@ def _top_level_permissions(workflow: str) -> dict[str, str]:
             in_permissions = True
             inline = line.partition(":")[2].strip()
             if inline:
-                key, _, value = inline.partition(":")
-                values[key.strip()] = value.split("#", 1)[0].strip()
+                scalar = inline.split("#", 1)[0].strip()
+                if ":" in scalar:
+                    key, _, value = scalar.partition(":")
+                    values[key.strip()] = value.strip()
+                elif scalar:
+                    values["*"] = scalar
                 in_permissions = False
             continue
         if not in_permissions:
@@ -52,7 +56,13 @@ def test_demo_workflow_is_manual_pr_based_and_least_privilege():
     assert re.search(r"^\s+pull-requests: write(?: #.*)?$", workflow, re.MULTILINE)
     top_level = _top_level_permissions(workflow)
     assert top_level.get("contents") == "read"
-    assert "write" not in top_level.values()
+    assert "*" not in top_level
+    assert all(value == "read" for value in top_level.values())
+    assert not re.search(
+        r"^[ \t]*permissions:[ \t]*write-all(?:[ \t]+#.*)?$",
+        workflow,
+        re.MULTILINE,
+    )
     assert 'branch="automation/demo-${GITHUB_RUN_ID}"' in workflow
     assert 'git push origin "$branch"' in workflow
     assert "gh pr create" in workflow
@@ -72,6 +82,18 @@ def test_top_level_permissions_ignore_job_scoped_write() -> None:
         "      pull-requests: write\n"
     )
     assert _top_level_permissions(workflow) == {"contents": "read"}
+
+
+def test_top_level_permissions_detect_write_all_scalar() -> None:
+    workflow = (
+        "name: demo\n"
+        "permissions: write-all\n"
+        "jobs:\n"
+        "  generate:\n"
+        "    permissions:\n"
+        "      contents: write\n"
+    )
+    assert _top_level_permissions(workflow) == {"*": "write-all"}
 
 
 def test_demo_workflow_pins_actions_node_and_svg_term_cli():

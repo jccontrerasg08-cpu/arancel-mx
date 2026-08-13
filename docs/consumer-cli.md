@@ -2,7 +2,7 @@
 
 `arancel-mx` exposes a consumer-first command line for downloading, verifying, querying, and diagnosing published Mexican tariff datasets without cloning the repository.
 
-> The consumer CLI is implemented in the package now. The `pip install arancel-mx` command below is the public installation path once the distribution is published to PyPI. Until that publication happens, contributors should use the editable development install documented in the README.
+> The consumer CLI is implemented in the package now. `pip install arancel-mx` is the current public install path. Contributors working from a checkout should use the editable development install documented in the README.
 
 ## Install and first run
 
@@ -14,6 +14,8 @@ arancel-mx --version
 arancel-mx doctor
 arancel-mx data download
 arancel-mx lookup 01012101
+arancel-mx ficha 01012101
+arancel-mx chapters
 arancel-mx search "refrigeradores"
 arancel-mx data verify
 ```
@@ -73,6 +75,8 @@ Use `--format json` for structured automation and `--format csv` for row-oriente
 
 ```bash
 arancel-mx lookup 01012101
+arancel-mx ficha 01012101
+arancel-mx chapters
 arancel-mx search "refrigeradores" --limit 20
 arancel-mx parent 01012101
 arancel-mx children 010121
@@ -80,12 +84,24 @@ arancel-mx provenance 01012101
 ```
 
 - `lookup` resolves an exact normalized tariff code.
+- `ficha` returns the SIICEX-style hierarchy card (section grouping, chapter → heading → subheading → fraction/NICO, UM, IGI, IGE) from the verified official dataset only. IGI/IGE are the official `igi_text` / `ige_text` values (for example `10` and `Ex.`), not rewritten percentages. Codes absent from the current official snapshot fail closed.
+- `chapters` lists current HS2 chapters.
 - `search` ranks current records by code or description.
 - `parent` returns the direct parent in the HS2 → HS4 → HS6 → MX8 → NICO10 hierarchy.
 - `children` returns direct children of a code.
 - `provenance` returns the recorded source traceability for the selected code.
 
 The same normalization and query semantics are shared by the public Python consumer layer and CLI.
+
+```python
+from arancel_mx import Dataset
+
+dataset = Dataset.latest()  # or Dataset.open("arancel_mx.duckdb")
+card = dataset.ficha("01012101")
+print(card.formatted_code, card.record.description, card.record.igi_text)
+for node in card.hierarchy:
+    print(node.level, node.code, node.description)
+```
 
 ## Dataset lifecycle commands
 

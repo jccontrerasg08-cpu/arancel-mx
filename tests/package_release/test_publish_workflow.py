@@ -78,13 +78,21 @@ def test_tag_must_point_at_protected_main_tip(workflow: dict) -> None:
     # A pkg-v* tag can be created on any commit; the release must originate from
     # the protected main tip, so the validation job compares the tag SHA to main.
     steps = workflow["jobs"]["validate-tag"]["steps"]
-    origin_gate = [
-        step
-        for step in steps
-        if "origin main" in str(step.get("run", ""))
-        and "TAG_SHA" in str(step.get("env", {}))
-    ]
-    assert origin_gate, "validate-tag must gate on the protected main tip"
+    origin_gate = next(
+        (
+            step
+            for step in steps
+            if step.get("env", {}).get("TAG_SHA") == "${{ github.sha }}"
+            and "git fetch --no-tags --depth 1 origin main" in str(step.get("run", ""))
+        ),
+        None,
+    )
+    assert origin_gate is not None
+
+    run = str(origin_gate["run"])
+    assert 'main_sha="$(git rev-parse FETCH_HEAD)"' in run
+    assert 'if [ "$TAG_SHA" != "$main_sha" ]; then' in run
+    assert "exit 1" in run
 
 
 def test_no_stored_upload_secrets(workflow_text: str) -> None:
@@ -110,6 +118,19 @@ def test_build_happens_once_and_is_reused(workflow: dict) -> None:
         str(step.get("run", "")) for step in jobs["build-once"]["steps"]
     )
     assert "python -m build" in build_steps
+    version_gate = next(
+        (
+            step
+            for step in jobs["build-once"]["steps"]
+            if step.get("env", {}).get("EXPECTED_VERSION")
+            == "${{ needs.validate-tag.outputs.version }}"
+        ),
+        None,
+    )
+    assert version_gate is not None
+    version_run = str(version_gate["run"])
+    assert 'test -f "dist/arancel_mx-${EXPECTED_VERSION}.tar.gz"' in version_run
+    assert 'ls dist/arancel_mx-"${EXPECTED_VERSION}"-*.whl' in version_run
     # Publisher jobs must consume the uploaded artifact, never rebuild it.
     for name in PUBLISH_JOBS:
         job_steps = jobs[name]["steps"]

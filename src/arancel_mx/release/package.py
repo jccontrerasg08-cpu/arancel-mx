@@ -53,6 +53,7 @@ def _checksum_lines(path: Path) -> dict[str, str]:
         if match is None:
             raise ValueError(f"Invalid checksum line: {line}")
         digest, name = match.groups()
+        digest = digest.lower()
         if name in declared:
             raise ValueError(f"Duplicate checksum entry: {name}")
         declared[name] = digest

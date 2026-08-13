@@ -243,3 +243,20 @@ def test_publication_bundle_requires_checksum_coverage_for_manifest_and_sources(
 
     with pytest.raises(ValueError, match="checksum coverage"):
         verify_publication_bundle(release)
+
+
+def test_verify_release_accepts_uppercase_sha256sums_digests(tmp_path):
+    release, _sources = _fixture(tmp_path)
+    checksums_path = release / "SHA256SUMS"
+    checksums_path.write_text(
+        "".join(
+            f"{digest.upper()}  {name}\n"
+            for digest, name in (
+                line.split("  ", 1)
+                for line in checksums_path.read_text(encoding="ascii").splitlines()
+            )
+        ),
+        encoding="ascii",
+    )
+
+    assert verify_release(release)["validation_status"] == "passed"
