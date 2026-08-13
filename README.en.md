@@ -181,7 +181,7 @@ Downstream apps should pin, install, verify, and query `arancel-mx` as an upstre
 
 1. **Install** and pin: `pip install arancel-mx==0.2.0`, then select `--dataset data-YYYY.MM.DD`.
 2. **Verify** with `arancel-mx doctor`, `data download`, `data verify`, `SHA256SUMS`, and manifest schema v2.
-3. **Query** IGI/IGE via CLI or `Dataset` (`lookup`, `ficha`, `provenance`). Display official `igi_text` / `ige_text` literals; do not rewrite them to percentages.
+3. **Query** IGI/IGE via CLI or `Dataset` (`lookup`, `ficha`, `compare`, `provenance`). Display official `igi_text` / `ige_text` literals; do not rewrite them to percentages. `compare` against VUCEM is informative, not legal identity.
 4. **Out of scope:** IVA, NOM, T-MEC, hosted REST, and hosted Postgres are not published here.
 
 Do not treat a self-ingested copy as upstream truth.
@@ -359,6 +359,7 @@ These images are documentary context, not a live technical status indicator for 
 ├── workflows/
 │   ├── ci.yml
 │   ├── official-data-pipeline.yml
+│   ├── publish-python-package.yml
 │   ├── production-certification.yml
 │   └── generate-demo.yml
 └── dependabot.yml
@@ -366,6 +367,9 @@ requirements/
 └── production-build.txt
 src/arancel_mx/
 ├── certification/
+├── consumer/
+├── domain/
+├── parsers/
 ├── pipeline/
 ├── release/
 ├── sources/
@@ -374,6 +378,7 @@ src/arancel_mx/
 scripts/
 ├── build_official_dataset.py
 ├── run_official_pipeline.py
+├── check_documented_urls.py
 ├── certify_package_install.py
 ├── check_duckdb_compat.py
 ├── certify_github_release.py
@@ -432,7 +437,9 @@ See [`SECURITY.md`](SECURITY.md), [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CODE_O
 | Live release/Issue write-boundary certification | Available |
 | Stable public search API | Available |
 | TIGIE card (`ficha` / `chapters`) | Available |
-| PyPI publication | Published: `arancel-mx==0.2.0` |
+| Compare HS6 / MX8 / NICO vs VUCEM | Available (informative, not legal identity) |
+| LIGIE national notes | Parser and `arancel_mx_national_notes` view; the current snapshot may leave it empty |
+| PyPI publication | Published: `arancel-mx==0.2.0` (`0.2.1` in-tree, not on PyPI until `pkg-v0.2.1`) |
 
 ## Contributing
 

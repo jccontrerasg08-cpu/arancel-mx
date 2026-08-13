@@ -45,38 +45,54 @@ def _excel_engine(path: Path) -> str:
 def _cell(value: object) -> str:
     if value is None:
         return ""
+    if isinstance(value, bool):
+        return str(value)
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
+    if isinstance(value, int):
+        return str(value)
     return str(value)
 
 
-def _iter_openpyxl_rows(path: Path, sheet_name: str | None = None) -> Iterator[tuple[str, list[str]]]:
+def _iter_openpyxl_rows(
+    path: Path, sheet_name: str | None = None, max_rows: int | None = None
+) -> Iterator[tuple[str, list[str]]]:
     from openpyxl import load_workbook
 
     workbook = load_workbook(path, read_only=True, data_only=True)
     try:
         names = (sheet_name,) if sheet_name is not None else tuple(workbook.sheetnames)
         for name in names:
-            for row in workbook[name].iter_rows(values_only=True):
+            kwargs: dict[str, Any] = {"values_only": True}
+            if max_rows is not None:
+                kwargs["max_row"] = max_rows
+            for row in workbook[name].iter_rows(**kwargs):
                 yield name, [_cell(item) for item in row]
     finally:
         workbook.close()
 
 
-def _iter_xlrd_rows(path: Path, sheet_name: str | None = None) -> Iterator[tuple[str, list[str]]]:
+def _iter_xlrd_rows(
+    path: Path, sheet_name: str | None = None, max_rows: int | None = None
+) -> Iterator[tuple[str, list[str]]]:
     import xlrd
 
     book = xlrd.open_workbook(str(path))
     names = (sheet_name,) if sheet_name is not None else tuple(book.sheet_names())
     for name in names:
         sheet = book.sheet_by_name(name)
-        for row_index in range(sheet.nrows):
+        limit = sheet.nrows if max_rows is None else min(sheet.nrows, max_rows)
+        for row_index in range(limit):
             yield name, [_cell(sheet.cell_value(row_index, column)) for column in range(sheet.ncols)]
 
 
-def _iter_rows(path: Path, sheet_name: str | None = None) -> Iterator[tuple[str, list[str]]]:
+def _iter_rows(
+    path: Path, sheet_name: str | None = None, max_rows: int | None = None
+) -> Iterator[tuple[str, list[str]]]:
     if _excel_engine(path) == "openpyxl":
-        yield from _iter_openpyxl_rows(path, sheet_name)
+        yield from _iter_openpyxl_rows(path, sheet_name, max_rows=max_rows)
         return
-    yield from _iter_xlrd_rows(path, sheet_name)
+    yield from _iter_xlrd_rows(path, sheet_name, max_rows=max_rows)
 
 
 def probe_workbook(path: Path, sample_rows: int = 20, sample_columns: int = 30) -> WorkbookProbe:
@@ -84,16 +100,11 @@ def probe_workbook(path: Path, sample_rows: int = 20, sample_columns: int = 30) 
         raise ValueError("workbook probe bounds must be positive")
     samples: dict[str, list[tuple[Any, ...]]] = {}
     order: list[str] = []
-    counts: dict[str, int] = {}
-    for name, row in _iter_rows(path):
+    for name, row in _iter_rows(path, max_rows=sample_rows):
         if name not in samples:
             order.append(name)
             samples[name] = []
-            counts[name] = 0
-        if counts[name] >= sample_rows:
-            continue
         samples[name].append(tuple(row[:sample_columns]))
-        counts[name] += 1
     return WorkbookProbe(tuple(order), {name: tuple(rows) for name, rows in samples.items()})
 
 

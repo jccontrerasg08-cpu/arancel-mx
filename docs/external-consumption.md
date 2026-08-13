@@ -32,7 +32,7 @@ arancel-mx --version
 arancel-mx doctor
 ```
 
-`arancel-mx==0.2.0` ya está en PyPI (carga del 2026-08-12). Fijar el paquete **no** fija el dataset. El dataset usa tags inmutables `data-YYYY.MM.DD` independientes de la versión PEP 440.
+`arancel-mx==0.2.0` ya está en PyPI (carga del 2026-08-12). El checkout declara `0.2.1`; esa versión no está en PyPI hasta `pkg-v0.2.1`. Las aplicaciones aguas abajo siguen fijando `arancel-mx==0.2.0`. La descripción larga en pypi.org es la del upload `0.2.0` (README congelado en esa rueda); los contratos vivos están en git. Fijar el paquete **no** fija el dataset. El dataset usa tags inmutables `data-YYYY.MM.DD` independientes de la versión PEP 440. `/releases/latest` resuelve hoy a `data-2026.08.11`.
 
 ```bash
 arancel-mx data download --dataset data-YYYY.MM.DD
