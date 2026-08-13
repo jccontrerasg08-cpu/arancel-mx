@@ -5,6 +5,7 @@ from importlib.metadata import version
 import pytest
 
 import arancel_mx
+from arancel_mx.consumer import Dataset as ConsumerDataset
 from arancel_mx.consumer.errors import (
     ArancelMXError,
     DatasetDownloadError,
@@ -29,6 +30,17 @@ from arancel_mx.consumer.models import (
 
 def test_runtime_version_comes_from_distribution_metadata() -> None:
     assert arancel_mx.__version__ == version("arancel-mx")
+
+
+def test_consumer_package_reexports_public_types() -> None:
+    from arancel_mx.consumer import CompareRow, Dataset, InvalidCodeError
+
+    assert Dataset is arancel_mx.Dataset
+    assert Dataset is ConsumerDataset
+    assert CompareRow is arancel_mx.CompareRow
+    assert InvalidCodeError is arancel_mx.InvalidCodeError
+    assert "Dataset" in arancel_mx.consumer.__all__
+    assert "CompareRow" in arancel_mx.consumer.__all__
 
 
 def test_exception_hierarchy_is_stable() -> None:
