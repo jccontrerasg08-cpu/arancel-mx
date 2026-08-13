@@ -28,7 +28,7 @@ arancel-mx data verify
 The package version and dataset version are independent identifiers.
 
 - **package version**: the Python distribution and CLI implementation, reported by `arancel-mx --version`. PyPI currently publishes `0.2.0`. The checkout declares `0.2.1` and is not on PyPI until `pkg-v0.2.1`.
-- **dataset version**: an immutable public tariff-data release named `data-YYYY.MM.DD`, for example `data-2026.08.11`.
+- **dataset version**: an immutable public tariff-data release named `data-YYYY.MM.DD`. `/releases/latest` currently resolves to `data-2026.08.11`.
 
 Updating the Python package does not silently replace a pinned dataset version. Publishing a new dataset release does not require changing the package version.
 

@@ -67,7 +67,7 @@ release/
 └── official-sources.tar.gz
 ```
 
-Los cinco archivos distintos de `SHA256SUMS` deben estar cubiertos por checksums. `official-sources.tar.gz` conserva los snapshots capturados y `source_capture.json` necesarios para auditar el build.
+`SHA256SUMS` cubre los otros cinco assets. `official-sources.tar.gz` conserva los snapshots capturados y `source_capture.json` necesarios para auditar el build. GitHub también ofrece **Source code** (zip/tar.gz) y **Release attestation (json)**; esos archivos **no** forman parte del contrato de seis assets.
 
 Antes de cualquier mutación de GitHub Release, `certify_bundle()` exige que el directorio contenga exactamente los six assets, valida manifest/schema/procedencia, abre el DuckDB público, comprueba el archive de fuentes (incluido el ledger Diputados) y vuelve a comprobar hashes.
 

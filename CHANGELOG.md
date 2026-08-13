@@ -7,6 +7,7 @@ All notable changes to the Python package are documented here. Dataset releases 
 ### Changed
 
 - Live docs match in-tree `0.2.1` vs PyPI `0.2.0`: cache paths, `compare`, national notes, and the public source tree.
+- Documented `/releases/latest` as `data-2026.08.11` (six public assets), Diputados `law_reform` 2025-12-29 / `tariff_decree` 2026-04-23 from that manifest, and that the PyPI long description is frozen at the `0.2.0` upload.
 
 ## [0.2.1] - 2026-08-13
 

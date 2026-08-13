@@ -85,7 +85,7 @@ db = Dataset.open("/path/to/arancel_mx.duckdb")
 
 ## Package and data versions are independent
 
-The Python distribution uses PEP 440 package versions such as `0.2.0` (PyPI) and in-tree `0.2.1`. Tariff datasets use immutable date tags such as `data-2026.08.11`.
+The Python distribution uses PEP 440 package versions such as `0.2.0` (PyPI) and in-tree `0.2.1`. Tariff datasets use immutable date tags such as `data-2026.08.11` (`/releases/latest` currently). The PyPI project page long description is frozen at the `0.2.0` upload until `pkg-v0.2.1`.
 
 Verified datasets are cached under `XDG_CACHE_HOME/arancel-mx`, `~/Library/Caches/arancel-mx` on macOS, `%LOCALAPPDATA%/arancel-mx/Cache` on Windows, or `~/.cache/arancel-mx`. Override with `ARANCEL_MX_CACHE_DIR`. The consumer extra does not depend on `platformdirs`.
 
