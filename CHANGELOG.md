@@ -6,6 +6,8 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Fixed
 
+- `prepare_release_archive()` stages the source archive, `SHA256SUMS`, and latest pointer before replacing anything in the release directory, so a failed copy leaves the original checksums and no dangling `official-sources.tar.gz`. Cleanup still removes the staging directory if restoring checksums fails.
+- `verify_sources()` rejects non-object `source_capture.json` rows with `ValueError` instead of `AttributeError`.
 - xlrd integral numeric cells stringify without a `.0` suffix, so a 7-digit `.xls` code is rejected instead of publishing a different 8-digit identity.
 - Restored `from arancel_mx.consumer import Dataset` and the other public consumer re-exports.
 - Dependabot no longer requests repository labels that do not exist.
