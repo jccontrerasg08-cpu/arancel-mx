@@ -74,14 +74,27 @@ def test_only_publisher_jobs_request_oidc(workflow_text: str) -> None:
 
 def test_publisher_jobs_use_gated_environments(workflow_text: str) -> None:
     jobs = _job_blocks(workflow_text)
-    assert "name: testpypi" in jobs["publish-testpypi"]
-    assert "name: pypi" in jobs["publish-pypi"]
+    for job, environment in (
+        ("publish-testpypi", "testpypi"),
+        ("publish-pypi", "pypi"),
+    ):
+        assert re.search(
+            rf"^    environment:[ \t]*\n"
+            rf"(?:(?: {{6,}}\S.*)?\n)*?"
+            rf"^      name:[ \t]*{environment}[ \t]*$",
+            jobs[job],
+            re.MULTILINE,
+        ), job
 
 
 def test_production_publish_is_final_release_only(workflow_text: str) -> None:
     block = _job_blocks(workflow_text)["publish-pypi"]
-    assert "production_eligible" in block
-    assert "'true'" in block
+    assert re.search(
+        r"^    if:[ \t]*needs\.validate-tag\.outputs\.production_eligible"
+        r"[ \t]*==[ \t]*['\"]true['\"][ \t]*$",
+        block,
+        re.MULTILINE,
+    )
 
 
 def test_tag_must_point_at_protected_main_tip(workflow_text: str) -> None:

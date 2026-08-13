@@ -19,6 +19,9 @@ _PINNED_USES = re.compile(r"^[^@\s]+@[0-9a-f]{40}$")
 _INTERPOLATION = re.compile(r"\$\{\{")
 _TOP_LEVEL = re.compile(r"^[a-zA-Z_][\w-]*:", re.MULTILINE)
 _JOB_KEY = re.compile(r"^  ([\w-]+):$", re.MULTILINE)
+_USES = re.compile(
+    r"^(?P<indent>[ \t]*)(?:-[ \t]+)?uses:[ \t]+(?P<ref>\S+)", re.MULTILINE
+)
 
 
 def _workflow_paths() -> list[Path]:
@@ -57,7 +60,7 @@ def _run_scripts(block: str) -> list[str]:
     lines = block.splitlines()
     i = 0
     while i < len(lines):
-        folded = re.match(r"^(\s+)run:\s+\|[-]?\s*$", lines[i])
+        folded = re.match(r"^(\s+)(?:-\s+)?run:\s+[|>]-?\s*$", lines[i])
         if folded:
             indent = len(folded.group(1))
             body: list[str] = []
@@ -70,11 +73,77 @@ def _run_scripts(block: str) -> list[str]:
                 i += 1
             scripts.append("\n".join(body))
             continue
-        inline = re.match(r"^\s+run:\s+(\S.*)$", lines[i])
-        if inline and not lines[i].rstrip().endswith("|"):
+        inline = re.match(r"^\s+(?:-\s+)?run:\s+(\S.*)$", lines[i])
+        if inline:
             scripts.append(inline.group(1))
         i += 1
     return scripts
+
+
+def _following_with_block(lines: list[str], uses_index: int) -> str:
+    uses_indent = lines[uses_index].index("uses:")
+    for i in range(uses_index + 1, len(lines)):
+        line = lines[i]
+        stripped = line.strip()
+        indent = len(line) - len(line.lstrip(" "))
+        if _USES.match(line) or (
+            re.match(r"^\s*-\s+", line) and indent < uses_indent
+        ):
+            break
+        if not stripped or stripped.startswith("#"):
+            continue
+        if indent == uses_indent and stripped == "with:":
+            body: list[str] = []
+            for candidate in lines[i + 1 :]:
+                candidate_indent = len(candidate) - len(candidate.lstrip(" "))
+                if candidate.strip() and candidate_indent <= indent:
+                    break
+                body.append(candidate)
+            return "\n".join(body)
+        if indent <= uses_indent:
+            break
+    return ""
+
+
+def test_run_script_extraction_covers_list_items_and_folded_blocks():
+    block = """\
+  example:
+    steps:
+      - run: echo "${{ github.ref }}"
+      - run: >
+          printf foo |
+          cat
+        run: >-
+          printf bar | cat
+"""
+    assert _run_scripts(block) == [
+        'echo "${{ github.ref }}"',
+        "          printf foo |\n          cat",
+        "          printf bar | cat",
+    ]
+
+
+def test_action_extraction_covers_list_items_and_mapping_keys():
+    text = """\
+      - uses: owner/list-item@v1
+        uses: owner/mapping@v2
+"""
+    assert [match.group("ref") for match in _USES.finditer(text)] == [
+        "owner/list-item@v1",
+        "owner/mapping@v2",
+    ]
+
+
+def test_checkout_credentials_are_read_from_the_checkout_with_block():
+    lines = """\
+      - uses: actions/checkout@0000000000000000000000000000000000000000
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@0000000000000000000000000000000000000000
+        with:
+          persist-credentials: false
+""".splitlines()
+    assert "persist-credentials: false" not in _following_with_block(lines, 0)
 
 
 def test_every_workflow_parses_and_declares_bounded_triggers():
@@ -124,24 +193,30 @@ def test_every_workflow_serializes_concurrent_runs():
 def test_every_action_is_pinned_to_a_commit_sha_with_a_readable_version_comment():
     for path in _workflow_paths():
         text = path.read_text(encoding="utf-8")
-        for uses in re.findall(r"^\s+uses: (\S+)", text, re.MULTILINE):
+        for match in _USES.finditer(text):
+            uses = match.group("ref")
             assert _PINNED_USES.fullmatch(uses), f"{path.name} uses {uses}"
-            assert f"uses: {uses} # v" in text, (
+            line = text[match.start() :].splitlines()[0]
+            assert f"uses: {uses} # v" in line, (
                 f"{path.name} pins {uses} without a readable version comment"
             )
 
 
 def test_checkout_credentials_are_an_explicit_and_justified_decision():
     for name, text in _workflow_texts().items():
-        checkouts = len(re.findall(r"uses: actions/checkout@", text))
-        if checkouts == 0:
-            continue
-        falses = len(re.findall(r"persist-credentials: false", text))
         if name in CHECKOUTS_KEEPING_CREDENTIALS:
             continue
-        assert checkouts == falses, (
-            f"{name} keeps a checkout credential without persist-credentials: false"
-        )
+        lines = text.splitlines()
+        for i, line in enumerate(lines):
+            match = _USES.match(line)
+            if not match or not match.group("ref").startswith("actions/checkout@"):
+                continue
+            with_block = _following_with_block(lines, i)
+            assert re.search(
+                r"^\s+persist-credentials:\s*false\s*(?:#.*)?$",
+                with_block,
+                re.MULTILINE,
+            ), f"{name} keeps a checkout credential without persist-credentials: false"
 
 
 def test_no_shell_script_interpolates_workflow_expressions():
