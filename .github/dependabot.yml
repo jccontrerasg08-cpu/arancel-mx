@@ -21,9 +21,6 @@ updates:
     # proposed for the official build. Security updates ignore this delay.
     cooldown:
       default-days: 7
-    labels:
-      - dependencies
-      - python
     open-pull-requests-limit: 5
 
   # Left ungrouped on purpose: each action SHA bump is a supply-chain change that
@@ -33,7 +30,4 @@ updates:
     schedule:
       interval: weekly
       day: monday
-    labels:
-      - dependencies
-      - github-actions
     open-pull-requests-limit: 5

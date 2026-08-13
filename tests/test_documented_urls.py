@@ -10,11 +10,14 @@ from scripts.check_documented_urls import (
     EXTRA_DOCUMENTED_URLS,
     MARKDOWN_LINK_PATTERN,
     README_RELEASE_URLS,
+    _RETRY_PAUSE,
     build_session,
     check_reachable,
     documented_public_urls,
     extract_bare_http_urls,
+    fetch_html_body,
     is_parseable_url,
+    probe_documented_urls,
     registered_public_urls,
     sanitize_documented_url,
 )
@@ -88,6 +91,77 @@ def test_readme_official_sources_use_parseable_markdown_links() -> None:
         )
         assert linked_urls, f"{readme_path.name} must document at least one official HTTPS link"
         assert all(is_parseable_url(url) for url in linked_urls)
+
+
+def test_fetch_html_body_pauses_between_connection_retries(monkeypatch: pytest.MonkeyPatch) -> None:
+    sleeps: list[float] = []
+    calls = {"n": 0}
+
+    class _Response:
+        status_code = 200
+        url = "https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html"
+        text = "<html><body>" + ("LIGIE " * 80) + "</body></html>"
+
+        def raise_for_status(self) -> None:
+            return None
+
+    class _Session:
+        def get(self, url: str, **kwargs: object) -> _Response:
+            calls["n"] += 1
+            if calls["n"] < 3:
+                raise requests.ConnectionError("Network is unreachable")
+            return _Response()
+
+    monkeypatch.setattr("scripts.check_documented_urls.time.sleep", sleeps.append)
+    status, final_url, _html = fetch_html_body(
+        _Session(),  # type: ignore[arg-type]
+        "https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html",
+        timeout=5,
+    )
+
+    assert calls["n"] == 3
+    assert sleeps == list(_RETRY_PAUSE)
+    assert status == 200
+    assert final_url.endswith("ligie.info22.html")
+
+
+def test_probe_retries_only_urls_that_failed_the_first_pass(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr("scripts.check_documented_urls.time.sleep", lambda _seconds: None)
+    seen: list[str] = []
+
+    class _Response:
+        status_code = 200
+        url = "https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html"
+        text = "<html><body>" + ("LIGIE " * 80) + "</body></html>"
+
+        def raise_for_status(self) -> None:
+            return None
+
+    class _Session:
+        def get(self, url: str, **kwargs: object) -> _Response:
+            seen.append(url)
+            if url.endswith("ligie.info22.html") and seen.count(url) <= 3:
+                raise requests.Timeout("Read timed out.")
+            response = _Response()
+            response.url = url
+            return response
+
+    urls = (
+        "https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html",
+        "https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html",
+    )
+    session = _Session()
+    remaining = probe_documented_urls(session, urls, timeout=5)  # type: ignore[arg-type]
+    assert remaining == [urls[1]]
+    remaining = probe_documented_urls(session, remaining, timeout=5)  # type: ignore[arg-type]
+    assert remaining == []
+    assert seen.count(urls[0]) == 1
+    assert seen.count(urls[1]) == 4
+    output = capsys.readouterr().out
+    assert "FAIL" in output
+    assert "OK [200]" in output
 
 
 @pytest.mark.skipif(
