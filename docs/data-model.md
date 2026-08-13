@@ -67,7 +67,9 @@ dataset_release
 arancel_mx  (vista)
 ```
 
-También pueden incluirse tablas y vistas públicas para versiones/enmiendas NICO, notas nacionales e indicadores cuando forman parte del modelo distribuible.
+También pueden incluirse tablas y vistas públicas para versiones/enmiendas NICO e indicadores cuando forman parte del modelo distribuible.
+
+Las tablas `national_note*` y la vista `arancel_mx_national_notes` existen en el DuckDB público. El parser HTML de notas nacionales está en el paquete. El snapshot oficial actual no exige esa fuente, así que una release `data-*` puede dejar la vista vacía. GIR, notas de sección/capítulo y reglas complementarias no se publican.
 
 `source_registry` **no se embebe en el DuckDB público**. La identidad exacta del registry usado para construir una release se conserva en `manifest.json` mediante `registry_version` y `registry_sha256`, y también queda disponible dentro del metadata de release correspondiente. Esta separación evita confundir estado operativo del pipeline con el contrato de consumo del dataset.
 

@@ -4,6 +4,10 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ## [Unreleased]
 
+### Changed
+
+- Live docs match in-tree `0.2.1` vs PyPI `0.2.0`: cache paths, `compare`, national notes, and the public source tree.
+
 ## [0.2.1] - 2026-08-13
 
 ### Added

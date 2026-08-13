@@ -66,8 +66,12 @@ def test_consumer_guide_documents_offline_formats_and_version_pinning() -> None:
         "arancel-mx ficha",
         "arancel-mx chapters",
         "arancel-mx compare",
+        "XDG_CACHE_HOME",
+        "LOCALAPPDATA",
     )
     assert [value for value in required if value not in guide] == []
+    assert "0.1.0" not in guide
+    assert "platformdirs" in guide.lower()
 
 
 def test_consumer_cli_treats_pip_install_as_current_public_path() -> None:

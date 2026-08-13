@@ -84,6 +84,8 @@ def test_sources_document_legal_reconciliation_as_blocking_gate():
         "siicex-caaarem",
         "tigies-mx",
         "not an official source",
+        "last_law_reform",
+        "2025-12-29",
     )
     assert [value for value in required if value not in sources] == []
 
@@ -100,5 +102,7 @@ def test_data_model_separates_fetch_time_generation_time_and_internal_release_pr
         "registry_sha256",
         "github_run_id",
         "github_artifact_name",
+        "arancel_mx_national_notes",
+        "national_note",
     )
     assert [value for value in required if value not in model] == []

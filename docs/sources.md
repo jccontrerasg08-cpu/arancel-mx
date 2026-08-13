@@ -45,6 +45,8 @@ El ledger **registered** de la Cámara de Diputados es el ancla para saber qué 
 
 La reconciliación es un **blocking gate** antes de publicación. Entre otros casos, la construcción queda bloqueada si una entrada legal esperada carece de evidencia DOF suficiente, si las identidades documentales no concuerdan o si existe una **discrepancy** material que no puede explicarse con las reglas registradas.
 
+El parser del ledger distingue `last_law_reform` (reforma de la ley) de `latest_tariff_modification` (decreto de fracciones). El fixture registered actual espera `2025-12-29` y `2026-04-23`. Esas fechas salen del HTML de Diputados; no se copian de visores de terceros.
+
 La prioridad no se resuelve silenciosamente: la publicación jurídica y el texto legal gobiernan la vigencia; los libros operativos aportan estructura utilizable. Una discrepancia se conserva en diagnósticos y bloquea **publication**.
 
 Esto no convierte al repositorio en una fuente de asesoría jurídica. El sistema verifica consistencia entre evidencia observada y reglas registradas; la validez jurídica final depende de las publicaciones oficiales aplicables.

@@ -354,6 +354,7 @@ Estas imágenes son contexto documental y no un indicador dinámico del estado d
 ├── workflows/
 │   ├── ci.yml
 │   ├── official-data-pipeline.yml
+│   ├── publish-python-package.yml
 │   ├── production-certification.yml
 │   └── generate-demo.yml
 └── dependabot.yml
@@ -361,6 +362,9 @@ requirements/
 └── production-build.txt
 src/arancel_mx/
 ├── certification/
+├── consumer/
+├── domain/
+├── parsers/
 ├── pipeline/
 ├── release/
 ├── sources/
@@ -369,6 +373,7 @@ src/arancel_mx/
 scripts/
 ├── build_official_dataset.py
 ├── run_official_pipeline.py
+├── check_documented_urls.py
 ├── certify_package_install.py
 ├── check_duckdb_compat.py
 ├── certify_github_release.py
@@ -427,7 +432,9 @@ Ver [`SECURITY.md`](SECURITY.md), [`CONTRIBUTING.md`](CONTRIBUTING.md) y [`docs/
 | Certificación live de release/Issue write-boundaries | Disponible |
 | API de búsqueda estable | Disponible |
 | Ficha TIGIE (`ficha` / `chapters`) | Disponible |
-| Publicación en PyPI | Publicado: `arancel-mx==0.2.0` |
+| Compare HS6 / MX8 / NICO vs VUCEM | Disponible (informativo, no identidad legal) |
+| Notas nacionales LIGIE | Parser y vista `arancel_mx_national_notes`; el snapshot actual puede dejarla vacía |
+| Publicación en PyPI | Publicado: `arancel-mx==0.2.0` (`0.2.1` in-tree, no en PyPI hasta `pkg-v0.2.1`) |
 
 ## Contribución
 
