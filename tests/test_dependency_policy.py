@@ -90,9 +90,7 @@ def test_dependabot_updates_python_and_actions_weekly_without_credentials():
     assert config.count("interval: weekly") == 2
     assert config.count("day: monday") == 2
     assert config.count("open-pull-requests-limit: 5") == 2
-    assert "dependencies" in config
-    assert "python" in config
-    assert "github-actions" in config
+    assert "labels:" not in config
 
     lowered = config.lower()
     forbidden = (

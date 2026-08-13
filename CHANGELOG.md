@@ -8,6 +8,12 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 - Live docs match in-tree `0.2.1` vs PyPI `0.2.0`: cache paths, `compare`, national notes, and the public source tree.
 - Documented `/releases/latest` as `data-2026.08.11` (six public assets), Diputados `law_reform` 2025-12-29 / `tariff_decree` 2026-04-23 from that manifest, and that the PyPI long description is frozen at the `0.2.0` upload.
+### Fixed
+
+- xlrd integral numeric cells stringify without a `.0` suffix, so a 7-digit `.xls` code is rejected instead of publishing a different 8-digit identity.
+- Restored `from arancel_mx.consumer import Dataset` and the other public consumer re-exports.
+- Dependabot no longer requests repository labels that do not exist.
+- Documented-URL checks wait 1.5s then 3s between connection retries, then retry only the URLs that failed the first pass.
 
 ## [0.2.1] - 2026-08-13
 

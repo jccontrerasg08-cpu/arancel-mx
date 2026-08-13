@@ -2,7 +2,9 @@ from pathlib import Path
 
 from openpyxl import Workbook
 import pytest
+import xlrd
 
+from arancel_mx.domain.normalization import normalize_code
 from arancel_mx.parsers import workbooks
 from arancel_mx.parsers.profiles import resolve_workbook_profile
 from arancel_mx.parsers.workbooks import (
@@ -11,6 +13,13 @@ from arancel_mx.parsers.workbooks import (
     parse_ligie_workbook,
     parse_nico_workbook,
     probe_workbook,
+)
+
+XLS_NUMERIC_SHORT = (
+    Path(__file__).resolve().parents[1]
+    / "fixtures"
+    / "workbooks"
+    / "ligie-numeric-short-code.xls"
 )
 
 
@@ -39,6 +48,43 @@ def test_probe_is_bounded_and_reports_sheet_samples(tmp_path):
 
     assert probe.sheet_names == ("Datos",)
     assert len(probe.samples["Datos"]) == 2
+
+
+def test_probe_stops_reading_after_sample_bound(tmp_path, monkeypatch):
+    path = make_workbook(tmp_path, "probe.xlsx", [["h"]] + [[str(i)] for i in range(50)])
+    seen: list[object] = []
+    original = workbooks._iter_openpyxl_rows
+
+    def wrapped(path, sheet_name=None, max_rows=None):
+        assert max_rows == 3
+        for item in original(path, sheet_name, max_rows=max_rows):
+            seen.append(item)
+            yield item
+
+    monkeypatch.setattr(workbooks, "_iter_openpyxl_rows", wrapped)
+    probe = probe_workbook(path, sample_rows=3)
+
+    assert len(seen) == 3
+    assert len(probe.samples["Datos"]) == 3
+
+
+def test_probe_stops_reading_xls_after_sample_bound(monkeypatch):
+    book = xlrd.open_workbook(str(XLS_NUMERIC_SHORT))
+    assert book.sheet_by_index(0).nrows > 1
+    seen: list[object] = []
+    original = workbooks._iter_xlrd_rows
+
+    def wrapped(path, sheet_name=None, max_rows=None):
+        assert max_rows == 1
+        for item in original(path, sheet_name, max_rows=max_rows):
+            seen.append(item)
+            yield item
+
+    monkeypatch.setattr(workbooks, "_iter_xlrd_rows", wrapped)
+    probe = probe_workbook(XLS_NUMERIC_SHORT, sample_rows=1)
+
+    assert len(seen) == 1
+    assert len(probe.samples["Datos"]) == 1
 
 
 def test_excel_engine_selects_registered_reader_by_suffix():
@@ -94,6 +140,33 @@ def test_ligie_parser_rejects_complete_short_code(tmp_path):
 
     with pytest.raises(ValueError, match="width"):
         parse_ligie_workbook(path, SOURCE, profile)
+
+
+def test_cell_keeps_integral_xlrd_floats_at_their_digit_width():
+    assert workbooks._cell(1012101.0) == "1012101"
+    assert workbooks._cell(10.5) == "10.5"
+    with pytest.raises(ValueError, match="length"):
+        normalize_code(workbooks._cell(1012101.0))
+    assert normalize_code("1012101.0") == "10121010"
+
+
+def test_ligie_parser_rejects_xlrd_numeric_short_code():
+    book = xlrd.open_workbook(str(XLS_NUMERIC_SHORT))
+    value = book.sheet_by_index(0).cell_value(1, 0)
+    assert value == 1012101.0
+    profile = WorkbookProfile(
+        sheet="Datos",
+        header_row=1,
+        columns={
+            "code": "Fracción",
+            "description": "Descripción",
+            "igi": "IGI",
+            "ige": "IGE",
+        },
+    )
+
+    with pytest.raises(ValueError, match="width"):
+        parse_ligie_workbook(XLS_NUMERIC_SHORT, SOURCE, profile)
 
 
 def test_ligie_parser_omits_unregistered_unit_fields(tmp_path):
