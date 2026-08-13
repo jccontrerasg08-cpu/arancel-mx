@@ -113,6 +113,7 @@ def test_run_script_extraction_covers_list_items_and_folded_blocks():
       - run: >
           printf foo |
           cat
+      - name: Folded mapping-key script
         run: >-
           printf bar | cat
 """
