@@ -9,7 +9,7 @@ All notable changes to the Python package are documented here. Dataset releases 
 - xlrd integral numeric cells stringify without a `.0` suffix, so a 7-digit `.xls` code is rejected instead of publishing a different 8-digit identity.
 - Restored `from arancel_mx.consumer import Dataset` and the other public consumer re-exports.
 - Dependabot no longer requests repository labels that do not exist.
-- Documented-URL checks wait 1.5s then 3s between connection retries so a SNICE reset is not an immediate CI failure.
+- Documented-URL checks wait 1.5s then 3s between connection retries, then retry only the URLs that failed the first pass.
 
 ## [0.2.1] - 2026-08-13
 

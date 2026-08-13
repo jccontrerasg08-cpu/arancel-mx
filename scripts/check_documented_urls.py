@@ -213,6 +213,26 @@ def build_session() -> requests.Session:
     return session
 
 
+def probe_documented_urls(
+    session: requests.Session,
+    urls: tuple[str, ...] | list[str],
+    *,
+    timeout: float,
+) -> list[str]:
+    """Check each URL once. Return the URLs that were still unreachable."""
+
+    failed: list[str] = []
+    for url in urls:
+        try:
+            status, final_url = check_documented_url(session, url, timeout=timeout)
+            suffix = f" -> {final_url}" if final_url != sanitize_documented_url(url) else ""
+            print(f"OK [{status}] {url}{suffix}")
+        except (requests.RequestException, ValueError) as exc:
+            failed.append(url)
+            print(f"FAIL {url} -> {exc}")
+    return failed
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -231,20 +251,16 @@ def main() -> int:
         return 1
 
     session = build_session()
-    failures: list[str] = []
-    for url in documented_public_urls():
-        try:
-            status, final_url = check_documented_url(session, url, timeout=args.timeout)
-            suffix = f" -> {final_url}" if final_url != sanitize_documented_url(url) else ""
-            print(f"OK [{status}] {url}{suffix}")
-        except (requests.RequestException, ValueError) as exc:
-            failures.append(f"{url} -> {exc}")
-            print(f"FAIL {url} -> {exc}")
-
-    if failures:
+    remaining = probe_documented_urls(
+        session, documented_public_urls(), timeout=args.timeout
+    )
+    if remaining:
+        print("\nRetrying previously unreachable URLs:")
+        remaining = probe_documented_urls(session, remaining, timeout=args.timeout)
+    if remaining:
         print("\nUnreachable documented URLs:")
-        for failure in failures:
-            print(f"  - {failure}")
+        for url in remaining:
+            print(f"  - {url}")
         return 1
     return 0
 
