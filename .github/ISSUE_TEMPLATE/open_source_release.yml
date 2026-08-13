@@ -1,0 +1,25 @@
+name: Lista de publicación OSS
+description: Recorre la lista de publicación de código abierto antes de etiquetar un paquete público.
+title: "[OSS]: "
+body:
+  - type: markdown
+    attributes:
+      value: "Walk through these items before tagging a public package. Do not include credentials or PII in the issue."
+  - type: checkboxes
+    id: release_checklist
+    attributes:
+      label: Open-source release checklist
+      options:
+        - label: "Has PII been removed? Tracked text is scanned by tests/test_public_distribution.py."
+        - label: "Have security vulnerabilities been remediated?"
+        - label: "Are we including any other open source products? If so, is there any conflict with Apache-2.0?"
+        - label: "Is our TERMS.md included?"
+        - label: "Is a CHANGELOG.md present and does it contain structured, consistently formatted recent history?"
+        - label: "Are instructions for contributing included (CONTRIBUTING.md)?"
+        - label: "Are installation instructions clearly written in the README and tested on a clean machine?"
+        - label: "Are all dependencies described in the README, pyproject.toml, and requirements/production-build.txt?"
+        - label: "Are the public API docs present (docs/consumer-cli.md, docs/external-consumption.md)?"
+        - label: "Are there unit tests?"
+        - label: "If applicable and possible, is GitHub Actions CI set up?"
+        - label: "Have multiple people reviewed the code?"
+        - label: "Is there a screenshot in the README, if applicable? (docs/demo.gif)"

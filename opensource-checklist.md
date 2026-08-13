@@ -45,6 +45,8 @@ This is the CFPB [open-source-project-template](https://github.com/cfpb/open-sou
   - `docs/demo.gif`
 
 
+Use the GitHub issue form [`.github/ISSUE_TEMPLATE/open_source_release.yml`](.github/ISSUE_TEMPLATE/open_source_release.yml) to track this walkthrough.
+
 ## Copy this version to paste into a GitHub issue with live checkboxes:
 
 ```

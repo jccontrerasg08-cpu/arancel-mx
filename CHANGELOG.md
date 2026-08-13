@@ -8,6 +8,7 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 - Documented GitHub review extensions as install-only, `sha256sum -c SHA256SUMS` copy-paste, and `linguist-generated` for `.xls` fixtures.
 - `docs/external-consumption.md` uses `arancel-mx data verify --bundle` after `data download`; `sha256sum -c SHA256SUMS` is for a full GitHub Release directory.
+- English section in `TERMS.md`, GitHub issue form `.github/ISSUE_TEMPLATE/open_source_release.yml`, and a tighter tracked-text PII/secret scan.
 
 ### Changed
 

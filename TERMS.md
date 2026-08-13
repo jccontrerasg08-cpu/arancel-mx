@@ -23,3 +23,15 @@ Quedan fuera de la licencia Apache-2.0 de este proyecto:
 - obras de terceros usadas por dependencia, no vendoreadas en el árbol.
 
 Véanse [LICENSE](LICENSE), [NOTICE](NOTICE), [SECURITY.md](SECURITY.md) y [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## English
+
+Original code is Apache-2.0 ([LICENSE](LICENSE) and [NOTICE](NOTICE)). Contributions are Apache-2.0 under license section 5.
+
+Diputados, DOF (Official Gazette), and SNICE publications keep their own legal status and are not relicensed. `official-sources.tar.gz` is verification evidence, not a rights transfer.
+
+This is not legal advice.
+
+Python dependencies are not vendored; public runtime is in `pyproject.toml`.
+
+Exceptions: Mexican authority texts/bytes, and third-party dependencies.
