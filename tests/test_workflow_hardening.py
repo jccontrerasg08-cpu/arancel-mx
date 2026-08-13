@@ -17,7 +17,7 @@ MAX_TIMEOUT_MINUTES = 60
 _HOSTED_RUNNERS = frozenset({"ubuntu-latest", "windows-latest", "macos-latest"})
 _PINNED_USES = re.compile(r"^[^@\s]+@[0-9a-f]{40}$")
 _INTERPOLATION = re.compile(r"\$\{\{")
-_TOP_LEVEL = re.compile(r"^[a-zA-Z_][\w-]*:")
+_TOP_LEVEL = re.compile(r"^[a-zA-Z_][\w-]*:", re.MULTILINE)
 _JOB_KEY = re.compile(r"^  ([\w-]+):$", re.MULTILINE)
 
 
