@@ -81,21 +81,58 @@ def _normalize_code(value: str) -> str:
     return re.sub(r"\D", "", value)
 
 
+# 8-digit fracción (90014002 or 9001.40.02), not a 10-digit NICO such as 9001400200.
+_FRACTION_TOKEN = re.compile(r"(?<!\d)(\d{4}\.?\d{2}\.?\d{2})(?!\d)")
+
+
+def _cell_fraction_codes(cell: str) -> tuple[str, ...]:
+    codes: list[str] = []
+    for match in _FRACTION_TOKEN.finditer(cell):
+        digits = _normalize_code(match.group(1))
+        if len(digits) == 8:
+            codes.append(digits)
+    return tuple(codes)
+
+
+def _looks_like_description(cell: str, *, code: str) -> bool:
+    text = cell.strip()
+    if not text or code in _cell_fraction_codes(text):
+        return False
+    return re.search(r"[A-Za-zÁÉÍÓÚÜáéíóúüñÑ]", text) is not None
+
+
 def _find_fraction_row(
     tables: list[list[list[str]]],
     *,
     code: str,
 ) -> tuple[str, str | None, str | None] | None:
     for table in tables:
-        for row in table:
+        for index, row in enumerate(table):
             if not row:
                 continue
-            first = _normalize_code(row[0])
-            if first == code:
+            code_idx = next(
+                (idx for idx, cell in enumerate(row) if code in _cell_fraction_codes(cell)),
+                None,
+            )
+            if code_idx is None:
+                continue
+            description = next(
+                (cell.strip() for cell in row[code_idx + 1 :] if _looks_like_description(cell, code=code)),
+                "",
+            )
+            if not description:
+                for later in table[index + 1 :]:
+                    description = next(
+                        (cell.strip() for cell in later if _looks_like_description(cell, code=code) and len(cell.strip()) > 20),
+                        "",
+                    )
+                    if description:
+                        break
+            if not description:
                 description = row[1] if len(row) > 1 else " ".join(row)
-                import_duty = row[2] if len(row) > 2 else None
-                export_duty = row[3] if len(row) > 3 else None
-                return description, import_duty, export_duty
+            import_duty = row[2] if len(row) > 2 else None
+            export_duty = row[3] if len(row) > 3 else None
+            return description, import_duty, export_duty
     return None
 
 
