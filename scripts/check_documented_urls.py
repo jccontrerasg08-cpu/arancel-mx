@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import re
+import time
 from urllib.parse import urlparse
 
 import requests
@@ -49,6 +50,7 @@ README_RELEASE_URLS = (
 URL_PATTERN = re.compile(r"https?://[^\s\)\]\"'<>,`:]+")
 MARKDOWN_LINK_PATTERN = re.compile(r"\[[^\]]+\]\((https?://[^)]+)\)")
 TRAILING_URL_PUNCTUATION = ".,;:"
+_RETRY_PAUSE = (1.5, 3.0)
 
 
 def sanitize_documented_url(url: str) -> str:
@@ -140,6 +142,7 @@ def fetch_html_body(
             last_error = exc
             if attempt == 2:
                 break
+            time.sleep(_RETRY_PAUSE[attempt])
     assert last_error is not None
     raise last_error
 
@@ -188,6 +191,7 @@ def check_reachable(session: requests.Session, url: str, *, timeout: float) -> t
             last_error = exc
             if attempt == 2:
                 break
+            time.sleep(_RETRY_PAUSE[attempt])
     assert last_error is not None
     raise last_error
 

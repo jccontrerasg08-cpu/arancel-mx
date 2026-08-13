@@ -10,10 +10,12 @@ from scripts.check_documented_urls import (
     EXTRA_DOCUMENTED_URLS,
     MARKDOWN_LINK_PATTERN,
     README_RELEASE_URLS,
+    _RETRY_PAUSE,
     build_session,
     check_reachable,
     documented_public_urls,
     extract_bare_http_urls,
+    fetch_html_body,
     is_parseable_url,
     registered_public_urls,
     sanitize_documented_url,
@@ -88,6 +90,38 @@ def test_readme_official_sources_use_parseable_markdown_links() -> None:
         )
         assert linked_urls, f"{readme_path.name} must document at least one official HTTPS link"
         assert all(is_parseable_url(url) for url in linked_urls)
+
+
+def test_fetch_html_body_pauses_between_connection_retries(monkeypatch: pytest.MonkeyPatch) -> None:
+    sleeps: list[float] = []
+    calls = {"n": 0}
+
+    class _Response:
+        status_code = 200
+        url = "https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html"
+        text = "<html><body>" + ("LIGIE " * 80) + "</body></html>"
+
+        def raise_for_status(self) -> None:
+            return None
+
+    class _Session:
+        def get(self, url: str, **kwargs: object) -> _Response:
+            calls["n"] += 1
+            if calls["n"] < 3:
+                raise requests.ConnectionError("Network is unreachable")
+            return _Response()
+
+    monkeypatch.setattr("scripts.check_documented_urls.time.sleep", sleeps.append)
+    status, final_url, _html = fetch_html_body(
+        _Session(),  # type: ignore[arg-type]
+        "https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html",
+        timeout=5,
+    )
+
+    assert calls["n"] == 3
+    assert sleeps == list(_RETRY_PAUSE)
+    assert status == 200
+    assert final_url.endswith("ligie.info22.html")
 
 
 @pytest.mark.skipif(
