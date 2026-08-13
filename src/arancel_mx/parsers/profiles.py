@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import re
 import unicodedata
 
+from arancel_mx.domain.normalization import normalize_code
 from arancel_mx.parsers.workbooks import WorkbookProbe, WorkbookProfile
 
 
@@ -24,8 +25,8 @@ _PROFILE_ALIASES = {
         },
         "optional": {
             "unit_name": ("UNIDAD", "UNIDAD DE MEDIDA", "UMT"),
-            "igi": ("IGI", "IMP", "IMPORTACION"),
-            "ige": ("IGE", "EXP", "EXPORTACION"),
+            "igi": ("IGI", "IMP", "IMPORT", "IMPORTACION"),
+            "ige": ("IGE", "EXP", "EXPORT", "EXPORTACION"),
         },
         "parser_version": "ligie-profile-1",
     },
@@ -105,14 +106,45 @@ def _supplement_ligie_tariff_columns(
         family,
     )
     if supplemental is None:
+        _reject_unresolved_two_row_header(
+            samples, row_number, indices, missing_rates, family
+        )
         return columns, indices, data_row
     supplemental_columns, supplemental_indices = supplemental
     if not missing_rates.issubset(supplemental_columns):
+        _reject_unresolved_two_row_header(
+            samples, row_number, indices, missing_rates, family
+        )
         return columns, indices, data_row
 
     merged_columns = {**columns, **supplemental_columns}
     merged_indices = {**indices, **supplemental_indices}
     return merged_columns, merged_indices, row_number + 2
+
+
+def _reject_unresolved_two_row_header(
+    samples: tuple[tuple[object, ...], ...],
+    row_number: int,
+    indices: dict[str, int],
+    missing_rates: set[str],
+    family: str,
+) -> None:
+    if row_number >= len(samples):
+        return
+    next_row = samples[row_number]
+    code_index = indices.get("code")
+    if code_index is None or code_index >= len(next_row):
+        return
+    try:
+        code = normalize_code(next_row[code_index])
+    except ValueError:
+        code = ""
+    if len(code) == 8:
+        return
+    raise ValueError(
+        f"unresolved two-row tariff header: {family}; "
+        f"missing_rates={sorted(missing_rates)}"
+    )
 
 
 def resolve_workbook_profile(

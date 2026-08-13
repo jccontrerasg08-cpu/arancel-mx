@@ -39,7 +39,7 @@ def _positive_int(value: str) -> int:
 def _add_offline(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--offline",
-        action="store_true",
+        action=argparse.BooleanOptionalAction,
         default=None,
         help="Use verified local data only and make no network requests",
     )
