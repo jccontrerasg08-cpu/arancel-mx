@@ -171,12 +171,17 @@ def verify_sources(source_dir: Path) -> list[dict[str, Any]]:
         raise ValueError("Source capture metadata is empty")
     filenames: set[str] = set()
     for row in captured:
+        if not isinstance(row, dict):
+            raise ValueError("Source capture entry must be an object")
         filename = row.get("filename")
         if not isinstance(filename, str) or Path(filename).name != filename or filename in filenames:
             raise ValueError(f"Invalid captured source filename: {filename}")
         filenames.add(filename)
+        digest = row.get("sha256")
+        if not isinstance(digest, str) or not _SHA256.fullmatch(digest):
+            raise ValueError(f"Captured source checksum is invalid: {filename}")
         path = source_dir / filename
-        if not path.is_file() or sha256(path) != row.get("sha256"):
+        if not path.is_file() or sha256(path) != digest:
             raise ValueError(f"Captured source checksum mismatch: {filename}")
     return captured
 
@@ -217,7 +222,10 @@ def prepare_release_archive(
 
     manifest = verify_release(release_dir)
     captured = verify_sources(source_dir)
+    checksums_path = release_dir / "SHA256SUMS"
+    original_checksums = checksums_path.read_bytes()
     archive_tmp = archive_path.with_suffix(".tmp")
+    staging: Path | None = None
     try:
         with archive_tmp.open("wb") as raw_archive:
             with gzip.GzipFile(
@@ -237,16 +245,14 @@ def prepare_release_archive(
                         source_dir / "source_capture.json",
                         "official-sources/source_capture.json",
                     )
-        archive_tmp.replace(archive_path)
 
-        checksums_path = release_dir / "SHA256SUMS"
-        lines = checksums_path.read_text(encoding="ascii").rstrip("\r\n")
-        lines += f"\r\n{sha256(archive_path)}  {SOURCE_ARCHIVE}\r\n"
-        checksums_path.write_text(lines, encoding="ascii", newline="")
+        checksum_text = original_checksums.decode("ascii").rstrip("\r\n")
+        checksum_text += f"\r\n{sha256(archive_tmp)}  {SOURCE_ARCHIVE}\r\n"
+        checksum_bytes = checksum_text.encode("ascii")
 
         staging = Path(tempfile.mkdtemp(prefix=f".{latest_dir.name}-", dir=latest_dir.parent))
         shutil.copy2(release_dir / "manifest.json", staging / "manifest.json")
-        shutil.copy2(checksums_path, staging / "SHA256SUMS")
+        (staging / "SHA256SUMS").write_bytes(checksum_bytes)
         version = str(manifest["dataset_version"])
         (staging / "README.md").write_text(
             "# Arancel MX latest release\n\n"
@@ -256,12 +262,21 @@ def prepare_release_archive(
             "against `SHA256SUMS` before use.\n",
             encoding="utf-8",
         )
+
+        archive_tmp.replace(archive_path)
+        checksums_path.write_bytes(checksum_bytes)
         staging.replace(latest_dir)
+        staging = None
     except Exception:
         if archive_tmp.exists():
             archive_tmp.unlink()
         if archive_path.exists():
             archive_path.unlink()
+        checksums_path.write_bytes(original_checksums)
+        if staging is not None and staging.exists():
+            shutil.rmtree(staging, ignore_errors=True)
+        if latest_dir.exists():
+            shutil.rmtree(latest_dir, ignore_errors=True)
         raise
     return {
         "dataset_version": manifest["dataset_version"],

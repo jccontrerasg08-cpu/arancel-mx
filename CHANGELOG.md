@@ -4,6 +4,11 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ## [Unreleased]
 
+### Fixed
+
+- `prepare_release_archive()` stages the source archive, `SHA256SUMS`, and latest pointer before replacing anything in the release directory, so a failed copy leaves the original checksums and no dangling `official-sources.tar.gz`.
+- `verify_sources()` rejects non-object `source_capture.json` rows with `ValueError` instead of `AttributeError`.
+
 ## [0.2.1] - 2026-08-13
 
 ### Added
