@@ -148,7 +148,7 @@ Requiere Python 3.11 o superior.
 
 ### Consumo del dataset publicado
 
-`arancel-mx==0.2.0` está publicado en PyPI (carga del 2026-08-12 vía Trusted Publishing). La matriz externa completa de SO/Python del diseño 2026-08-11 no fue un gate bloqueante de esa carga. La guía canónica para aplicaciones aguas abajo es [`docs/external-consumption.md`](docs/external-consumption.md).
+`arancel-mx==0.2.0` está publicado en PyPI (carga del 2026-08-12 vía Trusted Publishing). La matriz externa de SO/Python no fue un gate bloqueante de esa carga. `0.2.1` bloquea PyPI con Ubuntu/Windows/macOS × CPython 3.11–3.13 después de TestPyPI. La guía canónica para aplicaciones aguas abajo es [`docs/external-consumption.md`](docs/external-consumption.md).
 
 ```bash
 pip install arancel-mx==0.2.0
@@ -190,6 +190,7 @@ arancel-mx doctor
 arancel-mx data download
 arancel-mx lookup 01012101
 arancel-mx ficha 01012101
+arancel-mx compare 01012101
 arancel-mx chapters
 arancel-mx search "refrigeradores"
 arancel-mx data verify
@@ -216,6 +217,7 @@ También se puede fijar una release exacta con `--dataset data-YYYY.MM.DD`. Cons
 | `data verify` | Revalida integridad local y opcionalmente el bundle remoto |
 | `lookup` / `search` | Consulta por código exacto o texto |
 | `ficha` | Ficha jerárquica capítulo → fracción/NICO con UM, IGI e IGE |
+| `compare` | Diff HS6 / MX8 / NICO del dataset GitHub contra VUCEM (informativo) |
 | `chapters` | Lista los capítulos HS2 vigentes |
 | `parent` / `children` | Navega la jerarquía HS2 → HS4 → HS6 → MX8 → NICO10 |
 | `provenance` | Muestra trazabilidad documental del código seleccionado |
@@ -237,8 +239,6 @@ python -m arancel_mx reconcile --ledger-json ledger.json --dof-json dof.json --s
 # verificar y preparar un bundle local
 python -m arancel_mx release --release-dir out/release --source-dir data/raw/release --latest-dir out/latest
 ```
-
-Durante la serie 0.x, `update` permanece como alias de compatibilidad de sólo lectura para `check-updates`; la documentación nueva usa `check-updates` como nombre preferido.
 
 ## Uso desde Python
 

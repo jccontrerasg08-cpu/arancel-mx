@@ -16,6 +16,7 @@ def test_root_package_exports_dataset() -> None:
     assert "Dataset" in arancel_mx.__all__
     assert "Ficha" in arancel_mx.__all__
     assert "HsSection" in arancel_mx.__all__
+    assert "CompareRow" in arancel_mx.__all__
 
 
 def test_dataset_open_validates_local_file_read_only(consumer_duckdb: Path) -> None:

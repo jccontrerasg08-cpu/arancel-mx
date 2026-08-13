@@ -4,6 +4,14 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-08-13
+
+### Added
+
+- Package publish workflow blocks PyPI on an OS × Python matrix after TestPyPI: Ubuntu, Windows, and macOS × CPython 3.11, 3.12, and 3.13. The required PR `test` job stays single-cell Python 3.11 on Ubuntu.
+- National-notes HTML parser and materialize path for `arancel_mx_national_notes`. GIR, section/chapter notes, and reglas complementarias remain unpublished.
+- `arancel-mx compare` / `Dataset.compare` diffs HS6, MX8 (`fraccion8`), and NICO against VUCEM HTML sheets. The dataset column is the GitHub `data-*` release as read by the CLI. VUCEM is informative, not legal identity.
+
 ### Removed
 
 - Dropped `platformdirs` from the consumer runtime; cache paths use `XDG_CACHE_HOME` / `LOCALAPPDATA` / `~/Library/Caches`.
@@ -11,6 +19,10 @@ All notable changes to the Python package are documented here. Dataset releases 
 - Removed leftover pandas pins (`numpy`, `python-dateutil`, `six`) from `requirements/production-build.txt`.
 - Removed the deprecated maintainer `update` CLI alias. Use `check-updates`.
 - Removed shipped Superpowers plan/spec files under `docs/superpowers/`. Live contracts remain in `docs/`.
+
+### Release status
+
+In-tree only. `0.2.1` is not on PyPI until `pkg-v0.2.1` passes TestPyPI and the OS/Python matrix.
 
 ## [0.2.0] - 2026-08-12
 
@@ -44,4 +56,4 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Release status
 
-Trusted Publishing uploaded `arancel-mx==0.2.0` to PyPI on 2026-08-12. The original 2026-08-11 design's full external OS/Python matrix was not a blocking gate for that upload. A later `0.2.1+` would be required to treat that matrix as a release gate.
+Trusted Publishing uploaded `arancel-mx==0.2.0` to PyPI on 2026-08-12. The original 2026-08-11 design's full external OS/Python matrix was not a blocking gate for that upload. `0.2.1` treats Ubuntu/Windows/macOS × CPython 3.11–3.13 as a blocking publish gate.

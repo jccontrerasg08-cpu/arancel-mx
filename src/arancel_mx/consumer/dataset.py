@@ -9,7 +9,7 @@ from typing import Any
 from arancel_mx.consumer.config import resolve_config
 from arancel_mx.consumer.integrity import validate_duckdb
 from arancel_mx.consumer.manager import DatasetManager
-from arancel_mx.consumer.models import DatasetInfo, Ficha, ProvenanceRecord, SearchResult, TariffRecord
+from arancel_mx.consumer.models import CompareRow, DatasetInfo, Ficha, ProvenanceRecord, SearchResult, TariffRecord
 from arancel_mx.consumer import query
 from arancel_mx.storage.duckdb import connect as duckdb_connect
 
@@ -128,3 +128,17 @@ class Dataset:
     def chapters(self) -> tuple[TariffRecord, ...]:
         with self.connect() as connection:
             return query.chapters(connection)
+
+    def compare(
+        self,
+        code: str,
+        *,
+        fetch: bool = True,
+        timeout: float = 30,
+        get_sheet=None,
+    ) -> tuple[CompareRow, ...]:
+        from arancel_mx.consumer.compare import compare_code
+
+        return compare_code(
+            self, code, fetch=fetch, timeout=timeout, get_sheet=get_sheet
+        )

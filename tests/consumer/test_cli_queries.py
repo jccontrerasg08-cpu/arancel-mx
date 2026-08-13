@@ -7,7 +7,7 @@ import pytest
 
 from arancel_mx.cli import main
 from arancel_mx.consumer.errors import InvalidCodeError
-from arancel_mx.consumer.models import Ficha, HsSection, ProvenanceRecord, SearchResult, TariffRecord
+from arancel_mx.consumer.models import CompareRow, Ficha, HsSection, ProvenanceRecord, SearchResult, TariffRecord
 import arancel_mx.consumer.cli as consumer_cli
 
 
@@ -65,6 +65,19 @@ class FakeDataset:
 
     def children(self, code: str) -> tuple[TariffRecord, ...]:
         return (_record("01012101", "fraccion8"), _record("01012102", "fraccion8"))
+
+    def compare(self, code: str, *, fetch: bool = True, timeout: float = 30, get_sheet=None):
+        return (
+            CompareRow(
+                code="01012101",
+                level="fraccion8",
+                field="igi",
+                dataset="10",
+                other="10",
+                other_source="vucem",
+                match=True,
+            ),
+        )
 
     def provenance(self, code: str) -> tuple[ProvenanceRecord, ...]:
         return (
@@ -198,6 +211,14 @@ def test_empty_provenance_csv_keeps_provenance_schema(monkeypatch, capsys) -> No
     output = capsys.readouterr().out
     assert output.startswith("source_document_id,role,is_primary,authority")
     assert output.count("\n") == 1
+
+
+def test_compare_json_contract(capsys) -> None:
+    assert main(["compare", "01012101", "--format", "json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload[0]["code"] == "01012101"
+    assert payload[0]["other_source"] == "vucem"
+    assert payload[0]["match"] is True
 
 
 def test_ficha_json_contract(capsys) -> None:

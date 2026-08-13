@@ -14,7 +14,16 @@ from arancel_mx.consumer.output import CsvSchema, render, render_json
 
 
 _OUTPUT_FORMATS = ("table", "json", "csv")
-_QUERY_ACTIONS = {"lookup", "search", "parent", "children", "provenance", "ficha", "chapters"}
+_QUERY_ACTIONS = {
+    "lookup",
+    "search",
+    "parent",
+    "children",
+    "provenance",
+    "ficha",
+    "chapters",
+    "compare",
+}
 _QUERY_CSV_SCHEMAS: dict[str, CsvSchema] = {
     "lookup": "tariff",
     "search": "search",
@@ -23,6 +32,7 @@ _QUERY_CSV_SCHEMAS: dict[str, CsvSchema] = {
     "provenance": "provenance",
     "ficha": "ficha",
     "chapters": "tariff",
+    "compare": "compare",
 }
 
 
@@ -188,6 +198,11 @@ def register_consumer_commands(
         "ficha",
         help_text="Muestra la ficha jerárquica (capítulo → fracción/NICO) de un código",
     )
+    _add_query_command(
+        subparsers,
+        "compare",
+        help_text="Compara HS6, MX8 o NICO del dataset GitHub con VUCEM (informativo)",
+    )
     chapters = subparsers.add_parser(
         "chapters",
         help="Lista los capítulos HS2 vigentes",
@@ -257,6 +272,10 @@ def _run_query(namespace: argparse.Namespace) -> int:
         value = dataset.provenance(namespace.code)
     elif action == "ficha":
         value = dataset.ficha(namespace.code)
+    elif action == "compare":
+        value = dataset.compare(
+            namespace.code, fetch=namespace.offline is not True
+        )
     elif action == "chapters":
         value = dataset.chapters()
     else:

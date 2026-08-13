@@ -146,7 +146,7 @@ Python 3.11 or newer is required.
 
 ### Published dataset consumer
 
-`arancel-mx==0.2.0` is published on PyPI (uploaded 2026-08-12 via Trusted Publishing). The 2026-08-11 design's full external OS/Python matrix was not a blocking gate for that upload.
+`arancel-mx==0.2.0` is published on PyPI (uploaded 2026-08-12 via Trusted Publishing). The 2026-08-11 design's full external OS/Python matrix was not a blocking gate for that upload. `0.2.1` blocks PyPI on Ubuntu/Windows/macOS × CPython 3.11–3.13 after TestPyPI.
 
 ```bash
 pip install arancel-mx==0.2.0
@@ -195,6 +195,7 @@ arancel-mx doctor
 arancel-mx data download
 arancel-mx lookup 01012101
 arancel-mx ficha 01012101
+arancel-mx compare 01012101
 arancel-mx chapters
 arancel-mx search "refrigeradores"
 arancel-mx data verify
@@ -221,6 +222,7 @@ Pin an exact release with `--dataset data-YYYY.MM.DD`. See [`docs/consumer-cli.m
 | `data verify` | Revalidate local integrity and optionally the remote bundle |
 | `lookup` / `search` | Query by exact code or text |
 | `ficha` | Hierarchy card from chapter → fraction/NICO with UM, IGI, and IGE |
+| `compare` | Diff GitHub-dataset HS6 / MX8 / NICO against VUCEM (informative) |
 | `chapters` | List current HS2 chapters |
 | `parent` / `children` | Navigate HS2 → HS4 → HS6 → MX8 → NICO10 |
 | `provenance` | Show documentary traceability for a selected code |
@@ -242,8 +244,6 @@ python -m arancel_mx reconcile --ledger-json ledger.json --dof-json dof.json --s
 # verify and prepare a local publication bundle
 python -m arancel_mx release --release-dir out/release --source-dir data/raw/release --latest-dir out/latest
 ```
-
-During the 0.x series, `update` remains a deprecated read-only compatibility alias for `check-updates`; new documentation uses `check-updates` as the preferred maintainer command.
 
 ## Python usage
 

@@ -126,8 +126,37 @@ jobs:
           packages-dir: dist
           print-hash: true
 
+  external-certification-matrix:
+    needs: [validate-tag, publish-testpypi]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.11", "3.12", "3.13"]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install the TestPyPI package without a source checkout
+        env:
+          EXPECTED_VERSION: ${{ needs.validate-tag.outputs.version }}
+        run: |
+          python -m pip install pip==26.2.1
+          python -c "import os, subprocess, sys; v = os.environ['EXPECTED_VERSION']; subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--index-url', 'https://test.pypi.org/simple/', '--extra-index-url', 'https://pypi.org/simple/', f'arancel-mx=={v}'])"
+      - name: Import the installed version
+        env:
+          EXPECTED_VERSION: ${{ needs.validate-tag.outputs.version }}
+        run: |
+          python -c "import arancel_mx, os; assert arancel_mx.__version__ == os.environ['EXPECTED_VERSION']"
+          python -m arancel_mx --help
+
   publish-pypi:
-    needs: [validate-tag, build-once, publish-testpypi]
+    needs: [validate-tag, build-once, publish-testpypi, external-certification-matrix]
     if: needs.validate-tag.outputs.production_eligible == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15

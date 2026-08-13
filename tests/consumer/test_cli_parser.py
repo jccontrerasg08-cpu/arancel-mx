@@ -18,6 +18,7 @@ def test_parser_exposes_consumer_and_maintainer_commands() -> None:
         "provenance",
         "ficha",
         "chapters",
+        "compare",
         "build",
         "check-updates",
         "reconcile",

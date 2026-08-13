@@ -24,6 +24,7 @@ WORKFLOWS = ROOT / ".github" / "workflows"
 # single place where the checkout credential may stay in .git/config.
 CHECKOUTS_KEEPING_CREDENTIALS = frozenset({"generate-demo.yml"})
 MAX_TIMEOUT_MINUTES = 60
+_HOSTED_RUNNERS = frozenset({"ubuntu-latest", "windows-latest", "macos-latest"})
 _PINNED_USES = re.compile(r"^[^@\s]+@[0-9a-f]{40}$")
 _INTERPOLATION = re.compile(r"\$\{\{")
 
@@ -97,7 +98,15 @@ def test_every_job_is_least_privilege_bounded_and_hosted_by_github(workflows):
             timeout = job.get("timeout-minutes")
             assert isinstance(timeout, int), f"{label} has no timeout"
             assert 0 < timeout <= MAX_TIMEOUT_MINUTES, label
-            assert job.get("runs-on") == "ubuntu-latest", label
+            runs_on = job.get("runs-on")
+            if isinstance(runs_on, str) and "matrix.os" in runs_on:
+                matrix = job.get("strategy")
+                assert isinstance(matrix, dict), label
+                oss = (matrix.get("matrix") or {}).get("os")
+                assert isinstance(oss, list) and oss, label
+                assert set(oss) <= _HOSTED_RUNNERS, label
+            else:
+                assert runs_on == "ubuntu-latest", label
 
 
 def test_every_workflow_serializes_concurrent_runs(workflows):

@@ -112,8 +112,33 @@ def test_workflow_never_creates_a_github_release(workflow_text: str) -> None:
         assert forbidden not in lowered
 
 
-def test_build_happens_once_and_is_reused(workflow: dict) -> None:
+def test_production_publish_requires_the_os_python_matrix(workflow: dict) -> None:
     jobs = workflow["jobs"]
+    matrix_job = jobs["external-certification-matrix"]
+    assert matrix_job["needs"] == ["validate-tag", "publish-testpypi"]
+    assert matrix_job["runs-on"] == "${{ matrix.os }}"
+    matrix = matrix_job["strategy"]["matrix"]
+    assert set(matrix["os"]) == {"ubuntu-latest", "windows-latest", "macos-latest"}
+    assert matrix["python-version"] == ["3.11", "3.12", "3.13"]
+    assert jobs["publish-pypi"]["needs"] == [
+        "validate-tag",
+        "build-once",
+        "publish-testpypi",
+        "external-certification-matrix",
+    ]
+    assert not any(
+        str(step.get("uses", "")).startswith("actions/checkout@")
+        for step in matrix_job["steps"]
+    )
+    assert not any("arancel-mx doctor" in str(step.get("run", "")) for step in matrix_job["steps"])
+    assert all(
+        "${EXPECTED_VERSION}" not in str(step.get("run", ""))
+        for step in matrix_job["steps"]
+    )
+    assert any(
+        "os.environ['EXPECTED_VERSION']" in str(step.get("run", ""))
+        for step in matrix_job["steps"]
+    )
     build_steps = " ".join(
         str(step.get("run", "")) for step in jobs["build-once"]["steps"]
     )
