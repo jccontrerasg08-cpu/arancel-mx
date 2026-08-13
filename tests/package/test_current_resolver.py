@@ -30,7 +30,7 @@ def test_current_resolver_probe_records_normal_runtime_resolution(tmp_path: Path
         capture_output=True,
         text=True,
     )
-    wheel = next(dist.glob("arancel_mx-0.2.0-*.whl"))
+    wheel = next(dist.glob("arancel_mx-0.2.1-*.whl"))
     dataset = create_consumer_duckdb(
         tmp_path / "fixture ñ" / "arancel_mx.duckdb",
         dataset_version="2026.08.11",
@@ -43,7 +43,7 @@ def test_current_resolver_probe_records_normal_runtime_resolution(tmp_path: Path
             str(SCRIPT),
             str(wheel),
             "--expected-version",
-            "0.2.0",
+            "0.2.1",
             "--dataset",
             str(dataset),
         ],
@@ -56,7 +56,7 @@ def test_current_resolver_probe_records_normal_runtime_resolution(tmp_path: Path
     assert completed.returncode == 0, completed.stdout + completed.stderr
     report = json.loads(completed.stdout)
     assert report["status"] == "ok"
-    assert report["resolved"]["arancel-mx"] == "0.2.0"
+    assert report["resolved"]["arancel-mx"] == "0.2.1"
     for dependency in ("duckdb", "filelock", "requests"):
         assert dependency in report["resolved"]
     for heavy in ("pandas", "openpyxl", "pymupdf", "xlrd"):

@@ -146,7 +146,7 @@ Python 3.11 or newer is required.
 
 ### Published dataset consumer
 
-`arancel-mx==0.2.0` is published on PyPI (uploaded 2026-08-12 via Trusted Publishing). The 2026-08-11 design's full external OS/Python matrix was not a blocking gate for that upload.
+`arancel-mx==0.2.0` is published on PyPI (uploaded 2026-08-12 via Trusted Publishing). The 2026-08-11 design's full external OS/Python matrix was not a blocking gate for that upload. `0.2.1` blocks PyPI on Ubuntu/Windows/macOS × CPython 3.11–3.13 after TestPyPI.
 
 ```bash
 pip install arancel-mx==0.2.0
@@ -242,8 +242,6 @@ python -m arancel_mx reconcile --ledger-json ledger.json --dof-json dof.json --s
 # verify and prepare a local publication bundle
 python -m arancel_mx release --release-dir out/release --source-dir data/raw/release --latest-dir out/latest
 ```
-
-During the 0.x series, `update` remains a deprecated read-only compatibility alias for `check-updates`; new documentation uses `check-updates` as the preferred maintainer command.
 
 ## Python usage
 

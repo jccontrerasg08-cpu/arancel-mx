@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import date
+from html import unescape
 import hashlib
 from pathlib import Path
 import re
@@ -20,6 +21,45 @@ def _text(value: object) -> str:
 
 def _fold(value: object) -> str:
     return fold_text(value).upper()
+
+
+_CHAPTER_HEADING = re.compile(r"Cap[ií]tulo\s+(\d{1,2})\b", re.IGNORECASE)
+_NOTE_START = re.compile(r"(?m)^\s*(\d+)\.\s+")
+
+
+def parse_national_notes_html(html: str, source_document_id: str) -> list[dict]:
+    """Extract numbered LIGIE national notes from SNICE-style HTML."""
+    if not source_document_id:
+        raise ValueError("source_document_id is required")
+    stripped = re.sub(r"(?is)<(script|style).*?</\1>", " ", html)
+    stripped = re.sub(r"(?i)<br\s*/?>", "\n", stripped)
+    stripped = re.sub(r"(?i)</(p|div|h[1-6]|li|tr)>", "\n", stripped)
+    text = unescape(re.sub(r"<[^>]+>", " ", stripped))
+    text = re.sub(r"[ \t]+", " ", text)
+    text = re.sub(r"\n{2,}", "\n", text)
+    rows: list[dict] = []
+    chapter: str | None = None
+    for block in re.split(r"(?=Cap[ií]tulo\s+\d{1,2}\b)", text, flags=re.IGNORECASE):
+        heading = _CHAPTER_HEADING.search(block)
+        if heading:
+            chapter = heading.group(1).zfill(2)
+        starts = list(_NOTE_START.finditer(block))
+        for index, match in enumerate(starts):
+            end = starts[index + 1].start() if index + 1 < len(starts) else len(block)
+            body = " ".join(block[match.end() : end].split())
+            if not body:
+                raise ValueError("national note is missing text")
+            rows.append(
+                {
+                    "chapter": chapter,
+                    "note_number": match.group(1),
+                    "text": body,
+                    "source_document_id": source_document_id,
+                }
+            )
+    if not rows:
+        raise ValueError("national notes HTML contains no numbered notes")
+    return rows
 
 
 def _identifier(prefix: str, values: list[object]) -> str:

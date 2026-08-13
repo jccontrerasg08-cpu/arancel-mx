@@ -264,6 +264,41 @@ def _insert_rates(
     )
 
 
+def _insert_national_notes(
+    conn: duckdb.DuckDBPyConnection,
+    notes: Sequence[Mapping[str, object]],
+) -> None:
+    for row in notes:
+        note_number = str(row.get("note_number") or "").strip()
+        text = str(row.get("text") or "").strip()
+        source_id = str(row.get("source_document_id") or "").strip()
+        if not note_number or not text or not source_id:
+            raise ValueError("national notes require note_number, text, and source_document_id")
+        note_id = str(
+            row.get("national_note_id")
+            or hashlib.sha256(canonical_json([row.get("chapter"), note_number]).encode("utf-8")).hexdigest()
+        )
+        conn.execute(
+            "INSERT INTO national_note VALUES (?, ?, ?)",
+            [note_id, row.get("chapter"), note_number],
+        )
+        version_id = str(
+            row.get("national_note_version_id")
+            or hashlib.sha256(canonical_json([note_id, text, source_id]).encode("utf-8")).hexdigest()
+        )
+        conn.execute(
+            "INSERT INTO national_note_version VALUES (?, ?, ?, ?, ?, ?)",
+            [
+                version_id,
+                note_id,
+                text,
+                row.get("effective_from"),
+                row.get("effective_to"),
+                source_id,
+            ],
+        )
+
+
 def _build_view(conn: duckdb.DuckDBPyConnection) -> None:
     conn.execute(
         """
@@ -288,6 +323,14 @@ def _build_view(conn: duckdb.DuckDBPyConnection) -> None:
     columns = [row[0] for row in conn.execute("DESCRIBE arancel_mx").fetchall()]
     if columns != list(PUBLIC_COLUMNS):
         raise ValueError(f"Public view columns do not match contract: {columns}")
+    conn.execute(
+        """CREATE OR REPLACE VIEW arancel_mx_national_notes AS
+           SELECT n.national_note_id, n.chapter, n.note_number,
+                  v.national_note_version_id, v.text, v.effective_from,
+                  v.effective_to, v.source_document_id
+           FROM national_note n
+           JOIN national_note_version v USING (national_note_id)"""
+    )
 
 
 def _validate_database(conn: duckdb.DuckDBPyConnection) -> dict[str, object]:
@@ -484,6 +527,7 @@ def materialize_arancel(
     classifications: Sequence[Mapping[str, object]],
     rates: Sequence[Mapping[str, object]],
     release: Mapping[str, object],
+    national_notes: Sequence[Mapping[str, object]] = (),
 ) -> dict[str, object]:
     """Replace canonical data only after the complete candidate validates."""
     documents_by_id, release_metadata = _validate_inputs(
@@ -504,11 +548,13 @@ def materialize_arancel(
     try:
         ensure_tariff_schema(conn)
         conn.execute("DROP VIEW IF EXISTS arancel_mx")
+        conn.execute("DROP VIEW IF EXISTS arancel_mx_national_notes")
         for table in reversed(PUBLIC_INTERNAL_TABLES):
             conn.execute(f"DELETE FROM {table}")
         _insert_sources(conn, source_documents)
         _insert_classifications(conn, classifications)
         _insert_rates(conn, rates)
+        _insert_national_notes(conn, national_notes)
 
         canonical_rows: list[list[object]] = []
         provenance_rows: list[list[object]] = []
@@ -670,14 +716,6 @@ def _create_public_database(source_path: Path, target_path: Path) -> None:
             conn.execute(f'DROP TABLE "{table}"')
         conn.execute("DETACH upstream")
         _build_view(conn)
-        conn.execute(
-            """CREATE OR REPLACE VIEW arancel_mx_national_notes AS
-               SELECT n.national_note_id, n.chapter, n.note_number,
-                      v.national_note_version_id, v.text, v.effective_from,
-                      v.effective_to, v.source_document_id
-               FROM national_note n
-               JOIN national_note_version v USING (national_note_id)"""
-        )
         conn.execute(
             """CREATE OR REPLACE VIEW nico_proposals AS
                SELECT p.*, b.observed_at, b.published_at, b.source_document_id,

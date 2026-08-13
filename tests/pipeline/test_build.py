@@ -100,7 +100,60 @@ def test_build_materializes_a_valid_public_record(tmp_path):
     assert "local_path" not in stored_sources[0]
 
 
-def test_build_rejects_missing_release_metadata_before_transaction(tmp_path):
+def test_build_materializes_national_notes_into_the_public_view(tmp_path):
+    path = init_tariff_db(tmp_path / "arancel.duckdb")
+    source = {
+        "source_document_id": "doc-1",
+        "authority": "Cámara de Diputados",
+        "publication_venue": "DOF",
+        "title": "LIGIE",
+        "source_url": "https://www.diputados.gob.mx/ligie.pdf",
+        "sha256": "a" * 64,
+        "observed_at": date(2026, 8, 9),
+        "retrieved_at": datetime(2026, 8, 9, 12, 0),
+    }
+    classification = {
+        "level": "hs2",
+        "code": "01",
+        "description": "Animales vivos.",
+        "ligie_version": "LIGIE-2022",
+        "validity_basis": "observed_snapshot",
+        "updated_at": date(2026, 8, 9),
+        "source_document_id": "doc-1",
+    }
+    release = {
+        "dataset_version": "2026.08.09",
+        "schema_version": "2",
+        "ligie_version": "LIGIE-2022",
+        "effective_as_of": date(2026, 8, 9),
+        "generated_at": datetime(2026, 8, 9, 12, 0),
+        "release_metadata": release_metadata(),
+    }
+    notes = [
+        {
+            "chapter": "01",
+            "note_number": "1",
+            "text": "Los animales vivos de este capítulo.",
+            "source_document_id": "doc-1",
+        }
+    ]
+
+    with connect(path) as connection:
+        materialize_arancel(
+            connection, [source], [classification], [], release, national_notes=notes
+        )
+        row = connection.execute(
+            "SELECT chapter, note_number, text FROM arancel_mx_national_notes"
+        ).fetchone()
+        empty = materialize_arancel(connection, [source], [classification], [], release)
+        leftover = connection.execute(
+            "SELECT COUNT(*) FROM arancel_mx_national_notes"
+        ).fetchone()[0]
+
+    assert row == ("01", "1", "Los animales vivos de este capítulo.")
+    assert leftover == 0
+    assert empty["row_count"] == 1
+
     path = init_tariff_db(tmp_path / "arancel.duckdb")
     release = {
         "dataset_version": "2026.08.09",

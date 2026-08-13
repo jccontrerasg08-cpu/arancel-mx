@@ -154,6 +154,9 @@ No hay un séptimo asset `source_trace.json`. Una aplicación que necesite un ob
 - Postgres hospedado
 - SIICEX-CAAAREM o HTML de VUCEM como identidad legal
 - cola humana para promover capturas incompletas
+- GIR, notas de sección/capítulo/subpartida o reglas complementarias (incluida la 10ª)
+
+Las notas nacionales LIGIE tienen tablas (`national_note*`, vista `arancel_mx_national_notes`) y un parser HTML. El snapshot oficial actual sigue sin exigir esa fuente; una release `data-*` posterior puede llenar la vista. Hasta entonces la vista puede estar vacía. No se inventan instrumentos legales.
 
 Una discrepancia, parser dudoso o gate fallido bloquea la publicación. No hay “publicar de todos modos”.
 
