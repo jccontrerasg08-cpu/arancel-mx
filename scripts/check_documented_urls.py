@@ -130,14 +130,16 @@ def fetch_html_body(
 ) -> tuple[int, str, str]:
     """Download one HTML page, verify it is usable, and return status, final URL, and body."""
     cleaned = sanitize_documented_url(url)
-    last_error: requests.RequestException | ValueError | None = None
+    last_error: ValueError | None = None
     for attempt in range(3):
         try:
             response = session.get(cleaned, allow_redirects=True, timeout=timeout)
             response.raise_for_status()
             ensure_html_body_accessible(response.text, url=response.url)
             return response.status_code, response.url, response.text
-        except (requests.RequestException, ValueError) as exc:
+        except requests.RequestException:
+            raise
+        except ValueError as exc:
             last_error = exc
             if attempt == 2:
                 break
@@ -173,26 +175,16 @@ def check_documented_url(
 def check_reachable(session: requests.Session, url: str, *, timeout: float) -> tuple[int, str]:
     """Return the HTTP status and final URL for one documented public endpoint."""
     cleaned = sanitize_documented_url(url)
-    last_error: requests.RequestException | None = None
-    for attempt in range(3):
-        try:
-            response = session.head(cleaned, allow_redirects=True, timeout=timeout)
-            if response.status_code in {405, 501}:
-                response = session.get(cleaned, allow_redirects=True, timeout=timeout, stream=True)
-                response.close()
-            if response.status_code >= 400:
-                raise requests.HTTPError(
-                    f"{cleaned} returned HTTP {response.status_code}",
-                    response=response,
-                )
-            return response.status_code, response.url
-        except requests.RequestException as exc:
-            last_error = exc
-            if attempt == 2:
-                break
-            time.sleep(_RETRY_PAUSE[attempt])
-    assert last_error is not None
-    raise last_error
+    response = session.head(cleaned, allow_redirects=True, timeout=timeout)
+    if response.status_code in {405, 501}:
+        response = session.get(cleaned, allow_redirects=True, timeout=timeout, stream=True)
+        response.close()
+    if response.status_code >= 400:
+        raise requests.HTTPError(
+            f"{cleaned} returned HTTP {response.status_code}",
+            response=response,
+        )
+    return response.status_code, response.url
 
 
 def build_session() -> requests.Session:

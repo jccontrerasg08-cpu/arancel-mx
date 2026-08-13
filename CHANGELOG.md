@@ -10,7 +10,7 @@ All notable changes to the Python package are documented here. Dataset releases 
 - Documented `/releases/latest` as `data-2026.08.11` (six public assets), Diputados `law_reform` 2025-12-29 / `tariff_decree` 2026-04-23 from that manifest, and that the PyPI long description is frozen at the `0.2.0` upload.
 ### Fixed
 
-- Official capture, `check-updates`, and documented-URL probes share `build_official_session()`: urllib3 retries connect/read only (`status=0`, backoff 0.5, 6 attempts) and HTTPS `DEFAULT:@SECLEVEL=1` for weak-DH gob.mx hosts. HTTP 4xx/5xx stay fail-closed.
+- Official capture, `check-updates`, and documented-URL probes share `build_official_session()`: urllib3 retries connect/read only (`status=0`, backoff 0.5, `total=6`) and HTTPS `DEFAULT:@SECLEVEL=1` for weak-DH gob.mx hosts. HTTP 4xx/5xx stay fail-closed. Script-level URL probes no longer stack a second 3-attempt loop on those transport retries.
 - `prepare_release_archive()` stages the source archive, `SHA256SUMS`, and latest pointer before replacing anything in the release directory, so a failed copy leaves the original checksums and no dangling `official-sources.tar.gz`. Cleanup still removes the staging directory if restoring checksums fails.
 - `verify_sources()` rejects non-object `source_capture.json` rows with `ValueError` instead of `AttributeError`.
 - xlrd integral numeric cells stringify without a `.0` suffix, so a 7-digit `.xls` code is rejected instead of publishing a different 8-digit identity.
