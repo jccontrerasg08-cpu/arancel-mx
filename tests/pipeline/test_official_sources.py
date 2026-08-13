@@ -24,6 +24,10 @@ LIGIE_INDEX = "https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html"
 NICO_INDEX = "https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html"
 LIGIE_URL = "https://www.snice.gob.mx/files/FRACCIONESARANCELARIAS_20260810.XLSX"
 NICO_URL = "https://www.snice.gob.mx/files/NICO-AGOSTO26-LIGIE_20260810-20260810.XLSX"
+NOTES_URL = "https://www.snice.gob.mx/cs/avi/snice/ligie.notasnac22.html"
+NOTES_HTML = (
+    Path(__file__).parents[1] / "fixtures" / "snice" / "ligie.notasnac22.html"
+).read_text(encoding="utf-8")
 XLSX_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 
@@ -88,6 +92,9 @@ def fake_session():
         ),
         LIGIE_URL: Response(LIGIE_URL, b"ligie-workbook", XLSX_TYPE),
         NICO_URL: Response(NICO_URL, b"nico-workbook", XLSX_TYPE),
+        NOTES_URL: Response(
+            NOTES_URL, NOTES_HTML.encode("utf-8"), "text/html; charset=utf-8", NOTES_HTML
+        ),
     }
     return FakeSession(responses)
 
@@ -115,10 +122,11 @@ def test_capture_official_inputs_returns_registered_and_required_legal_roles(tmp
         ("diputados_ligie", "consolidated_text"),
         ("dof_law_reform", "law_reform"),
         ("dof_tariff_decree", "tariff_decree"),
+        ("national_notes", "national_notes"),
     }
     assert snapshot.registry_version == "2026-08-10"
     assert len(snapshot.registry_sha256) == 64
-    assert len(snapshot.identities) == 6
+    assert len(snapshot.identities) == 7
     assert all(identity.registry_version == "2026-08-10" for identity in snapshot.identities)
     assert snapshot.reconciliation.publishable is True
     assert snapshot.reconciliation.discrepancies == ()
@@ -182,6 +190,7 @@ def test_release_sources_preserve_required_dof_evidence(tmp_path):
         "ligie-consolidated.pdf",
         "ligie-ledger.htm",
         "ligie.xlsx",
+        "national-notes.html",
         "nico.xlsx",
         "source_capture.json",
     ]
