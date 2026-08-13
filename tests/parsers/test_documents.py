@@ -1,9 +1,6 @@
 from datetime import date
 from pathlib import Path
-
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import PageBreak, SimpleDocTemplate, Spacer, Table, TableStyle
+import shutil
 
 from arancel_mx.parsers.documents import (
     _hierarchy_entries_from_table,
@@ -12,6 +9,7 @@ from arancel_mx.parsers.documents import (
 
 
 SOURCE = Path(__file__).parents[2] / "src" / "arancel_mx" / "parsers" / "documents.py"
+PDF_FIXTURES = Path(__file__).parents[1] / "fixtures" / "pdf"
 
 
 def _finished_hierarchy(pages: list[list[list[object]]]) -> dict[str, str]:
@@ -42,21 +40,7 @@ def test_pdf_parser_uses_supported_pymupdf_namespace():
 
 def test_pdf_parser_extracts_official_hierarchy(tmp_path):
     path = tmp_path / "ligie.pdf"
-    story = [
-        Table([["Capítulo 01"], ["Animales vivos"]]),
-        Spacer(1, 10),
-        Table(
-            [
-                ["CÓDIGO", "", "DESCRIPCIÓN", "UNIDAD", "IMP.", "EXP."],
-                ["01.01", "", "Caballos, asnos, mulos y burdéganos, vivos.", "", "", ""],
-                ["0101.21", "--", "Reproductores de raza pura.", "", "", ""],
-                ["0101.21.01", "", "Reproductores de raza pura.", "Cbza", "10", "Ex."],
-            ],
-            colWidths=[70, 20, 280, 50, 40, 40],
-            style=TableStyle([("GRID", (0, 0), (-1, -1), 0.5, colors.black)]),
-        ),
-    ]
-    SimpleDocTemplate(str(path), pagesize=letter).build(story)
+    shutil.copyfile(PDF_FIXTURES / "ligie_hierarchy.pdf", path)
 
     rows = parse_ligie_pdf_hierarchy(
         path, "doc-pdf", "LIGIE-2022", date(2025, 12, 29), None
@@ -124,27 +108,7 @@ def test_hierarchy_does_not_merge_complete_heading_into_next_page() -> None:
 
 def test_pdf_parser_joins_heading_split_across_pages(tmp_path: Path) -> None:
     path = tmp_path / "ligie-pagebreak.pdf"
-    story = [
-        Table(
-            [
-                ["CÓDIGO", "", "DESCRIPCIÓN"],
-                ["11.04", "", "germen de cereales entero, aplastado, en copos o"],
-            ],
-            colWidths=[70, 20, 400],
-            style=TableStyle([("GRID", (0, 0), (-1, -1), 0.5, colors.black)]),
-        ),
-        PageBreak(),
-        Table(
-            [
-                ["", "", "molido."],
-                ["", "-", "Granos aplastados o en copos:"],
-                ["1104.12", "--", "De avena."],
-            ],
-            colWidths=[70, 20, 400],
-            style=TableStyle([("GRID", (0, 0), (-1, -1), 0.5, colors.black)]),
-        ),
-    ]
-    SimpleDocTemplate(str(path), pagesize=letter).build(story)
+    shutil.copyfile(PDF_FIXTURES / "ligie_pagebreak.pdf", path)
 
     rows = parse_ligie_pdf_hierarchy(
         path, "doc-pdf", "LIGIE-2022", date(2025, 12, 29), None
