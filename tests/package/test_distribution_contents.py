@@ -73,6 +73,7 @@ def test_sdist_contains_rebuild_inputs_and_public_package_docs(distributions: tu
         f"{root}/NOTICE",
         f"{root}/docs/package-release.md",
         f"{root}/docs/consumer-cli.md",
+        f"{root}/docs/external-consumption.md",
         f"{root}/src/arancel_mx/__init__.py",
         f"{root}/src/arancel_mx/py.typed",
         f"{root}/src/arancel_mx/sources/source_registry.json",
