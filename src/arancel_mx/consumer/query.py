@@ -26,7 +26,9 @@ _ROW_SELECT = """
            igi_text, igi_kind, igi_value,
            ige_text, ige_kind, ige_value,
            dataset_version, schema_version,
-           effective_from, effective_to, is_current
+           effective_from, effective_to, is_current,
+           hs2, hs4, hs6, fraccion8, nico2, nico10,
+           ligie_version, validity_basis
     FROM arancel_mx
 """
 
@@ -70,6 +72,12 @@ def _as_float(value: object) -> float | None:
     return float(value)
 
 
+def _as_optional_str(value: object) -> str | None:
+    if value is None:
+        return None
+    return str(value)
+
+
 def _parent_code(code: str) -> str | None:
     width = _PARENT_LENGTH[len(code)]
     return None if width is None else code[:width]
@@ -95,6 +103,14 @@ def _row_to_tariff_record(row: Iterable[object]) -> TariffRecord:
         effective_from=values[12],  # DuckDB returns datetime.date for DATE columns.
         effective_to=values[13],
         is_current=bool(values[14]),
+        hs2=_as_optional_str(values[15]),
+        hs4=_as_optional_str(values[16]),
+        hs6=_as_optional_str(values[17]),
+        fraccion8=_as_optional_str(values[18]),
+        nico2=_as_optional_str(values[19]),
+        nico10=_as_optional_str(values[20]),
+        ligie_version=_as_optional_str(values[21]),
+        validity_basis=_as_optional_str(values[22]),
     )
 
 
