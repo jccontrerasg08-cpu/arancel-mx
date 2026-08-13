@@ -13,6 +13,5 @@ class CertificationReport:
     a returned report therefore represents a fully successful certification pass.
     """
 
-    passed: bool
     checks: tuple[str, ...]
     row_count: int

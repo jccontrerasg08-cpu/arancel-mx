@@ -76,21 +76,3 @@ def capture_document(
     else:
         _atomic_json(manifest_path, payload)
     return CaptureManifest(target, manifest_path, digest, payload)
-
-
-def can_reuse_parse(
-    previous: Mapping[str, Any] | None,
-    source_sha256: str,
-    parser_version: str,
-    schema_version: str,
-    registry_version: str,
-) -> bool:
-    if previous is None:
-        return False
-    identity = {
-        "source_sha256": source_sha256,
-        "parser_version": parser_version,
-        "schema_version": schema_version,
-        "registry_version": registry_version,
-    }
-    return all(str(previous.get(key)) == str(value) for key, value in identity.items())

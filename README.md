@@ -359,8 +359,7 @@ Estas imágenes son contexto documental y no un indicador dinámico del estado d
 │   ├── ci.yml
 │   ├── official-data-pipeline.yml
 │   ├── publish-python-package.yml
-│   ├── production-certification.yml
-│   └── generate-demo.yml
+│   └── production-certification.yml
 └── dependabot.yml
 requirements/
 └── production-build.txt
@@ -412,7 +411,6 @@ La certificación live de permisos GitHub se ejecuta aparte mediante el workflow
 - Dependabot abre PRs semanales para Python y GitHub Actions.
 - El pipeline de producción usa permisos por job, no `write-all`.
 - No usa PAT para releases.
-- La automatización de demos abre PR en vez de empujar a `main`.
 - La certificación de write-boundaries usa namespaces `certification-*` y `[CERTIFICATION ALERT]`, separados de producción.
 
 El runbook de configuración de producción está en [`docs/operations/github-settings.md`](docs/operations/github-settings.md). Ahí se documentan release immutability, el ruleset de `main`, el required check `test`, permisos de Actions y controles de Advanced Security que deben verificarse en la UI.

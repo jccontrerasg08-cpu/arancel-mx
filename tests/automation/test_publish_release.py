@@ -157,7 +157,6 @@ class CleanupFailureGitHub(FakeGitHub):
 
 def patch_local_verifier(monkeypatch, events, value=None):
     class Report:
-        passed = True
         checks = ("publication_bundle",)
         row_count = 1
 

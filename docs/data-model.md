@@ -51,7 +51,7 @@ generated_at
 
 ## DuckDB interno y DuckDB distribuible
 
-El warehouse interno usa un esquema más amplio para captura, staging y construcción reproducible. Ahí existen tablas operativas como `source_registry`, `source_discovery_run`, `source_discovery_item`, `source_capture`, `staging_arancel_row` y `arancel_quarantine`, además de las tablas canónicas.
+El warehouse interno materializa las tablas canónicas (y notas, propuestas e indicadores) antes de copiarlas al DuckDB público.
 
 El archivo público `arancel_mx.duckdb` no es una copia completa de ese warehouse. El exporter crea un DuckDB distribuible nuevo y copia únicamente tablas canónicas o de auditoría pública. El contrato mínimo que la certificación de consumidor exige incluye:
 
@@ -71,7 +71,7 @@ También pueden incluirse tablas y vistas públicas para versiones/enmiendas NIC
 
 Las tablas `national_note*` y la vista `arancel_mx_national_notes` existen en el DuckDB público. El parser HTML de notas nacionales está en el paquete. La release `data-2026.08.11` no incluye `national_notes` en `source_identity`, así que esa vista puede estar vacía. GIR, notas de sección/capítulo y reglas complementarias no se publican.
 
-`source_registry` **no se embebe en el DuckDB público**. La identidad exacta del registry usado para construir una release se conserva en `manifest.json` mediante `registry_version` y `registry_sha256`, y también queda disponible dentro del metadata de release correspondiente. Esta separación evita confundir estado operativo del pipeline con el contrato de consumo del dataset.
+`source_registry.json` **no se embebe en el DuckDB público**. La identidad exacta del registry usado para construir una release se conserva en `manifest.json` mediante `registry_version` y `registry_sha256`, y también queda disponible dentro del metadata de release correspondiente. Esta separación evita confundir estado operativo del pipeline con el contrato de consumo del dataset.
 
 La vista pública `arancel_mx` expone códigos, descripción, jerarquía, unidad, tasas, vigencia, versión, estado actual y procedencia verificable. Su orden de columnas se valida contra el contrato canónico `PUBLIC_COLUMNS`.
 

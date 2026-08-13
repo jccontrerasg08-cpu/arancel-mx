@@ -1,6 +1,6 @@
 import json
 
-from arancel_mx.sources.capture import can_reuse_parse, capture_document
+from arancel_mx.sources.capture import capture_document
 
 
 META = {
@@ -35,18 +35,3 @@ def test_identical_capture_ignores_retrieved_at_drift(tmp_path):
     assert first.sha256 == second.sha256
     assert first.metadata["retrieved_at"] == "2026-08-09T12:00:00Z"
     assert second.metadata["retrieved_at"] == "2026-08-09T12:00:00Z"
-
-
-def test_parse_reuse_requires_the_complete_identity():
-    previous = {
-        "source_sha256": "abc",
-        "parser_version": "1",
-        "schema_version": "1",
-        "registry_version": "1",
-    }
-
-    assert can_reuse_parse(previous, "abc", "1", "1", "1")
-    assert not can_reuse_parse(previous, "def", "1", "1", "1")
-    assert not can_reuse_parse(previous, "abc", "2", "1", "1")
-    assert not can_reuse_parse(previous, "abc", "1", "2", "1")
-    assert not can_reuse_parse(previous, "abc", "1", "1", "2")
