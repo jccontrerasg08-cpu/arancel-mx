@@ -9,12 +9,13 @@
 Python 3.11 or newer is required.
 
 ```bash
-pip install arancel-mx
+pip install arancel-mx==0.2.0
 arancel-mx --version
 arancel-mx doctor
 arancel-mx data download
 arancel-mx lookup 01012101
 arancel-mx ficha 01012101
+arancel-mx compare 01012101
 arancel-mx chapters
 arancel-mx search "refrigeradores"
 arancel-mx data verify
@@ -26,8 +27,8 @@ arancel-mx data verify
 
 The package version and dataset version are independent identifiers.
 
-- **package version**: the Python distribution and CLI implementation, reported by `arancel-mx --version`, for example `0.1.0`.
-- **dataset version**: an immutable public tariff-data release named `data-YYYY.MM.DD`, for example `data-2026.08.11`.
+- **package version**: the Python distribution and CLI implementation, reported by `arancel-mx --version`. PyPI currently publishes `0.2.0`. The checkout declares `0.2.1` and is not on PyPI until `pkg-v0.2.1`.
+- **dataset version**: an immutable public tariff-data release named `data-YYYY.MM.DD`. `/releases/latest` currently resolves to `data-2026.08.11`.
 
 Updating the Python package does not silently replace a pinned dataset version. Publishing a new dataset release does not require changing the package version.
 
@@ -154,6 +155,15 @@ Explicit CLI or API arguments take precedence over environment variables, which 
 | `ARANCEL_MX_DATASET` | Pin an exact `data-YYYY.MM.DD` release |
 | `ARANCEL_MX_OFFLINE` | Enable strict offline mode with `1`, `true`, `yes`, or `on` |
 | `ARANCEL_MX_TIMEOUT` | Set the positive HTTP timeout in seconds |
+
+Default cache root when `ARANCEL_MX_CACHE_DIR` is unset:
+
+- `XDG_CACHE_HOME/arancel-mx` when `XDG_CACHE_HOME` is set
+- macOS: `~/Library/Caches/arancel-mx`
+- Windows: `%LOCALAPPDATA%/arancel-mx/Cache`
+- otherwise: `~/.cache/arancel-mx`
+
+The consumer runtime does not use `platformdirs`.
 
 Invalid consumer configuration fails with an actionable public error instead of being treated as an integrity failure.
 

@@ -36,8 +36,11 @@ def test_package_release_doc_explains_lightweight_install_and_python_api() -> No
     assert 'pip install "arancel-mx[maintainer]"' in document
     assert "from arancel_mx import Dataset" in document
     assert "Dataset.latest()" in document
+    assert "Dataset.compare" in document
     assert "data-YYYY.MM.DD" in document
     assert "dataset is not embedded" in document.lower()
+    assert "XDG_CACHE_HOME" in document
+    assert "pkg-v0.2.1" in document
 
 
 def test_package_release_doc_keeps_code_and_data_release_channels_separate() -> None:

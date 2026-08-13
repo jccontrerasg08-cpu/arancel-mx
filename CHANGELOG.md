@@ -4,6 +4,10 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ## [Unreleased]
 
+### Changed
+
+- Live docs match in-tree `0.2.1` vs PyPI `0.2.0`: cache paths, `compare`, national notes, and the public source tree.
+- Documented `/releases/latest` as `data-2026.08.11` (six public assets), Diputados `law_reform` 2025-12-29 / `tariff_decree` 2026-04-23 from that manifest, and that the PyPI long description is frozen at the `0.2.0` upload.
 ### Fixed
 
 - `prepare_release_archive()` stages the source archive, `SHA256SUMS`, and latest pointer before replacing anything in the release directory, so a failed copy leaves the original checksums and no dangling `official-sources.tar.gz`. Cleanup still removes the staging directory if restoring checksums fails.
