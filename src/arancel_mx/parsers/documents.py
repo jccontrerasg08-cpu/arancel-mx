@@ -39,7 +39,7 @@ def parse_national_notes_html(html: str, source_document_id: str) -> list[dict]:
     text = re.sub(r"\n{2,}", "\n", text)
     rows: list[dict] = []
     chapter: str | None = None
-    for block in re.split(r"(?=Cap[ií]tulo\s+\d{1,2}\b)", text, flags=re.IGNORECASE):
+    for block in re.split(r"(?m)(?=^[ \t]*Cap[ií]tulo\s+\d{1,2}\b)", text, flags=re.IGNORECASE):
         heading = _CHAPTER_HEADING.search(block)
         if heading:
             chapter = heading.group(1).zfill(2)

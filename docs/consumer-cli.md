@@ -76,6 +76,9 @@ Use `--format json` for structured automation and `--format csv` for row-oriente
 ```bash
 arancel-mx lookup 01012101
 arancel-mx ficha 01012101
+arancel-mx compare 010121
+arancel-mx compare 01012101
+arancel-mx compare 0101210100
 arancel-mx chapters
 arancel-mx search "refrigeradores" --limit 20
 arancel-mx parent 01012101
@@ -90,6 +93,7 @@ arancel-mx provenance 01012101
 - `parent` returns the direct parent in the HS2 → HS4 → HS6 → MX8 → NICO10 hierarchy.
 - `children` returns direct children of a code.
 - `provenance` returns the recorded source traceability for the selected code.
+- `compare` diffs one HS6, MX8, or NICO code from the verified GitHub `data-*` dataset against the VUCEM classifier sheet (`buildHojas1/{mx8}.html`). HS6 has no VUCEM page, so children MX8/NICO are compared. VUCEM is informative, not legal identity. `--offline` skips the third-party fetch.
 
 The same normalization and query semantics are shared by the public Python consumer layer and CLI.
 

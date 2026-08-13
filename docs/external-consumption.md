@@ -20,7 +20,7 @@ fijar arancel-mx==0.2.0
 
 El software original se distribuye como `arancel-mx` (nombre en PyPI), se importa como `arancel_mx` y el comando de consola es `arancel-mx`. No existe la distribución `arancelmx`.
 
-Tipos públicos documentados: `Dataset`, `TariffRecord`, `Ficha`, `ProvenanceRecord`, `SearchResult`, `DatasetInfo` y `HsSection`, más las excepciones exportadas desde `arancel_mx`.
+Tipos públicos documentados: `Dataset`, `TariffRecord`, `Ficha`, `ProvenanceRecord`, `SearchResult`, `DatasetInfo`, `HsSection` y `CompareRow`, más las excepciones exportadas desde `arancel_mx`.
 
 ## Instalar y fijar versiones
 
@@ -82,6 +82,9 @@ CLI:
 ```bash
 arancel-mx lookup 01012101
 arancel-mx ficha 01012101
+arancel-mx compare 010121
+arancel-mx compare 01012101
+arancel-mx compare 0101210100
 arancel-mx chapters
 arancel-mx search "refrigeradores"
 arancel-mx parent 01012101
@@ -105,9 +108,10 @@ for chapter in db.chapters():
 parent = db.parent("01012101")
 children = db.children("01012101")
 hits = db.search("raza pura")
+rows = db.compare("01012101")  # Dataset.compare vs VUCEM; not legal identity
 ```
 
-Consultas públicas: `lookup`, `search`, `ficha`, `chapters`, `parent`, `children`, `provenance`.
+Consultas públicas: `lookup`, `search`, `ficha`, `chapters`, `parent`, `children`, `provenance`, `compare`.
 
 IGI/IGE se muestran con los literales oficiales `igi_text` / `ige_text` (por ejemplo `10` o `Ex.`). No reescribas esos literales a `"16%"` ni trates `igi_value` como IVA.
 

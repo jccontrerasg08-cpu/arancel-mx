@@ -37,6 +37,7 @@ def test_bilingual_readmes_show_install_and_consumer_first_commands() -> None:
         "arancel-mx data download",
         "arancel-mx lookup 01012101",
         "arancel-mx ficha 01012101",
+        "arancel-mx compare 01012101",
         "arancel-mx chapters",
         "arancel-mx data verify",
         "docs/consumer-cli.md",
@@ -64,6 +65,7 @@ def test_consumer_guide_documents_offline_formats_and_version_pinning() -> None:
         "arancel-mx search \"refrigeradores\"",
         "arancel-mx ficha",
         "arancel-mx chapters",
+        "arancel-mx compare",
     )
     assert [value for value in required if value not in guide] == []
 
@@ -105,6 +107,7 @@ def test_external_consumption_guide_locks_install_verify_query_and_public_surfac
         "Dataset.open",
         "release_verified",
         "Dataset.provenance",
+        "Dataset.compare",
         "lookup",
         "search",
         "ficha",
@@ -117,6 +120,7 @@ def test_external_consumption_guide_locks_install_verify_query_and_public_surfac
         "SearchResult",
         "DatasetInfo",
         "HsSection",
+        "CompareRow",
         "from arancel_mx import Dataset",
         "arancel_mx.duckdb",
         "arancel_mx.csv",

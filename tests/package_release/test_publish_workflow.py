@@ -130,7 +130,15 @@ def test_production_publish_requires_the_os_python_matrix(workflow: dict) -> Non
         str(step.get("uses", "")).startswith("actions/checkout@")
         for step in matrix_job["steps"]
     )
-    jobs = workflow["jobs"]
+    assert not any("arancel-mx doctor" in str(step.get("run", "")) for step in matrix_job["steps"])
+    assert all(
+        "${EXPECTED_VERSION}" not in str(step.get("run", ""))
+        for step in matrix_job["steps"]
+    )
+    assert any(
+        "os.environ['EXPECTED_VERSION']" in str(step.get("run", ""))
+        for step in matrix_job["steps"]
+    )
     build_steps = " ".join(
         str(step.get("run", "")) for step in jobs["build-once"]["steps"]
     )

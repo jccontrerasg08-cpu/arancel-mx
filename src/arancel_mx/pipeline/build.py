@@ -91,6 +91,7 @@ def _validate_inputs(
     classifications: Sequence[Mapping[str, object]],
     rates: Sequence[Mapping[str, object]],
     release: Mapping[str, object],
+    national_notes: Sequence[Mapping[str, object]] = (),
 ) -> tuple[dict[str, Mapping[str, object]], dict[str, object]]:
     for field in (
         "dataset_version",
@@ -121,7 +122,7 @@ def _validate_inputs(
             _required(document.get(field), f"source_document.{field}")
         by_id[source_id] = document
 
-    for row in [*classifications, *rates]:
+    for row in [*classifications, *rates, *national_notes]:
         source_id = str(_required(row.get("source_document_id"), "row.source_document_id"))
         if source_id not in by_id:
             raise ValueError(f"Unknown source document: {source_id}")
@@ -535,6 +536,7 @@ def materialize_arancel(
         classifications,
         rates,
         release,
+        national_notes,
     )
     records = consolidate_records(list(classifications), list(rates), release)
     rate_source_ids = {str(row["source_document_id"]) for row in rates}

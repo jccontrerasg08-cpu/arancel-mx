@@ -30,3 +30,15 @@ def test_parse_national_notes_html_rejects_empty_or_unnumbered_input():
         parse_national_notes_html("<p>Capítulo 01 sin notas.</p>", "doc-notes")
     with pytest.raises(ValueError, match="missing text"):
         parse_national_notes_html("<p>Capítulo 01</p><p>1. </p>", "doc-notes")
+
+
+def test_parse_national_notes_html_does_not_split_on_inline_chapter_references():
+    html = """
+    <h2>Capítulo 01</h2>
+    <p>1. Véase el Capítulo 02 para esta regla complementaria del mismo título.</p>
+    <h2>Capítulo 02</h2>
+    <p>1. Carne y despojos comestibles.</p>
+    """
+    rows = parse_national_notes_html(html, "doc-notes")
+    assert [(row["chapter"], row["note_number"]) for row in rows] == [("01", "1"), ("02", "1")]
+    assert "Capítulo 02" in rows[0]["text"]

@@ -195,6 +195,7 @@ arancel-mx doctor
 arancel-mx data download
 arancel-mx lookup 01012101
 arancel-mx ficha 01012101
+arancel-mx compare 01012101
 arancel-mx chapters
 arancel-mx search "refrigeradores"
 arancel-mx data verify
@@ -221,6 +222,7 @@ Pin an exact release with `--dataset data-YYYY.MM.DD`. See [`docs/consumer-cli.m
 | `data verify` | Revalidate local integrity and optionally the remote bundle |
 | `lookup` / `search` | Query by exact code or text |
 | `ficha` | Hierarchy card from chapter → fraction/NICO with UM, IGI, and IGE |
+| `compare` | Diff GitHub-dataset HS6 / MX8 / NICO against VUCEM (informative) |
 | `chapters` | List current HS2 chapters |
 | `parent` / `children` | Navigate HS2 → HS4 → HS6 → MX8 → NICO10 |
 | `provenance` | Show documentary traceability for a selected code |

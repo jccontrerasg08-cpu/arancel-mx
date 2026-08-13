@@ -87,6 +87,20 @@ class Ficha:
 
 
 @dataclass(frozen=True, slots=True)
+class CompareRow:
+    """One field compared between the GitHub/CLI dataset and a third-party page."""
+
+    code: str
+    level: str
+    field: str
+    dataset: str | None
+    other: str | None
+    other_source: str
+    match: bool | None
+    note: str = ""
+
+
+@dataclass(frozen=True, slots=True)
 class DatasetInfo:
     dataset_version: str | None
     schema_version: str | None

@@ -16,6 +16,7 @@ from arancel_mx.consumer.errors import (
     RecordNotFoundError,
 )
 from arancel_mx.consumer.models import (
+    CompareRow,
     DatasetInfo,
     Ficha,
     HsSection,
@@ -28,6 +29,7 @@ __version__ = _distribution_version("arancel-mx")
 
 __all__ = [
     "ArancelMXError",
+    "CompareRow",
     "Dataset",
     "DatasetDownloadError",
     "DatasetError",

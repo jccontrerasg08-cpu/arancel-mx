@@ -11,11 +11,11 @@ from typing import Literal, Mapping, Sequence
 
 import json
 
-from arancel_mx.consumer.models import Ficha, ProvenanceRecord, SearchResult, TariffRecord
+from arancel_mx.consumer.models import CompareRow, Ficha, ProvenanceRecord, SearchResult, TariffRecord
 from arancel_mx.consumer.query import format_code
 
 
-CsvSchema = Literal["tariff", "search", "provenance", "dataset", "ficha"]
+CsvSchema = Literal["tariff", "search", "provenance", "dataset", "ficha", "compare"]
 
 _TARIFF_FIELDS = (
     "code",
@@ -68,12 +68,23 @@ _FICHA_FIELDS = (
     "schema_version",
 )
 _DATASET_FIELDS = ("dataset", "scope")
+_COMPARE_FIELDS = (
+    "code",
+    "level",
+    "field",
+    "dataset",
+    "other",
+    "other_source",
+    "match",
+    "note",
+)
 _CSV_SCHEMA_FIELDS: dict[CsvSchema, tuple[str, ...]] = {
     "tariff": _TARIFF_FIELDS,
     "search": _SEARCH_FIELDS,
     "provenance": _PROVENANCE_FIELDS,
     "dataset": _DATASET_FIELDS,
     "ficha": _FICHA_FIELDS,
+    "compare": _COMPARE_FIELDS,
 }
 
 
@@ -172,6 +183,8 @@ def _csv_row(value: object) -> tuple[tuple[str, ...], dict[str, object]]:
         )
     if isinstance(value, Ficha):
         return _FICHA_FIELDS, {key: _plain(item) for key, item in _ficha_row(value).items()}
+    if isinstance(value, CompareRow):
+        return _COMPARE_FIELDS, {field: _plain(getattr(value, field)) for field in _COMPARE_FIELDS}
     if isinstance(value, TariffRecord):
         return _TARIFF_FIELDS, _tariff_row(value)
     if isinstance(value, ProvenanceRecord):

@@ -10,6 +10,7 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 - Package publish workflow blocks PyPI on an OS × Python matrix after TestPyPI: Ubuntu, Windows, and macOS × CPython 3.11, 3.12, and 3.13. The required PR `test` job stays single-cell Python 3.11 on Ubuntu.
 - National-notes HTML parser and materialize path for `arancel_mx_national_notes`. GIR, section/chapter notes, and reglas complementarias remain unpublished.
+- `arancel-mx compare` / `Dataset.compare` diffs HS6, MX8 (`fraccion8`), and NICO against VUCEM HTML sheets. The dataset column is the GitHub `data-*` release as read by the CLI. VUCEM is informative, not legal identity.
 
 ### Removed
 
