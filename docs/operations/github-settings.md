@@ -21,6 +21,7 @@ default GITHUB_TOKEN: contents read
 Official data pipeline / build-and-verify: contents read
 Official data pipeline / publish: contents write + attestations write + id-token write
 Official data pipeline / notify: contents read + issues write
+Published bundle canary / verify-published-bundle: contents read
 CI job test: contents read
 ```
 
@@ -28,7 +29,9 @@ Cada escritura vive dentro del job que la necesita; ningún workflow concede per
 
 ### Schedule del pipeline oficial
 
-GitHub deshabilita automáticamente los workflows programados de un repositorio público después de **60 días sin actividad** y notifica al mantenedor. Si el cron `17 11 * * *` deja de ejecutarse, revisa primero **Settings → Actions** y la pestaña **Actions** por el aviso de schedule deshabilitado antes de investigar el pipeline; reactivarlo es un paso manual.
+GitHub deshabilita automáticamente los workflows programados de un repositorio público después de **60 días sin actividad** y notifica al mantenedor. Si el cron `17 11 * * *` deja de ejecutarse, revisa primero **Settings → Actions** y la pestaña **Actions** por el aviso de schedule deshabilitado antes de investigar el pipeline; reactivarlo es un paso manual. El canario `published-bundle-canary.yml` tampoco reinicia ese reloj: hace falta un commit o un PR.
+
+On 2026-08-14 the `main-production` ruleset was **active** (required check `test`, strict up-to-date, conversation resolution, squash-only, linear history, block force-push/deletion). That API observation does **not** replace the UI checklist below. Release immutability and the default Actions token still need a maintainer click.
 
 ## 2. Release immutability
 

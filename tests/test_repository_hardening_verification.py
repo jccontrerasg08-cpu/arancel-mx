@@ -63,15 +63,26 @@ def test_workflows_contain_no_high_risk_shortcuts():
         assert _REMOTE_SHELL_PIPE.search(text) is None, name
 
 
-def test_official_python_jobs_share_the_reviewed_constraints_file():
+def test_no_workflow_installs_the_hs_classifier_or_an_openai_key():
+    for name, text in _workflow_texts().items():
+        assert "[hs]" not in text, name
+        assert "OPENAI_API_KEY" not in text, name
+        assert "dspy" not in text.lower(), name
     ci = (WORKFLOWS / "ci.yml").read_text(encoding="utf-8")
     production = (WORKFLOWS / "official-data-pipeline.yml").read_text(encoding="utf-8")
     development = 'python -m pip install -c requirements/production-build.txt -e ".[dev]"'
+
+    canary = (WORKFLOWS / "published-bundle-canary.yml").read_text(encoding="utf-8")
+    runtime = "python -m pip install -c requirements/production-build.txt -e ."
 
     assert development in ci
     assert "python -m pip install pip==26.2.1" in ci
     assert production.count("python -m pip install pip==26.2.1") == 3
     assert "python -m pip install --upgrade" not in production
+    assert runtime in canary
+    assert "python -m pip install pip==26.2.1" in canary
+    assert ".[dev]" not in canary
+    assert "[hs]" not in canary
 
 
 def test_only_the_read_only_build_job_installs_development_tooling():
@@ -115,9 +126,14 @@ def test_production_write_permissions_remain_job_scoped():
     production = (WORKFLOWS / "official-data-pipeline.yml").read_text(encoding="utf-8")
     ci = (WORKFLOWS / "ci.yml").read_text(encoding="utf-8")
 
+    canary = (WORKFLOWS / "published-bundle-canary.yml").read_text(encoding="utf-8")
+
     assert production.count("contents: write") == 1
     assert production.count("issues: write") == 1
     assert "pull-requests: write" not in production
     assert "contents: write" not in ci
     assert "issues: write" not in ci
     assert "pull-requests: write" not in ci
+    assert "contents: write" not in canary
+    assert "issues: write" not in canary
+    assert "pull-requests: write" not in canary

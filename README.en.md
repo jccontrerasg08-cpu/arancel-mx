@@ -312,6 +312,7 @@ The **Official data pipeline** workflow is defined in [`.github/workflows/offici
 - Build: global/read-only `contents: read` with offline tests before source access.
 - Publish: `contents: write` only when trusted `main` produced `built` and mutation is authorized.
 - Notify: `issues: write` only for the automation-alert lifecycle.
+- Canary: [`.github/workflows/published-bundle-canary.yml`](.github/workflows/published-bundle-canary.yml) (`47 12 * * *`) verifies the public six-asset contract; `contents: read`, no `[hs]`/`[dev]` extras.
 
 **Automatic publication** occurs only for a valid, changed, independently verified candidate. **Any failure blocks publication.** If the registered source identity is unchanged, `no_change` stops green and the publisher remains `skipped`.
 
