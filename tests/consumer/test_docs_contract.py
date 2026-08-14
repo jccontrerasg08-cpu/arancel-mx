@@ -165,6 +165,7 @@ def test_external_consumption_guide_locks_install_verify_query_and_public_surfac
         "--offline",
         "Apache-2.0",
         "NOTICE",
+        "TERMS.md",
         "docs/consumer-cli.md",
         "docs/data-model.md",
         "docs/release-process.md",

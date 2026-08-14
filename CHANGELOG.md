@@ -15,6 +15,7 @@ All notable changes to the Python package are documented here. Dataset releases 
 - Official `data-*` capture fetches SNICE national-notes HTML and materializes `arancel_mx_national_notes`. GIR, section/chapter notes, and reglas complementarias remain unpublished.
 - Documented GitHub review extensions as install-only, `sha256sum -c SHA256SUMS` copy-paste, and `linguist-generated` for `.xls` fixtures.
 - `docs/external-consumption.md` uses `arancel-mx data verify --bundle` after `data download`; `sha256sum -c SHA256SUMS` is for a full GitHub Release directory.
+- English section in `TERMS.md`, GitHub issue form `.github/ISSUE_TEMPLATE/open_source_release.yml`, and a tighter tracked-text PII/secret scan.
 
 ### Changed
 
@@ -40,6 +41,7 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Added
 
+- `TERMS.md` and `opensource-checklist.md` for the Apache-2.0 public-release walkthrough.
 - Package publish workflow blocks PyPI on an OS × Python matrix after TestPyPI: Ubuntu, Windows, and macOS × CPython 3.11, 3.12, and 3.13. The required PR `test` job stays single-cell Python 3.11 on Ubuntu.
 - National-notes HTML parser and materialize path for `arancel_mx_national_notes`. GIR, section/chapter notes, and reglas complementarias remain unpublished.
 - `arancel-mx compare` / `Dataset.compare` diffs HS6, MX8 (`fraccion8`), and NICO against VUCEM HTML sheets. The dataset column is the GitHub `data-*` release as read by the CLI. VUCEM is informative, not legal identity.
