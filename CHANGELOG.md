@@ -7,6 +7,7 @@ All notable changes to the Python package are documented here. Dataset releases 
 ### Added
 
 - Vendored [`talmago/nomenclator`](https://github.com/talmago/nomenclator) (`src/nomenclator`, MIT) as optional extra `[hs]`: WCO HS 2022 English classifier (GIR + chapter notes) producing 6-digit suggestions. Commands: `arancel-mx nomenclator "…"` and console script `nomenclator`. Not Mexican legal identity; look up HS6 with `arancel-mx compare`.
+- Official `data-*` capture fetches SNICE national-notes HTML and materializes `arancel_mx_national_notes`. GIR, section/chapter notes, and reglas complementarias remain unpublished.
 - Documented GitHub review extensions as install-only, `sha256sum -c SHA256SUMS` copy-paste, and `linguist-generated` for `.xls` fixtures.
 - `docs/external-consumption.md` uses `arancel-mx data verify --bundle` after `data download`; `sha256sum -c SHA256SUMS` is for a full GitHub Release directory.
 
@@ -17,6 +18,7 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Removed
 
+- Dropped test-only `reportlab` and `PyYAML` from the `dev` extra; parser tests use committed PDF fixtures and workflow contracts read YAML as text.
 - Unused staging promotion path, warehouse-only DDL, SNICE HTML crawler, SIICEX↔VUCEM adapter types, parse-reuse helper, demo-generation workflow, and `current_resolver_probe`.
 
 ### Fixed

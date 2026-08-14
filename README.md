@@ -439,7 +439,7 @@ Ver [`SECURITY.md`](SECURITY.md), [`CONTRIBUTING.md`](CONTRIBUTING.md) y [`docs/
 | API de búsqueda estable | Disponible |
 | Ficha TIGIE (`ficha` / `chapters`) | Disponible |
 | Compare HS6 / MX8 / NICO vs VUCEM | Disponible (informativo, no identidad legal) |
-| Notas nacionales LIGIE | Parser y vista `arancel_mx_national_notes`; el snapshot actual puede dejarla vacía |
+| Notas nacionales LIGIE | Parser, captura oficial y vista `arancel_mx_national_notes`; `data-2026.08.11` puede seguir vacía hasta la siguiente `data-*` |
 | Publicación en PyPI | Publicado: `arancel-mx==0.2.0` (`0.2.1` in-tree, no en PyPI hasta `pkg-v0.2.1`) |
 
 ## Contribución
