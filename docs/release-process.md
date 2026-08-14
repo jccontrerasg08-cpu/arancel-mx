@@ -144,3 +144,5 @@ Los binarios, bases DuckDB, snapshots oficiales y bundles de release no se escri
 ## Compatibilidad del entrypoint
 
 `scripts/build_official_dataset.py` permanece como entrypoint público de construcción. La automatización de producción vive únicamente en `.github/workflows/official-data-pipeline.yml`, por lo que no hay dos schedules de dataset ejecutándose en paralelo.
+
+El canario [`.github/workflows/published-bundle-canary.yml`](../.github/workflows/published-bundle-canary.yml) (`47 12 * * *`) instala el paquete runtime (`-e .`, sin extras) y corre `arancel-mx data download` más `arancel-mx data verify --bundle` contra la última release pública. No captura fuentes, no publica, y no es un segundo pipeline de dataset.

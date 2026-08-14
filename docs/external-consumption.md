@@ -158,9 +158,10 @@ No hay un séptimo asset `source_trace.json`. Una aplicación que necesite un ob
 - Postgres hospedado
 - SIICEX-CAAAREM o HTML de VUCEM como identidad legal
 - cola humana para promover capturas incompletas
-- GIR, notas de sección/capítulo/subpartida o reglas complementarias (incluida la 10ª)
+- GIR, notas de sección/capítulo/subpartida o reglas complementarias (incluida la 10ª), y sugerencias HS6 WCO
+- RGCE Anexos 1–30, instructivos de pedimento y dumps TIGIE no oficiales (`tigieX`). El cruce es `fraccion8`/`nico10`; Anexo 9 no sustituye `igi_text`
 
-Las notas nacionales LIGIE tienen tablas (`national_note*`, vista `arancel_mx_national_notes`) y un parser HTML. El snapshot oficial actual sigue sin exigir esa fuente; una release `data-*` posterior puede llenar la vista. Hasta entonces la vista puede estar vacía. No se inventan instrumentos legales.
+Las notas nacionales LIGIE tienen tablas (`national_note*`, vista `arancel_mx_national_notes`) y un parser HTML. El pipeline oficial ya captura esa fuente. La release publicada `data-2026.08.11` puede seguir dejando la vista vacía hasta la siguiente `data-*`. No se inventan instrumentos legales.
 
 Una discrepancia, parser dudoso o gate fallido bloquea la publicación. No hay “publicar de todos modos”.
 

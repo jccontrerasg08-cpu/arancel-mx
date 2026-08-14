@@ -1,9 +1,28 @@
+from importlib.resources import files
+
 import pytest
 
 from arancel_mx.sources.registry import (
     classify_candidate,
     load_source_registry,
     registered_direct_document,
+)
+
+OFFICIAL_HOSTS = {
+    "www.diputados.gob.mx",
+    "diputados.gob.mx",
+    "www.snice.gob.mx",
+    "snice.gob.mx",
+    "www.dof.gob.mx",
+    "dof.gob.mx",
+}
+FORBIDDEN_REGISTRY_FRAGMENTS = (
+    "sat.gob.mx",
+    "wcoomd.org",
+    "siicex",
+    "openai",
+    "caaarem",
+    "tigiex",
 )
 
 
@@ -72,3 +91,12 @@ def test_registry_excludes_unofficial_compiled_tigie_hosts() -> None:
     }
     assert "siicex-caaarem.org.mx" not in hosts
     assert "www.siicex-caaarem.org.mx" not in hosts
+    assert hosts <= OFFICIAL_HOSTS
+
+
+def test_registry_json_excludes_sat_wco_and_unofficial_tigie_hosts() -> None:
+    text = files("arancel_mx.sources").joinpath("source_registry.json").read_text(
+        encoding="utf-8"
+    ).lower()
+    present = [fragment for fragment in FORBIDDEN_REGISTRY_FRAGMENTS if fragment in text]
+    assert present == []

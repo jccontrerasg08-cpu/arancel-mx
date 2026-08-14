@@ -312,6 +312,7 @@ The **Official data pipeline** workflow is defined in [`.github/workflows/offici
 - Build: global/read-only `contents: read` with offline tests before source access.
 - Publish: `contents: write` only when trusted `main` produced `built` and mutation is authorized.
 - Notify: `issues: write` only for the automation-alert lifecycle.
+- Canary: [`.github/workflows/published-bundle-canary.yml`](.github/workflows/published-bundle-canary.yml) (`47 12 * * *`) verifies the public six-asset contract; `contents: read`, no `[hs]`/`[dev]` extras.
 
 **Automatic publication** occurs only for a valid, changed, independently verified candidate. **Any failure blocks publication.** If the registered source identity is unchanged, `no_change` stops green and the publisher remains `skipped`.
 
@@ -441,7 +442,7 @@ See [`SECURITY.md`](SECURITY.md), [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CODE_O
 | Stable public search API | Available |
 | TIGIE card (`ficha` / `chapters`) | Available |
 | Compare HS6 / MX8 / NICO vs VUCEM | Available (informative, not legal identity) |
-| LIGIE national notes | Parser and `arancel_mx_national_notes` view; the current snapshot may leave it empty |
+| LIGIE national notes | Parser, official capture, and `arancel_mx_national_notes`; `data-2026.08.11` may stay empty until the next `data-*` |
 | PyPI publication | Published: `arancel-mx==0.2.0` (`0.2.1` in-tree, not on PyPI until `pkg-v0.2.1`) |
 
 ## Contributing

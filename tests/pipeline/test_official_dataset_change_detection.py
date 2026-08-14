@@ -71,6 +71,11 @@ def captured_source(dataset_key, document_role=None):
         document_role=role,
         capture=SimpleNamespace(path=Path(f"/{dataset_key}.fixture")),
         source_document={"source_document_id": f"source-{dataset_key}-{role}"},
+        fetched=SimpleNamespace(
+            media_type="text/html",
+            content=b"<h2>Capitulo 01</h2><p>1. Nota nacional.</p>",
+            charset="utf-8",
+        ),
     )
 
 
@@ -82,6 +87,7 @@ def snapshot(current_identities):
             captured_source("nico"),
             captured_source("diputados_ligie", "legal_ledger"),
             captured_source("diputados_ligie", "consolidated_text"),
+            captured_source("national_notes", "national_notes"),
         ),
     )
 
@@ -156,6 +162,7 @@ def test_changed_source_identity_proceeds_into_full_build(tmp_path, monkeypatch)
     build_config = config(tmp_path, "changed")
     current = identities()
     previous = list(current)
+    notes_parsed = False
     previous[0] = identity(
         "ligie",
         "ligie_snapshot",
@@ -168,9 +175,18 @@ def test_changed_source_identity_proceeds_into_full_build(tmp_path, monkeypatch)
         lambda config, session=None: snapshot(current),
     )
 
+    def parse_notes(html, source_document_id):
+        nonlocal notes_parsed
+        assert html == "<h2>Capitulo 01</h2><p>1. Nota nacional.</p>"
+        assert source_document_id == "source-national_notes-national_notes"
+        notes_parsed = True
+        return []
+
     def parser_reached(*_args, **_kwargs):
+        assert notes_parsed, "national notes must be parsed before workbook probing"
         raise RuntimeError("full build reached")
 
+    monkeypatch.setattr(official_dataset, "parse_national_notes_html", parse_notes)
     monkeypatch.setattr(official_dataset, "probe_workbook", parser_reached)
 
     with pytest.raises(RuntimeError, match="full build reached"):

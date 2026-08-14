@@ -307,6 +307,7 @@ El workflow **Official data pipeline** está definido en [`.github/workflows/off
 - Build: `contents: read` y tests offline antes de tocar la red.
 - Publish: `contents: write` sólo si `main` produjo `built` y la ejecución está autorizada para mutar.
 - Notify: `issues: write` únicamente para el lifecycle de alertas.
+- Canario: [`.github/workflows/published-bundle-canary.yml`](.github/workflows/published-bundle-canary.yml) (`47 12 * * *`) verifica el contrato público de seis assets; `contents: read`, sin extras `[hs]`/`[dev]`.
 
 La **publicación automática** ocurre sólo para un cambio válido y verificado. **Cualquier falla bloquea la publicación**. Si no hubo cambios, `no_change` termina en verde y el publisher queda `skipped`.
 
@@ -436,7 +437,7 @@ Ver [`SECURITY.md`](SECURITY.md), [`CONTRIBUTING.md`](CONTRIBUTING.md) y [`docs/
 | API de búsqueda estable | Disponible |
 | Ficha TIGIE (`ficha` / `chapters`) | Disponible |
 | Compare HS6 / MX8 / NICO vs VUCEM | Disponible (informativo, no identidad legal) |
-| Notas nacionales LIGIE | Parser y vista `arancel_mx_national_notes`; el snapshot actual puede dejarla vacía |
+| Notas nacionales LIGIE | Parser, captura oficial y vista `arancel_mx_national_notes`; `data-2026.08.11` puede seguir vacía hasta la siguiente `data-*` |
 | Publicación en PyPI | Publicado: `arancel-mx==0.2.0` (`0.2.1` in-tree, no en PyPI hasta `pkg-v0.2.1`) |
 
 ## Contribución

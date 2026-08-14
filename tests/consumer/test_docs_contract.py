@@ -189,6 +189,9 @@ def test_external_consumption_out_of_scope_says_iva_nom_and_tmec_are_not_publish
         "Postgres",
         "SIICEX",
         "VUCEM",
+        "RGCE",
+        "tigieX",
+        "fraccion8",
     ):
         assert term in section
     lowered = section.lower()

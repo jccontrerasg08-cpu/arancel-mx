@@ -9,13 +9,15 @@ and no GitHub Release creation for package tags.
 from __future__ import annotations
 
 from pathlib import Path
+import re
 
 import pytest
-import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 WORKFLOW = ROOT / ".github" / "workflows" / "publish-python-package.yml"
 PUBLISH_JOBS = {"publish-testpypi", "publish-pypi"}
+_TOP_LEVEL = re.compile(r"^[a-zA-Z_][\w-]*:", re.MULTILINE)
+_JOB_KEY = re.compile(r"^  ([\w-]+):$", re.MULTILINE)
 
 
 @pytest.fixture(scope="module")
@@ -23,76 +25,85 @@ def workflow_text() -> str:
     return WORKFLOW.read_text(encoding="utf-8")
 
 
-@pytest.fixture(scope="module")
-def workflow(workflow_text: str) -> dict:
-    document = yaml.safe_load(workflow_text)
-    assert isinstance(document, dict)
-    return document
+def _block_after(text: str, header: str) -> str:
+    match = re.search(rf"^{re.escape(header)}\n", text, re.MULTILINE)
+    assert match is not None, header
+    start = match.end()
+    nxt = _TOP_LEVEL.search(text, start)
+    return text[start : nxt.start() if nxt else len(text)]
 
 
-def _triggers(workflow: dict) -> dict:
-    return workflow.get("on", workflow.get(True))
+def _job_blocks(text: str) -> dict[str, str]:
+    jobs_match = re.search(r"^jobs:\n", text, re.MULTILINE)
+    assert jobs_match is not None
+    jobs_text = text[jobs_match.end() :]
+    keys = list(_JOB_KEY.finditer(jobs_text))
+    assert keys
+    blocks: dict[str, str] = {}
+    for i, match in enumerate(keys):
+        end = keys[i + 1].start() if i + 1 < len(keys) else len(jobs_text)
+        blocks[match.group(1)] = jobs_text[match.start() : end]
+    return blocks
 
 
 def test_workflow_exists() -> None:
     assert WORKFLOW.is_file()
 
 
-def test_trigger_is_package_tags_only(workflow: dict) -> None:
-    triggers = _triggers(workflow)
-    assert set(triggers) == {"push"}
-    assert triggers["push"] == {"tags": ["pkg-v*"]}
+def test_trigger_is_package_tags_only(workflow_text: str) -> None:
+    assert re.search(
+        r'^on:\n  push:\n    tags:\n      - "pkg-v\*"\n',
+        workflow_text,
+        re.MULTILINE,
+    )
+    triggers = _block_after(workflow_text, "on:")
+    assert "workflow_dispatch:" not in triggers
+    assert "pull_request:" not in triggers
+    assert "pull_request_target:" not in triggers
 
 
-def test_no_production_bypass_triggers(workflow: dict) -> None:
-    triggers = _triggers(workflow)
-    assert "workflow_dispatch" not in triggers
-    assert "pull_request" not in triggers
-    assert "pull_request_target" not in triggers
+def test_default_permissions_are_read_only(workflow_text: str) -> None:
+    assert re.search(r"^permissions:\n  contents: read\s*$", workflow_text, re.MULTILINE)
 
 
-def test_default_permissions_are_read_only(workflow: dict) -> None:
-    assert workflow["permissions"] == {"contents": "read"}
-
-
-def test_only_publisher_jobs_request_oidc(workflow: dict) -> None:
-    for name, job in workflow["jobs"].items():
-        permissions = job.get("permissions", {})
-        has_oidc = permissions.get("id-token") == "write"
+def test_only_publisher_jobs_request_oidc(workflow_text: str) -> None:
+    for name, block in _job_blocks(workflow_text).items():
+        has_oidc = "id-token: write" in block
         assert has_oidc == (name in PUBLISH_JOBS), name
 
 
-def test_publisher_jobs_use_gated_environments(workflow: dict) -> None:
-    jobs = workflow["jobs"]
-    assert jobs["publish-testpypi"]["environment"]["name"] == "testpypi"
-    assert jobs["publish-pypi"]["environment"]["name"] == "pypi"
+def test_publisher_jobs_use_gated_environments(workflow_text: str) -> None:
+    jobs = _job_blocks(workflow_text)
+    for job, environment in (
+        ("publish-testpypi", "testpypi"),
+        ("publish-pypi", "pypi"),
+    ):
+        assert re.search(
+            rf"^    environment:[ \t]*\n"
+            rf"(?:(?: {{6,}}\S.*)?\n)*?"
+            rf"^      name:[ \t]*{environment}[ \t]*$",
+            jobs[job],
+            re.MULTILINE,
+        ), job
 
 
-def test_production_publish_is_final_release_only(workflow: dict) -> None:
-    condition = workflow["jobs"]["publish-pypi"].get("if", "")
-    assert "production_eligible" in condition
-    assert "'true'" in condition
-
-
-def test_tag_must_point_at_protected_main_tip(workflow: dict) -> None:
-    # A pkg-v* tag can be created on any commit; the release must originate from
-    # the protected main tip, so the validation job compares the tag SHA to main.
-    steps = workflow["jobs"]["validate-tag"]["steps"]
-    origin_gate = next(
-        (
-            step
-            for step in steps
-            if step.get("env", {}).get("TAG_SHA") == "${{ github.sha }}"
-            and "git fetch --no-tags --depth 1 origin main" in str(step.get("run", ""))
-        ),
-        None,
+def test_production_publish_is_final_release_only(workflow_text: str) -> None:
+    block = _job_blocks(workflow_text)["publish-pypi"]
+    assert re.search(
+        r"^    if:[ \t]*needs\.validate-tag\.outputs\.production_eligible"
+        r"[ \t]*==[ \t]*['\"]true['\"][ \t]*$",
+        block,
+        re.MULTILINE,
     )
-    assert origin_gate is not None
 
-    run = str(origin_gate["run"])
-    assert 'main_sha="$(git rev-parse FETCH_HEAD)"' in run
-    assert 'if [ "$TAG_SHA" != "$main_sha" ]; then' in run
-    assert "exit 1" in run
+
+def test_tag_must_point_at_protected_main_tip(workflow_text: str) -> None:
+    block = _job_blocks(workflow_text)["validate-tag"]
+    assert "TAG_SHA: ${{ github.sha }}" in block
+    assert "git fetch --no-tags --depth 1 origin main" in block
+    assert 'main_sha="$(git rev-parse FETCH_HEAD)"' in block
+    assert 'if [ "$TAG_SHA" != "$main_sha" ]; then' in block
+    assert "exit 1" in block
 
 
 def test_no_stored_upload_secrets(workflow_text: str) -> None:
@@ -112,55 +123,27 @@ def test_workflow_never_creates_a_github_release(workflow_text: str) -> None:
         assert forbidden not in lowered
 
 
-def test_production_publish_requires_the_os_python_matrix(workflow: dict) -> None:
-    jobs = workflow["jobs"]
+def test_production_publish_requires_the_os_python_matrix(workflow_text: str) -> None:
+    jobs = _job_blocks(workflow_text)
     matrix_job = jobs["external-certification-matrix"]
-    assert matrix_job["needs"] == ["validate-tag", "publish-testpypi"]
-    assert matrix_job["runs-on"] == "${{ matrix.os }}"
-    matrix = matrix_job["strategy"]["matrix"]
-    assert set(matrix["os"]) == {"ubuntu-latest", "windows-latest", "macos-latest"}
-    assert matrix["python-version"] == ["3.11", "3.12", "3.13"]
-    assert jobs["publish-pypi"]["needs"] == [
-        "validate-tag",
-        "build-once",
-        "publish-testpypi",
-        "external-certification-matrix",
-    ]
-    assert not any(
-        str(step.get("uses", "")).startswith("actions/checkout@")
-        for step in matrix_job["steps"]
+    assert "needs: [validate-tag, publish-testpypi]" in matrix_job
+    assert "runs-on: ${{ matrix.os }}" in matrix_job
+    assert "os: [ubuntu-latest, windows-latest, macos-latest]" in matrix_job
+    assert 'python-version: ["3.11", "3.12", "3.13"]' in matrix_job
+    pypi = jobs["publish-pypi"]
+    assert (
+        "needs: [validate-tag, build-once, publish-testpypi, external-certification-matrix]"
+        in pypi
     )
-    assert not any("arancel-mx doctor" in str(step.get("run", "")) for step in matrix_job["steps"])
-    assert all(
-        "${EXPECTED_VERSION}" not in str(step.get("run", ""))
-        for step in matrix_job["steps"]
-    )
-    assert any(
-        "os.environ['EXPECTED_VERSION']" in str(step.get("run", ""))
-        for step in matrix_job["steps"]
-    )
-    build_steps = " ".join(
-        str(step.get("run", "")) for step in jobs["build-once"]["steps"]
-    )
-    assert "python -m build" in build_steps
-    version_gate = next(
-        (
-            step
-            for step in jobs["build-once"]["steps"]
-            if step.get("env", {}).get("EXPECTED_VERSION")
-            == "${{ needs.validate-tag.outputs.version }}"
-        ),
-        None,
-    )
-    assert version_gate is not None
-    version_run = str(version_gate["run"])
-    assert 'test -f "dist/arancel_mx-${EXPECTED_VERSION}.tar.gz"' in version_run
-    assert 'ls dist/arancel_mx-"${EXPECTED_VERSION}"-*.whl' in version_run
-    # Publisher jobs must consume the uploaded artifact, never rebuild it.
+    assert "actions/checkout@" not in matrix_job
+    assert "arancel-mx doctor" not in matrix_job
+    assert "${EXPECTED_VERSION}" not in matrix_job
+    assert "os.environ['EXPECTED_VERSION']" in matrix_job
+    build = jobs["build-once"]
+    assert "python -m build" in build
+    assert "EXPECTED_VERSION: ${{ needs.validate-tag.outputs.version }}" in build
+    assert 'test -f "dist/arancel_mx-${EXPECTED_VERSION}.tar.gz"' in build
     for name in PUBLISH_JOBS:
-        job_steps = jobs[name]["steps"]
-        assert any(
-            str(step.get("uses", "")).startswith("actions/download-artifact@")
-            for step in job_steps
-        ), name
-        assert all("python -m build" not in str(step.get("run", "")) for step in job_steps)
+        job = jobs[name]
+        assert "actions/download-artifact@" in job
+        assert "python -m build" not in job

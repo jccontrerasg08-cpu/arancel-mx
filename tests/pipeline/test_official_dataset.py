@@ -9,9 +9,6 @@ from pathlib import Path
 import duckdb
 from openpyxl import Workbook
 import pytest
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Spacer, Table, TableStyle
 
 from arancel_mx.pipeline import official_sources
 from arancel_mx.pipeline.official_dataset import (
@@ -32,6 +29,10 @@ LIGIE_INDEX = "https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html"
 NICO_INDEX = "https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html"
 LIGIE_URL = "https://www.snice.gob.mx/files/FRACCIONESARANCELARIAS_20260810.XLSX"
 NICO_URL = "https://www.snice.gob.mx/files/NICO-AGOSTO26-LIGIE_20260810-20260810.XLSX"
+NOTES_URL = "https://www.snice.gob.mx/cs/avi/snice/ligie.notasnac22.html"
+NOTES_HTML = (
+    Path(__file__).parents[1] / "fixtures" / "snice" / "ligie.notasnac22.html"
+).read_text(encoding="utf-8")
 XLSX_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 
@@ -88,24 +89,9 @@ def ligie_workbook_bytes(*, include_rates=True):
     return stream.getvalue()
 
 
-def hierarchy_pdf_bytes():
-    stream = BytesIO()
-    story = [
-        Table([["Capítulo 01"], ["Animales vivos"]]),
-        Spacer(1, 10),
-        Table(
-            [
-                ["CÓDIGO", "", "DESCRIPCIÓN", "UNIDAD", "IMP.", "EXP."],
-                ["01.01", "", "Caballos, asnos, mulos y burdéganos, vivos.", "", "", ""],
-                ["0101.21", "--", "Reproductores de raza pura.", "", "", ""],
-                ["0101.21.01", "", "Reproductores de raza pura.", "Cbza", "10", "Ex."],
-            ],
-            colWidths=[70, 20, 280, 50, 40, 40],
-            style=TableStyle([("GRID", (0, 0), (-1, -1), 0.5, colors.black)]),
-        ),
-    ]
-    SimpleDocTemplate(stream, pagesize=letter).build(story)
-    return stream.getvalue()
+PDF_HIERARCHY = (
+    Path(__file__).parents[1] / "fixtures" / "pdf" / "ligie_hierarchy.pdf"
+)
 
 
 @lru_cache(maxsize=1)
@@ -117,7 +103,7 @@ def fixture_bytes():
             ["01012101", "00", "Reproductores de raza pura."],
         ]
     )
-    return ligie_bytes, nico_bytes, hierarchy_pdf_bytes()
+    return ligie_bytes, nico_bytes, PDF_HIERARCHY.read_bytes()
 
 
 class Response:
@@ -182,6 +168,9 @@ def fake_session():
         ),
         LIGIE_URL: Response(LIGIE_URL, ligie_bytes, XLSX_TYPE),
         NICO_URL: Response(NICO_URL, nico_bytes, XLSX_TYPE),
+        NOTES_URL: Response(
+            NOTES_URL, NOTES_HTML.encode("utf-8"), "text/html; charset=utf-8", NOTES_HTML
+        ),
     }
     return FakeSession(responses)
 
@@ -212,7 +201,7 @@ def test_offline_build_produces_verified_release(tmp_path):
 
     assert summary["validation_status"] == "passed"
     assert summary["row_count"] == 5
-    assert summary["source_count"] == 6
+    assert summary["source_count"] == 7
     assert sorted(path.name for path in build_config.output_dir.iterdir()) == [
         "SHA256SUMS",
         "arancel_mx.csv",
@@ -230,6 +219,7 @@ def test_offline_build_produces_verified_release(tmp_path):
         NICO_INDEX,
         LIGIE_URL,
         NICO_URL,
+        NOTES_URL,
     }
 
     with duckdb.connect(
@@ -248,6 +238,16 @@ def test_offline_build_produces_verified_release(tmp_path):
             WHERE level = 'fraccion8' AND code = '01012101'
             """
         ).fetchone()
+        notes_count = connection.execute(
+            "SELECT COUNT(*) FROM arancel_mx_national_notes"
+        ).fetchone()[0]
+        assert notes_count > 0
+        chapter_notes = connection.execute(
+            "SELECT chapter, note_number, text FROM arancel_mx_national_notes "
+            "ORDER BY chapter, note_number"
+        ).fetchall()
+        assert chapter_notes[0][0] == "01"
+        assert chapter_notes[0][1] == "1"
     assert levels == {"fraccion8": 1, "hs2": 1, "hs4": 1, "hs6": 1, "nico10": 1}
     assert fraction_rate == (
         "Cbza",
@@ -263,7 +263,7 @@ def test_offline_build_produces_verified_release(tmp_path):
         (build_config.output_dir / "manifest.json").read_text(encoding="utf-8")
     )
     assert manifest["validation_status"] == "passed"
-    assert len(manifest["source_documents"]) == 6
+    assert len(manifest["source_documents"]) == 7
     assert {
         (
             identity["dataset_key"],
@@ -277,6 +277,7 @@ def test_offline_build_produces_verified_release(tmp_path):
         ("diputados_ligie", "consolidated_text"),
         ("dof_law_reform", "law_reform"),
         ("dof_tariff_decree", "tariff_decree"),
+        ("national_notes", "national_notes"),
     }
     for source in manifest["source_documents"]:
         assert source["source_url"].startswith("https://")
@@ -428,7 +429,7 @@ def test_schema_v2_manifest_replay_returns_no_change_without_candidate(tmp_path)
         "schema_version": "2",
         "row_count": 5,
         "validation_status": "passed",
-        "source_count": 6,
+        "source_count": 7,
         "output_dir": None,
     }
     assert not second.output_dir.exists()
