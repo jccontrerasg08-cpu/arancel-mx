@@ -366,8 +366,7 @@ These images are documentary context, not a live technical status indicator for 
 │   ├── ci.yml
 │   ├── official-data-pipeline.yml
 │   ├── publish-python-package.yml
-│   ├── production-certification.yml
-│   └── generate-demo.yml
+│   └── production-certification.yml
 └── dependabot.yml
 requirements/
 └── production-build.txt
@@ -421,7 +420,6 @@ GitHub write permissions are certified separately through the manual **Productio
 - Dependabot opens weekly PRs for Python and GitHub Actions updates.
 - Production permissions are job-scoped instead of using `write-all`.
 - Releases use the repository `GITHUB_TOKEN`, not a PAT.
-- Demo-generation automation opens a PR rather than pushing generated assets directly to `main`.
 - Write-boundary certification uses `certification-*` and `[CERTIFICATION ALERT]`, isolated from production namespaces.
 
 The production repository-settings runbook is [`docs/operations/github-settings.md`](docs/operations/github-settings.md). It defines release immutability, the `main` ruleset, required check `test`, Actions permissions, merge settings, and Advanced Security settings that maintainers must verify in the GitHub UI.

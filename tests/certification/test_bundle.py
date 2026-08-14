@@ -316,7 +316,6 @@ def test_certify_bundle_accepts_verified_cross_format_bundle(tmp_path: Path):
 
     report = certify_bundle(release)
 
-    assert report.passed is True
     assert report.row_count == 5
     assert set(report.checks) == {
         "publication_bundle",

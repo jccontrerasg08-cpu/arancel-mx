@@ -12,7 +12,7 @@ UI path: **Settings → Actions → General**.
 2. Select **Read repository contents and packages permissions** as the default workflow permission.
 3. Do not switch the repository default to broad read/write permissions. The production workflow grants writes only to the jobs that need them.
 4. **Allow GitHub Actions to create and approve pull requests** may remain enabled so maintenance automation can open PRs.
-5. Verify that no project workflow self-approves code or data PRs. The demo workflow may create a PR, but review/merge remains subject to the normal `main` policy.
+5. Verify that no project workflow self-approves code or data PRs. Review/merge remains subject to the normal `main` policy.
 
 Expected repository boundary:
 
@@ -21,7 +21,6 @@ default GITHUB_TOKEN: contents read
 Official data pipeline / build-and-verify: contents read
 Official data pipeline / publish: contents write + attestations write + id-token write
 Official data pipeline / notify: contents read + issues write
-generate-demo / generate: contents write + pull-requests write
 CI job test: contents read
 ```
 
