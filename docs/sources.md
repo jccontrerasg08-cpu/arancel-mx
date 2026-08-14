@@ -34,6 +34,8 @@ El pipeline **no** captura ni publica SIICEX-CAAAREM, dumps de entrenamiento com
 
 - `http://www.siicex-caaarem.org.mx/` is not an official source. Es un visor compilado de la confederación de agentes aduanales (HTTP, Lotus Notes). Puede mostrar IGI/IGE, permisos, TLC y PROSEC, pero no es Diputados, DOF ni SNICE, y el fetch oficial exige HTTPS sobre hosts registrados.
 - `tigies-mx` es un dump estático para entrenar modelos (capítulos, TIGIE plana, correlación SCIAN). No tiene procedencia SHA256 ni reconciliación legal.
+- Dumps como `tigieX.json` / `arcosNuevos.txt` son el mismo tipo: árboles de 8 dígitos sin IGI/NICO ni SHA256. No son fallback cuando SNICE falla.
+- Los Anexos RGCE 1–30 y los instructivos de pedimento (SAT) no entran al registro. Un consumidor puede cruzar `fraccion8`/`nico10` con esas listas; Anexo 9 (exención IGI) no sustituye el `igi_text` de LIGIE.
 
 La ficha pública de `arancel-mx` (`arancel-mx ficha` / `Dataset.ficha`) reproduce la navegación capítulo → partida → subpartida → fracción → NICO y las tasas IGI/IGE **sólo** desde el dataset oficial verificado. No inventa IVA, franja/región, permisos, TLC, PROSEC ni correlaciones SCIAN que esas compilaciones muestran y que este registro no captura.
 

@@ -62,11 +62,35 @@ def test_official_python_toolchain_is_exactly_pinned():
     assert constrained["setuptools"] == "83.0.0"
 
 
+def test_classifier_stack_is_not_pinned_into_the_official_build():
+    extras = tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))["project"][
+        "optional-dependencies"
+    ]
+    pins = CONSTRAINTS.read_text(encoding="utf-8").lower()
+    dev = " ".join(extras["dev"]).lower()
+    hs_names = {
+        _normalized(re.split(r"[<>=!~;\s\[]", spec, maxsplit=1)[0])
+        for spec in extras.get("hs", [])
+    }
+
+    assert "dspy" not in pins
+    assert "bm25s" not in pins
+    assert "model2vec" not in pins
+    assert "vicinity" not in pins
+    assert "dspy-ai" not in dev
+    assert hs_names.isdisjoint(
+        {_normalized(re.split(r"[<>=!~;\s\[]", spec, maxsplit=1)[0]) for spec in extras["dev"]}
+    )
+
+
 def test_ci_uses_exact_pip_and_constraints_file():
     workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
 
     assert "python -m pip install pip==26.2.1" in workflow
     assert 'python -m pip install -c requirements/production-build.txt -e ".[dev]"' in workflow
+    assert "[hs]" not in workflow
+    assert "OPENAI_API_KEY" not in workflow
+    assert "dspy" not in workflow
     assert "python -m pip install --upgrade pip" not in workflow
 
 

@@ -52,6 +52,9 @@ def test_github_settings_runbook_is_exact_and_actionable():
         "Code scanning/default setup: ON where available",
         "Private vulnerability reporting: ON",
         "## Verification checklist",
+        "Published bundle canary",
+        "verify-published-bundle",
+        "published-bundle-canary.yml",
     )
 
     assert [value for value in required if value not in runbook] == []

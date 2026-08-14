@@ -51,6 +51,9 @@ def test_autonomous_workflow_replaces_legacy_weekly_workflow():
     assert re.search(r"^permissions:\n\s+contents: read$", workflow, re.MULTILINE)
     assert "pull_request:" not in workflow
     assert "pull_request_target:" not in workflow
+    assert "[hs]" not in workflow
+    assert "OPENAI_API_KEY" not in workflow
+    assert "dspy" not in workflow
 
 
 def test_all_external_actions_are_pinned_to_full_commit_shas():
@@ -80,7 +83,7 @@ def test_build_job_is_read_only_constrained_tested_and_fail_closed():
         "actions/upload-artifact@",
         "name: ${{ steps.pipeline_result.outputs.artifact_name }}",
     )
-    forbidden = ("contents: write", "issues: write", "secrets.")
+    forbidden = ("contents: write", "issues: write", "secrets.", "[hs]", "OPENAI")
 
     assert [value for value in required if value not in build] == []
     assert [value for value in forbidden if value in build] == []
