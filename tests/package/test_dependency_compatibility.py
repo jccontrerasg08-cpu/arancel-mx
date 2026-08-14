@@ -106,6 +106,8 @@ def test_latest_allowed_runtime_dependency_set_installs_and_queries(tmp_path: Pa
     for name, floor in EXPECTED_FLOORS.items():
         assert name in report["resolved"]
         assert Version(report["resolved"][name]) >= Version(floor)
+    for heavy in ("pandas", "openpyxl", "pymupdf", "xlrd"):
+        assert heavy not in report["resolved"]
     assert report["probe"]["lookup_code"] == "01012101"
 
 

@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 WORKFLOWS = ROOT / ".github" / "workflows"
 # Only the manually dispatched documentation workflow pushes with git, so it is the
 # single place where the checkout credential may stay in .git/config.
-CHECKOUTS_KEEPING_CREDENTIALS = frozenset({"generate-demo.yml"})
+CHECKOUTS_KEEPING_CREDENTIALS = frozenset()
 MAX_TIMEOUT_MINUTES = 60
 _HOSTED_RUNNERS = frozenset({"ubuntu-latest", "windows-latest", "macos-latest"})
 _PINNED_USES = re.compile(r"^[^@\s]+@[0-9a-f]{40}$")

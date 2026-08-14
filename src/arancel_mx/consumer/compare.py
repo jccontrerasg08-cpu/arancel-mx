@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from collections.abc import Callable
 import re
-from typing import Protocol
 
 import requests
 
@@ -21,14 +20,6 @@ from arancel_mx.sources.vucem import VucemFractionSheet, fraction_sheet_url, par
 
 COMPARE_LEVELS = frozenset({"hs6", "fraccion8", "nico10"})
 _NICO_TOKEN = re.compile(r"\d+")
-
-
-class _DatasetView(Protocol):
-    def lookup(self, code: str) -> TariffRecord: ...
-
-    def children(self, code: str) -> tuple[TariffRecord, ...]: ...
-
-    def parent(self, code: str) -> TariffRecord | None: ...
 
 
 def _fetch_vucem(code8: str, *, timeout: float) -> VucemFractionSheet:
@@ -163,7 +154,7 @@ def _load_sheet(
 
 
 def compare_code(
-    dataset: _DatasetView,
+    dataset,
     code: str,
     *,
     fetch: bool = True,
@@ -212,7 +203,7 @@ def compare_code(
 
 
 def _fraction_and_nicos(
-    dataset: _DatasetView,
+    dataset,
     record: TariffRecord,
     loaded: VucemFractionSheet | BaseException | None,
 ) -> list[CompareRow]:

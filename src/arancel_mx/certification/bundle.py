@@ -292,7 +292,6 @@ def certify_bundle(release_dir: Path) -> CertificationReport:
     _certify_source_provenance(manifest, captured)
     row_count = _certify_csv_json(release_dir, manifest)
     return CertificationReport(
-        passed=True,
         checks=(
             "publication_bundle",
             *duckdb_checks,
