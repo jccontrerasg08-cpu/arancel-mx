@@ -24,6 +24,10 @@ _MAINTAINER_HINT = (
     "This command needs the maintainer dependencies. "
     "Install them with: pip install 'arancel-mx[maintainer]'"
 )
+_HS_HINT = (
+    "This command needs the HS classifier extra. "
+    "Install it with: pip install 'arancel-mx[hs]'"
+)
 
 
 def _missing_maintainer_extra(exc: ModuleNotFoundError) -> ValueError:
@@ -124,6 +128,11 @@ def build_parser() -> argparse.ArgumentParser:
     release.add_argument("--release-dir", required=True)
     release.add_argument("--source-dir", required=True)
     release.add_argument("--latest-dir", required=True)
+
+    subparsers.add_parser(
+        "nomenclator",
+        help="Clasifica un producto a HS6 WCO 2022 (extra [hs]; no es identidad LIGIE/NICO)",
+    )
     return parser
 
 
@@ -179,9 +188,22 @@ def _dispatch(namespace: argparse.Namespace) -> object:
     raise ValueError(f"Unsupported command: {namespace.command}")
 
 
+def _run_nomenclator(argv: Sequence[str]) -> int:
+    try:
+        from nomenclator.cli import main as nomenclator_main
+    except ModuleNotFoundError as exc:
+        missing = exc.name or "a required package"
+        print(f"error: {_HS_HINT} (missing: {missing})", file=sys.stderr)
+        return 2
+    return int(nomenclator_main(argv) or 0)
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     arguments = list(argv) if argv is not None else None
+    raw = arguments if arguments is not None else sys.argv[1:]
+    if raw and raw[0] in {"nomenclator", "hs"}:
+        return _run_nomenclator(raw[1:])
     if arguments == []:
         parser.print_help()
         return 0

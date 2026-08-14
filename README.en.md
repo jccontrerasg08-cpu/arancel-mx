@@ -61,6 +61,8 @@ sha256sum -c SHA256SUMS
 > [!IMPORTANT]
 > `arancel-mx` is a technical data tool. **It does not constitute legal advice.** For tariff-classification, regulatory-compliance, import, or export decisions, consult the applicable official publications and qualified professionals when appropriate.
 
+The optional `[hs]` extra vendors the WCO HS 2022 classifier from [`nomenclator`](https://github.com/talmago/nomenclator) (`arancel-mx nomenclator "…"`). It suggests an English HS6 using GIR; it does not replace the Mexican 8-digit fraction or NICO from a `data-*` dataset.
+
 ## Quick summary
 
 - Captures registered Diputados, DOF, and SNICE snapshots with SHA256 and real `retrieved_at` timestamps.
@@ -379,6 +381,8 @@ src/arancel_mx/
 ├── sources/
 │   └── source_registry.json
 └── storage/
+src/nomenclator/
+third_party/nomenclator/
 scripts/
 ├── build_official_dataset.py
 ├── run_official_pipeline.py

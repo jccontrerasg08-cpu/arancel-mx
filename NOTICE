@@ -9,3 +9,8 @@ endorsement by any authority.
 
 The project's original source code is licensed under the Apache License 2.0.
 Python dependencies are not vendored and retain their respective licenses.
+
+This product vendors the MIT-licensed nomenclator package (Tal Almagor,
+https://github.com/talmago/nomenclator). The original nomenclator LICENSE is
+preserved at third_party/nomenclator/LICENSE. WCO HS 2022 PDFs fetched at
+runtime remain copyright of the World Customs Organization.

@@ -48,6 +48,17 @@ maintainer = [
     "PyMuPDF>=1.24",
     "xlrd>=2.0",
 ]
+hs = [
+    "dspy-ai>=3.2.1,<4.0.0",
+    "pydantic>=2.13.4,<3.0.0",
+    "httpx>=0.28.1,<0.29.0",
+    "beautifulsoup4>=4.15.0,<5.0.0",
+    "pypdf>=6.14.2,<7.0.0",
+    "bm25s>=0.3.9,<0.4.0",
+    "model2vec>=0.8.2,<0.9.0",
+    "vicinity>=0.4.4,<0.5.0",
+    "rich>=15.0.0,<16.0.0",
+]
 dev = [
     "build>=1.2",
     "check-wheel-contents>=0.6.3",
@@ -65,6 +76,7 @@ dev = [
 
 [project.scripts]
 arancel-mx = "arancel_mx.cli:entrypoint"
+nomenclator = "nomenclator.cli:main"
 
 [project.urls]
 Repository = "https://github.com/jccontrerasg08-cpu/arancel-mx"
@@ -75,18 +87,30 @@ Changelog = "https://github.com/jccontrerasg08-cpu/arancel-mx/blob/main/CHANGELO
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["arancel_mx*"]
+include = ["arancel_mx*", "nomenclator*"]
+
+[tool.check-wheel-contents]
+toplevel = ["arancel_mx", "nomenclator"]
 
 [tool.setuptools.package-data]
 arancel_mx = ["sources/source_registry.json", "py.typed"]
+nomenclator = ["py.typed"]
 
 [tool.pytest.ini_options]
 pythonpath = [".", "src"]
 testpaths = ["tests"]
+markers = [
+    "integration: live WCO or OpenAI nomenclator tests",
+]
 
 [tool.ruff]
 target-version = "py311"
 src = ["src"]
+exclude = [
+    "src/nomenclator",
+    "tests/nomenclator",
+    "third_party",
+]
 
 [tool.ruff.lint]
 # Keep the first quality gate small enough that current main already passes.

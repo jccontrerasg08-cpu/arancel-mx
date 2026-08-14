@@ -63,6 +63,8 @@ Licencia del proyecto: **Apache-2.0**.
 > [!IMPORTANT]
 > `arancel-mx` es una herramienta técnica y de datos. **No constituye asesoría legal.** Para decisiones de clasificación arancelaria, cumplimiento regulatorio, importación o exportación deben consultarse las fuentes oficiales aplicables y, cuando corresponda, profesionales especializados.
 
+El extra opcional `[hs]` vende el clasificador WCO HS 2022 de [`nomenclator`](https://github.com/talmago/nomenclator) (`arancel-mx nomenclator "…"`). Sugiere un HS6 en inglés con GIR; no sustituye la fracción MX de 8 dígitos ni el NICO del dataset `data-*`.
+
 ## Resumen rápido
 
 - Captura snapshots registrados de Diputados, DOF y SNICE con SHA256 y `retrieved_at` real.
@@ -374,6 +376,8 @@ src/arancel_mx/
 ├── sources/
 │   └── source_registry.json
 └── storage/
+src/nomenclator/
+third_party/nomenclator/
 scripts/
 ├── build_official_dataset.py
 ├── run_official_pipeline.py

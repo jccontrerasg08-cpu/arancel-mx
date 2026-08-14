@@ -181,4 +181,14 @@ Concurrent downloads are serialized with a file lock. Existing verified versions
 
 For the publication-side six-asset contract and attestations, see [`release-process.md`](release-process.md). For the canonical database schema, see [`data-model.md`](data-model.md).
 
+## Optional WCO HS6 classifier (`[hs]`)
+
+```bash
+pip install 'arancel-mx[hs]'
+arancel-mx nomenclator "Men's cotton knitted shirts"
+nomenclator "Fresh bananas"
+```
+
+This is the vendored [`talmago/nomenclator`](https://github.com/talmago/nomenclator) pipeline (WCO HS 2022 English PDFs, GIR, chapter notes). The output is a 6-digit HS suggestion, not a Mexican `fraccion8`/`nico10`. Cross-check with `arancel-mx compare 610510`. Live WCO/OpenAI tests: `pytest tests/nomenclator --nomenclator-live`.
+
 > `arancel-mx` is a technical data tool and does not constitute legal advice. Consult the applicable official publications and qualified professionals for tariff-classification or compliance decisions.

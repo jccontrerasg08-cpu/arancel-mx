@@ -63,7 +63,7 @@ def test_only_tariff_source_package_is_distributed() -> None:
         for path in (ROOT / "src").rglob("*.py")
     }
 
-    assert python_roots == {"arancel_mx"}
+    assert python_roots == {"arancel_mx", "nomenclator"}
 
 
 def test_legacy_product_paths_are_absent() -> None:

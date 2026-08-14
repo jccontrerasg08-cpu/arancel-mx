@@ -6,6 +6,7 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Added
 
+- Vendored [`talmago/nomenclator`](https://github.com/talmago/nomenclator) (`src/nomenclator`, MIT) as optional extra `[hs]`: WCO HS 2022 English classifier (GIR + chapter notes) producing 6-digit suggestions. Commands: `arancel-mx nomenclator "…"` and console script `nomenclator`. Not Mexican legal identity; look up HS6 with `arancel-mx compare`.
 - Documented GitHub review extensions as install-only, `sha256sum -c SHA256SUMS` copy-paste, and `linguist-generated` for `.xls` fixtures.
 - `docs/external-consumption.md` uses `arancel-mx data verify --bundle` after `data download`; `sha256sum -c SHA256SUMS` is for a full GitHub Release directory.
 
