@@ -18,6 +18,7 @@ arancel-mx ficha 01012101
 arancel-mx compare 01012101
 arancel-mx chapters
 arancel-mx search "refrigeradores"
+arancel-mx suggest "camisas de algodón de punto"
 arancel-mx data verify
 ```
 
@@ -80,8 +81,11 @@ arancel-mx ficha 01012101
 arancel-mx compare 010121
 arancel-mx compare 01012101
 arancel-mx compare 0101210100
+arancel-mx compare 610510
 arancel-mx chapters
 arancel-mx search "refrigeradores" --limit 20
+arancel-mx search "camisas de algodón de punto"
+arancel-mx suggest "camisas de algodón de punto"
 arancel-mx parent 01012101
 arancel-mx children 010121
 arancel-mx provenance 01012101
@@ -90,11 +94,12 @@ arancel-mx provenance 01012101
 - `lookup` resolves an exact normalized tariff code.
 - `ficha` returns the SIICEX-style hierarchy card (section grouping, chapter → heading → subheading → fraction/NICO, UM, IGI, IGE) from the verified official dataset only. IGI/IGE are the official `igi_text` / `ige_text` values (for example `10` and `Ex.`), not rewritten percentages. Codes absent from the current official snapshot fail closed.
 - `chapters` lists current HS2 chapters.
-- `search` ranks current records by code or description.
+- `search` ranks current records. Exact code and code-prefix ranking are unchanged. Description queries rank matching HS2 chapters first, then rank current rows under those chapters. Results include `scorer_version` (`"1"`; bump when ranking changes) and a 0–1 `confidence` for analytics. `search` is not a classification.
+- `suggest` uses the same description narrowing and prints ficha plus national notes from `arancel_mx_national_notes` when that view has rows (the current `data-*` snapshot may be empty) for the top N hits, preferring `fraccion8`. `arancel-mx suggest "camisas de algodón de punto"` / `Dataset.suggest(text, limit=5)`. Retrieve-only: it does not claim a classification. A human, or their own model, classifies; evidence stays in the official dataset.
 - `parent` returns the direct parent in the HS2 → HS4 → HS6 → MX8 → NICO10 hierarchy.
 - `children` returns direct children of a code.
 - `provenance` returns the recorded source traceability for the selected code.
-- `compare` diffs one HS6, MX8, or NICO code from the verified GitHub `data-*` dataset against the VUCEM classifier sheet (`buildHojas1/{mx8}.html`). HS6 has no VUCEM page, so children MX8/NICO are compared. VUCEM is informative, not legal identity. `--offline` skips the third-party fetch.
+- `compare` diffs one HS6, MX8, or NICO code from the verified GitHub `data-*` dataset against the VUCEM classifier sheet (`buildHojas1/{mx8}.html`). HS6 has no VUCEM page, so children MX8/NICO are compared. VUCEM is informative, not legal identity. `--offline` skips the third-party fetch. An HS6 produced by an external classifier can be pasted into `arancel-mx compare 610510`. `dspy-nomenclator` (PyPI, MIT, Python ≥3.13, default `openai/gpt-4.1-mini`, fetches WCO HS 2022 PDFs) may run **elsewhere**; it is not an `arancel-mx` extra, not in CI, and not vendored here.
 
 The same normalization and query semantics are shared by the public Python consumer layer and CLI.
 
@@ -106,6 +111,7 @@ card = dataset.ficha("01012101")
 print(card.formatted_code, card.record.description, card.record.igi_text)
 for node in card.hierarchy:
     print(node.level, node.code, node.description)
+dataset.suggest("camisas de algodón de punto", limit=5)  # retrieve-only; not a classification
 ```
 
 ## Dataset lifecycle commands
