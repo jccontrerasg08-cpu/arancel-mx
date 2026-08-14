@@ -4,7 +4,8 @@ from datetime import date
 import json
 
 from arancel_mx.consumer.models import Ficha, HsSection, NationalNote, SearchResult, SuggestHit, TariffRecord
-from arancel_mx.consumer.output import render_csv, render_json, render_table
+from arancel_mx.consumer.output import render, render_csv, render_json, render_table
+from arancel_mx.consumer.query import SUGGEST_DISCLAIMER
 
 
 def _record() -> TariffRecord:
@@ -226,3 +227,23 @@ def test_suggest_table_prints_ficha_notes_and_wco_support_url() -> None:
     assert "61_2022e.pdf" not in text
     assert "01_2022e.pdf" in text
     assert "not a classification" in text.lower()
+
+
+def test_search_table_uses_shared_banner_not_csv_grid() -> None:
+    result = SearchResult(
+        _record(), 330, "description", scorer_version="1", confidence=1.0
+    )
+    text = render_table((result,))
+    assert text.splitlines()[0] == (
+        "--- 1/1  01012101  score=330  confidence=1.0  scorer=1 ---"
+    )
+    assert "0101.21.01  Fracción  Reproductores de raza pura ñ" in text
+    assert "score  " not in text.splitlines()[0]
+    assert not text.startswith("score")
+
+
+def test_empty_suggest_table_prints_disclaimer_then_no_results() -> None:
+    expected = f"{SUGGEST_DISCLAIMER}\nNo results."
+    assert render_table((), empty_csv_schema="suggest") == expected
+    assert render((), format_name="table", empty_csv_schema="suggest") == expected
+    assert render_table(()) == "No results."

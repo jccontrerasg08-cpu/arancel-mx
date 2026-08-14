@@ -12,7 +12,7 @@ from typing import Literal, Mapping, Sequence
 import json
 
 from arancel_mx.consumer.models import CompareRow, Ficha, ProvenanceRecord, SearchResult, SuggestHit, TariffRecord
-from arancel_mx.consumer.query import format_code
+from arancel_mx.consumer.query import SUGGEST_DISCLAIMER, format_code
 from arancel_mx.consumer.wco_support import WcoCite, cite_chapter
 
 
@@ -125,6 +125,13 @@ _LEVEL_LABELS = {
 }
 
 
+def _hit_banner(index: int, total: int, result: SearchResult) -> str:
+    return (
+        f"--- {index}/{total}  {result.record.code}  score={result.score}  "
+        f"confidence={result.confidence}  scorer={result.scorer_version} ---"
+    )
+
+
 def _ficha_row(ficha: Ficha) -> dict[str, object]:
     record = ficha.record
     section = ficha.section
@@ -178,10 +185,7 @@ def _render_suggest_table(hits: Sequence[SuggestHit]) -> str:
     total = len(hits)
     for index, hit in enumerate(hits, start=1):
         record = hit.search.record
-        blocks.append(
-            f"--- {index}/{total}  {record.code}  score={hit.search.score}  "
-            f"confidence={hit.search.confidence}  scorer={hit.search.scorer_version} ---"
-        )
+        blocks.append(_hit_banner(index, total, hit.search))
         blocks.append(_render_ficha_table(hit.ficha))
         if hit.national_notes:
             blocks.append("Notas nacionales")
@@ -194,6 +198,17 @@ def _render_suggest_table(hits: Sequence[SuggestHit]) -> str:
         if cite.local_path:
             blocks.append(f"WCO cache    {cite.local_path}")
     return "\n".join(blocks)
+
+
+def _render_search_table(results: Sequence[SearchResult]) -> str:
+    total = len(results)
+    lines: list[str] = []
+    for index, result in enumerate(results, start=1):
+        record = result.record
+        nivel = _LEVEL_LABELS.get(record.level, record.level)
+        lines.append(_hit_banner(index, total, result))
+        lines.append(f"{format_code(record.code)}  {nivel}  {record.description}")
+    return "\n".join(lines)
 
 
 def _tariff_row(record: TariffRecord) -> dict[str, object]:
@@ -288,7 +303,7 @@ def _render_wco_cite_table(cite: WcoCite) -> str:
     )
 
 
-def render_table(value: object) -> str:
+def render_table(value: object, *, empty_csv_schema: CsvSchema | None = None) -> str:
     """Render a compact human table; this is intentionally not a machine contract."""
 
     if isinstance(value, WcoCite):
@@ -298,7 +313,11 @@ def render_table(value: object) -> str:
     items = _sequence(value)
     if items and all(isinstance(item, SuggestHit) for item in items):
         return _render_suggest_table(tuple(items))
+    if items and all(isinstance(item, SearchResult) for item in items):
+        return _render_search_table(tuple(items))
     if not items:
+        if empty_csv_schema == "suggest":
+            return f"{SUGGEST_DISCLAIMER}\nNo results."
         return "No results."
     fields, first = _csv_row(items[0])
     rows = [first]
@@ -338,5 +357,5 @@ def render(
     if format_name == "csv":
         return render_csv(value, empty_schema=empty_csv_schema)
     if format_name == "table":
-        return render_table(value)
+        return render_table(value, empty_csv_schema=empty_csv_schema)
     raise ValueError(f"unsupported output format: {format_name}")
