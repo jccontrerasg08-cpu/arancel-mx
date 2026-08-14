@@ -36,9 +36,9 @@ def test_package_release_doc_explains_lightweight_install_and_python_api() -> No
     assert "data-YYYY.MM.DD" in document
     assert "dataset is not embedded" in document.lower()
     assert "pkg-v0.2.1" in document
-    assert "docs/consumer-cli.md" in document
-    assert "docs/external-consumption.md" in document
-    assert "docs/release-process.md" in document
+    assert "[`docs/consumer-cli.md`](consumer-cli.md)" in document
+    assert "[`docs/external-consumption.md`](external-consumption.md)" in document
+    assert "[`docs/release-process.md`](release-process.md)" in document
 
 
 def test_consumer_docs_cover_install_and_python_api() -> None:

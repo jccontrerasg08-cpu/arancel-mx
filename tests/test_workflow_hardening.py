@@ -155,7 +155,7 @@ def _following_with_block(lines: list[str], uses_index: int) -> str:
                     break
                 body.append(candidate)
             return "\n".join(body)
-        if indent <= uses_indent:
+        if indent < uses_indent:
             break
     return ""
 
@@ -178,6 +178,19 @@ def test_run_script_extraction_covers_list_items_and_folded_blocks():
         "          printf bar | cat",
     ]
     assert len(_step_blocks(block)) == 3
+
+
+def test_following_with_block_skips_sibling_step_keys():
+    lines = (
+        "      - name: Check out\n"
+        "        if: always()\n"
+        "        uses: actions/checkout@deadbeef\n"
+        "        with:\n"
+        "          persist-credentials: false\n"
+    ).splitlines()
+    uses_index = next(i for i, line in enumerate(lines) if "uses:" in line)
+    body = _following_with_block(lines, uses_index)
+    assert "persist-credentials: false" in body
 
 
 def test_workflow_structure_rejects_empty_and_malformed():

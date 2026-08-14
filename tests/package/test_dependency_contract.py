@@ -42,6 +42,7 @@ def test_dev_extra_preserves_full_repository_tooling() -> None:
     dev = _dependency_names(extras["dev"])
     assert HEAVY_MAINTAINER_DEPS <= dev
     assert {"build", "pytest"} <= dev
+    assert "reportlab" not in dev
 
 
 def test_consumer_import_and_help_do_not_import_maintainer_heavy_modules() -> None:
