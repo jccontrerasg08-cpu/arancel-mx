@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -123,3 +124,35 @@ def test_wco_help_is_spanish_support_not_authority(capsys) -> None:
     assert "apoyo" in text
     assert "ligie" in text
     assert "autoridad" in text or "no autoridad" in text
+
+
+def test_wco_cite_help_is_spanish_and_does_not_download(capsys) -> None:
+    assert main(["wco", "cite", "--help"]) == 0
+    text = capsys.readouterr().out.lower()
+    assert "no descarga" in text or "caché" in text or "cache" in text
+    assert "descarga el" not in text
+
+
+def test_wco_download_help_is_spanish_download(capsys) -> None:
+    assert main(["wco", "download", "--help"]) == 0
+    text = capsys.readouterr().out.lower()
+    assert "descarga" in text
+
+
+def test_wco_cite_json_chapter_does_not_download(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys
+) -> None:
+    _isolate_cache(monkeypatch, tmp_path)
+    _forbid_network(monkeypatch)
+
+    assert main(["wco", "cite", "01", "--format", "json"]) == 0
+    captured = capsys.readouterr()
+    assert captured.err == ""
+    payload = json.loads(captured.out)
+    assert payload["kind"] == "chapter"
+    assert payload["url"].endswith("01_2022e.pdf")
+    assert payload["local_path"] is None
+    disclaimer = payload["disclaimer"].lower()
+    assert "support" in disclaimer
+    assert "ligie" in disclaimer
+    assert "not" in disclaimer
