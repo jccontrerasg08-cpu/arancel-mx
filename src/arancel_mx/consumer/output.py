@@ -13,7 +13,7 @@ import json
 
 from arancel_mx.consumer.models import CompareRow, Ficha, ProvenanceRecord, SearchResult, SuggestHit, TariffRecord
 from arancel_mx.consumer.query import format_code
-from arancel_mx.consumer.wco_support import cite_chapter
+from arancel_mx.consumer.wco_support import WcoCite, cite_chapter
 
 
 CsvSchema = Literal["tariff", "search", "suggest", "provenance", "dataset", "ficha", "compare"]
@@ -277,9 +277,22 @@ def render_csv(value: object, *, empty_schema: CsvSchema | None = None) -> str:
     return buffer.getvalue()
 
 
+def _render_wco_cite_table(cite: WcoCite) -> str:
+    cache = cite.local_path if cite.local_path else "(none)"
+    return "\n".join(
+        (
+            f"WCO support  {cite.url}",
+            f"WCO cache    {cache}",
+            cite.disclaimer,
+        )
+    )
+
+
 def render_table(value: object) -> str:
     """Render a compact human table; this is intentionally not a machine contract."""
 
+    if isinstance(value, WcoCite):
+        return _render_wco_cite_table(value)
     if isinstance(value, Ficha):
         return _render_ficha_table(value)
     items = _sequence(value)

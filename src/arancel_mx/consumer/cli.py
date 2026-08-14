@@ -9,9 +9,10 @@ import sys
 from arancel_mx.consumer.config import resolve_config
 from arancel_mx.consumer.dataset import Dataset
 from arancel_mx.consumer.doctor import doctor_to_dict, render_doctor_human, run_doctor
-from arancel_mx.consumer.errors import DatasetUnavailableError
+from arancel_mx.consumer.errors import DatasetUnavailableError, QueryError
 from arancel_mx.consumer.manager import DatasetManager
 from arancel_mx.consumer.output import CsvSchema, render, render_json
+from arancel_mx.consumer.wco_support import cite_chapter, cite_gir, download_chapter, download_gir
 
 
 _OUTPUT_FORMATS = ("table", "json", "csv")
@@ -223,6 +224,31 @@ def register_consumer_commands(
     _add_output_format(chapters)
     chapters.set_defaults(consumer_action="chapters")
 
+    wco_help = (
+        "Cita o descarga PDF HS 2022 de la OMA "
+        "(apoyo de lectura, no autoridad LIGIE/NICO)"
+    )
+    wco = subparsers.add_parser("wco", help=wco_help, description=wco_help)
+    wco_subparsers = wco.add_subparsers(dest="wco_command", required=True)
+
+    cite = wco_subparsers.add_parser(
+        "cite",
+        help="Muestra URL y ruta local si está en caché; no descarga",
+        description="Muestra URL y ruta local si está en caché; no descarga",
+    )
+    cite.add_argument("target", help="Capítulo HS (01-97) o gir")
+    _add_output_format(cite)
+    cite.set_defaults(consumer_action="wco_cite")
+
+    download = wco_subparsers.add_parser(
+        "download",
+        help="Descarga el PDF al caché local",
+        description="Descarga el PDF al caché local",
+    )
+    download.add_argument("target", help="Capítulo HS (01-97) o gir")
+    _add_offline(download)
+    download.set_defaults(consumer_action="wco_download")
+
 
 def _local_duckdb_path(value: str) -> Path | None:
     text = value.strip()
@@ -415,6 +441,43 @@ def _run_doctor(namespace: argparse.Namespace) -> int:
     return result.exit_code
 
 
+def _wco_target_is_gir(target: str) -> bool:
+    return target.strip().lower() == "gir"
+
+
+def _run_wco_cite(namespace: argparse.Namespace) -> int:
+    target = namespace.target.strip()
+    try:
+        cite = cite_gir() if _wco_target_is_gir(target) else cite_chapter(target)
+    except ValueError as exc:
+        raise QueryError(str(exc)) from exc
+    _emit(cite, format_name=namespace.format)
+    return 0
+
+
+def _run_wco_download(namespace: argparse.Namespace) -> int:
+    config = _consumer_config(namespace)
+    target = namespace.target.strip()
+    try:
+        if _wco_target_is_gir(target):
+            path = download_gir(
+                cache_dir=config.cache_dir,
+                timeout=config.timeout,
+                offline=config.offline,
+            )
+        else:
+            path = download_chapter(
+                target,
+                cache_dir=config.cache_dir,
+                timeout=config.timeout,
+                offline=config.offline,
+            )
+    except ValueError as exc:
+        raise QueryError(str(exc)) from exc
+    sys.stdout.write(str(path) + "\n")
+    return 0
+
+
 def run_consumer(namespace: argparse.Namespace) -> int:
     """Run one parsed consumer command and return its process exit code."""
 
@@ -435,4 +498,8 @@ def run_consumer(namespace: argparse.Namespace) -> int:
         return _run_data_verify(namespace)
     if action == "doctor":
         return _run_doctor(namespace)
+    if action == "wco_cite":
+        return _run_wco_cite(namespace)
+    if action == "wco_download":
+        return _run_wco_download(namespace)
     raise ValueError(f"unsupported consumer command: {action}")
