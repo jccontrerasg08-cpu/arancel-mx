@@ -41,6 +41,12 @@ La ficha pública de `arancel-mx` (`arancel-mx ficha` / `Dataset.ficha`) reprodu
 
 Un visor de terceros puede mostrar fracciones o tasas que ya no existen en la LIGIE vigente. El ejemplo SIICEX `11063001` (harina de sagú, IGI 13%) no está en el snapshot SNICE actual; las fracciones vigentes son `11062002` (sagú, IGI 10) y `11063002` (productos del Capítulo 08, IGI 10). `arancel-mx ficha 11063001` falla cerrado.
 
+## Apoyo WCO (no es fuente oficial)
+
+Los PDF de nomenclatura HS 2022 de la WCO pueden guardarse en una caché local opcional de **apoyo de lectura**. No son identidad legal mexicana, no entran a DuckDB y **no** se registran en `source_registry.json`. El copyright permanece en la WCO. Cítalos como apoyo; nunca como autoridad LIGIE/NICO.
+
+Ejemplos (capítulo 61 y GIR): `https://www.wcoomd.org/-/media/wco/public/global/pdf/topics/nomenclature/instruments-and-tools/hs-nomenclature-2022/2022/61_2022e.pdf` y `0001_2022e-gir.pdf` en el mismo árbol. `wcoomd.org` no es un host oficial registrado. GIR y notas de sección/capítulo WCO no se publican como texto jurídico mexicano.
+
 ## Diputados ledger + DOF reconciliation
 
 El ledger **registered** de la Cámara de Diputados es el ancla para saber qué documentos legales deben ser explicables por la construcción. El pipeline realiza **reconciliation** de ese ledger con evidencia del **DOF** y con las fuentes registradas de SNICE.

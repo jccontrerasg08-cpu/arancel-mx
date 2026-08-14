@@ -6,6 +6,10 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Added
 
+- Description `search` ranks matching HS2 chapters first, then current rows under those chapters (`scorer_version` `"1"`, 0–1 `confidence` for analytics). Exact code/prefix ranking is unchanged. Not a classification.
+- `arancel-mx suggest` / `Dataset.suggest` retrieve ficha plus national notes for the top matches (prefer `fraccion8`). Retrieve-only; a human or their own model classifies.
+- Optional local WCO HS 2022 PDF cache for reading support. Not legal identity, not DuckDB, not `source_registry.json`. Copyright remains WCO.
+- External classifiers (for example `dspy-nomenclator` on PyPI) stay outside this package; paste HS6 into existing `arancel-mx compare`. PR #75 closed without vendoring nomenclator.
 - Scheduled published-bundle canary (`47 12 * * *`): runtime install without extras, then `data download` + `data verify --bundle` against the latest public `data-*` release.
 - Official `data-*` capture fetches SNICE national-notes HTML and materializes `arancel_mx_national_notes`. GIR, section/chapter notes, and reglas complementarias remain unpublished.
 - Documented GitHub review extensions as install-only, `sha256sum -c SHA256SUMS` copy-paste, and `linguist-generated` for `.xls` fixtures.

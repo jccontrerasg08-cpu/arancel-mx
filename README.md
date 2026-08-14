@@ -197,6 +197,7 @@ arancel-mx ficha 01012101
 arancel-mx compare 01012101
 arancel-mx chapters
 arancel-mx search "refrigeradores"
+arancel-mx suggest "camisas de algodón de punto"
 arancel-mx data verify
 ```
 
@@ -220,6 +221,7 @@ También se puede fijar una release exacta con `--dataset data-YYYY.MM.DD`. Cons
 | `data path` | Imprime únicamente la ruta del DuckDB seleccionado |
 | `data verify` | Revalida integridad local y opcionalmente el bundle remoto |
 | `lookup` / `search` | Consulta por código exacto o texto |
+| `suggest` | Recupera ficha y notas nacionales de los mejores candidatos; no clasifica |
 | `ficha` | Ficha jerárquica capítulo → fracción/NICO con UM, IGI e IGE |
 | `compare` | Diff HS6 / MX8 / NICO del dataset GitHub contra VUCEM (informativo) |
 | `chapters` | Lista los capítulos HS2 vigentes |
