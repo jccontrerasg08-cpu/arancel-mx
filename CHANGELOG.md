@@ -7,6 +7,7 @@ All notable changes to the Python package are documented here. Dataset releases 
 ### Added
 
 - Scheduled published-bundle canary (`47 12 * * *`): runtime install without extras, then `data download` + `data verify --bundle` against the latest public `data-*` release.
+- Official `data-*` capture fetches SNICE national-notes HTML and materializes `arancel_mx_national_notes`. GIR, section/chapter notes, and reglas complementarias remain unpublished.
 - Documented GitHub review extensions as install-only, `sha256sum -c SHA256SUMS` copy-paste, and `linguist-generated` for `.xls` fixtures.
 - `docs/external-consumption.md` uses `arancel-mx data verify --bundle` after `data download`; `sha256sum -c SHA256SUMS` is for a full GitHub Release directory.
 
@@ -17,6 +18,7 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Removed
 
+- Dropped test-only `reportlab` and `PyYAML` from the `dev` extra; parser tests use committed PDF fixtures and workflow contracts read YAML as text.
 - Unused staging promotion path, warehouse-only DDL, SNICE HTML crawler, SIICEX↔VUCEM adapter types, parse-reuse helper, demo-generation workflow, and `current_resolver_probe`.
 
 ### Fixed

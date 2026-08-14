@@ -32,15 +32,23 @@ def test_changelog_has_020_section_and_consumer_scope() -> None:
 
 def test_package_release_doc_explains_lightweight_install_and_python_api() -> None:
     document = _read("docs/package-release.md")
-    assert "pip install arancel-mx" in document
     assert 'pip install "arancel-mx[maintainer]"' in document
-    assert "from arancel_mx import Dataset" in document
-    assert "Dataset.latest()" in document
-    assert "Dataset.compare" in document
     assert "data-YYYY.MM.DD" in document
     assert "dataset is not embedded" in document.lower()
-    assert "XDG_CACHE_HOME" in document
     assert "pkg-v0.2.1" in document
+    assert "[`docs/consumer-cli.md`](consumer-cli.md)" in document
+    assert "[`docs/external-consumption.md`](external-consumption.md)" in document
+    assert "[`docs/release-process.md`](release-process.md)" in document
+
+
+def test_consumer_docs_cover_install_and_python_api() -> None:
+    cli = _read("docs/consumer-cli.md")
+    ingest = _read("docs/external-consumption.md")
+    assert "pip install arancel-mx" in cli
+    assert "from arancel_mx import Dataset" in cli
+    assert "Dataset.latest()" in cli
+    assert "XDG_CACHE_HOME" in cli
+    assert "Dataset.compare" in ingest
 
 
 def test_package_release_doc_keeps_code_and_data_release_channels_separate() -> None:

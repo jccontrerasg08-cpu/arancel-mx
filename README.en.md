@@ -441,7 +441,7 @@ See [`SECURITY.md`](SECURITY.md), [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CODE_O
 | Stable public search API | Available |
 | TIGIE card (`ficha` / `chapters`) | Available |
 | Compare HS6 / MX8 / NICO vs VUCEM | Available (informative, not legal identity) |
-| LIGIE national notes | Parser and `arancel_mx_national_notes` view; the current snapshot may leave it empty |
+| LIGIE national notes | Parser, official capture, and `arancel_mx_national_notes`; `data-2026.08.11` may stay empty until the next `data-*` |
 | PyPI publication | Published: `arancel-mx==0.2.0` (`0.2.1` in-tree, not on PyPI until `pkg-v0.2.1`) |
 
 ## Contributing

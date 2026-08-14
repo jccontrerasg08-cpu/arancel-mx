@@ -1,16 +1,10 @@
 # Python package release contract
 
-This document describes the public Python distribution independently from the tariff-data release pipeline.
+This document is the maintainer contract for publishing `arancel-mx` to TestPyPI/PyPI. Consumer install, CLI, and Python API live in [`docs/consumer-cli.md`](consumer-cli.md) and [`docs/external-consumption.md`](external-consumption.md). The `data-*` GitHub Release transaction lives in [`docs/release-process.md`](release-process.md).
 
-## Consumer installation
+`arancel-mx==0.2.0` is published on PyPI. The checkout declares `project.version` `0.2.1`; that version is not on PyPI until `pkg-v0.2.1` passes TestPyPI and the OS/Python matrix.
 
-`arancel-mx==0.2.0` is published on PyPI. The checkout declares `project.version` `0.2.1`; that version is not on PyPI until `pkg-v0.2.1` passes TestPyPI and the OS/Python matrix. Downstream apps keep pinning the published wheel:
-
-```bash
-pip install arancel-mx==0.2.0
-```
-
-The base install is intentionally consumer-focused. The dataset is not embedded in the wheel or sdist. Published tariff data remains in immutable GitHub Releases named `data-YYYY.MM.DD` and is downloaded only when the user requests managed data.
+The dataset is not embedded in the wheel or sdist. Published tariff data remains in immutable GitHub Releases named `data-YYYY.MM.DD`.
 
 Repository maintainers who need the ETL/parsing pipeline can install the optional extra:
 
@@ -18,78 +12,11 @@ Repository maintainers who need the ETL/parsing pipeline can install the optiona
 pip install "arancel-mx[maintainer]"
 ```
 
-Contributors should continue to use the full development extra from a checkout:
-
-```bash
-python -m pip install -e ".[dev]"
-```
-
-## First CLI use
-
-```bash
-arancel-mx --version
-arancel-mx doctor
-arancel-mx data download
-arancel-mx lookup 01012101
-arancel-mx ficha 01012101
-arancel-mx compare 01012101
-arancel-mx search "refrigeradores"
-```
-
-An exact data release can be pinned independently from the Python package version:
-
-```bash
-arancel-mx data download --dataset data-YYYY.MM.DD
-arancel-mx lookup 01012101 --dataset data-YYYY.MM.DD
-```
-
-After the selected release has been verified, strict offline queries use only the verified local cache:
-
-```bash
-arancel-mx lookup 01012101 --offline --format json
-arancel-mx doctor --offline --json
-```
-
-## Python API
-
-```python
-from arancel_mx import Dataset
-
-# Resolve one exact latest data release, verify it, cache it, and open read-only.
-db = Dataset.latest()
-record = db.lookup("01012101")
-card = db.ficha("01012101")
-rows = db.compare("01012101")  # Dataset.compare vs VUCEM; informative, not legal identity
-results = db.search("refrigeradores", limit=20)
-children = db.children("0101")
-sources = db.provenance("01012101")
-```
-
-Pin a dataset release explicitly:
-
-```python
-from arancel_mx import Dataset
-
-db = Dataset.version("data-YYYY.MM.DD")
-```
-
-Or open a local DuckDB file structurally without claiming release provenance:
-
-```python
-from arancel_mx import Dataset
-
-db = Dataset.open("/path/to/arancel_mx.duckdb")
-```
-
-`Dataset.open()` validates the local database structure, but a local file is not promoted to the stronger `release_verified` state merely because it opens successfully.
-
 ## Package and data versions are independent
 
 The Python distribution uses PEP 440 package versions such as `0.2.0` (PyPI) and in-tree `0.2.1`. Tariff datasets use immutable date tags such as `data-2026.08.11` (`/releases/latest` currently). The PyPI project page long description is frozen at the `0.2.0` upload until `pkg-v0.2.1`.
 
-Verified datasets are cached under `XDG_CACHE_HOME/arancel-mx`, `~/Library/Caches/arancel-mx` on macOS, `%LOCALAPPDATA%/arancel-mx/Cache` on Windows, or `~/.cache/arancel-mx`. Override with `ARANCEL_MX_CACHE_DIR`. The consumer extra does not depend on `platformdirs`.
-
-A package change does not create a new tariff dataset. A new tariff dataset does not require rebuilding the Python wheel. This separation keeps software compatibility independent from legal/data update cadence.
+A package change does not create a new tariff dataset. A new tariff dataset does not require rebuilding the Python wheel.
 
 ## Git tags and GitHub Releases
 
@@ -115,19 +42,6 @@ external certification
 manual production approval
         ↓
 PyPI
-```
-
-The data publication channel remains:
-
-```text
-GitHub Releases
-└── data-YYYY.MM.DD
-    ├── arancel_mx.duckdb
-    ├── arancel_mx.csv
-    ├── arancel_mx.json
-    ├── manifest.json
-    ├── SHA256SUMS
-    └── official-sources.tar.gz
 ```
 
 ## Build-once rule

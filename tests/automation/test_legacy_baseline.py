@@ -110,6 +110,17 @@ def test_legacy_baseline_forces_full_schema_v2_build_instead_of_no_change(
                 capture=SimpleNamespace(path=Path("/diputados.fixture")),
                 source_document={"source_document_id": "source-diputados"},
             ),
+            SimpleNamespace(
+                dataset_key="national_notes",
+                document_role="national_notes",
+                capture=SimpleNamespace(path=Path("/national_notes.fixture")),
+                source_document={"source_document_id": "source-national_notes-national_notes"},
+                fetched=SimpleNamespace(
+                    media_type="text/html",
+                    content=b"<h2>Capitulo 01</h2><p>1. Nota nacional.</p>",
+                    charset="utf-8",
+                ),
+            ),
         ),
     )
     monkeypatch.setattr(
