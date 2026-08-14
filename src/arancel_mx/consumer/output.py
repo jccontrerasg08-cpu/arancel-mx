@@ -13,6 +13,7 @@ import json
 
 from arancel_mx.consumer.models import CompareRow, Ficha, ProvenanceRecord, SearchResult, SuggestHit, TariffRecord
 from arancel_mx.consumer.query import format_code
+from arancel_mx.consumer.wco_support import cite_chapter
 
 
 CsvSchema = Literal["tariff", "search", "suggest", "provenance", "dataset", "ficha", "compare"]
@@ -172,6 +173,29 @@ def _render_ficha_table(ficha: Ficha) -> str:
     return "\n".join(lines)
 
 
+def _render_suggest_table(hits: Sequence[SuggestHit]) -> str:
+    blocks = [hits[0].disclaimer]
+    total = len(hits)
+    for index, hit in enumerate(hits, start=1):
+        record = hit.search.record
+        blocks.append(
+            f"--- {index}/{total}  {record.code}  score={hit.search.score}  "
+            f"confidence={hit.search.confidence}  scorer={hit.search.scorer_version} ---"
+        )
+        blocks.append(_render_ficha_table(hit.ficha))
+        if hit.national_notes:
+            blocks.append("Notas nacionales")
+            for note in hit.national_notes:
+                blocks.append(f"{note.note_number}  {note.text}")
+        else:
+            blocks.append("Notas nacionales  (none)")
+        cite = cite_chapter(record.hs2 or record.code[:2])
+        blocks.append(f"WCO support  {cite.url}")
+        if cite.local_path:
+            blocks.append(f"WCO cache    {cite.local_path}")
+    return "\n".join(blocks)
+
+
 def _tariff_row(record: TariffRecord) -> dict[str, object]:
     return {field: _plain(getattr(record, field)) for field in _TARIFF_FIELDS}
 
@@ -260,8 +284,7 @@ def render_table(value: object) -> str:
         return _render_ficha_table(value)
     items = _sequence(value)
     if items and all(isinstance(item, SuggestHit) for item in items):
-        body = render_table(tuple(item.search for item in items))
-        return f"{body}\n{items[0].disclaimer}"
+        return _render_suggest_table(tuple(items))
     if not items:
         return "No results."
     fields, first = _csv_row(items[0])

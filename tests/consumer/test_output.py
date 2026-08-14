@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date
 import json
 
-from arancel_mx.consumer.models import Ficha, HsSection, SearchResult, SuggestHit, TariffRecord
+from arancel_mx.consumer.models import Ficha, HsSection, NationalNote, SearchResult, SuggestHit, TariffRecord
 from arancel_mx.consumer.output import render_csv, render_json, render_table
 
 
@@ -207,3 +207,22 @@ def test_suggest_table_includes_disclaimer() -> None:
     assert "01012101" in text
     assert "not a classification" in text.lower()
     assert "wco" in text.lower()
+
+
+def test_suggest_table_prints_ficha_notes_and_wco_support_url() -> None:
+    hit = SuggestHit(
+        search=SearchResult(_record(), 355, "description", scorer_version="1", confidence=1.0),
+        ficha=_ficha(),
+        national_notes=(
+            NationalNote("01", "1", "Nota nacional fixture.", "fixture-source"),
+        ),
+        disclaimer="This is not a classification. WCO is not LIGIE/NICO authority.",
+    )
+    text = render_table((hit,))
+    assert "Código" in text
+    assert "0101.21.01" in text
+    assert "Nota nacional fixture." in text
+    assert "Notas nacionales" in text
+    assert "61_2022e.pdf" not in text
+    assert "01_2022e.pdf" in text
+    assert "not a classification" in text.lower()

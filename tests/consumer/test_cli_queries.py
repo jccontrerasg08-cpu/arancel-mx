@@ -290,6 +290,9 @@ def test_suggest_table_includes_disclaimer(capsys) -> None:
     text = capsys.readouterr().out.lower()
     assert "01012101" in text
     assert "not a classification" in text
+    assert "código" in text or "ficha" in text or "0101.21.01" in text
+    assert "notas nacionales" in text
+    assert "wco support" in text
 
 
 def test_suggest_csv_keeps_search_prefix(capsys) -> None:
