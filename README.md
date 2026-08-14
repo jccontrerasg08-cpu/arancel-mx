@@ -387,6 +387,7 @@ scripts/
 └── data_alert.py
 docs/
 tests/
+TERMS.md
 LICENSE
 NOTICE
 ```
@@ -441,7 +442,7 @@ Ver [`SECURITY.md`](SECURITY.md), [`CONTRIBUTING.md`](CONTRIBUTING.md) y [`docs/
 
 ## Contribución
 
-Las contribuciones de la **comunidad de código abierto** son bienvenidas. Consulta [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md), [`SECURITY.md`](SECURITY.md), `LICENSE` y `NOTICE` antes de enviar cambios.
+Las contribuciones de la **comunidad de código abierto** son bienvenidas. Consulta [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md), [`SECURITY.md`](SECURITY.md), [`TERMS.md`](TERMS.md), [`opensource-checklist.md`](opensource-checklist.md), `LICENSE` y `NOTICE` antes de enviar cambios.
 
 Para cambios de fuentes, parsers, reconciliación o release contract, agrega fixtures/pruebas offline del caso esperado. Para cambios del build oficial, actualiza el lock/constraints en el mismo PR cuando corresponda.
 

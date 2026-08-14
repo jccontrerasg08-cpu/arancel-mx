@@ -80,18 +80,38 @@ def test_legacy_product_paths_are_absent() -> None:
 
 
 def test_tracked_text_contains_no_credentials_or_private_absolute_paths() -> None:
+    binary_suffixes = {
+        ".png",
+        ".gif",
+        ".jpg",
+        ".jpeg",
+        ".webp",
+        ".xls",
+        ".xlsx",
+        ".pdf",
+        ".duckdb",
+    }
     patterns = (
         re.compile(r"AKIA[0-9A-Z]{16}"),
         re.compile(r"gh[pousr]_[A-Za-z0-9]{36,}"),
         re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
         re.compile(r"[A-Za-z]:\\Users\\[^\\\s]+", re.IGNORECASE),
+        re.compile(
+            r"@(?:gmail|googlemail|hotmail|outlook|yahoo|icloud|proton(?:mail)?)\.",
+            re.IGNORECASE,
+        ),
+        re.compile(r"xox[baprs]-"),
+        re.compile("sk_" "live_"),
     )
     findings = []
     for relative in _tracked_files():
         path = ROOT / relative
-        if not path.is_file():
+        if not path.is_file() or path.suffix.lower() in binary_suffixes:
             continue
-        text = path.read_bytes().decode("utf-8", errors="ignore")
+        payload = path.read_bytes()
+        if b"\x00" in payload[:8192]:
+            continue
+        text = payload.decode("utf-8", errors="ignore")
         for pattern in patterns:
             if pattern.search(text):
                 findings.append((relative, pattern.pattern))
@@ -118,11 +138,14 @@ def test_open_source_governance_files_are_present() -> None:
     required = (
         "LICENSE",
         "NOTICE",
+        "TERMS.md",
+        "opensource-checklist.md",
         "CONTRIBUTING.md",
         "SECURITY.md",
         "CODE_OF_CONDUCT.md",
         ".github/ISSUE_TEMPLATE/bug_report.yml",
         ".github/ISSUE_TEMPLATE/feature_request.yml",
+        ".github/ISSUE_TEMPLATE/open_source_release.yml",
         ".github/pull_request_template.md",
     )
 
@@ -146,6 +169,8 @@ def test_readme_describes_the_focused_public_project() -> None:
         "python -m arancel_mx",
         "contributing.md",
         "security.md",
+        "terms.md",
+        "opensource-checklist.md",
         "no constituye asesoría legal",
         "fuentes oficiales",
         "## alcance",
@@ -293,3 +318,55 @@ def test_ci_workflow_builds_package_without_secrets_or_network_updates() -> None
 
     assert [value for value in required if value not in workflow] == []
     assert [value for value in forbidden if value in workflow] == []
+
+
+def test_terms_describe_apache_and_official_source_exceptions() -> None:
+    terms = (ROOT / "TERMS.md").read_text(encoding="utf-8").lower()
+    required = (
+        "apache-2.0",
+        "license",
+        "notice",
+        "diputados",
+        "diario oficial de la federación",
+        "snice",
+        "asesoría legal",
+        "## english",
+        "not legal advice",
+        "pyproject.toml",
+        "official-sources.tar.gz",
+    )
+
+    assert [value for value in required if value not in terms] == []
+    assert "cc0" not in terms
+
+
+def test_open_source_checklist_is_issue_ready_and_project_specific() -> None:
+    text = (ROOT / "opensource-checklist.md").read_text(encoding="utf-8")
+    required = (
+        "TERMS.md",
+        "CHANGELOG.md",
+        "CONTRIBUTING.md",
+        "pyproject.toml",
+        "requirements/production-build.txt",
+        "GitHub Actions",
+        "- [ ]",
+        "docs/demo.gif",
+        "docs/consumer-cli.md",
+        "docs/external-consumption.md",
+        "tests/test_public_distribution.py",
+        ".github/ISSUE_TEMPLATE/open_source_release.yml",
+    )
+
+    assert [value for value in required if value not in text] == []
+    assert "TravisCI" not in text
+    assert "public domain release" not in text.lower()
+    assert "Clouseau" not in text
+    assert "CFPB-specific" not in text
+
+
+def test_open_source_release_issue_template_uses_checkboxes_and_terms() -> None:
+    template = (
+        ROOT / ".github/ISSUE_TEMPLATE/open_source_release.yml"
+    ).read_text(encoding="utf-8")
+    assert "type: checkboxes" in template
+    assert "TERMS.md" in template
