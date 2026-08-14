@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date
 import json
 
-from arancel_mx.consumer.models import Ficha, HsSection, SearchResult, TariffRecord
+from arancel_mx.consumer.models import Ficha, HsSection, SearchResult, SuggestHit, TariffRecord
 from arancel_mx.consumer.output import render_csv, render_json, render_table
 
 
@@ -177,3 +177,33 @@ def test_ficha_table_lists_direct_children() -> None:
     assert "Hijos" in text
     assert "NICO" in text
     assert "0101.21.01 00" in text
+
+
+def _suggest_hit() -> SuggestHit:
+    return SuggestHit(
+        search=SearchResult(_record(), 355, "description", scorer_version="1", confidence=1.0),
+        ficha=_ficha(),
+        national_notes=(),
+        disclaimer="This is not a classification. WCO is not LIGIE/NICO authority.",
+    )
+
+
+def test_suggest_json_includes_search_ficha_and_disclaimer() -> None:
+    payload = json.loads(render_json((_suggest_hit(),)))
+    assert payload[0]["search"]["record"]["code"] == "01012101"
+    assert payload[0]["ficha"]["formatted_code"] == "0101.21.01"
+    assert "not a classification" in payload[0]["disclaimer"].lower()
+
+
+def test_suggest_csv_keeps_search_header_prefix_and_disclaimer() -> None:
+    text = render_csv((_suggest_hit(),))
+    assert text.splitlines()[0].startswith("score,match_kind,code,level,description")
+    assert "disclaimer" in text.splitlines()[0]
+    assert "not a classification" in text.splitlines()[1].lower()
+
+
+def test_suggest_table_includes_disclaimer() -> None:
+    text = render_table((_suggest_hit(),))
+    assert "01012101" in text
+    assert "not a classification" in text.lower()
+    assert "wco" in text.lower()

@@ -8,7 +8,7 @@ import pytest
 import arancel_mx
 import arancel_mx.consumer.dataset as dataset_module
 from arancel_mx.consumer.dataset import Dataset
-from arancel_mx.consumer.models import DatasetInfo, Ficha, SearchResult, TariffRecord
+from arancel_mx.consumer.models import DatasetInfo, Ficha, SearchResult, SuggestHit, TariffRecord
 
 
 def test_root_package_exports_dataset() -> None:
@@ -17,6 +17,7 @@ def test_root_package_exports_dataset() -> None:
     assert "Ficha" in arancel_mx.__all__
     assert "HsSection" in arancel_mx.__all__
     assert "CompareRow" in arancel_mx.__all__
+    assert "SuggestHit" in arancel_mx.__all__
 
 
 def test_dataset_open_validates_local_file_read_only(consumer_duckdb: Path) -> None:
@@ -108,6 +109,15 @@ def test_dataset_parent_children_and_provenance_delegate_to_query_layer(
     assert tuple(item.code for item in dataset.children("010121")) == ("01012101",)
     provenance = dataset.provenance("01012101")
     assert provenance[0].source_document_id == "fixture-source"
+
+
+def test_dataset_suggest_returns_tuple_of_suggest_hits(consumer_duckdb: Path) -> None:
+    dataset = Dataset.open(consumer_duckdb)
+    result = dataset.suggest("reproductores")
+    assert isinstance(result, tuple)
+    assert all(isinstance(item, SuggestHit) for item in result)
+    assert result[0].search.record.level == "fraccion8"
+    assert result[0].ficha.record.code == "01012101"
 
 
 def test_dataset_ficha_and_chapters(consumer_duckdb: Path) -> None:

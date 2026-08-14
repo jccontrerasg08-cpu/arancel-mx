@@ -17,6 +17,7 @@ _OUTPUT_FORMATS = ("table", "json", "csv")
 _QUERY_ACTIONS = {
     "lookup",
     "search",
+    "suggest",
     "parent",
     "children",
     "provenance",
@@ -27,6 +28,7 @@ _QUERY_ACTIONS = {
 _QUERY_CSV_SCHEMAS: dict[str, CsvSchema] = {
     "lookup": "tariff",
     "search": "search",
+    "suggest": "suggest",
     "parent": "tariff",
     "children": "tariff",
     "provenance": "provenance",
@@ -178,6 +180,15 @@ def register_consumer_commands(
     )
     search.add_argument("--limit", type=_positive_int, default=20)
 
+    suggest = _add_query_command(
+        subparsers,
+        "suggest",
+        help_text="Retrieve-only suggestions; not a classification",
+        positional="text",
+    )
+    suggest.description = "Retrieve-only suggestions; not a classification"
+    suggest.add_argument("--limit", type=_positive_int, default=5)
+
     _add_query_command(
         subparsers,
         "parent",
@@ -263,6 +274,8 @@ def _run_query(namespace: argparse.Namespace) -> int:
         value: object = dataset.lookup(namespace.code)
     elif action == "search":
         value = dataset.search(namespace.text, limit=namespace.limit)
+    elif action == "suggest":
+        value = dataset.suggest(namespace.text, limit=namespace.limit)
     elif action == "parent":
         parent_record = dataset.parent(namespace.code)
         value = () if parent_record is None and namespace.format != "json" else parent_record

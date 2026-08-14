@@ -47,6 +47,16 @@ class SearchResult:
     record: TariffRecord
     score: int
     match_kind: Literal["exact_code", "code_prefix", "description"]
+    scorer_version: str = "1"
+    confidence: float = 0.0
+
+
+@dataclass(frozen=True, slots=True)
+class NationalNote:
+    chapter: str
+    note_number: str
+    text: str
+    source_document_id: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -84,6 +94,14 @@ class Ficha:
     section: HsSection | None
     hierarchy: tuple[TariffRecord, ...]
     children: tuple[TariffRecord, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class SuggestHit:
+    search: SearchResult
+    ficha: Ficha
+    national_notes: tuple[NationalNote, ...]
+    disclaimer: str
 
 
 @dataclass(frozen=True, slots=True)

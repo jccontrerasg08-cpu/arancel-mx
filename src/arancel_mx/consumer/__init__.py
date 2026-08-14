@@ -20,6 +20,7 @@ from arancel_mx.consumer.models import (
     HsSection,
     ProvenanceRecord,
     SearchResult,
+    SuggestHit,
     TariffRecord,
 )
 
@@ -41,5 +42,6 @@ __all__ = [
     "QueryError",
     "RecordNotFoundError",
     "SearchResult",
+    "SuggestHit",
     "TariffRecord",
 ]

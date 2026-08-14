@@ -24,6 +24,7 @@ from arancel_mx.consumer.models import (
     HsSection,
     ProvenanceRecord,
     SearchResult,
+    SuggestHit,
     TariffRecord,
 )
 
@@ -41,6 +42,9 @@ def test_consumer_package_reexports_public_types() -> None:
     assert InvalidCodeError is arancel_mx.InvalidCodeError
     assert "Dataset" in arancel_mx.consumer.__all__
     assert "CompareRow" in arancel_mx.consumer.__all__
+    assert "SuggestHit" in arancel_mx.__all__
+    assert "SuggestHit" in arancel_mx.consumer.__all__
+    assert arancel_mx.SuggestHit is SuggestHit
 
 
 def test_exception_hierarchy_is_stable() -> None:
@@ -101,6 +105,8 @@ def test_search_result_constructor_fields_are_contractual() -> None:
     assert result.record is record
     assert result.score == 100
     assert result.match_kind == "exact_code"
+    assert result.scorer_version == "1"
+    assert result.confidence == 0.0
 
 
 def test_provenance_record_constructor_fields_are_contractual() -> None:

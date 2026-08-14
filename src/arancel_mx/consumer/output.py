@@ -11,11 +11,11 @@ from typing import Literal, Mapping, Sequence
 
 import json
 
-from arancel_mx.consumer.models import CompareRow, Ficha, ProvenanceRecord, SearchResult, TariffRecord
+from arancel_mx.consumer.models import CompareRow, Ficha, ProvenanceRecord, SearchResult, SuggestHit, TariffRecord
 from arancel_mx.consumer.query import format_code
 
 
-CsvSchema = Literal["tariff", "search", "provenance", "dataset", "ficha", "compare"]
+CsvSchema = Literal["tariff", "search", "suggest", "provenance", "dataset", "ficha", "compare"]
 
 _TARIFF_FIELDS = (
     "code",
@@ -35,7 +35,8 @@ _TARIFF_FIELDS = (
     "effective_to",
     "is_current",
 )
-_SEARCH_FIELDS = ("score", "match_kind", *_TARIFF_FIELDS)
+_SEARCH_FIELDS = ("score", "match_kind", *_TARIFF_FIELDS, "scorer_version", "confidence")
+_SUGGEST_FIELDS = (*_SEARCH_FIELDS, "disclaimer")
 _PROVENANCE_FIELDS = (
     "source_document_id",
     "role",
@@ -81,6 +82,7 @@ _COMPARE_FIELDS = (
 _CSV_SCHEMA_FIELDS: dict[CsvSchema, tuple[str, ...]] = {
     "tariff": _TARIFF_FIELDS,
     "search": _SEARCH_FIELDS,
+    "suggest": _SUGGEST_FIELDS,
     "provenance": _PROVENANCE_FIELDS,
     "dataset": _DATASET_FIELDS,
     "ficha": _FICHA_FIELDS,
@@ -179,8 +181,17 @@ def _csv_row(value: object) -> tuple[tuple[str, ...], dict[str, object]]:
         row = _tariff_row(value.record)
         return (
             _SEARCH_FIELDS,
-            {"score": value.score, "match_kind": value.match_kind, **row},
+            {
+                "score": value.score,
+                "match_kind": value.match_kind,
+                **row,
+                "scorer_version": value.scorer_version,
+                "confidence": value.confidence,
+            },
         )
+    if isinstance(value, SuggestHit):
+        fields, row = _csv_row(value.search)
+        return (*fields, "disclaimer"), {**row, "disclaimer": value.disclaimer}
     if isinstance(value, Ficha):
         return _FICHA_FIELDS, {key: _plain(item) for key, item in _ficha_row(value).items()}
     if isinstance(value, CompareRow):
@@ -248,6 +259,9 @@ def render_table(value: object) -> str:
     if isinstance(value, Ficha):
         return _render_ficha_table(value)
     items = _sequence(value)
+    if items and all(isinstance(item, SuggestHit) for item in items):
+        body = render_table(tuple(item.search for item in items))
+        return f"{body}\n{items[0].disclaimer}"
     if not items:
         return "No results."
     fields, first = _csv_row(items[0])

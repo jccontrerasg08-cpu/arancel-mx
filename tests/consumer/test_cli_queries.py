@@ -7,7 +7,15 @@ import pytest
 
 from arancel_mx.cli import main
 from arancel_mx.consumer.errors import InvalidCodeError
-from arancel_mx.consumer.models import CompareRow, Ficha, HsSection, ProvenanceRecord, SearchResult, TariffRecord
+from arancel_mx.consumer.models import (
+    CompareRow,
+    Ficha,
+    HsSection,
+    ProvenanceRecord,
+    SearchResult,
+    SuggestHit,
+    TariffRecord,
+)
 import arancel_mx.consumer.cli as consumer_cli
 
 
@@ -59,6 +67,17 @@ class FakeDataset:
 
     def search(self, text: str, *, limit: int = 20) -> tuple[SearchResult, ...]:
         return (SearchResult(_record(), 355, "description"),)[:limit]
+
+    def suggest(self, text: str, *, limit: int = 5) -> tuple[SuggestHit, ...]:
+        record = _record()
+        return (
+            SuggestHit(
+                search=SearchResult(record, 355, "description"),
+                ficha=self.ficha(record.code),
+                national_notes=(),
+                disclaimer="This is not a classification. WCO is not LIGIE/NICO authority.",
+            ),
+        )[:limit]
 
     def parent(self, code: str) -> TariffRecord | None:
         return _record("010121", "hs6")
@@ -256,3 +275,40 @@ def test_empty_chapters_csv_keeps_tariff_schema(monkeypatch, capsys) -> None:
     output = capsys.readouterr().out
     assert output.startswith("code,level,description")
     assert output.count("\n") == 1
+
+
+def test_suggest_accepts_limit_and_format(capsys) -> None:
+    assert main(["suggest", "camisas de punto", "--limit", "1", "--format", "json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert len(payload) == 1
+    assert "not a classification" in payload[0]["disclaimer"].lower()
+    assert payload[0]["search"]["record"]["code"] == "01012101"
+
+
+def test_suggest_table_includes_disclaimer(capsys) -> None:
+    assert main(["suggest", "camisas de punto"]) == 0
+    text = capsys.readouterr().out.lower()
+    assert "01012101" in text
+    assert "not a classification" in text
+
+
+def test_suggest_csv_keeps_search_prefix(capsys) -> None:
+    assert main(["suggest", "camisas de punto", "--format", "csv"]) == 0
+    output = capsys.readouterr().out
+    assert output.startswith("score,match_kind,code,level,description")
+    assert "disclaimer" in output.splitlines()[0]
+
+
+def test_empty_suggest_csv_keeps_schema(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(FakeDataset, "suggest", lambda self, text, limit=5: ())
+    assert main(["suggest", "sin coincidencias", "--format", "csv"]) == 0
+    output = capsys.readouterr().out
+    assert output.startswith("score,match_kind,code,level,description")
+    assert output.count("\n") == 1
+
+
+def test_suggest_help_is_retrieve_only_not_a_classification(capsys) -> None:
+    assert main(["suggest", "--help"]) == 0
+    text = capsys.readouterr().out.lower()
+    assert "retrieve-only" in text
+    assert "classification" in text
