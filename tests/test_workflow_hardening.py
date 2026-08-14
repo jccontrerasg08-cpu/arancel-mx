@@ -2,7 +2,8 @@
 
 GitHub Actions YAML uses a bare `on:` key. A YAML 1.1 loader maps that key to
 the boolean True, which is why this repo previously imported PyYAML. These
-tests treat `on:` as a literal line instead.
+tests treat `on:` as a literal line instead. Loading still runs a stdlib
+structural check so empty or malformed workflows fail before those text checks.
 """
 
 from __future__ import annotations
@@ -19,19 +20,46 @@ _PINNED_USES = re.compile(r"^[^@\s]+@[0-9a-f]{40}$")
 _INTERPOLATION = re.compile(r"\$\{\{")
 _TOP_LEVEL = re.compile(r"^[a-zA-Z_][\w-]*:", re.MULTILINE)
 _JOB_KEY = re.compile(r"^  ([\w-]+):$", re.MULTILINE)
+_STEP_ITEM = re.compile(r"^(\s+)-\s+\S")
+_BASH_SHELL = re.compile(r"^\s+(?:-\s+)?shell:\s+bash\s*$", re.MULTILINE)
 _USES = re.compile(
     r"^(?P<indent>[ \t]*)(?:-[ \t]+)?uses:[ \t]+(?P<ref>\S+)", re.MULTILINE
 )
+_REQUIRED_HEADERS = ("name:", "on:", "jobs:")
 
 
 def _workflow_paths() -> list[Path]:
     return sorted((*WORKFLOWS.glob("*.yml"), *WORKFLOWS.glob("*.yaml")))
 
 
+def _top_level_keys(text: str) -> list[str]:
+    return [match.group(0)[:-1] for match in _TOP_LEVEL.finditer(text)]
+
+
+def _assert_workflow_structure(name: str, text: str) -> None:
+    assert text.strip(), f"{name} is empty"
+    keys = _top_level_keys(text)
+    assert keys, f"{name} has no top-level keys"
+    seen: set[str] = set()
+    for key in keys:
+        assert key not in seen, f"{name} duplicates top-level key {key!r}"
+        seen.add(key)
+    for header in _REQUIRED_HEADERS:
+        assert re.search(rf"^{re.escape(header)}", text, re.MULTILINE), (
+            f"{name} missing {header}"
+        )
+    _job_blocks(text)
+
+
 def _workflow_texts() -> dict[str, str]:
     paths = _workflow_paths()
     assert paths
-    return {path.name: path.read_text(encoding="utf-8") for path in paths}
+    texts: dict[str, str] = {}
+    for path in paths:
+        text = path.read_text(encoding="utf-8")
+        _assert_workflow_structure(path.name, text)
+        texts[path.name] = text
+    return texts
 
 
 def _block_after(text: str, header: str) -> str:
@@ -48,6 +76,8 @@ def _job_blocks(text: str) -> dict[str, str]:
     jobs_text = text[jobs_match.end() :]
     keys = list(_JOB_KEY.finditer(jobs_text))
     assert keys
+    names = [match.group(1) for match in keys]
+    assert len(names) == len(set(names)), f"duplicate jobs: {names}"
     blocks: dict[str, str] = {}
     for i, match in enumerate(keys):
         end = keys[i + 1].start() if i + 1 < len(keys) else len(jobs_text)
@@ -78,6 +108,31 @@ def _run_scripts(block: str) -> list[str]:
             scripts.append(inline.group(1))
         i += 1
     return scripts
+
+
+def _step_blocks(block: str) -> list[str]:
+    lines = block.splitlines()
+    steps_at = next(
+        (i for i, line in enumerate(lines) if re.match(r"^\s+steps:\s*$", line)),
+        None,
+    )
+    if steps_at is None:
+        return []
+    starts: list[int] = []
+    item_indent: int | None = None
+    for i, line in enumerate(lines[steps_at + 1 :], start=steps_at + 1):
+        match = _STEP_ITEM.match(line)
+        if not match:
+            continue
+        indent = len(match.group(1))
+        if item_indent is None:
+            item_indent = indent
+        if indent == item_indent:
+            starts.append(i)
+    return [
+        "\n".join(lines[start : starts[i + 1] if i + 1 < len(starts) else len(lines)])
+        for i, start in enumerate(starts)
+    ]
 
 
 def _following_with_block(lines: list[str], uses_index: int) -> str:
@@ -122,6 +177,56 @@ def test_run_script_extraction_covers_list_items_and_folded_blocks():
         "          printf foo |\n          cat",
         "          printf bar | cat",
     ]
+    assert len(_step_blocks(block)) == 3
+
+
+def test_workflow_structure_rejects_empty_and_malformed():
+    valid = (
+        "name: x\n"
+        "on:\n"
+        "  push:\n"
+        "jobs:\n"
+        "  test:\n"
+        "    runs-on: ubuntu-latest\n"
+    )
+    _assert_workflow_structure("ok.yml", valid)
+    cases = (
+        ("empty.yml", ""),
+        ("dup-key.yml", "name: a\nname: b\non:\n  push:\njobs:\n  test:\n    runs-on: ubuntu-latest\n"),
+        ("no-name.yml", "on:\n  push:\njobs:\n  test:\n    runs-on: ubuntu-latest\n"),
+        ("no-on.yml", "name: x\njobs:\n  test:\n    runs-on: ubuntu-latest\n"),
+        ("no-jobs.yml", "name: x\non:\n  push:\n"),
+        ("empty-jobs.yml", "name: x\non:\n  push:\njobs:\n"),
+        (
+            "dup-job.yml",
+            "name: x\non:\n  push:\njobs:\n  test:\n    runs-on: ubuntu-latest\n"
+            "  test:\n    runs-on: ubuntu-latest\n",
+        ),
+    )
+    for name, text in cases:
+        try:
+            _assert_workflow_structure(name, text)
+        except AssertionError:
+            continue
+        raise AssertionError(f"{name} should fail structure check")
+
+
+def test_pipefail_requires_shell_bash_on_the_piped_step():
+    job = """\
+  example:
+    steps:
+      - name: Unrelated
+        shell: bash
+        run: echo ok
+      - name: Piped
+        run: printf foo | cat
+"""
+    steps = _step_blocks(job)
+    assert len(steps) == 2
+    assert "shell: bash" in job
+    piped = [step for step in steps if any("|" in script for script in _run_scripts(step))]
+    assert len(piped) == 1
+    assert _BASH_SHELL.search(piped[0]) is None
 
 
 def test_action_extraction_covers_list_items_and_mapping_keys():
@@ -192,14 +297,13 @@ def test_every_workflow_serializes_concurrent_runs():
 
 
 def test_every_action_is_pinned_to_a_commit_sha_with_a_readable_version_comment():
-    for path in _workflow_paths():
-        text = path.read_text(encoding="utf-8")
+    for name, text in _workflow_texts().items():
         for match in _USES.finditer(text):
             uses = match.group("ref")
-            assert _PINNED_USES.fullmatch(uses), f"{path.name} uses {uses}"
+            assert _PINNED_USES.fullmatch(uses), f"{name} uses {uses}"
             line = text[match.start() :].splitlines()[0]
             assert f"uses: {uses} # v" in line, (
-                f"{path.name} pins {uses} without a readable version comment"
+                f"{name} pins {uses} without a readable version comment"
             )
 
 
@@ -233,19 +337,20 @@ def test_no_shell_script_interpolates_workflow_expressions():
 def test_piped_shell_scripts_opt_into_pipefail():
     for name, text in _workflow_texts().items():
         for job_name, block in _job_blocks(text).items():
-            for script in _run_scripts(block):
-                if "|" not in script:
-                    continue
-                assert "set -euo pipefail" in script, (
-                    f"{name}:{job_name} pipes without pipefail"
-                )
-                assert "shell: bash" in block, f"{name}:{job_name} pipes without shell: bash"
+            for step in _step_blocks(block):
+                for script in _run_scripts(step):
+                    if "|" not in script:
+                        continue
+                    label = f"{name}:{job_name}"
+                    assert "set -euo pipefail" in script, f"{label} pipes without pipefail"
+                    assert _BASH_SHELL.search(step), (
+                        f"{label} pipes without shell: bash on that step"
+                    )
 
 
 def test_workflow_outputs_are_only_written_through_the_reviewed_boundary():
-    for path in _workflow_paths():
-        text = path.read_text(encoding="utf-8")
+    for name, text in _workflow_texts().items():
         assert "GITHUB_OUTPUT" not in text, (
-            f"{path.name} writes step outputs inline; use scripts.workflow_diagnostics "
+            f"{name} writes step outputs inline; use scripts.workflow_diagnostics "
             "so the values stay validated and single-line"
         )
