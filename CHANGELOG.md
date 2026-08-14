@@ -7,6 +7,7 @@ All notable changes to the Python package are documented here. Dataset releases 
 ### Added
 
 - Description `search` ranks matching HS2 chapters first, then current rows under those chapters (`scorer_version` `"1"`, 0–1 `confidence` for analytics). Exact code/prefix ranking is unchanged. Not a classification.
+- `arancel-mx --dataset path.duckdb` opens a local DuckDB file for query commands. Missing files fail closed. `package_consumer_probe.py --forbid-src-layout` rejects editable `src/arancel_mx` installs.
 - `arancel-mx suggest` / `Dataset.suggest` retrieve ficha plus national notes for the top matches (prefer `fraccion8`). Retrieve-only; a human or their own model classifies.
 - Optional local WCO HS 2022 PDF cache for reading support. Not legal identity, not DuckDB, not `source_registry.json`. Copyright remains WCO.
 - External classifiers (for example `dspy-nomenclator` on PyPI) stay outside this package; paste HS6 into existing `arancel-mx compare`. PR #75 closed without vendoring nomenclator.

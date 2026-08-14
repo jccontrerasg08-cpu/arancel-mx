@@ -26,6 +26,11 @@ def _parser() -> argparse.ArgumentParser:
         help="Fail if arancel_mx imports from beneath this source checkout root.",
     )
     parser.add_argument(
+        "--forbid-src-layout",
+        action="store_true",
+        help="Fail if arancel_mx imports from a checkout src/arancel_mx layout.",
+    )
+    parser.add_argument(
         "--dataset",
         type=Path,
         help="Optional local DuckDB dataset to open and query read-only.",
@@ -65,6 +70,18 @@ def main(argv: list[str] | None = None) -> int:
                 import_origin=str(origin),
             )
 
+    if args.forbid_src_layout:
+        if (
+            origin.name == "__init__.py"
+            and origin.parent.name == "arancel_mx"
+            and origin.parent.parent.name == "src"
+        ):
+            return _error(
+                "import_origin",
+                "arancel_mx resolved from a source checkout src layout",
+                import_origin=str(origin),
+            )
+
     actual_version = arancel_mx.__version__
     if actual_version != args.expected_version:
         return _error(
@@ -86,6 +103,7 @@ def main(argv: list[str] | None = None) -> int:
         try:
             dataset = arancel_mx.Dataset.open(dataset_path)
             record = dataset.lookup(args.lookup_code)
+            hits = dataset.suggest("reproductores", limit=1)
         except Exception as exc:
             return _error(
                 "dataset",
@@ -100,6 +118,11 @@ def main(argv: list[str] | None = None) -> int:
                 "dataset_source": dataset.info.source,
                 "dataset_structural_valid": dataset.info.structural_valid,
                 "lookup_code": record.code,
+                "suggest_count": len(hits),
+                "suggest_code": None if not hits else hits[0].search.record.code,
+                "suggest_scorer_version": None
+                if not hits
+                else hits[0].search.scorer_version,
             }
         )
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from pathlib import Path
 import sys
 
 from arancel_mx.consumer.config import resolve_config
@@ -60,7 +61,7 @@ def _add_offline(parser: argparse.ArgumentParser) -> None:
 def _add_dataset_selection(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--dataset",
-        help="Pin an exact data-YYYY.MM.DD release instead of the latest selection",
+        help="Pin data-YYYY.MM.DD or open a local .duckdb file",
     )
     _add_offline(parser)
 
@@ -223,6 +224,16 @@ def register_consumer_commands(
     chapters.set_defaults(consumer_action="chapters")
 
 
+def _local_duckdb_path(value: str) -> Path | None:
+    text = value.strip()
+    if not text:
+        return None
+    path = Path(text)
+    if path.is_file() or text.lower().endswith(".duckdb") or "/" in text or "\\" in text:
+        return path
+    return None
+
+
 def _consumer_config(namespace: argparse.Namespace):
     options: dict[str, object] = {}
     if getattr(namespace, "dataset", None) is not None:
@@ -240,6 +251,13 @@ def _consumer_config(namespace: argparse.Namespace):
 def _selected_dataset(namespace: argparse.Namespace) -> Dataset:
     # Validate environment/configuration through the same public error boundary
     # used by data and doctor before Dataset resolves it internally.
+    raw = getattr(namespace, "dataset", None)
+    if raw:
+        local = _local_duckdb_path(raw)
+        if local is not None:
+            if not local.is_file():
+                raise DatasetUnavailableError(f"local dataset not found: {local}")
+            return Dataset.open(local)
     _consumer_config(namespace)
     options = {"offline": namespace.offline}
     if namespace.dataset:

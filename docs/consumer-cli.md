@@ -39,7 +39,10 @@ To select an exact data release instead of the default latest selection:
 arancel-mx data download --dataset data-YYYY.MM.DD
 arancel-mx lookup 01012101 --dataset data-YYYY.MM.DD
 arancel-mx data verify --dataset data-YYYY.MM.DD
+arancel-mx suggest "reproductores" --dataset arancel_mx.duckdb
 ```
+
+`--dataset` also opens a local `.duckdb` file (`Dataset.open`). That path is structurally validated, not `release_verified`.
 
 The same pin can be supplied through `ARANCEL_MX_DATASET`.
 

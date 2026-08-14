@@ -83,3 +83,5 @@ def test_clean_wheel_install_runs_probe_with_local_dataset(tmp_path: Path) -> No
     assert completed.returncode == 0, completed.stdout + completed.stderr
     assert '"status":"ok"' in completed.stdout
     assert '"lookup_code":"01012101"' in completed.stdout
+    assert '"suggest_code":"01012101"' in completed.stdout
+    assert '"suggest_scorer_version":"1"' in completed.stdout
