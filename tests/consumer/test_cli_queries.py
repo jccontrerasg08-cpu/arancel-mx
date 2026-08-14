@@ -314,4 +314,4 @@ def test_suggest_help_is_retrieve_only_not_a_classification(capsys) -> None:
     assert main(["suggest", "--help"]) == 0
     text = capsys.readouterr().out.lower()
     assert "retrieve-only" in text
-    assert "classification" in text
+    assert "no es una clasificación" in text

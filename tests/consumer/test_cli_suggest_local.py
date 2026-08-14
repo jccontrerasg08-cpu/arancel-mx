@@ -5,6 +5,8 @@ from pathlib import Path
 import subprocess
 import sys
 
+import duckdb
+
 from arancel_mx.cli import main
 from arancel_mx.consumer.wco_support import chapter_pdf_url
 
@@ -77,3 +79,42 @@ def test_subprocess_cli_suggest_uses_this_checkout_src(
     assert completed.returncode == 0, completed.stderr
     assert completed.stderr == ""
     assert completed.stdout == SUGGEST_REPRODUCTORES_TABLE
+
+
+def test_cli_suggest_table_prints_national_notes_when_present(
+    consumer_duckdb: Path,
+    capsys,
+) -> None:
+    conn = duckdb.connect(str(consumer_duckdb))
+    try:
+        conn.execute(
+            "INSERT INTO national_note VALUES ('note-01-1', '01', '1')"
+        )
+        conn.execute(
+            """
+            INSERT INTO national_note_version VALUES (
+                'note-01-1-v', 'note-01-1',
+                'Los animales vivos de este capítulo.',
+                NULL, NULL, 'fixture-source'
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE OR REPLACE VIEW arancel_mx_national_notes AS
+            SELECT n.national_note_id, n.chapter, n.note_number,
+                   v.national_note_version_id, v.text, v.effective_from,
+                   v.effective_to, v.source_document_id
+            FROM national_note n
+            JOIN national_note_version v USING (national_note_id)
+            """
+        )
+    finally:
+        conn.close()
+
+    assert main(["suggest", "reproductores", "--dataset", str(consumer_duckdb)]) == 0
+    captured = capsys.readouterr()
+    assert captured.err == ""
+    assert "Los animales vivos de este capítulo." in captured.out
+    assert "Notas nacionales" in captured.out
+    assert "Notas nacionales  (none)" not in captured.out

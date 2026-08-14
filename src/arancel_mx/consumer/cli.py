@@ -185,10 +185,10 @@ def register_consumer_commands(
     suggest = _add_query_command(
         subparsers,
         "suggest",
-        help_text="Retrieve-only suggestions; not a classification",
+        help_text="Sugerencias retrieve-only; no es una clasificación",
         positional="text",
     )
-    suggest.description = "Retrieve-only suggestions; not a classification"
+    suggest.description = "Sugerencias retrieve-only; no es una clasificación"
     suggest.add_argument("--limit", type=_positive_int, default=5)
 
     _add_query_command(
