@@ -6,6 +6,7 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Added
 
+- Official `data-*` capture fetches SNICE national-notes HTML and materializes `arancel_mx_national_notes`. GIR, section/chapter notes, and reglas complementarias remain unpublished.
 - Documented GitHub review extensions as install-only, `sha256sum -c SHA256SUMS` copy-paste, and `linguist-generated` for `.xls` fixtures.
 - `docs/external-consumption.md` uses `arancel-mx data verify --bundle` after `data download`; `sha256sum -c SHA256SUMS` is for a full GitHub Release directory.
 

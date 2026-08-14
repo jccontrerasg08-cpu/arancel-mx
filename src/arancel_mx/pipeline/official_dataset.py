@@ -9,7 +9,10 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any, Literal
 
-from arancel_mx.parsers.documents import parse_ligie_pdf_hierarchy
+from arancel_mx.parsers.documents import (
+    parse_ligie_pdf_hierarchy,
+    parse_national_notes_html,
+)
 from arancel_mx.parsers.profiles import resolve_workbook_profile
 from arancel_mx.parsers.workbooks import (
     parse_ligie_workbook,
@@ -33,6 +36,7 @@ from arancel_mx.release.package import (
     verify_release,
     verify_sources,
 )
+from arancel_mx.sources.http import decode_fetched_text
 from arancel_mx.storage.duckdb import connect, init_tariff_db
 
 
@@ -277,6 +281,11 @@ def build_official_dataset(
     diputados_source = _required_source(
         snapshot, "diputados_ligie", "consolidated_text"
     )
+    notes_source = _required_source(snapshot, "national_notes", "national_notes")
+    national_notes = parse_national_notes_html(
+        decode_fetched_text(notes_source.fetched),
+        str(notes_source.source_document["source_document_id"]),
+    )
 
     ligie_profile = resolve_workbook_profile(
         probe_workbook(ligie_source.capture.path), "ligie_snapshot"
@@ -340,6 +349,7 @@ def build_official_dataset(
             classifications,
             rate_rows,
             release,
+            national_notes=national_notes,
         )
         level_counts = dict(
             connection.execute(

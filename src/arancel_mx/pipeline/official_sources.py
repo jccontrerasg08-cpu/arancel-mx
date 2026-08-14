@@ -45,6 +45,7 @@ SOURCE_AUTHORITY = {
     "ligie": ("Secretaría de Economía / SNICE", "SNICE"),
     "nico": ("Secretaría de Economía / SNICE", "SNICE"),
     "diputados_ligie": ("Cámara de Diputados", "Cámara de Diputados"),
+    "national_notes": ("Secretaría de Economía / SNICE", "SNICE"),
 }
 LEGAL_EVIDENCE_HOSTS = (
     "dof.gob.mx",
@@ -381,6 +382,15 @@ def capture_official_inputs(
             config=config,
             session=client,
         ),
+        _capture_source(
+            dataset_key="national_notes",
+            document_role="national_notes",
+            title="Notas nacionales LIGIE",
+            url=registry["national_notes"].canonical_page,
+            entry=registry["national_notes"],
+            config=config,
+            session=client,
+        ),
         *legal_sources,
     )
     reconciliation = _reconcile_snapshot(ledger, sources)
@@ -425,6 +435,8 @@ def write_release_sources(
             return f"ligie-ledger{suffix or '.html'}"
         if key == ("diputados_ligie", "consolidated_text"):
             return "ligie-consolidated.pdf"
+        if key == ("national_notes", "national_notes"):
+            return "national-notes.html"
         if key == ("dof_law_reform", "law_reform"):
             return f"dof-law-reform{suffix}"
         if key == ("dof_tariff_decree", "tariff_decree"):
