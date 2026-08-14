@@ -103,7 +103,7 @@ arancel-mx provenance 01012101
 arancel-mx lookup 01012101 --offline --format json
 ```
 
-`wco cite`/`wco download` are WCO HS 2022 reading support only, not LIGIE/NICO authority, not a DuckDB query. `cite` never downloads.
+`wco cite`/`wco download` son apoyo de lectura HS 2022 de la OMA, no autoridad LIGIE/NICO ni consulta DuckDB. `cite` no descarga.
 
 Python:
 
