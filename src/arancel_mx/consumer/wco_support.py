@@ -11,6 +11,7 @@ import urllib.error
 import urllib.request
 
 from arancel_mx.consumer.config import resolve_config
+from arancel_mx.consumer.errors import ArancelMXError
 
 WCO_HS2022_BASE = (
     "https://www.wcoomd.org/-/media/wco/public/global/pdf/"
@@ -23,7 +24,7 @@ DISCLAIMER = (
 _GIR_NAME = "0001_2022e-gir.pdf"
 
 
-class WcoSupportError(Exception):
+class WcoSupportError(ArancelMXError):
     """Raised when a WCO support PDF is missing offline or fails download checks."""
 
 
@@ -83,6 +84,17 @@ def cite_chapter(chapter: str, *, cache_dir: Path | None = None) -> WcoCite:
         chapter=code,
         kind="chapter",
         url=chapter_pdf_url(code),
+        local_path=None if local is None else str(local),
+        disclaimer=DISCLAIMER,
+    )
+
+
+def cite_gir(*, cache_dir: Path | None = None) -> WcoCite:
+    local = local_gir_pdf(cache_dir=cache_dir)
+    return WcoCite(
+        chapter=None,
+        kind="gir",
+        url=gir_pdf_url(),
         local_path=None if local is None else str(local),
         disclaimer=DISCLAIMER,
     )
