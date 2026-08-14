@@ -16,6 +16,7 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Removed
 
+- Dropped test-only `reportlab` and `PyYAML` from the `dev` extra; parser tests use committed PDF fixtures and workflow contracts read YAML as text.
 - Unused staging promotion path, warehouse-only DDL, SNICE HTML crawler, SIICEX↔VUCEM adapter types, parse-reuse helper, demo-generation workflow, and `current_resolver_probe`.
 
 ### Fixed
