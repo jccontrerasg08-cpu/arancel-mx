@@ -203,6 +203,7 @@ arancel-mx compare 01012101
 arancel-mx chapters
 arancel-mx search "refrigeradores"
 arancel-mx suggest "camisas de algodón de punto"
+arancel-mx wco cite 01
 arancel-mx data verify
 ```
 
@@ -227,6 +228,7 @@ Pin an exact release with `--dataset data-YYYY.MM.DD`. See [`docs/consumer-cli.m
 | `data verify` | Revalidate local integrity and optionally the remote bundle |
 | `lookup` / `search` | Query by exact code or text |
 | `suggest` | Retrieve ficha and national notes for top candidates; does not classify |
+| `wco cite` / `wco download` | WCO HS 2022 PDF URL (and cache path if present); reading support, not LIGIE/NICO authority |
 | `ficha` | Hierarchy card from chapter → fraction/NICO with UM, IGI, and IGE |
 | `compare` | Diff GitHub-dataset HS6 / MX8 / NICO against VUCEM (informative) |
 | `chapters` | List current HS2 chapters |
