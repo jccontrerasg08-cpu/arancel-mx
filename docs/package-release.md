@@ -14,7 +14,7 @@ pip install "arancel-mx[maintainer]"
 
 ## Package and data versions are independent
 
-The Python distribution uses PEP 440 package versions such as `0.2.0` (PyPI) and in-tree `0.2.1`. Tariff datasets use immutable date tags such as `data-2026.08.11` (`/releases/latest` currently). The PyPI project page long description is frozen at the `0.2.0` upload until `pkg-v0.2.1`.
+The Python distribution uses PEP 440 package versions such as `0.2.0` (PyPI) and in-tree `0.2.1`. Tariff datasets use immutable date tags such as `data-2026.08.15` (`/releases/latest` currently). The PyPI project page long description is frozen at the `0.2.0` upload until `pkg-v0.2.1`.
 
 A package change does not create a new tariff dataset. A new tariff dataset does not require rebuilding the Python wheel.
 

@@ -29,7 +29,7 @@ arancel-mx data verify
 The package version and dataset version are independent identifiers.
 
 - **package version**: the Python distribution and CLI implementation, reported by `arancel-mx --version`. PyPI currently publishes `0.2.0`. The checkout declares `0.2.1` and is not on PyPI until `pkg-v0.2.1`.
-- **dataset version**: an immutable public tariff-data release named `data-YYYY.MM.DD`. `/releases/latest` currently resolves to `data-2026.08.11`.
+- **dataset version**: an immutable public tariff-data release named `data-YYYY.MM.DD`. `/releases/latest` currently resolves to `data-2026.08.15`.
 
 Updating the Python package does not silently replace a pinned dataset version. Publishing a new dataset release does not require changing the package version.
 
@@ -99,7 +99,7 @@ arancel-mx wco download 61
 - `ficha` returns the SIICEX-style hierarchy card (section grouping, chapter → heading → subheading → fraction/NICO, UM, IGI, IGE) from the verified official dataset only. IGI/IGE are the official `igi_text` / `ige_text` values (for example `10` and `Ex.`), not rewritten percentages. Codes absent from the current official snapshot fail closed.
 - `chapters` lists current HS2 chapters.
 - `search` ranks current records. Exact code and code-prefix ranking are unchanged. Description queries rank matching HS2 chapters first, then rank current rows under those chapters. Results include `scorer_version` (`"1"`; bump when ranking changes) and a 0–1 `confidence` for analytics. `search` is not a classification.
-- `suggest` uses the same description narrowing and prints ficha plus national notes from `arancel_mx_national_notes` when that view has rows (the current `data-*` snapshot may be empty) for the top N hits, preferring `fraccion8`. `arancel-mx suggest "camisas de algodón de punto"` / `Dataset.suggest(text, limit=5)`. Retrieve-only: it does not claim a classification. A human, or their own model, classifies; evidence stays in the official dataset.
+- `suggest` uses the same description narrowing and prints ficha plus national notes from `arancel_mx_national_notes` when that view has rows (`data-2026.08.15` contains 266 records) for the top N hits, preferring `fraccion8`. `arancel-mx suggest "camisas de algodón de punto"` / `Dataset.suggest(text, limit=5)`. Retrieve-only: it does not claim a classification. A human, or their own model, classifies; evidence stays in the official dataset.
 - `wco cite` prints the WCO HS 2022 PDF URL and local cache path if present; it never downloads. `wco download` stores the PDF in the local cache (`--offline` fails closed if missing). WCO PDFs are reading support only, not LIGIE/NICO authority. `arancel-mx wco cite gir` cites the GIR PDF.
 - `parent` returns the direct parent in the HS2 → HS4 → HS6 → MX8 → NICO10 hierarchy.
 - `children` returns direct children of a code.

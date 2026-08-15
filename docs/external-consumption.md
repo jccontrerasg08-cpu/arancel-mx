@@ -32,7 +32,7 @@ arancel-mx --version
 arancel-mx doctor
 ```
 
-`arancel-mx==0.2.0` ya está en PyPI (carga del 2026-08-12). El checkout declara `0.2.1`; esa versión no está en PyPI hasta `pkg-v0.2.1`. Las aplicaciones aguas abajo siguen fijando `arancel-mx==0.2.0`. La descripción larga en pypi.org es la del upload `0.2.0` (README congelado en esa rueda); los contratos vivos están en git. Fijar el paquete **no** fija el dataset. El dataset usa tags inmutables `data-YYYY.MM.DD` independientes de la versión PEP 440. `/releases/latest` resuelve hoy a `data-2026.08.11`.
+`arancel-mx==0.2.0` ya está en PyPI (carga del 2026-08-12). El checkout declara `0.2.1`; esa versión no está en PyPI hasta `pkg-v0.2.1`. Las aplicaciones aguas abajo siguen fijando `arancel-mx==0.2.0`. La descripción larga en pypi.org es la del upload `0.2.0` (README congelado en esa rueda); los contratos vivos están en git. Fijar el paquete **no** fija el dataset. El dataset usa tags inmutables `data-YYYY.MM.DD` independientes de la versión PEP 440. `/releases/latest` resuelve hoy a `data-2026.08.15`.
 
 ```bash
 arancel-mx data download --dataset data-YYYY.MM.DD
@@ -80,7 +80,7 @@ El modo `--offline` es estricto: no hay fallback de red. Si el dataset falta o f
 Dos consultas de apoyo a la revisión. Ninguna publica una clasificación ni sustituye LIGIE/NICO. El dataset oficial verificado es la evidencia; WCO y VUCEM son únicamente fuentes informativas de apoyo.
 
 1. **`search` (dos etapas, sin LLM, offline).** `arancel-mx search "camisas de algodón de punto"`. En consultas por descripción ordena primero los capítulos HS2 coincidentes y después las filas vigentes de esos capítulos. El ranking por código exacto o prefijo no cambia. Los resultados incluyen `scorer_version` (`"1"`; se incrementa si cambia el ranking) y un `confidence` de 0 a 1 para analítica. No es una clasificación.
-2. **`suggest`.** `arancel-mx suggest "camisas de algodón de punto"` / `Dataset.suggest(text, limit=5)`. Mismo recorte. Imprime ficha y notas nacionales (`arancel_mx_national_notes` cuando la vista tiene filas; el snapshot `data-*` actual puede estar vacío) para los N primeros, con preferencia por `fraccion8`. Retrieve-only: no afirma una clasificación. Una persona decide la clasificación; la evidencia permanece en el dataset oficial.
+2. **`suggest`.** `arancel-mx suggest "camisas de algodón de punto"` / `Dataset.suggest(text, limit=5)`. Mismo recorte. Imprime ficha y notas nacionales (`arancel_mx_national_notes` cuando la vista tiene filas; `data-2026.08.15` contiene 266 registros) para los N primeros, con preferencia por `fraccion8`. Retrieve-only: no afirma una clasificación. Una persona decide la clasificación; la evidencia permanece en el dataset oficial.
 
 CLI:
 
@@ -172,7 +172,7 @@ No hay un séptimo asset `source_trace.json`. Una aplicación que necesite un ob
 - GIR, notas de sección/capítulo/subpartida o reglas complementarias (incluida la 10ª), y sugerencias HS6 WCO. Esos textos WCO no se publican como instrumento jurídico mexicano. Una caché local opcional de PDF WCO es sólo apoyo de lectura (copyright WCO; no es autoridad LIGIE/NICO). `suggest` es retrieve-only sobre el dataset oficial y no clasifica.
 - RGCE Anexos 1–30, instructivos de pedimento y dumps TIGIE no oficiales (`tigieX`). El cruce es `fraccion8`/`nico10`; Anexo 9 no sustituye `igi_text`
 
-Las notas nacionales LIGIE tienen tablas (`national_note*`, vista `arancel_mx_national_notes`) y un parser HTML. El pipeline oficial ya captura esa fuente. La release publicada `data-2026.08.11` puede seguir dejando la vista vacía hasta la siguiente `data-*`. No se inventan instrumentos legales.
+Las notas nacionales LIGIE tienen tablas (`national_note*`, vista `arancel_mx_national_notes`) y un parser HTML. El pipeline oficial ya captura esa fuente oficial DOF. La release publicada `data-2026.08.15` contiene 266 registros. No se inventan instrumentos legales.
 
 Una discrepancia, parser dudoso o gate fallido bloquea la publicación. No hay “publicar de todos modos”.
 
