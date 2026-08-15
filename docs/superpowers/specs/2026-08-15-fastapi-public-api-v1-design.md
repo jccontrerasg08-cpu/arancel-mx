@@ -15,7 +15,7 @@ Success means:
 
 - a public client can query current HS2/HS4/HS6/MX8/NICO10 records without installing Python;
 - responses are backed by one explicitly selected immutable `data-YYYY.MM.DD` release;
-- the service starts only after the selected dataset is structurally verified;
+- the service never reports readiness or serves tariff data until the selected dataset is structurally verified;
 - DuckDB is opened read-only;
 - API failures never weaken the existing official-data publication gates;
 - normal repository CI remains the pre-merge gate before FastAPI Cloud deploys the default branch.
@@ -83,7 +83,8 @@ The API version is `/v1`. Package version, API version, and dataset version rema
 - LLM/classifier functionality;
 - bulk exports;
 - asynchronous job queues;
-- custom distributed rate-limit infrastructure.
+- custom distributed rate-limit infrastructure;
+- automatically publishing a new PyPI package merely because the FastAPI Cloud app is deployed.
 
 `compare` remains outside v1 because it can perform a live external VUCEM request. The first HTTP contract must be deterministic over the verified selected dataset.
 
@@ -136,9 +137,12 @@ For v1, follow the documented platform contract instead of relying on undocument
 - add a bounded `fastapi[standard]` requirement to the project runtime dependencies;
 - add `[tool.fastapi] entrypoint = "arancel_mx.api.app:app"`;
 - do not introduce a second package/workspace solely to isolate this dependency;
+- keep the existing CLI/library import path independent from API application initialization;
 - reassess an isolated deployment package only if dependency weight becomes a demonstrated problem.
 
 This is a conscious trade-off: slightly larger base installation in exchange for a standard, documented deployment path and no duplicate package metadata.
+
+The in-tree package is already `0.2.1`. This feature can remain part of that unreleased package version unless the repository's package-release review decides otherwise. FastAPI Cloud deployment and PyPI publication remain separate release events.
 
 ## 6. Dataset lifecycle
 
@@ -151,15 +155,18 @@ The value must match `data-YYYY.MM.DD`. There is no silent `latest` fallback in 
 Lifespan startup:
 
 1. parse and validate settings;
-2. call `Dataset.version(tag, offline=False, ...)`;
-3. reuse the existing download/cache/integrity machinery;
-4. ensure verification succeeds;
-5. retain the immutable `Dataset` object in application state;
-6. mark readiness true only after all prior steps succeed.
+2. initialize application state as not ready;
+3. call `Dataset.version(tag, offline=False, ...)` once;
+4. reuse the existing download/cache/integrity machinery;
+5. ensure verification succeeds;
+6. retain the immutable `Dataset` object in application state;
+7. mark readiness true only after all prior steps succeed.
+
+Expected dataset bootstrap failures are recorded in sanitized application state instead of fabricating an empty dataset. This allows `/healthz` to report process health and `/readyz` to return 503 with a stable error while tariff endpoints also return 503. Unexpected programming errors are not silently swallowed.
 
 Request handling opens short-lived read-only DuckDB connections through the existing `Dataset` methods. No writable connection is created.
 
-A failed dataset download, integrity check, schema validation, or open operation prevents readiness and must not be converted into a successful empty API.
+A failed dataset download, integrity check, schema validation, or open operation must never be converted into a successful empty API response.
 
 ## 7. HTTP contract
 
@@ -169,13 +176,13 @@ A failed dataset download, integrity check, schema validation, or open operation
 : small service descriptor with links to `/docs`, `/openapi.json`, and `/v1/meta`.
 
 `GET /healthz`
-: process health only. Returns 200 when the application process is alive.
+: process health only. Returns 200 when the application process is alive, even if the dataset is not ready.
 
 `GET /readyz`
 : returns 200 only when a verified dataset is loaded; otherwise 503.
 
 `GET /v1/meta`
-: returns `api_version`, package version, selected dataset version, schema version, and read-only status.
+: returns `api_version`, package version, selected dataset version, schema version, and read-only status. Returns 503 while the selected dataset is unavailable.
 
 ### Data endpoints
 
@@ -243,7 +250,7 @@ Mapping:
 - internal consumer inconsistency such as multiple current rows: 503;
 - unexpected exception: 500 with no traceback, filesystem path, SQL, or internal exception text in the response.
 
-A request ID is generated or propagated for diagnostics and returned in `X-Request-ID`.
+A fresh server-generated request ID is assigned to each request and returned in `X-Request-ID`. v1 does not trust an arbitrary incoming request ID for log identity.
 
 ## 10. CORS and public-access boundary
 
@@ -253,7 +260,7 @@ CORS policy:
 
 - `allow_origins=["*"]`;
 - `allow_credentials=False`;
-- allow only `GET` and `OPTIONS` cross-origin methods;
+- allow only `GET` cross-origin application methods; preflight `OPTIONS` is handled by CORS middleware;
 - expose `X-Request-ID`;
 - no authorization cookies or headers are part of v1.
 
@@ -279,7 +286,8 @@ Implementation follows TDD. For each behavior slice, add a failing test before p
 Required focused tests:
 
 - settings reject missing/invalid dataset tags;
-- lifespan loads exactly one dataset and readiness reflects success/failure;
+- lifespan attempts exactly one dataset bootstrap and readiness reflects success/failure;
+- dataset-bootstrap failure leaves health available, readiness/data unavailable, and does not fabricate data;
 - root/meta/health/readiness contracts;
 - exact HS/MX8/NICO10 lookup including leading-zero codes and `nico2="00"`;
 - official tariff text is not rewritten;
@@ -290,9 +298,11 @@ Required focused tests:
 - provenance ordering;
 - National Notes by chapter;
 - CORS does not enable credentials;
+- request IDs are server-generated and returned consistently;
 - unexpected exceptions do not leak internal details;
 - API has no POST/PUT/PATCH/DELETE application routes;
-- OpenAPI exposes only intended v1 operations;
+- OpenAPI exposes only intended service/v1 operations;
+- importing the normal CLI/library does not initialize the FastAPI application or download a dataset;
 - FastAPI entrypoint imports from a built wheel, not only an editable checkout.
 
 Repository gates before merge:
@@ -351,7 +361,7 @@ Expected values should come from the pinned `data-2026.08.15` test fixture or a 
 - no live upstream fetch occurs during a normal data request;
 - dataset verification errors fail closed;
 - request error payloads are sanitized;
-- production logs may include request IDs and exception classes but must not log secrets or downloaded source contents;
+- production logs may include server-generated request IDs and exception classes but must not log secrets or downloaded source contents;
 - no CORS credentials;
 - no debug mode in production;
 - API startup must not publish or alter GitHub releases.
@@ -375,7 +385,7 @@ The feature is complete only when:
 
 1. every listed v1 route is backed by the existing verified `Dataset` facade;
 2. production selects an explicit immutable dataset tag;
-3. startup verification and read-only DuckDB behavior are enforced;
+3. dataset verification and read-only DuckDB behavior are enforced before any tariff response is served;
 4. no write/maintainer endpoint exists;
 5. tests demonstrate NICO string/leading-zero preservation;
 6. all repository verification gates pass on the PR head;
