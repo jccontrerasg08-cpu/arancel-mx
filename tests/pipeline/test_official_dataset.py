@@ -29,9 +29,9 @@ LIGIE_INDEX = "https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html"
 NICO_INDEX = "https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html"
 LIGIE_URL = "https://www.snice.gob.mx/files/FRACCIONESARANCELARIAS_20260810.XLSX"
 NICO_URL = "https://www.snice.gob.mx/files/NICO-AGOSTO26-LIGIE_20260810-20260810.XLSX"
-NOTES_URL = "https://www.snice.gob.mx/cs/avi/snice/ligie.notasnac22.html"
+NOTES_URL = "https://dof.gob.mx/nota_detalle.php?codigo=5673161&fecha=02/12/2022"
 NOTES_HTML = (
-    Path(__file__).parents[1] / "fixtures" / "snice" / "ligie.notasnac22.html"
+    Path(__file__).parents[1] / "fixtures" / "dof" / "national-notes-2022.html"
 ).read_text(encoding="utf-8")
 XLSX_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
@@ -241,7 +241,7 @@ def test_offline_build_produces_verified_release(tmp_path):
         notes_count = connection.execute(
             "SELECT COUNT(*) FROM arancel_mx_national_notes"
         ).fetchone()[0]
-        assert notes_count > 0
+        assert notes_count == 20
         chapter_notes = connection.execute(
             "SELECT chapter, note_number, text FROM arancel_mx_national_notes "
             "ORDER BY chapter, note_number"
@@ -283,6 +283,13 @@ def test_offline_build_produces_verified_release(tmp_path):
         assert source["source_url"].startswith("https://")
         assert len(source["sha256"]) == 64
         assert "local_path" not in source
+    national_notes_source = next(
+        source
+        for source in manifest["source_documents"]
+        if source["title"] == "Notas nacionales LIGIE (DOF)"
+    )
+    assert national_notes_source["source_url"] == NOTES_URL
+    assert national_notes_source["publication_venue"] == "Diario Oficial de la Federación"
 
 
 def test_build_rejects_fraction_dataset_without_tariff_values(tmp_path):

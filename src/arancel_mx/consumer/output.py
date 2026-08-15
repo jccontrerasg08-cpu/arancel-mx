@@ -247,7 +247,8 @@ def _csv_row(value: object) -> tuple[tuple[str, ...], dict[str, object]]:
         return fields, {field: _plain(value[field]) for field in fields}
     if is_dataclass(value):
         payload = _plain(value)
-        assert isinstance(payload, dict)
+        if not isinstance(payload, dict):
+            raise TypeError("dataclass serialization must produce a mapping")
         fields = tuple(sorted(payload))
         return fields, payload
     raise TypeError(f"Unsupported CSV output type: {type(value).__name__}")

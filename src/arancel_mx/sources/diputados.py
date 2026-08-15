@@ -88,7 +88,8 @@ class _LedgerParser(HTMLParser):
             self._link_href = None
             self._link_parts = None
         elif tag in {"th", "td"} and self._cell_parts is not None:
-            assert self._row_cells is not None
+            if self._row_cells is None:
+                raise ValueError("Diputados ledger parser closed a cell outside a row")
             self._row_cells.append(" ".join(self._cell_parts).strip())
             self._cell_parts = None
         elif tag == "tr" and self._row_cells is not None:

@@ -144,7 +144,8 @@ def fetch_html_body(
             if attempt == 2:
                 break
             time.sleep(_RETRY_PAUSE[attempt])
-    assert last_error is not None
+    if last_error is None:
+        raise RuntimeError("HTML access retries completed without a captured error")
     raise last_error
 
 

@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from arancel_mx.parsers.documents import parse_national_notes_html
@@ -42,3 +44,38 @@ def test_parse_national_notes_html_does_not_split_on_inline_chapter_references()
     rows = parse_national_notes_html(html, "doc-notes")
     assert [(row["chapter"], row["note_number"]) for row in rows] == [("01", "1"), ("02", "1")]
     assert "Capítulo 02" in rows[0]["text"]
+
+
+def test_parse_national_notes_html_handles_official_dof_section_and_chapter_scopes():
+    html = (
+        Path(__file__).parents[1] / "fixtures" / "dof" / "national-notes-2022.html"
+    ).read_text(encoding="utf-8")
+
+    rows = parse_national_notes_html(html, "official-dof-notes")
+
+    section_i = [
+        row
+        for row in rows
+        if row["scope_type"] == "section" and row["scope_value"] == "I"
+    ]
+    assert [row["chapter"] for row in section_i] == ["01", "02", "03", "04", "05"]
+    assert all(row["note_number"] == "1" for row in section_i)
+
+    section_vi = [
+        row
+        for row in rows
+        if row["scope_type"] == "section" and row["scope_value"] == "VI"
+    ]
+    assert [row["chapter"] for row in section_vi] == [f"{number:02d}" for number in range(28, 39)]
+
+    chapter_29 = [
+        row
+        for row in rows
+        if row["scope_type"] == "chapter" and row["scope_value"] == "29"
+    ]
+    assert [(row["chapter"], row["note_number"]) for row in chapter_29] == [("29", "1")]
+
+    chapter_97 = [row for row in rows if row["chapter"] == "97"]
+    assert len(chapter_97) == 1
+    assert "Artículo Segundo" not in chapter_97[0]["text"]
+    assert chapter_97[0]["source_document_id"] == "official-dof-notes"

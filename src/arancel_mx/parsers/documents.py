@@ -23,12 +23,52 @@ def _fold(value: object) -> str:
     return fold_text(value).upper()
 
 
-_CHAPTER_HEADING = re.compile(r"Cap[ií]tulo\s+(\d{1,2})\b", re.IGNORECASE)
+_CHAPTER_HEADING = re.compile(r"Cap[ií]tulo\s+(\d{1,2})(?![.\d])", re.IGNORECASE)
+_SECTION_HEADING = re.compile(r"Secci[oó]n\s+([IVXLCDM]+)\b", re.IGNORECASE)
 _NOTE_START = re.compile(r"(?m)^\s*(\d+)\.\s+")
+_SCOPE_BOUNDARY = re.compile(
+    r"(?m)(?=^[ \t]*(?:Cap[ií]tulo\s+\d{1,2}(?![.\d])|Secci[oó]n\s+[IVXLCDM]+\b|"
+    r"Art[ií]culo\s+|TRANSITORIOS\b))",
+    re.IGNORECASE,
+)
+_SECTION_CHAPTER_RANGES = {
+    "I": ("01", "05"),
+    "II": ("06", "14"),
+    "III": ("15", "15"),
+    "IV": ("16", "24"),
+    "V": ("25", "27"),
+    "VI": ("28", "38"),
+    "VII": ("39", "40"),
+    "VIII": ("41", "43"),
+    "IX": ("44", "46"),
+    "X": ("47", "49"),
+    "XI": ("50", "63"),
+    "XII": ("64", "67"),
+    "XIII": ("68", "70"),
+    "XIV": ("71", "71"),
+    "XV": ("72", "83"),
+    "XVI": ("84", "85"),
+    "XVII": ("86", "89"),
+    "XVIII": ("90", "92"),
+    "XIX": ("93", "93"),
+    "XX": ("94", "96"),
+    "XXI": ("97", "97"),
+}
+
+
+def _section_chapters(roman: str) -> tuple[str, ...]:
+    """Return the LIGIE chapters to which a section-level note applies."""
+    start, end = _SECTION_CHAPTER_RANGES[roman]
+    return tuple(f"{number:02d}" for number in range(int(start), int(end) + 1))
 
 
 def parse_national_notes_html(html: str, source_document_id: str) -> list[dict]:
-    """Extract numbered LIGIE national notes from SNICE-style HTML."""
+    """Extract numbered LIGIE national notes from SNICE or official DOF HTML.
+
+    National notes published at section level apply to every chapter in the
+    corresponding Harmonized System section. They are materialized once per
+    applicable chapter so the consumer's chapter lookup remains complete.
+    """
     if not source_document_id:
         raise ValueError("source_document_id is required")
     stripped = re.sub(r"(?is)<(script|style).*?</\1>", " ", html)
@@ -38,25 +78,36 @@ def parse_national_notes_html(html: str, source_document_id: str) -> list[dict]:
     text = re.sub(r"[ \t]+", " ", text)
     text = re.sub(r"\n{2,}", "\n", text)
     rows: list[dict] = []
-    chapter: str | None = None
-    for block in re.split(r"(?m)(?=^[ \t]*Cap[ií]tulo\s+\d{1,2}\b)", text, flags=re.IGNORECASE):
-        heading = _CHAPTER_HEADING.search(block)
-        if heading:
-            chapter = heading.group(1).zfill(2)
+    for block in _SCOPE_BOUNDARY.split(text):
+        chapter_heading = _CHAPTER_HEADING.search(block)
+        section_heading = _SECTION_HEADING.search(block)
+        if chapter_heading:
+            chapters = (chapter_heading.group(1).zfill(2),)
+            scope_type = "chapter"
+            scope_value = chapters[0]
+        elif section_heading:
+            scope_type = "section"
+            scope_value = section_heading.group(1).upper()
+            chapters = _section_chapters(scope_value)
+        else:
+            continue
         starts = list(_NOTE_START.finditer(block))
         for index, match in enumerate(starts):
             end = starts[index + 1].start() if index + 1 < len(starts) else len(block)
             body = " ".join(block[match.end() : end].split())
             if not body:
                 raise ValueError("national note is missing text")
-            rows.append(
-                {
-                    "chapter": chapter,
-                    "note_number": match.group(1),
-                    "text": body,
-                    "source_document_id": source_document_id,
-                }
-            )
+            for chapter in chapters:
+                rows.append(
+                    {
+                        "chapter": chapter,
+                        "scope_type": scope_type,
+                        "scope_value": scope_value,
+                        "note_number": match.group(1),
+                        "text": body,
+                        "source_document_id": source_document_id,
+                    }
+                )
     if not rows:
         raise ValueError("national notes HTML contains no numbered notes")
     return rows

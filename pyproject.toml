@@ -87,12 +87,14 @@ target-version = "py311"
 src = ["src"]
 
 [tool.ruff.lint]
-# Keep the first quality gate small enough that current main already passes.
-select = ["E9", "E71", "E72", "F63", "F7", "F811", "F82", "W6"]
+# Keep the baseline focused while enforcing the reviewed Bandit-compatible security rules.
+select = ["E9", "E71", "E72", "F63", "F7", "F811", "F82", "W6", "S"]
 
 [tool.ruff.lint.per-file-ignores]
 # Closure captured before a later `del`; ruff F821 false-positive on current main.
 "tests/consumer/test_upgrade_cache.py" = ["F821"]
+# Pytest assertions and controlled local-process fixtures are test contracts, not runtime code.
+"tests/**/*.py" = ["S101", "S105", "S107", "S603", "S607", "S108"]
 
 [tool.mypy]
 python_version = "3.11"
