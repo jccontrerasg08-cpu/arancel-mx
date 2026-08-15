@@ -112,7 +112,12 @@ def test_public_cors_allows_get_without_credentials(valid_settings, fake_dataset
     assert preflight.status_code == 200
     assert preflight.headers["access-control-allow-origin"] == "*"
     assert preflight.headers.get("access-control-allow-credentials") is None
-    assert "GET" in preflight.headers["access-control-allow-methods"]
+    allowed_methods = {
+        method.strip()
+        for method in preflight.headers["access-control-allow-methods"].split(",")
+    }
+    assert "GET" in allowed_methods
+    assert allowed_methods <= {"GET", "OPTIONS"}
     assert preflight.headers["x-request-id"]
 
     assert response.status_code == 200
