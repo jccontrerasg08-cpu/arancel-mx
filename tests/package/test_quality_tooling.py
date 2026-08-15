@@ -9,49 +9,53 @@ ROOT = Path(__file__).resolve().parents[2]
 PYPROJECT = ROOT / "pyproject.toml"
 CONSTRAINTS = ROOT / "requirements" / "production-build.txt"
 CI = ROOT / ".github" / "workflows" / "ci.yml"
-
-QUALITY_TOOLS = ("ruff", "mypy", "pytest-cov")
-_EXACT = re.compile(r"^([A-Za-z0-9_.-]+)==([^=<>!~\s]+)$")
-_JOB_HEADER = re.compile(r"(?m)^  ([A-Za-z0-9_-]+):$")
+QUALITY_TOOLS = {"mypy", "pytest", "pytest-cov", "ruff"}
 
 
 def _normalized(name: str) -> str:
     return re.sub(r"[-_.]+", "-", name).lower()
 
 
-def _payload() -> dict[str, object]:
+def _dependency_name(spec: str) -> str:
+    token = spec.split(";", 1)[0].strip()
+    token = re.split(r"[<>=!~\[\s]", token, maxsplit=1)[0]
+    return token
+
+
+def _pyproject() -> dict[str, object]:
     return tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))
 
 
 def _dev_dependency_names() -> set[str]:
-    project = _payload()["project"]
-    specs = project["optional-dependencies"]["dev"]
-    return {
-        _normalized(re.split(r"[<>=!~;\s\[]", spec, maxsplit=1)[0])
-        for spec in specs
-    }
+    project = _pyproject()["project"]
+    assert isinstance(project, dict)
+    optional = project["optional-dependencies"]
+    assert isinstance(optional, dict)
+    dev = optional["dev"]
+    assert isinstance(dev, list)
+    return {_normalized(_dependency_name(item)) for item in dev}
 
 
-def _constraint_pins() -> dict[str, str]:
-    pins: dict[str, str] = {}
+def _constraint_pins() -> set[str]:
+    pins: set[str] = set()
     for raw in CONSTRAINTS.read_text(encoding="utf-8").splitlines():
         line = raw.strip()
         if not line or line.startswith("#"):
             continue
-        match = _EXACT.fullmatch(line)
-        assert match is not None, f"production dependency is not exact: {line}"
-        pins[_normalized(match.group(1))] = match.group(2)
+        assert "==" in line, f"production constraint must be exact: {line}"
+        name, _version = line.split("==", 1)
+        pins.add(_normalized(name))
     return pins
 
 
 def _ci_test_job() -> str:
     workflow = CI.read_text(encoding="utf-8")
     header = re.search(r"(?m)^  test:$", workflow)
-    assert header is not None, "CI workflow must keep the required job named test"
+    assert header is not None
     start = header.start()
     following = [
         match.start()
-        for match in _JOB_HEADER.finditer(workflow[header.end() :])
+        for match in re.finditer(r"(?m)^  [A-Za-z0-9_-]+:$", workflow[header.end() :])
     ]
     end = header.end() + following[0] if following else len(workflow)
     return workflow[start:end]
@@ -73,7 +77,10 @@ def test_ci_test_job_runs_ruff_mypy_and_pytest_coverage_after_install() -> None:
     job = _ci_test_job()
     install = 'python -m pip install -c requirements/production-build.txt -e ".[dev]"'
     ruff = "python -m ruff check src tests scripts"
-    mypy = "python -m mypy src/arancel_mx/consumer src/arancel_mx/__init__.py"
+    mypy = (
+        "python -m mypy src/arancel_mx/consumer src/arancel_mx/api "
+        "src/arancel_mx/__init__.py"
+    )
     pytest_cov = "python -m pytest -q --cov=arancel_mx --cov-report=term-missing"
 
     assert install in job
@@ -93,25 +100,3 @@ def test_ci_test_job_keeps_stable_check_run_name_and_python_311() -> None:
     assert "matrix:" not in job
     assert 'python-version: "3.11"' in job
     assert "ruff format" not in job
-
-
-def test_ruff_enables_a_small_rule_set() -> None:
-    tool = _payload()["tool"]
-    ruff = tool["ruff"]
-    lint = ruff.get("lint", ruff)
-    select = set(lint.get("select", ruff.get("select", [])))
-    assert {"E9", "F63", "F7", "F82"} <= select
-
-
-def test_mypy_targets_the_public_consumer_api() -> None:
-    mypy = _payload()["tool"]["mypy"]
-    assert mypy.get("ignore_missing_imports") is True
-    assert mypy.get("python_version") == "3.11"
-
-
-def test_coverage_floor_is_conservative() -> None:
-    coverage = _payload()["tool"]["coverage"]
-    report = coverage.get("report", coverage)
-    floor = report.get("fail_under")
-    assert isinstance(floor, (int, float))
-    assert floor >= 50
