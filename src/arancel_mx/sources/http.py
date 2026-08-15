@@ -52,18 +52,14 @@ def _host_allowed(url: str, allowed_hosts: tuple[str, ...]) -> bool:
     return bool(host) and host in {value.lower() for value in allowed_hosts}
 
 
-def _require_https(url: str) -> None:
-    if urlparse(url).scheme.lower() != "https":
-        raise ValueError(f"official document URL must use https: {url}")
-
-
 def _require_allowed_https_url(
     url: str,
     allowed_hosts: tuple[str, ...],
     *,
     redirected: bool,
 ) -> None:
-    _require_https(url)
+    if urlparse(url).scheme.lower() != "https":
+        raise ValueError(f"official document URL must use https: {url}")
     if not _host_allowed(url, allowed_hosts):
         kind = "redirected host" if redirected else "requested host"
         raise ValueError(f"{kind} is not allowed: {url}")
@@ -229,8 +225,6 @@ def fetch_official_document(
             _require_allowed_https_url(next_url, allowed_hosts, redirected=True)
             current_url = next_url
 
-        if response is None:
-            raise ValueError("official document request returned no response")
         response.raise_for_status()
         final_url = str(getattr(response, "url", "") or current_url)
         _require_allowed_https_url(
