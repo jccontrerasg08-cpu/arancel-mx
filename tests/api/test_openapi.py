@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import importlib
+
 from fastapi.testclient import TestClient
 
 from arancel_mx.api.app import create_app
@@ -38,6 +40,19 @@ def test_openapi_documents_version_and_non_classification_boundary(
     assert "does not classify" in description or "no clasifica" in description
 
 
+def test_openapi_exposes_typed_metadata_contract(valid_settings, fake_dataset) -> None:
+    application = _app(valid_settings, fake_dataset)
+    with TestClient(application) as client:
+        payload = client.get("/openapi.json").json()
+
+    schemas = payload["components"]["schemas"]
+    assert "MetaResponse" in schemas
+    meta_schema = payload["paths"]["/v1/meta"]["get"]["responses"]["200"]["content"][
+        "application/json"
+    ]["schema"]
+    assert meta_schema == {"$ref": "#/components/schemas/MetaResponse"}
+
+
 def test_openapi_keeps_interactive_documentation_enabled(valid_settings, fake_dataset) -> None:
     application = _app(valid_settings, fake_dataset)
     with TestClient(application) as client:
@@ -51,6 +66,7 @@ def test_openapi_keeps_interactive_documentation_enabled(valid_settings, fake_da
 def test_module_import_does_not_require_dataset_environment(monkeypatch) -> None:
     monkeypatch.delenv("ARANCEL_MX_API_DATASET", raising=False)
 
-    from arancel_mx.api.app import app
+    module = importlib.import_module("arancel_mx.api.app")
+    reloaded = importlib.reload(module)
 
-    assert app.title == "Arancel MX API"
+    assert reloaded.app.title == "Arancel MX API"
