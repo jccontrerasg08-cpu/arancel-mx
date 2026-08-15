@@ -2,18 +2,27 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from contextlib import asynccontextmanager
 import re
 from uuid import uuid4
 
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from arancel_mx.api.config import ApiSettings, load_settings
+from arancel_mx.api.models import ErrorDetail, ErrorEnvelope
 from arancel_mx.api.routes import router as service_router
 from arancel_mx.consumer import Dataset
+from arancel_mx.consumer.errors import (
+    DatasetError,
+    InvalidCodeError,
+    QueryError,
+    RecordNotFoundError,
+)
 
 
 DatasetLoader = Callable[[ApiSettings], Dataset]
@@ -37,6 +46,29 @@ def _request_id(value: str | None) -> str:
     if value is not None and _REQUEST_ID.fullmatch(value) is not None:
         return value
     return uuid4().hex
+
+
+def _error_response(
+    request: Request,
+    *,
+    status_code: int,
+    code: str,
+    message: str,
+    headers: Mapping[str, str] | None = None,
+) -> JSONResponse:
+    """Build one sanitized error envelope without exposing exception details."""
+
+    request_id = getattr(request.state, "request_id", None) or _request_id(None)
+    payload = ErrorEnvelope(
+        error=ErrorDetail(code=code, message=message, request_id=request_id)
+    )
+    response = JSONResponse(
+        status_code=status_code,
+        content=payload.model_dump(),
+        headers=dict(headers) if headers is not None else None,
+    )
+    response.headers["X-Request-ID"] = request_id
+    return response
 
 
 def create_app(
@@ -89,6 +121,79 @@ def create_app(
         response = await call_next(request)
         response.headers["X-Request-ID"] = request_id
         return response
+
+    @application.exception_handler(InvalidCodeError)
+    async def invalid_code_handler(request: Request, exc: InvalidCodeError):
+        return _error_response(
+            request,
+            status_code=400,
+            code="invalid_code",
+            message="Invalid tariff code.",
+        )
+
+    @application.exception_handler(RecordNotFoundError)
+    async def record_not_found_handler(request: Request, exc: RecordNotFoundError):
+        return _error_response(
+            request,
+            status_code=404,
+            code="record_not_found",
+            message="Tariff record not found.",
+        )
+
+    @application.exception_handler(QueryError)
+    async def query_error_handler(request: Request, exc: QueryError):
+        return _error_response(
+            request,
+            status_code=503,
+            code="dataset_inconsistent",
+            message="The verified dataset could not satisfy this query safely.",
+        )
+
+    @application.exception_handler(DatasetError)
+    async def dataset_error_handler(request: Request, exc: DatasetError):
+        return _error_response(
+            request,
+            status_code=503,
+            code="dataset_unavailable",
+            message="The verified dataset is unavailable.",
+        )
+
+    @application.exception_handler(RequestValidationError)
+    async def validation_error_handler(request: Request, exc: RequestValidationError):
+        return _error_response(
+            request,
+            status_code=422,
+            code="validation_error",
+            message="Request validation failed.",
+        )
+
+    @application.exception_handler(StarletteHTTPException)
+    async def http_error_handler(request: Request, exc: StarletteHTTPException):
+        if exc.status_code == 404:
+            code = "route_not_found"
+            message = "Route not found."
+        elif exc.status_code == 405:
+            code = "method_not_allowed"
+            message = "Method not allowed."
+        else:
+            code = "http_error"
+            message = "Request failed."
+        return _error_response(
+            request,
+            status_code=exc.status_code,
+            code=code,
+            message=message,
+            headers=exc.headers,
+        )
+
+    @application.exception_handler(Exception)
+    async def unexpected_error_handler(request: Request, exc: Exception):
+        return _error_response(
+            request,
+            status_code=500,
+            code="internal_error",
+            message="Internal server error.",
+        )
 
     application.include_router(service_router)
 
