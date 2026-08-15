@@ -121,7 +121,7 @@ def test_external_consumption_guide_locks_install_verify_query_and_public_surfac
     required = (
         "pip install arancel-mx==0.2.0",
         "  -> pip install arancel-mx==0.2.0",
-        "data-2026.08.11",
+        "data-2026.08.15",
         "data-YYYY.MM.DD",
         "--dataset data-YYYY.MM.DD",
         "arancel-mx doctor",
