@@ -17,6 +17,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "dependency_compatibility_probe.py"
 EXPECTED_FLOORS = {
     "duckdb": "1.1.0",
+    "fastapi": "0.141.1",
     "filelock": "3.16.0",
     "requests": "2.32.0",
 }
