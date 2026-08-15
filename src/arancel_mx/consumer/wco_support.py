@@ -105,7 +105,12 @@ def _download(url: str, dest: Path, *, timeout: float, offline: bool) -> Path:
         return dest
     if offline:
         raise WcoSupportError(f"WCO HS 2022 PDF is not cached and offline=True: {dest}")
-    dest.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        dest.parent.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        raise WcoSupportError(
+            f"failed to prepare WCO HS 2022 cache: {dest.parent}"
+        ) from exc
     try:
         with urllib.request.urlopen(url, timeout=timeout) as response:
             body = response.read()
