@@ -96,11 +96,14 @@ arancel-mx chapters
 arancel-mx search "refrigeradores"
 arancel-mx search "camisas de algodón de punto"
 arancel-mx suggest "camisas de algodón de punto"
+arancel-mx wco cite 61
 arancel-mx parent 01012101
 arancel-mx children 010121
 arancel-mx provenance 01012101
 arancel-mx lookup 01012101 --offline --format json
 ```
+
+`wco cite`/`wco download` son apoyo de lectura HS 2022 de la OMA, no autoridad LIGIE/NICO ni consulta DuckDB. `cite` no descarga.
 
 Python:
 
