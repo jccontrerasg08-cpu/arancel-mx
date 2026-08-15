@@ -14,6 +14,7 @@ import venv
 
 FLOORS = {
     "duckdb": "1.1.0",
+    "fastapi": "0.141.1",
     "filelock": "3.16.0",
     "requests": "2.32.0",
 }
@@ -81,6 +82,14 @@ def _package_versions(python: Path, *, cwd: Path, env: dict[str, str]) -> dict[s
     return dict(sorted(resolved.items()))
 
 
+def _floor_requirements() -> list[str]:
+    requirements = []
+    for name, version in FLOORS.items():
+        dependency = "fastapi[standard]" if name == "fastapi" else name
+        requirements.append(f"{dependency}=={version}")
+    return requirements
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     distribution = args.distribution.resolve()
@@ -103,7 +112,6 @@ def main(argv: list[str] | None = None) -> int:
         python = _venv_python(environment)
 
         if args.mode == "floor":
-            floor_requirements = [f"{name}=={version}" for name, version in FLOORS.items()]
             _run(
                 [
                     str(python),
@@ -111,7 +119,7 @@ def main(argv: list[str] | None = None) -> int:
                     "pip",
                     "install",
                     "--disable-pip-version-check",
-                    *floor_requirements,
+                    *_floor_requirements(),
                 ],
                 cwd=external,
                 env=env,
