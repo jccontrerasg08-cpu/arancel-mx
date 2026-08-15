@@ -4,17 +4,28 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Path, Query, Request
 
 from arancel_mx import __version__
 from arancel_mx.api import API_VERSION
 from arancel_mx.api.dependencies import get_dataset
-from arancel_mx.api.models import FichaResponse, ProvenanceResponse, TariffResponse
+from arancel_mx.api.models import (
+    FichaResponse,
+    NationalNoteResponse,
+    ProvenanceResponse,
+    SearchResponse,
+    SuggestResponse,
+    TariffResponse,
+)
 from arancel_mx.consumer import Dataset
 
 
 router = APIRouter()
 DatasetDependency = Annotated[Dataset, Depends(get_dataset)]
+SearchText = Annotated[str, Query(min_length=1, max_length=300)]
+SearchLimit = Annotated[int, Query(ge=1, le=50)]
+SuggestLimit = Annotated[int, Query(ge=1, le=20)]
+ChapterPath = Annotated[str, Path(pattern=r"^\d{2}$")]
 
 
 @router.get("/")
@@ -68,6 +79,52 @@ def ficha(code: str, dataset: DatasetDependency) -> FichaResponse:
     """Return the existing verified hierarchy card for one code."""
 
     return FichaResponse.from_ficha(dataset.ficha(code))
+
+
+@router.get("/v1/search", response_model=list[SearchResponse], tags=["retrieval"])
+def search(
+    q: SearchText,
+    dataset: DatasetDependency,
+    limit: SearchLimit = 20,
+) -> list[SearchResponse]:
+    """Return deterministic retrieve-only search results from verified data."""
+
+    return [SearchResponse.from_result(result) for result in dataset.search(q, limit=limit)]
+
+
+@router.get("/v1/suggest", response_model=list[SuggestResponse], tags=["retrieval"])
+def suggest(
+    q: SearchText,
+    dataset: DatasetDependency,
+    limit: SuggestLimit = 5,
+) -> list[SuggestResponse]:
+    """Return bounded evidence candidates without claiming classification."""
+
+    return [SuggestResponse.from_hit(hit) for hit in dataset.suggest(q, limit=limit)]
+
+
+@router.get("/v1/chapters", response_model=list[TariffResponse], tags=["hierarchy"])
+def chapters(dataset: DatasetDependency) -> list[TariffResponse]:
+    """Return current HS2 chapters from the verified dataset."""
+
+    return [TariffResponse.from_record(record) for record in dataset.chapters()]
+
+
+@router.get(
+    "/v1/chapters/{chapter}/national-notes",
+    response_model=list[NationalNoteResponse],
+    tags=["legal-notes"],
+)
+def national_notes(
+    chapter: ChapterPath,
+    dataset: DatasetDependency,
+) -> list[NationalNoteResponse]:
+    """Return materialized official National Notes for one two-digit chapter."""
+
+    return [
+        NationalNoteResponse.from_note(note)
+        for note in dataset.national_notes(chapter)
+    ]
 
 
 @router.get(
