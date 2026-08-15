@@ -6,6 +6,10 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Added
 
+- Public FastAPI HTTP service with an explicit `/v1` contract over the existing verified `Dataset` facade. The service is GET-only, read-only, requires no API key, and exposes lookup, ficha, hierarchy, provenance, search, suggest, chapters, National Notes, health/readiness, OpenAPI, and metadata endpoints.
+- FastAPI Cloud deployment metadata via `[tool.fastapi]` and an import-safe `arancel_mx.api.app:app` entrypoint. Production startup requires an explicit immutable `ARANCEL_MX_API_DATASET` such as `data-2026.08.15`; there is no silent `latest` fallback.
+- API responses preserve tariff/NICO string identity, official IGI/IGE literals, source provenance, scorer metadata, and the retrieve-only classification disclaimer. The HTTP layer does not expose source capture, update, reconciliation, release publication, live VUCEM compare, or WCO download.
+- FastAPI Cloud runtime is pinned to Python 3.13 with `.python-version` while package metadata continues supporting Python 3.11+. Clean-install certification imports the FastAPI entrypoint from built wheel/sdist artifacts.
 - Description `search` ranks matching HS2 chapters first, then current rows under those chapters (`scorer_version` `"1"`, 0–1 `confidence` for analytics). Exact code/prefix ranking is unchanged. Not a classification.
 - `arancel-mx --dataset path.duckdb` opens a local DuckDB file for query commands. Missing files fail closed. `package_consumer_probe.py --forbid-src-layout` rejects editable `src/arancel_mx` installs.
 - `arancel-mx suggest` / `Dataset.suggest` retrieve ficha plus national notes for the top matches (prefer `fraccion8`). Retrieve-only; a human or their own model classifies.
@@ -20,8 +24,9 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Changed
 
-- Live docs match in-tree `0.2.1` vs PyPI `0.2.0`: cache paths, `compare`, national notes, and the public source tree.
-- Documented `/releases/latest` as `data-2026.08.11` (six public assets), Diputados `law_reform` 2025-12-29 / `tariff_decree` 2026-04-23 from that manifest, and that the PyPI long description is frozen at the `0.2.0` upload.
+- Live docs match in-tree `0.2.1` vs PyPI `0.2.0`: cache paths, `compare`, national notes, the public source tree, and the FastAPI v1 consumption boundary.
+- Documented `/releases/latest` as `data-2026.08.15` (six public assets), Diputados `law_reform` 2025-12-29 / `tariff_decree` 2026-04-23 from that manifest, and that the PyPI long description is frozen at the `0.2.0` upload.
+- Development tests use `httpx2` with Starlette's current TestClient path; base package runtime stays independent of that test-only compatibility dependency.
 
 ### Removed
 
