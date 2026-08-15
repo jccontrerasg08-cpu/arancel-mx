@@ -11,6 +11,7 @@ from arancel_mx.api import API_VERSION
 from arancel_mx.api.dependencies import get_dataset
 from arancel_mx.api.models import (
     FichaResponse,
+    MetaResponse,
     NationalNoteResponse,
     ProvenanceResponse,
     SearchResponse,
@@ -48,25 +49,25 @@ def healthz() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@router.get("/v1/meta")
+@router.get("/v1/meta", response_model=MetaResponse, tags=["service"])
 def metadata(
     request: Request,
     dataset: DatasetDependency,
-) -> dict[str, str | bool | None]:
+) -> MetaResponse:
     """Expose independent API, package, and verified dataset identities."""
 
     settings = request.app.state.settings
     info = dataset.info
-    return {
-        "api_version": API_VERSION,
-        "package_version": __version__,
-        "dataset_tag": settings.dataset_tag,
-        "dataset_version": info.dataset_version,
-        "schema_version": info.schema_version,
-        "read_only": True,
-        "release_verified": info.release_verified,
-        "structural_valid": info.structural_valid,
-    }
+    return MetaResponse(
+        api_version=API_VERSION,
+        package_version=__version__,
+        dataset_tag=settings.dataset_tag,
+        dataset_version=info.dataset_version,
+        schema_version=info.schema_version,
+        read_only=True,
+        release_verified=info.release_verified,
+        structural_valid=info.structural_valid,
+    )
 
 
 @router.get("/v1/lookup/{code}", response_model=TariffResponse, tags=["tariff"])
