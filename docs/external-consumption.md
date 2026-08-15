@@ -77,11 +77,10 @@ El modo `--offline` es estricto: no hay fallback de red. Si el dataset falta o f
 
 ## Consultar
 
-Tres caminos de apoyo a la clasificación. Ninguno publica una clasificación ni sustituye LIGIE/NICO. El dataset oficial verificado es la evidencia; WCO, VUCEM y clasificadores externos son informativos.
+Dos consultas de apoyo a la revisión. Ninguna publica una clasificación ni sustituye LIGIE/NICO. El dataset oficial verificado es la evidencia; WCO y VUCEM son únicamente fuentes informativas de apoyo.
 
 1. **`search` (dos etapas, sin LLM, offline).** `arancel-mx search "camisas de algodón de punto"`. En consultas por descripción ordena primero los capítulos HS2 coincidentes y después las filas vigentes de esos capítulos. El ranking por código exacto o prefijo no cambia. Los resultados incluyen `scorer_version` (`"1"`; se incrementa si cambia el ranking) y un `confidence` de 0 a 1 para analítica. No es una clasificación.
-2. **`suggest`.** `arancel-mx suggest "camisas de algodón de punto"` / `Dataset.suggest(text, limit=5)`. Mismo recorte. Imprime ficha y notas nacionales (`arancel_mx_national_notes` cuando la vista tiene filas; el snapshot `data-*` actual puede estar vacío) para los N primeros, con preferencia por `fraccion8`. Retrieve-only: no afirma una clasificación. Clasifica un humano o el modelo del consumidor. La evidencia permanece en el dataset oficial.
-3. **Clasificador externo + `compare`.** El usuario puede ejecutar `dspy-nomenclator` (PyPI, MIT, Python ≥3.13, modelo por defecto `openai/gpt-4.1-mini`, descarga PDF HS 2022 de la WCO) **fuera** de este repositorio. No es extra de `arancel-mx`, no entra a CI y no hay copia vendored aquí. El HS6 se pega en `arancel-mx compare 610510`. `compare` ya existe. Cero vendor en este repo.
+2. **`suggest`.** `arancel-mx suggest "camisas de algodón de punto"` / `Dataset.suggest(text, limit=5)`. Mismo recorte. Imprime ficha y notas nacionales (`arancel_mx_national_notes` cuando la vista tiene filas; el snapshot `data-*` actual puede estar vacío) para los N primeros, con preferencia por `fraccion8`. Retrieve-only: no afirma una clasificación. Una persona decide la clasificación; la evidencia permanece en el dataset oficial.
 
 CLI:
 
@@ -91,7 +90,6 @@ arancel-mx ficha 01012101
 arancel-mx compare 010121
 arancel-mx compare 01012101
 arancel-mx compare 0101210100
-arancel-mx compare 610510
 arancel-mx chapters
 arancel-mx search "refrigeradores"
 arancel-mx search "camisas de algodón de punto"
@@ -171,7 +169,7 @@ No hay un séptimo asset `source_trace.json`. Una aplicación que necesite un ob
 - Postgres hospedado
 - SIICEX-CAAAREM o HTML de VUCEM como identidad legal
 - cola humana para promover capturas incompletas
-- GIR, notas de sección/capítulo/subpartida o reglas complementarias (incluida la 10ª), y sugerencias HS6 WCO. Esos textos WCO no se publican como instrumento jurídico mexicano. Una caché local opcional de PDF WCO es sólo apoyo de lectura (copyright WCO; no es autoridad LIGIE/NICO). `suggest` es retrieve-only sobre el dataset oficial y no clasifica. `dspy-nomenclator` se ejecuta fuera de este paquete.
+- GIR, notas de sección/capítulo/subpartida o reglas complementarias (incluida la 10ª), y sugerencias HS6 WCO. Esos textos WCO no se publican como instrumento jurídico mexicano. Una caché local opcional de PDF WCO es sólo apoyo de lectura (copyright WCO; no es autoridad LIGIE/NICO). `suggest` es retrieve-only sobre el dataset oficial y no clasifica.
 - RGCE Anexos 1–30, instructivos de pedimento y dumps TIGIE no oficiales (`tigieX`). El cruce es `fraccion8`/`nico10`; Anexo 9 no sustituye `igi_text`
 
 Las notas nacionales LIGIE tienen tablas (`national_note*`, vista `arancel_mx_national_notes`) y un parser HTML. El pipeline oficial ya captura esa fuente. La release publicada `data-2026.08.11` puede seguir dejando la vista vacía hasta la siguiente `data-*`. No se inventan instrumentos legales.

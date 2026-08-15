@@ -84,7 +84,6 @@ arancel-mx ficha 01012101
 arancel-mx compare 010121
 arancel-mx compare 01012101
 arancel-mx compare 0101210100
-arancel-mx compare 610510
 arancel-mx chapters
 arancel-mx search "refrigeradores" --limit 20
 arancel-mx search "camisas de algodón de punto"
@@ -105,7 +104,7 @@ arancel-mx wco download 61
 - `parent` returns the direct parent in the HS2 → HS4 → HS6 → MX8 → NICO10 hierarchy.
 - `children` returns direct children of a code.
 - `provenance` returns the recorded source traceability for the selected code.
-- `compare` diffs one HS6, MX8, or NICO code from the verified GitHub `data-*` dataset against the VUCEM classifier sheet (`buildHojas1/{mx8}.html`). HS6 has no VUCEM page, so children MX8/NICO are compared. VUCEM is informative, not legal identity. `--offline` skips the third-party fetch. An HS6 produced by an external classifier can be pasted into `arancel-mx compare 610510`. `dspy-nomenclator` (PyPI, MIT, Python ≥3.13, default `openai/gpt-4.1-mini`, fetches WCO HS 2022 PDFs) may run **elsewhere**; it is not an `arancel-mx` extra, not in CI, and not vendored here.
+- `compare` diffs one HS6, MX8, or NICO code from the verified GitHub `data-*` dataset against the VUCEM classifier sheet (`buildHojas1/{mx8}.html`). HS6 has no VUCEM page, so children MX8/NICO are compared. VUCEM is informative, not legal identity. `--offline` skips the third-party fetch. `compare` is a verification aid, not a classifier.
 
 The same normalization and query semantics are shared by the public Python consumer layer and CLI.
 
