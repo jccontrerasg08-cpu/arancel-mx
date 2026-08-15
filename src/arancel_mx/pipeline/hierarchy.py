@@ -89,6 +89,25 @@ def assemble_classifications(
         if level == "nico10" and ("fraccion8", code[:8], version) not in by_key:
             raise ValueError(f"missing fraction parent: {code}:{version}")
 
+    fraction_keys = {
+        (str(row["code"]), str(row["ligie_version"]))
+        for row in rows
+        if str(row["level"]) == "fraccion8"
+    }
+    nico_parent_keys = {
+        (str(row["code"])[:8], str(row["ligie_version"]))
+        for row in rows
+        if str(row["level"]) == "nico10"
+    }
+    missing_nico_coverage = sorted(
+        code for code, _version in fraction_keys - nico_parent_keys
+    )
+    if missing_nico_coverage:
+        raise ValueError(
+            "current tariff fractions missing NICO coverage: "
+            + ", ".join(missing_nico_coverage)
+        )
+
     return sorted(
         rows,
         key=lambda row: (
