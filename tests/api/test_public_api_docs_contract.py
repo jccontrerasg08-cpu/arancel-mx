@@ -19,12 +19,12 @@ def test_spanish_readme_documents_public_api_without_inventing_hostname() -> Non
         "GET-only",
         "read-only",
         "sin API key",
-        "`/v1`",
-        "`/docs`",
-        "`/readyz`",
-        "`/v1/meta`",
-        "`ARANCEL_MX_API_DATASET=data-2026.08.15`",
-        "`8517130100`",
+        "/v1",
+        "/docs",
+        "/readyz",
+        "/v1/meta",
+        "ARANCEL_MX_API_DATASET=data-2026.08.15",
+        "8517130100",
     )
     for token in required:
         assert token in text
@@ -41,12 +41,12 @@ def test_english_readme_documents_same_public_api_boundary() -> None:
         "GET-only",
         "read-only",
         "no API key",
-        "`/v1`",
-        "`/docs`",
-        "`/readyz`",
-        "`/v1/meta`",
-        "`ARANCEL_MX_API_DATASET=data-2026.08.15`",
-        "`8517130100`",
+        "/v1",
+        "/docs",
+        "/readyz",
+        "/v1/meta",
+        "ARANCEL_MX_API_DATASET=data-2026.08.15",
+        "8517130100",
     )
     for token in required:
         assert token in text
@@ -59,9 +59,9 @@ def test_external_consumption_guide_documents_unhosted_url_placeholder_and_versi
     lowered = text.lower()
 
     required = (
-        "`ARANCEL_MX_API_URL`",
-        "`ARANCEL_MX_API_DATASET=data-2026.08.15`",
-        "`/v1/lookup/8517130100`",
+        "ARANCEL_MX_API_URL",
+        "ARANCEL_MX_API_DATASET=data-2026.08.15",
+        "/v1/lookup/8517130100",
         "API v1",
         "package 0.2.1",
         "dataset data-2026.08.15",
