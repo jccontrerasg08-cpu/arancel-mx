@@ -92,6 +92,8 @@ arancel-mx suggest "camisas de algodón de punto"
 arancel-mx parent 01012101
 arancel-mx children 010121
 arancel-mx provenance 01012101
+arancel-mx wco cite 61
+arancel-mx wco download 61
 ```
 
 - `lookup` resolves an exact normalized tariff code.
@@ -99,6 +101,7 @@ arancel-mx provenance 01012101
 - `chapters` lists current HS2 chapters.
 - `search` ranks current records. Exact code and code-prefix ranking are unchanged. Description queries rank matching HS2 chapters first, then rank current rows under those chapters. Results include `scorer_version` (`"1"`; bump when ranking changes) and a 0–1 `confidence` for analytics. `search` is not a classification.
 - `suggest` uses the same description narrowing and prints ficha plus national notes from `arancel_mx_national_notes` when that view has rows (the current `data-*` snapshot may be empty) for the top N hits, preferring `fraccion8`. `arancel-mx suggest "camisas de algodón de punto"` / `Dataset.suggest(text, limit=5)`. Retrieve-only: it does not claim a classification. A human, or their own model, classifies; evidence stays in the official dataset.
+- `wco cite` prints the WCO HS 2022 PDF URL and local cache path if present; it never downloads. `wco download` stores the PDF in the local cache (`--offline` fails closed if missing). WCO PDFs are reading support only, not LIGIE/NICO authority. `arancel-mx wco cite gir` cites the GIR PDF.
 - `parent` returns the direct parent in the HS2 → HS4 → HS6 → MX8 → NICO10 hierarchy.
 - `children` returns direct children of a code.
 - `provenance` returns the recorded source traceability for the selected code.

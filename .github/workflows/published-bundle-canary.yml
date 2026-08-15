@@ -44,3 +44,6 @@ jobs:
 
       - name: Retrieve-only suggest against the downloaded dataset
         run: arancel-mx suggest reproductores --offline
+
+      - name: Cite WCO HS 2022 chapter PDF URL without downloading
+        run: arancel-mx wco cite 01

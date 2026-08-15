@@ -198,6 +198,7 @@ arancel-mx compare 01012101
 arancel-mx chapters
 arancel-mx search "refrigeradores"
 arancel-mx suggest "camisas de algodón de punto"
+arancel-mx wco cite 01
 arancel-mx data verify
 ```
 
@@ -222,6 +223,7 @@ También se puede fijar una release exacta con `--dataset data-YYYY.MM.DD`. Cons
 | `data verify` | Revalida integridad local y opcionalmente el bundle remoto |
 | `lookup` / `search` | Consulta por código exacto o texto |
 | `suggest` | Recupera ficha y notas nacionales de los mejores candidatos; no clasifica |
+| `wco cite` / `wco download` | URL (y caché si existe) del PDF HS 2022 OMA; apoyo de lectura, no autoridad LIGIE/NICO |
 | `ficha` | Ficha jerárquica capítulo → fracción/NICO con UM, IGI e IGE |
 | `compare` | Diff HS6 / MX8 / NICO del dataset GitHub contra VUCEM (informativo) |
 | `chapters` | Lista los capítulos HS2 vigentes |

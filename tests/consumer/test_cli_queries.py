@@ -310,8 +310,20 @@ def test_empty_suggest_csv_keeps_schema(monkeypatch, capsys) -> None:
     assert output.count("\n") == 1
 
 
+def test_empty_suggest_table_prints_disclaimer_then_no_results(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(FakeDataset, "suggest", lambda self, text, limit=5: ())
+    assert main(["suggest", "sin coincidencias"]) == 0
+    captured = capsys.readouterr()
+    assert captured.err == ""
+    text = captured.out
+    lowered = text.lower()
+    assert "not a classification" in lowered
+    assert "No results." in text
+    assert lowered.index("not a classification") < lowered.index("no results.")
+
+
 def test_suggest_help_is_retrieve_only_not_a_classification(capsys) -> None:
     assert main(["suggest", "--help"]) == 0
     text = capsys.readouterr().out.lower()
     assert "retrieve-only" in text
-    assert "classification" in text
+    assert "no es una clasificación" in text

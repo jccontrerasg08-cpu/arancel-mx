@@ -7,6 +7,7 @@ from urllib.error import HTTPError, URLError
 
 import pytest
 
+from arancel_mx.consumer.errors import ArancelMXError
 from arancel_mx.consumer.wco_support import (
     DISCLAIMER,
     WCO_HS2022_BASE,
@@ -15,6 +16,7 @@ from arancel_mx.consumer.wco_support import (
     cache_root,
     chapter_pdf_url,
     cite_chapter,
+    cite_gir,
     download_chapter,
     download_gir,
     gir_pdf_url,
@@ -178,6 +180,19 @@ def test_download_uses_cache_hit_without_network(
     assert download_chapter("61", cache_dir=tmp_path, offline=True) == dest
 
 
+def test_download_cache_directory_failure_is_public_error(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    cache_file = tmp_path / "not-a-directory"
+    cache_file.write_text("occupied", encoding="utf-8")
+    _forbid_network(monkeypatch)
+
+    with pytest.raises(WcoSupportError, match="failed to prepare WCO HS 2022 cache"):
+        download_chapter("61", cache_dir=cache_file)
+    with pytest.raises(WcoSupportError, match="failed to prepare WCO HS 2022 cache"):
+        download_gir(cache_dir=cache_file)
+
+
 def test_download_http_error(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     def boom(url: str, timeout: float | None = None) -> object:
         raise HTTPError(url, 404, "Not Found", hdrs=None, fp=BytesIO())
@@ -230,3 +245,25 @@ def test_wco_support_does_not_import_sources() -> None:
     assert "arancel_mx.sources" not in text
     assert "dspy" not in text.lower()
     assert "openai" not in text.lower()
+
+
+def test_wco_support_error_is_arancel_mx_error() -> None:
+    assert issubclass(WcoSupportError, ArancelMXError)
+
+
+def test_cite_gir_is_not_a_chapter_and_skips_network(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    _forbid_network(monkeypatch)
+    cite = cite_gir(cache_dir=tmp_path)
+    assert cite.kind == "gir"
+    assert cite.chapter is None
+    assert cite.url == gir_pdf_url()
+    assert cite.local_path is None
+    assert cite.disclaimer == DISCLAIMER
+
+    path = cache_root(tmp_path) / "0001_2022e-gir.pdf"
+    path.parent.mkdir(parents=True)
+    path.write_bytes(FAKE_PDF)
+    cached = cite_gir(cache_dir=tmp_path)
+    assert cached.local_path == str(path)
