@@ -45,7 +45,7 @@ def _clean_env(home: Path) -> dict[str, str]:
 
 
 def _run(command: list[str], *, cwd: Path, env: dict[str, str]) -> subprocess.CompletedProcess[str]:
-    completed = subprocess.run(
+    completed = subprocess.run(  # noqa: S603 - callers construct commands from the isolated venv and validated paths.
         command,
         cwd=cwd,
         env=env,

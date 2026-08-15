@@ -24,9 +24,9 @@ LIGIE_INDEX = "https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html"
 NICO_INDEX = "https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html"
 LIGIE_URL = "https://www.snice.gob.mx/files/FRACCIONESARANCELARIAS_20260810.XLSX"
 NICO_URL = "https://www.snice.gob.mx/files/NICO-AGOSTO26-LIGIE_20260810-20260810.XLSX"
-NOTES_URL = "https://www.snice.gob.mx/cs/avi/snice/ligie.notasnac22.html"
+NOTES_URL = "https://dof.gob.mx/nota_detalle.php?codigo=5673161&fecha=02/12/2022"
 NOTES_HTML = (
-    Path(__file__).parents[1] / "fixtures" / "snice" / "ligie.notasnac22.html"
+    Path(__file__).parents[1] / "fixtures" / "dof" / "national-notes-2022.html"
 ).read_text(encoding="utf-8")
 XLSX_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
@@ -124,10 +124,10 @@ def test_capture_official_inputs_returns_registered_and_required_legal_roles(tmp
         ("dof_tariff_decree", "tariff_decree"),
         ("national_notes", "national_notes"),
     }
-    assert snapshot.registry_version == "2026-08-10"
+    assert snapshot.registry_version == "2026-08-15"
     assert len(snapshot.registry_sha256) == 64
     assert len(snapshot.identities) == 7
-    assert all(identity.registry_version == "2026-08-10" for identity in snapshot.identities)
+    assert all(identity.registry_version == "2026-08-15" for identity in snapshot.identities)
     assert snapshot.reconciliation.publishable is True
     assert snapshot.reconciliation.discrepancies == ()
 
@@ -145,6 +145,10 @@ def test_capture_official_inputs_returns_registered_and_required_legal_roles(tmp
     assert ledger.capture.path.is_file()
     assert ledger.source_document["media_type"].startswith("text/html")
     assert ledger.source_document["sha256"] == ledger.capture.sha256
+    national_notes = by_role[("national_notes", "national_notes")]
+    assert national_notes.source_document["source_url"] == NOTES_URL
+    assert national_notes.source_document["authority"] == "Secretaría de Economía / SHCP"
+    assert national_notes.source_document["publication_venue"] == "Diario Oficial de la Federación"
 
 
 def test_missing_captured_required_dof_role_blocks_reconciliation(tmp_path, monkeypatch):

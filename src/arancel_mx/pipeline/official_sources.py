@@ -45,7 +45,7 @@ SOURCE_AUTHORITY = {
     "ligie": ("Secretaría de Economía / SNICE", "SNICE"),
     "nico": ("Secretaría de Economía / SNICE", "SNICE"),
     "diputados_ligie": ("Cámara de Diputados", "Cámara de Diputados"),
-    "national_notes": ("Secretaría de Economía / SNICE", "SNICE"),
+    "national_notes": ("Secretaría de Economía / SHCP", "Diario Oficial de la Federación"),
 }
 LEGAL_EVIDENCE_HOSTS = (
     "dof.gob.mx",
@@ -343,6 +343,11 @@ def capture_official_inputs(
         diputados_entry,
         "consolidated_text",
     )
+    national_notes_entry = registry["national_notes"]
+    national_notes_url = registered_direct_document(
+        national_notes_entry,
+        "national_notes",
+    )
 
     discovery_registry = {key: registry[key] for key in ("ligie", "nico")}
     discovered = discover_registered_sources(
@@ -385,9 +390,9 @@ def capture_official_inputs(
         _capture_source(
             dataset_key="national_notes",
             document_role="national_notes",
-            title="Notas nacionales LIGIE",
-            url=registry["national_notes"].canonical_page,
-            entry=registry["national_notes"],
+            title="Notas nacionales LIGIE (DOF)",
+            url=national_notes_url,
+            entry=national_notes_entry,
             config=config,
             session=client,
         ),

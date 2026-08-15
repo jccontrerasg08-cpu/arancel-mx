@@ -76,6 +76,14 @@ def test_diputados_consolidated_text_is_an_explicit_registered_document():
     assert url == "https://www.diputados.gob.mx/LeyesBiblio/pdf/LIGIE_2022.pdf"
 
 
+def test_national_notes_are_captured_from_the_registered_dof_publication():
+    entry = load_source_registry()["national_notes"]
+
+    url = registered_direct_document(entry, "national_notes")
+
+    assert url == "https://dof.gob.mx/nota_detalle.php?codigo=5673161&fecha=02/12/2022"
+
+
 def test_missing_direct_document_fails_closed():
     entry = load_source_registry()["ligie"]
 

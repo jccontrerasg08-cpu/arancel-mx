@@ -277,7 +277,16 @@ def _insert_national_notes(
             raise ValueError("national notes require note_number, text, and source_document_id")
         note_id = str(
             row.get("national_note_id")
-            or hashlib.sha256(canonical_json([row.get("chapter"), note_number]).encode("utf-8")).hexdigest()
+            or hashlib.sha256(
+                canonical_json(
+                    [
+                        row.get("scope_type", "chapter"),
+                        row.get("scope_value", row.get("chapter")),
+                        row.get("chapter"),
+                        note_number,
+                    ]
+                ).encode("utf-8")
+            ).hexdigest()
         )
         conn.execute(
             "INSERT INTO national_note VALUES (?, ?, ?)",
@@ -552,7 +561,7 @@ def materialize_arancel(
         conn.execute("DROP VIEW IF EXISTS arancel_mx")
         conn.execute("DROP VIEW IF EXISTS arancel_mx_national_notes")
         for table in reversed(PUBLIC_INTERNAL_TABLES):
-            conn.execute(f"DELETE FROM {table}")
+            conn.execute(f"DELETE FROM {table}")  # noqa: S608 - table is drawn from the static internal-table allowlist.
         _insert_sources(conn, source_documents)
         _insert_classifications(conn, classifications)
         _insert_rates(conn, rates)
@@ -581,7 +590,7 @@ def materialize_arancel(
         if canonical_rows:
             placeholders = ", ".join("?" for _ in PUBLIC_COLUMNS[:40])
             conn.executemany(
-                f"INSERT INTO canonical_record VALUES ({placeholders})",
+                f"INSERT INTO canonical_record VALUES ({placeholders})",  # noqa: S608 - placeholders are generated from the static public-column contract.
                 canonical_rows,
             )
         if provenance_rows:
@@ -702,7 +711,7 @@ def _create_public_database(source_path: Path, target_path: Path) -> None:
         escaped_source = str(source_path).replace("'", "''")
         conn.execute(f"ATTACH '{escaped_source}' AS upstream (READ_ONLY)")
         for table in PUBLIC_INTERNAL_TABLES:
-            conn.execute(f"INSERT INTO {table} SELECT * FROM upstream.{table}")
+            conn.execute(f"INSERT INTO {table} SELECT * FROM upstream.{table}")  # noqa: S608 - table is drawn from the static internal-table allowlist.
         unwanted = [
             row[0]
             for row in conn.execute(
@@ -753,7 +762,7 @@ def _export_arancel_release(
         columns = [row[0] for row in conn.execute("DESCRIBE arancel_mx").fetchall()]
         if columns != list(PUBLIC_COLUMNS):
             raise ValueError("Cannot export a database with a non-canonical arancel_mx view")
-        tuples = conn.execute(f"SELECT * FROM arancel_mx {order}").fetchall()
+        tuples = conn.execute(f"SELECT * FROM arancel_mx {order}").fetchall()  # noqa: S608 - ordering is a fixed local constant.
         rows = [dict(zip(columns, values, strict=True)) for values in tuples]
         release_row = conn.execute(
             """

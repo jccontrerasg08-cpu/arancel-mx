@@ -155,10 +155,15 @@ def main(argv: list[str] | None = None) -> int:
         venv.EnvBuilder(with_pip=True, clear=True).create(venv_dir)
         env = _clean_environment(external_home)
         for command in smoke_commands(distribution, venv_dir):
-            subprocess.run(command, check=True, cwd=external_cwd, env=env)
+            subprocess.run(  # noqa: S603 - commands use the isolated venv and a verified local artifact.
+                command,
+                check=True,
+                cwd=external_cwd,
+                env=env,
+            )
 
         if args.expected_version is not None:
-            subprocess.run(
+            subprocess.run(  # noqa: S603 - probe path is repository-local and arguments are validated above.
                 _probe_command(
                     _venv_python(venv_dir),
                     checkout=checkout,

@@ -112,7 +112,7 @@ def _download(url: str, dest: Path, *, timeout: float, offline: bool) -> Path:
             f"failed to prepare WCO HS 2022 cache: {dest.parent}"
         ) from exc
     try:
-        with urllib.request.urlopen(url, timeout=timeout) as response:
+        with urllib.request.urlopen(url, timeout=timeout) as response:  # noqa: S310 - URL is constructed from the fixed WCO HTTPS base.
             body = response.read()
     except (urllib.error.URLError, TimeoutError, OSError) as exc:
         raise WcoSupportError(f"failed to download WCO HS 2022 PDF: {url}") from exc
