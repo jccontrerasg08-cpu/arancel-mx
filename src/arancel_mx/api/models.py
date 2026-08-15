@@ -37,6 +37,19 @@ class ErrorEnvelope(FrozenModel):
     error: ErrorDetail
 
 
+class MetaResponse(FrozenModel):
+    """Independent API, package, and verified dataset identities."""
+
+    api_version: str
+    package_version: str
+    dataset_tag: str
+    dataset_version: str
+    schema_version: str
+    read_only: bool
+    release_verified: bool
+    structural_valid: bool
+
+
 class RateResponse(FrozenModel):
     """Official tariff-rate representation without reinterpretation."""
 
