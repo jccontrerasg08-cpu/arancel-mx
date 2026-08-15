@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from contextlib import asynccontextmanager
+import logging
 import re
 from uuid import uuid4
 
@@ -26,6 +27,7 @@ from arancel_mx.consumer.errors import (
 )
 
 
+logger = logging.getLogger(__name__)
 DatasetLoader = Callable[[ApiSettings], Dataset]
 _REQUEST_ID = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
 _API_DESCRIPTION = """
@@ -96,12 +98,24 @@ def create_app(
         application.state.startup_error = None
         resolved_settings = settings if settings is not None else load_settings()
         application.state.settings = resolved_settings
+        logger.info("loading verified dataset tag=%s", resolved_settings.dataset_tag)
         try:
             dataset = loader(resolved_settings)
         except Exception as exc:
             application.state.startup_error = exc.__class__.__name__
+            logger.error(
+                "dataset startup verification failed tag=%s error_type=%s",
+                resolved_settings.dataset_tag,
+                exc.__class__.__name__,
+            )
             raise
 
+        logger.info(
+            "verified dataset ready tag=%s dataset_version=%s schema_version=%s",
+            resolved_settings.dataset_tag,
+            dataset.info.dataset_version,
+            dataset.info.schema_version,
+        )
         application.state.dataset = dataset
         application.state.ready = True
         try:
@@ -204,6 +218,12 @@ def create_app(
 
     @application.exception_handler(Exception)
     async def unexpected_error_handler(request: Request, exc: Exception):
+        request_id = getattr(request.state, "request_id", None) or _request_id(None)
+        logger.error(
+            "unhandled API exception request_id=%s error_type=%s",
+            request_id,
+            exc.__class__.__name__,
+        )
         return _error_response(
             request,
             status_code=500,
