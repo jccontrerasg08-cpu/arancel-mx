@@ -33,8 +33,9 @@ Public, read-only HTTP access to the verified `arancel-mx` dataset through the
 versioned `/v1` contract.
 
 The service is informational and is **not legal advice**. `search` and `suggest`
-are retrieve-only helpers and **do not classify merchandise**. The API does not
-expose dataset mutation, source capture, reconciliation, or publication endpoints.
+are retrieve-only helpers; this service **does not classify merchandise**. The API
+does not expose dataset mutation, source capture, reconciliation, or publication
+endpoints.
 """.strip()
 
 
