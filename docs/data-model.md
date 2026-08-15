@@ -69,7 +69,7 @@ arancel_mx  (vista)
 
 También pueden incluirse tablas y vistas públicas para versiones/enmiendas NICO e indicadores cuando forman parte del modelo distribuible.
 
-Las tablas `national_note*` y la vista `arancel_mx_national_notes` existen en el DuckDB público. El pipeline oficial captura la página SNICE de notas nacionales, las parsea y las materializa. La release publicada `data-2026.08.11` es anterior a esa captura, así que esa vista puede estar vacía hasta la siguiente `data-*`. GIR, notas de sección/capítulo y reglas complementarias no se publican.
+Las tablas `national_note*` y la vista `arancel_mx_national_notes` existen en el DuckDB público. El pipeline oficial captura la publicación oficial del DOF de notas nacionales, las parsea y las materializa. La release publicada `data-2026.08.15` contiene 266 registros de esa fuente. GIR, notas de sección/capítulo y reglas complementarias no se publican.
 
 `source_registry.json` **no se embebe en el DuckDB público**. La identidad exacta del registry usado para construir una release se conserva en `manifest.json` mediante `registry_version` y `registry_sha256`, y también queda disponible dentro del metadata de release correspondiente. Esta separación evita confundir estado operativo del pipeline con el contrato de consumo del dataset.
 

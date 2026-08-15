@@ -92,7 +92,7 @@ def test_sources_document_legal_reconciliation_as_blocking_gate():
         "not an official source",
         "last_law_reform",
         "2025-12-29",
-        "data-2026.08.11",
+        "data-2026.08.15",
         "ligie_2022_ref02_29dic25.pdf",
     )
     assert [value for value in required if value not in sources] == []
