@@ -220,6 +220,7 @@ No hay un séptimo asset `source_trace.json`. Una aplicación que necesite un ob
 - PROSEC
 - columnas de descripción en inglés
 - Postgres hospedado
+- API REST de escritura, administración o mutación. La API REST pública v1 permanece estrictamente GET-only/read-only.
 - SIICEX-CAAAREM o HTML de VUCEM como identidad legal
 - cola humana para promover capturas incompletas
 - GIR, notas de sección/capítulo/subpartida o reglas complementarias (incluida la 10ª), y sugerencias HS6 WCO. Esos textos WCO no se publican como instrumento jurídico mexicano. Una caché local opcional de PDF WCO es sólo apoyo de lectura (copyright WCO; no es autoridad LIGIE/NICO). `suggest` es retrieve-only sobre el dataset oficial y no clasifica.
