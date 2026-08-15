@@ -42,8 +42,8 @@ jobs:
       - name: Lint with Ruff
         run: python -m ruff check src tests scripts
 
-      - name: Type-check public consumer API
-        run: python -m mypy src/arancel_mx/consumer src/arancel_mx/__init__.py
+      - name: Type-check public consumer and API
+        run: python -m mypy src/arancel_mx/consumer src/arancel_mx/api src/arancel_mx/__init__.py
 
       - name: Run tests
         env:
