@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from contextlib import asynccontextmanager
 import logging
-import re
 from uuid import uuid4
 
 from fastapi import FastAPI, Request
@@ -29,7 +28,6 @@ from arancel_mx.consumer.errors import (
 
 logger = logging.getLogger(__name__)
 DatasetLoader = Callable[[ApiSettings], Dataset]
-_REQUEST_ID = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
 _API_DESCRIPTION = """
 Public, read-only HTTP access to the verified `arancel-mx` dataset through the
 versioned `/v1` contract.
@@ -52,11 +50,9 @@ def _load_dataset(settings: ApiSettings) -> Dataset:
     )
 
 
-def _request_id(value: str | None) -> str:
-    """Preserve a small safe caller ID or generate a local opaque ID."""
+def _request_id() -> str:
+    """Generate one opaque server-owned identity for a single request."""
 
-    if value is not None and _REQUEST_ID.fullmatch(value) is not None:
-        return value
     return uuid4().hex
 
 
@@ -70,7 +66,7 @@ def _error_response(
 ) -> JSONResponse:
     """Build one sanitized error envelope without exposing exception details."""
 
-    request_id = getattr(request.state, "request_id", None) or _request_id(None)
+    request_id = getattr(request.state, "request_id", None) or _request_id()
     payload = ErrorEnvelope(
         error=ErrorDetail(code=code, message=message, request_id=request_id)
     )
@@ -146,7 +142,7 @@ def create_app(
 
     @application.middleware("http")
     async def request_id_middleware(request: Request, call_next):
-        request_id = _request_id(request.headers.get("X-Request-ID"))
+        request_id = _request_id()
         request.state.request_id = request_id
         response = await call_next(request)
         response.headers["X-Request-ID"] = request_id
@@ -218,7 +214,7 @@ def create_app(
 
     @application.exception_handler(Exception)
     async def unexpected_error_handler(request: Request, exc: Exception):
-        request_id = getattr(request.state, "request_id", None) or _request_id(None)
+        request_id = getattr(request.state, "request_id", None) or _request_id()
         logger.error(
             "unhandled API exception request_id=%s error_type=%s",
             request_id,
