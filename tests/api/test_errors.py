@@ -27,16 +27,21 @@ def _app_with_failure_route(valid_settings, fake_dataset, exc: Exception):
     return app
 
 
-def _assert_error(response, *, status: int, code: str, message: str) -> None:
+def _assert_error(response, *, status: int, code: str, message: str) -> str:
     assert response.status_code == status
+    request_id = response.headers["x-request-id"]
+    assert request_id != "test-err-1"
+    assert len(request_id) == 32
+    assert request_id.isascii()
+    assert request_id.isalnum()
     assert response.json() == {
         "error": {
             "code": code,
             "message": message,
-            "request_id": "test-err-1",
+            "request_id": request_id,
         }
     }
-    assert response.headers["x-request-id"] == "test-err-1"
+    return request_id
 
 
 def test_invalid_code_is_a_sanitized_400(valid_settings, fake_dataset) -> None:
@@ -196,10 +201,15 @@ def test_unexpected_exception_log_contains_only_request_id_and_type(
     with TestClient(app, raise_server_exceptions=False) as client:
         response = client.get("/_test/failure", headers={"X-Request-ID": "test-err-1"})
 
-    assert response.status_code == 500
+    request_id = _assert_error(
+        response,
+        status=500,
+        code="internal_error",
+        message="Internal server error.",
+    )
     messages = [record.getMessage() for record in caplog.records]
     assert (
-        "unhandled API exception request_id=test-err-1 error_type=RuntimeError"
+        f"unhandled API exception request_id={request_id} error_type=RuntimeError"
         in messages
     )
     assert secret not in "\n".join(messages)
