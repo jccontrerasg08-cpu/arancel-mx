@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from arancel_mx.api import API_VERSION
 from arancel_mx.api.config import ApiSettings, load_settings
 from arancel_mx.api.models import ErrorDetail, ErrorEnvelope
 from arancel_mx.api.routes import router as service_router
@@ -27,6 +28,14 @@ from arancel_mx.consumer.errors import (
 
 DatasetLoader = Callable[[ApiSettings], Dataset]
 _REQUEST_ID = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
+_API_DESCRIPTION = """
+Public, read-only HTTP access to the verified `arancel-mx` dataset through the
+versioned `/v1` contract.
+
+The service is informational and is **not legal advice**. `search` and `suggest`
+are retrieve-only helpers and **do not classify merchandise**. The API does not
+expose dataset mutation, source capture, reconciliation, or publication endpoints.
+""".strip()
 
 
 def _load_dataset(settings: ApiSettings) -> Dataset:
@@ -99,7 +108,13 @@ def create_app(
         finally:
             application.state.ready = False
 
-    application = FastAPI(title="Arancel MX API", lifespan=lifespan)
+    application = FastAPI(
+        title="Arancel MX API",
+        description=_API_DESCRIPTION,
+        version=API_VERSION,
+        license_info={"name": "Apache-2.0", "identifier": "Apache-2.0"},
+        lifespan=lifespan,
+    )
     application.state.dataset = None
     application.state.settings = None
     application.state.ready = False
