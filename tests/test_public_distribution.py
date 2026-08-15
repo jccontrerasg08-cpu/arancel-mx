@@ -25,8 +25,9 @@ def test_private_paths_are_not_distributed() -> None:
     assert [path for path in private_paths if (ROOT / path).exists()] == []
 
 
-def test_shipped_engineering_specs_are_not_kept_in_tree() -> None:
-    assert not (ROOT / "docs/superpowers").exists()
+def test_engineering_specs_are_pruned_from_sdist() -> None:
+    manifest = (ROOT / "MANIFEST.in").read_text(encoding="utf-8")
+    assert "prune docs/superpowers" in manifest
 
 
 def test_generated_and_local_paths_are_ignored() -> None:

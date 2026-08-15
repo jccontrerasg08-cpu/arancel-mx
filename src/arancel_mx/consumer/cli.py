@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from pathlib import Path
 import sys
 
 from arancel_mx.consumer.config import resolve_config
@@ -17,6 +18,7 @@ _OUTPUT_FORMATS = ("table", "json", "csv")
 _QUERY_ACTIONS = {
     "lookup",
     "search",
+    "suggest",
     "parent",
     "children",
     "provenance",
@@ -27,6 +29,7 @@ _QUERY_ACTIONS = {
 _QUERY_CSV_SCHEMAS: dict[str, CsvSchema] = {
     "lookup": "tariff",
     "search": "search",
+    "suggest": "suggest",
     "parent": "tariff",
     "children": "tariff",
     "provenance": "provenance",
@@ -58,7 +61,7 @@ def _add_offline(parser: argparse.ArgumentParser) -> None:
 def _add_dataset_selection(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--dataset",
-        help="Pin an exact data-YYYY.MM.DD release instead of the latest selection",
+        help="Pin data-YYYY.MM.DD or open a local .duckdb file",
     )
     _add_offline(parser)
 
@@ -178,6 +181,15 @@ def register_consumer_commands(
     )
     search.add_argument("--limit", type=_positive_int, default=20)
 
+    suggest = _add_query_command(
+        subparsers,
+        "suggest",
+        help_text="Retrieve-only suggestions; not a classification",
+        positional="text",
+    )
+    suggest.description = "Retrieve-only suggestions; not a classification"
+    suggest.add_argument("--limit", type=_positive_int, default=5)
+
     _add_query_command(
         subparsers,
         "parent",
@@ -212,6 +224,16 @@ def register_consumer_commands(
     chapters.set_defaults(consumer_action="chapters")
 
 
+def _local_duckdb_path(value: str) -> Path | None:
+    text = value.strip()
+    if not text:
+        return None
+    path = Path(text)
+    if path.is_file() or text.lower().endswith(".duckdb") or "/" in text or "\\" in text:
+        return path
+    return None
+
+
 def _consumer_config(namespace: argparse.Namespace):
     options: dict[str, object] = {}
     if getattr(namespace, "dataset", None) is not None:
@@ -229,6 +251,13 @@ def _consumer_config(namespace: argparse.Namespace):
 def _selected_dataset(namespace: argparse.Namespace) -> Dataset:
     # Validate environment/configuration through the same public error boundary
     # used by data and doctor before Dataset resolves it internally.
+    raw = getattr(namespace, "dataset", None)
+    if raw:
+        local = _local_duckdb_path(raw)
+        if local is not None:
+            if not local.is_file():
+                raise DatasetUnavailableError(f"local dataset not found: {local}")
+            return Dataset.open(local)
     _consumer_config(namespace)
     options = {"offline": namespace.offline}
     if namespace.dataset:
@@ -263,6 +292,8 @@ def _run_query(namespace: argparse.Namespace) -> int:
         value: object = dataset.lookup(namespace.code)
     elif action == "search":
         value = dataset.search(namespace.text, limit=namespace.limit)
+    elif action == "suggest":
+        value = dataset.suggest(namespace.text, limit=namespace.limit)
     elif action == "parent":
         parent_record = dataset.parent(namespace.code)
         value = () if parent_record is None and namespace.format != "json" else parent_record

@@ -139,6 +139,18 @@ def test_full_consumer_cli_sequence_survives_strict_offline_mode(
     ]
     assert [child["code"] for child in card["children"]] == ["0101210100"]
 
+    assert main(["suggest", "reproductores", "--dataset", TAG]) == 0
+    suggest = capsys.readouterr()
+    assert suggest.err == ""
+    assert suggest.out.startswith(
+        "This is not a classification. Retrieve-only matches from the official dataset."
+    )
+    assert "--- 1/1  01012101  score=330  confidence=1.0  scorer=1 ---" in suggest.out
+    assert "Código      0101.21.01" in suggest.out
+    assert "Notas nacionales  (none)" in suggest.out
+    assert "WCO support  " in suggest.out
+    assert "01_2022e.pdf" in suggest.out
+
     assert main(["chapters", "--dataset", TAG, "--format", "json"]) == 0
     chapters = _json_stdout(capsys)
     assert [row["code"] for row in chapters] == ["01"]

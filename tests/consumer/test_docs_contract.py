@@ -39,6 +39,7 @@ def test_bilingual_readmes_show_install_and_consumer_first_commands() -> None:
         "arancel-mx ficha 01012101",
         "arancel-mx compare 01012101",
         "arancel-mx chapters",
+        "arancel-mx suggest",
         "arancel-mx data verify",
         "docs/consumer-cli.md",
     )
@@ -136,6 +137,7 @@ def test_external_consumption_guide_locks_install_verify_query_and_public_surfac
         "Dataset.compare",
         "lookup",
         "search",
+        "suggest",
         "ficha",
         "chapters",
         "parent",

@@ -46,9 +46,12 @@ def test_canary_installs_runtime_package_without_classifier_or_dev_extras() -> N
     assert "dspy" not in workflow
     assert "arancel-mx data download" in workflow
     assert "arancel-mx data verify --bundle" in workflow
+    assert "arancel-mx suggest reproductores --offline" in workflow
     assert workflow.index("python -m pip install -c requirements/production-build.txt -e .") < workflow.index(
         "arancel-mx data download"
-    ) < workflow.index("arancel-mx data verify --bundle")
+    ) < workflow.index("arancel-mx data verify --bundle") < workflow.index(
+        "arancel-mx suggest reproductores --offline"
+    )
 
 
 def test_canary_actions_are_pinned_to_full_commit_shas() -> None:

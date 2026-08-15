@@ -9,8 +9,15 @@ from typing import Iterable
 
 from arancel_mx.consumer.errors import InvalidCodeError, QueryError, RecordNotFoundError
 from arancel_mx.consumer.hs_sections import section_for_chapter
-from arancel_mx.consumer.models import Ficha, ProvenanceRecord, SearchResult, TariffRecord
+from arancel_mx.consumer.models import Ficha, NationalNote, ProvenanceRecord, SearchResult, SuggestHit, TariffRecord
 from arancel_mx.domain.normalization import format_normalized_code
+
+
+SCORER_VERSION = "1"
+SUGGEST_DISCLAIMER = (
+    "This is not a classification. Retrieve-only matches from the official dataset. "
+    "WCO is not LIGIE/NICO authority."
+)
 
 
 _CODE_LENGTHS = {2, 4, 6, 8, 10}
@@ -139,6 +146,18 @@ def _search_code_candidate(text: str) -> str | None:
     return digits
 
 
+def _chapter(record: TariffRecord) -> str:
+    return record.hs2 or record.code[:2]
+
+
+def _confidence(match_kind: str, matched: int, query_token_count: int) -> float:
+    if match_kind == "exact_code":
+        return 1.0
+    if match_kind == "code_prefix":
+        return 0.85
+    return matched / query_token_count
+
+
 def search(connection, text: str, *, limit: int) -> tuple[SearchResult, ...]:
     """Search current records with stable scoring and tie-breaking."""
 
@@ -159,6 +178,7 @@ def search(connection, text: str, *, limit: int) -> tuple[SearchResult, ...]:
         record = _row_to_tariff_record(row)
         score = 0
         match_kind = None
+        matched = 0
 
         if code_candidate is not None and record.code == code_candidate:
             score = 1000
@@ -177,17 +197,90 @@ def search(connection, text: str, *, limit: int) -> tuple[SearchResult, ...]:
 
         if match_kind is not None:
             results.append(
-                SearchResult(record=record, score=score, match_kind=match_kind)
+                SearchResult(
+                    record=record,
+                    score=score,
+                    match_kind=match_kind,
+                    scorer_version=SCORER_VERSION,
+                    confidence=_confidence(match_kind, matched, len(query_tokens)),
+                )
             )
 
-    results.sort(
-        key=lambda item: (
-            -item.score,
-            item.record.code,
-            item.record.description,
+    if code_candidate is None:
+        chapter_score: dict[str, int] = {}
+        for item in results:
+            chapter = _chapter(item.record)
+            current = chapter_score.get(chapter)
+            if current is None or item.score > current:
+                chapter_score[chapter] = item.score
+        results.sort(
+            key=lambda item: (
+                -chapter_score[_chapter(item.record)],
+                -item.score,
+                item.record.code,
+                item.record.description,
+            )
         )
-    )
+    else:
+        results.sort(
+            key=lambda item: (
+                -item.score,
+                item.record.code,
+                item.record.description,
+            )
+        )
     return tuple(results[:limit])
+
+
+def _national_notes(connection, chapter: str) -> tuple[NationalNote, ...]:
+    exists = connection.execute(
+        """
+        SELECT 1 FROM information_schema.tables
+        WHERE lower(table_name) = 'arancel_mx_national_notes'
+        LIMIT 1
+        """
+    ).fetchone()
+    if exists is None:
+        return ()
+    rows = connection.execute(
+        """
+        SELECT chapter, note_number, text, source_document_id
+        FROM arancel_mx_national_notes
+        WHERE chapter = ?
+        ORDER BY note_number
+        """,
+        [chapter],
+    ).fetchall()
+    return tuple(
+        NationalNote(
+            chapter=str(row[0]),
+            note_number=str(row[1]),
+            text=str(row[2]),
+            source_document_id=str(row[3]),
+        )
+        for row in rows
+    )
+
+
+def suggest(connection, text: str, *, limit: int = 5) -> tuple[SuggestHit, ...]:
+    """Return retrieve-only ranked candidates with ficha and chapter notes."""
+
+    if limit <= 0:
+        raise ValueError("suggest limit must be greater than zero")
+    # ponytail: search() already scans every current row; slice after preferring
+    # fraccion8. Upgrade: split rank/slice if this list needs a hard cap.
+    ranked = search(connection, text, limit=2**31 - 1)
+    preferred = tuple(item for item in ranked if item.record.level == "fraccion8")
+    chosen = preferred or ranked
+    return tuple(
+        SuggestHit(
+            search=item,
+            ficha=ficha(connection, item.record.code),
+            national_notes=_national_notes(connection, _chapter(item.record)),
+            disclaimer=SUGGEST_DISCLAIMER,
+        )
+        for item in chosen[:limit]
+    )
 
 
 def parent(connection, code: str) -> TariffRecord | None:
