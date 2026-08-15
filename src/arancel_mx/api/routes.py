@@ -2,13 +2,19 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Request
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Request
 
 from arancel_mx import __version__
 from arancel_mx.api import API_VERSION
+from arancel_mx.api.dependencies import get_dataset
+from arancel_mx.api.models import FichaResponse, ProvenanceResponse, TariffResponse
+from arancel_mx.consumer import Dataset
 
 
 router = APIRouter()
+DatasetDependency = Annotated[Dataset, Depends(get_dataset)]
 
 
 @router.get("/")
@@ -48,3 +54,54 @@ def metadata(request: Request) -> dict[str, str | bool | None]:
         "release_verified": info.release_verified,
         "structural_valid": info.structural_valid,
     }
+
+
+@router.get("/v1/lookup/{code}", response_model=TariffResponse, tags=["tariff"])
+def lookup(code: str, dataset: DatasetDependency) -> TariffResponse:
+    """Return one exact current tariff record from the verified dataset."""
+
+    return TariffResponse.from_record(dataset.lookup(code))
+
+
+@router.get("/v1/ficha/{code}", response_model=FichaResponse, tags=["tariff"])
+def ficha(code: str, dataset: DatasetDependency) -> FichaResponse:
+    """Return the existing verified hierarchy card for one code."""
+
+    return FichaResponse.from_ficha(dataset.ficha(code))
+
+
+@router.get(
+    "/v1/codes/{code}/parent",
+    response_model=TariffResponse | None,
+    tags=["hierarchy"],
+)
+def parent(code: str, dataset: DatasetDependency) -> TariffResponse | None:
+    """Return the direct verified parent, or null for an HS2 chapter."""
+
+    record = dataset.parent(code)
+    return TariffResponse.from_record(record) if record is not None else None
+
+
+@router.get(
+    "/v1/codes/{code}/children",
+    response_model=list[TariffResponse],
+    tags=["hierarchy"],
+)
+def children(code: str, dataset: DatasetDependency) -> list[TariffResponse]:
+    """Return direct current children from the verified hierarchy."""
+
+    return [TariffResponse.from_record(record) for record in dataset.children(code)]
+
+
+@router.get(
+    "/v1/codes/{code}/provenance",
+    response_model=list[ProvenanceResponse],
+    tags=["provenance"],
+)
+def provenance(code: str, dataset: DatasetDependency) -> list[ProvenanceResponse]:
+    """Return recorded source provenance in consumer-defined order."""
+
+    return [
+        ProvenanceResponse.from_record(record)
+        for record in dataset.provenance(code)
+    ]
