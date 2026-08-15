@@ -7,6 +7,21 @@ from arancel_mx.api.app import create_app
 from arancel_mx.consumer.errors import DatasetIntegrityError
 
 
+def _assert_degraded_service(client: TestClient) -> None:
+    health = client.get("/healthz")
+    ready = client.get("/readyz")
+    meta = client.get("/v1/meta")
+
+    assert health.status_code == 200
+    assert health.json() == {"status": "ok"}
+    assert ready.status_code == 503
+    assert ready.json() == {"status": "not_ready"}
+    assert meta.status_code == 503
+    assert meta.json()["error"]["code"] == "dataset_unavailable"
+    assert meta.json()["error"]["message"] == "The verified dataset is unavailable."
+    assert meta.json()["error"]["request_id"] == meta.headers["x-request-id"]
+
+
 def test_lifespan_loads_verified_dataset_once(valid_settings, fake_dataset) -> None:
     calls: list[str] = []
 
@@ -30,15 +45,50 @@ def test_lifespan_loads_verified_dataset_once(valid_settings, fake_dataset) -> N
     assert app.state.ready is False
 
 
-def test_lifespan_fails_closed_when_dataset_verification_fails(
-    valid_settings,
-) -> None:
+def test_dataset_verification_failure_yields_degraded_service(valid_settings) -> None:
     def loader(settings):
         raise DatasetIntegrityError(f"invalid dataset: {settings.dataset_tag}")
 
     app = create_app(settings=valid_settings, dataset_loader=loader)
 
-    with pytest.raises(DatasetIntegrityError, match="invalid dataset"):
+    with TestClient(app) as client:
+        _assert_degraded_service(client)
+        assert app.state.dataset is None
+        assert app.state.ready is False
+        assert app.state.startup_error == "DatasetIntegrityError"
+
+
+def test_missing_dataset_configuration_yields_degraded_service(
+    monkeypatch,
+    fake_dataset,
+) -> None:
+    monkeypatch.delenv("ARANCEL_MX_API_DATASET", raising=False)
+    calls = 0
+
+    def loader(settings):
+        nonlocal calls
+        calls += 1
+        return fake_dataset
+
+    app = create_app(dataset_loader=loader)
+
+    with TestClient(app) as client:
+        _assert_degraded_service(client)
+        assert app.state.dataset is None
+        assert app.state.settings is None
+        assert app.state.ready is False
+        assert app.state.startup_error == "ValueError"
+
+    assert calls == 0
+
+
+def test_unexpected_loader_failure_still_aborts_startup(valid_settings) -> None:
+    def loader(settings):
+        raise RuntimeError("programming defect")
+
+    app = create_app(settings=valid_settings, dataset_loader=loader)
+
+    with pytest.raises(RuntimeError, match="programming defect"):
         with TestClient(app):
             pass
 
@@ -97,9 +147,8 @@ def test_lifespan_logs_failure_type_without_exception_payload(
 
     app = create_app(settings=valid_settings, dataset_loader=loader)
 
-    with pytest.raises(DatasetIntegrityError):
-        with TestClient(app):
-            pass
+    with TestClient(app) as client:
+        assert client.get("/readyz").status_code == 503
 
     messages = [record.getMessage() for record in caplog.records]
     assert (
