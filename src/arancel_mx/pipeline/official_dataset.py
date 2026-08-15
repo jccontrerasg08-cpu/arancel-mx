@@ -157,6 +157,39 @@ def _nico_rows(staging_rows, source_id: str, config: OfficialDatasetConfig):
     ]
 
 
+def _validate_nico_coverage(
+    fraction_rows: list[dict[str, object]],
+    nico_rows: list[dict[str, object]],
+    rate_rows: list[dict[str, object]],
+) -> None:
+    """Reject operable tariff fractions absent from the authoritative NICO snapshot.
+
+    Fully prohibited fractions are intentionally allowed to have no NICO entry. The
+    official NICO catalogue omits those lines, while fractions that can be imported
+    or exported still require commercial-identification coverage.
+    """
+    fraction_codes = {str(row["code"]) for row in fraction_rows}
+    nico_parents = {str(row["code"])[:8] for row in nico_rows}
+    rate_by_code = {str(row["code"]): row for row in rate_rows}
+
+    uncovered = fraction_codes - nico_parents
+    missing_required = []
+    for code in sorted(uncovered):
+        rate = rate_by_code.get(code, {})
+        fully_prohibited = (
+            str(rate.get("igi_kind") or "") == "prohibida"
+            and str(rate.get("ige_kind") or "") == "prohibida"
+        )
+        if not fully_prohibited:
+            missing_required.append(code)
+
+    if missing_required:
+        raise ValueError(
+            "operable tariff fractions missing NICO coverage: "
+            + ", ".join(missing_required)
+        )
+
+
 def _level_counts(classifications: list[dict[str, object]]) -> dict[str, int]:
     counts = Counter(str(row["level"]) for row in classifications)
     return {level: int(counts.get(level, 0)) for level in RELEASE_LEVELS}
@@ -314,6 +347,7 @@ def build_official_dataset(
         str(nico_source.source_document["source_document_id"]),
         config,
     )
+    _validate_nico_coverage(fraction_rows, nico_rows, rate_rows)
 
     hs_rows = parse_ligie_pdf_hierarchy(
         diputados_source.capture.path,
