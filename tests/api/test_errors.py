@@ -182,3 +182,24 @@ def test_unexpected_exception_does_not_leak_internal_details(
         message="Internal server error.",
     )
     assert secret not in response.text
+
+
+def test_unexpected_exception_log_contains_only_request_id_and_type(
+    valid_settings,
+    fake_dataset,
+    caplog,
+) -> None:
+    secret = "C:/private/warehouse.db SELECT * FROM secrets"
+    caplog.set_level("ERROR", logger="arancel_mx.api.app")
+    app = _app_with_failure_route(valid_settings, fake_dataset, RuntimeError(secret))
+
+    with TestClient(app, raise_server_exceptions=False) as client:
+        response = client.get("/_test/failure", headers={"X-Request-ID": "test-err-1"})
+
+    assert response.status_code == 500
+    messages = [record.getMessage() for record in caplog.records]
+    assert (
+        "unhandled API exception request_id=test-err-1 error_type=RuntimeError"
+        in messages
+    )
+    assert secret not in "\n".join(messages)
