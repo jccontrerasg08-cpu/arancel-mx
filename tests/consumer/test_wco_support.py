@@ -180,6 +180,19 @@ def test_download_uses_cache_hit_without_network(
     assert download_chapter("61", cache_dir=tmp_path, offline=True) == dest
 
 
+def test_download_cache_directory_failure_is_public_error(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    cache_file = tmp_path / "not-a-directory"
+    cache_file.write_text("occupied", encoding="utf-8")
+    _forbid_network(monkeypatch)
+
+    with pytest.raises(WcoSupportError, match="failed to prepare WCO HS 2022 cache"):
+        download_chapter("61", cache_dir=cache_file)
+    with pytest.raises(WcoSupportError, match="failed to prepare WCO HS 2022 cache"):
+        download_gir(cache_dir=cache_file)
+
+
 def test_download_http_error(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     def boom(url: str, timeout: float | None = None) -> object:
         raise HTTPError(url, 404, "Not Found", hdrs=None, fp=BytesIO())
