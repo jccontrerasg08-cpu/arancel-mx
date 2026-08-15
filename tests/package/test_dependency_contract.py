@@ -43,6 +43,11 @@ def test_fastapi_cloud_runtime_and_entrypoint_are_declared() -> None:
     assert payload["tool"]["fastapi"]["entrypoint"] == "arancel_mx.api.app:app"
 
 
+def test_fastapi_cloud_uses_tested_python_without_pinning_library_metadata() -> None:
+    assert Path(".python-version").read_text(encoding="utf-8").strip() == "3.13"
+    assert _project()["requires-python"] == ">=3.11"
+
+
 def test_maintainer_extra_contains_pipeline_dependencies() -> None:
     extras = _project()["optional-dependencies"]
     maintainer = _dependency_names(extras["maintainer"])
@@ -53,7 +58,7 @@ def test_dev_extra_preserves_full_repository_tooling() -> None:
     extras = _project()["optional-dependencies"]
     dev = _dependency_names(extras["dev"])
     assert HEAVY_MAINTAINER_DEPS <= dev
-    assert {"build", "pytest"} <= dev
+    assert {"build", "httpx2", "pytest"} <= dev
     assert "reportlab" not in dev
 
 
