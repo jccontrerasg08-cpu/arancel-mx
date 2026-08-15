@@ -90,17 +90,39 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(application: FastAPI):
+        application.state.dataset = None
+        application.state.settings = None
         application.state.ready = False
         application.state.startup_error = None
-        resolved_settings = settings if settings is not None else load_settings()
+
+        try:
+            resolved_settings = settings if settings is not None else load_settings()
+        except ValueError as exc:
+            application.state.startup_error = exc.__class__.__name__
+            logger.error(
+                "API startup configuration failed error_type=%s",
+                exc.__class__.__name__,
+            )
+            yield
+            return
+
         application.state.settings = resolved_settings
         logger.info("loading verified dataset tag=%s", resolved_settings.dataset_tag)
         try:
             dataset = loader(resolved_settings)
-        except Exception as exc:
+        except DatasetError as exc:
             application.state.startup_error = exc.__class__.__name__
             logger.error(
                 "dataset startup verification failed tag=%s error_type=%s",
+                resolved_settings.dataset_tag,
+                exc.__class__.__name__,
+            )
+            yield
+            return
+        except Exception as exc:
+            application.state.startup_error = exc.__class__.__name__
+            logger.error(
+                "unexpected API startup failure tag=%s error_type=%s",
                 resolved_settings.dataset_tag,
                 exc.__class__.__name__,
             )
