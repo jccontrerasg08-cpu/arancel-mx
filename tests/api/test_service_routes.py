@@ -84,17 +84,26 @@ def test_overlong_request_id_is_replaced(valid_settings, fake_dataset) -> None:
 
 def test_public_cors_allows_get_without_credentials(valid_settings, fake_dataset) -> None:
     with _client(valid_settings, fake_dataset) as client:
-        response = client.options(
+        preflight = client.options(
             "/v1/meta",
             headers={
                 "Origin": "https://example.com",
                 "Access-Control-Request-Method": "GET",
             },
         )
+        response = client.get(
+            "/v1/meta",
+            headers={"Origin": "https://example.com"},
+        )
+
+    assert preflight.status_code == 200
+    assert preflight.headers["access-control-allow-origin"] == "*"
+    assert preflight.headers.get("access-control-allow-credentials") is None
+    assert "GET" in preflight.headers["access-control-allow-methods"]
+    assert preflight.headers["x-request-id"]
 
     assert response.status_code == 200
     assert response.headers["access-control-allow-origin"] == "*"
     assert response.headers.get("access-control-allow-credentials") is None
-    assert "GET" in response.headers["access-control-allow-methods"]
     assert "x-request-id" in response.headers["access-control-expose-headers"].lower()
     assert response.headers["x-request-id"]
