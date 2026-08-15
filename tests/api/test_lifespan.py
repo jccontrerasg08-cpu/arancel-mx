@@ -60,3 +60,50 @@ def test_create_app_does_not_load_dataset_before_lifespan(
 
     assert calls == 0
     assert app.state.ready is False
+
+
+def test_lifespan_logs_verified_dataset_identity_without_local_path(
+    valid_settings,
+    fake_dataset,
+    caplog,
+) -> None:
+    caplog.set_level("INFO", logger="arancel_mx.api.app")
+    app = create_app(
+        settings=valid_settings,
+        dataset_loader=lambda settings: fake_dataset,
+    )
+
+    with TestClient(app):
+        pass
+
+    messages = [record.getMessage() for record in caplog.records]
+    assert "loading verified dataset tag=data-2026.08.15" in messages
+    assert (
+        "verified dataset ready tag=data-2026.08.15 "
+        "dataset_version=2026.08.15 schema_version=2"
+    ) in messages
+    assert "/verified/arancel_mx.duckdb" not in "\n".join(messages)
+
+
+def test_lifespan_logs_failure_type_without_exception_payload(
+    valid_settings,
+    caplog,
+) -> None:
+    secret = "C:/private/cache/arancel_mx.duckdb"
+    caplog.set_level("ERROR", logger="arancel_mx.api.app")
+
+    def loader(settings):
+        raise DatasetIntegrityError(f"sha mismatch at {secret}")
+
+    app = create_app(settings=valid_settings, dataset_loader=loader)
+
+    with pytest.raises(DatasetIntegrityError):
+        with TestClient(app):
+            pass
+
+    messages = [record.getMessage() for record in caplog.records]
+    assert (
+        "dataset startup verification failed tag=data-2026.08.15 "
+        "error_type=DatasetIntegrityError"
+    ) in messages
+    assert secret not in "\n".join(messages)
