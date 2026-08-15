@@ -115,7 +115,8 @@ def test_readme_en_links_external_consumption_with_english_ingest_summary() -> N
     english = _read("README.en.md")
     assert "docs/external-consumption.md" in english
     lowered = english.lower()
-    for phrase in ("install", "verify", "query", "out of scope"):
+    for phrase in ("install", "verify", "query", "public http api"):
         assert phrase in lowered
+    assert "does not classify" in lowered
     spanish = _read("README.md")
     assert "docs/external-consumption.md" in spanish
