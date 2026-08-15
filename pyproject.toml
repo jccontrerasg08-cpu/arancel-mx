@@ -38,6 +38,7 @@ classifiers = [
 ]
 dependencies = [
   "duckdb>=1.1",
+  "fastapi[standard]>=0.141.1",
   "filelock>=3.16",
   "requests>=2.32",
 ]
@@ -51,6 +52,7 @@ maintainer = [
 dev = [
     "build>=1.2",
     "check-wheel-contents>=0.6.3",
+    "httpx2>=2.9.0",
     "mypy>=1.0",
     "openpyxl>=3.1",
     "PyMuPDF>=1.24",
@@ -70,6 +72,9 @@ Issues = "https://github.com/jccontrerasg08-cpu/arancel-mx/issues"
 Documentation = "https://github.com/jccontrerasg08-cpu/arancel-mx/tree/main/docs"
 Changelog = "https://github.com/jccontrerasg08-cpu/arancel-mx/blob/main/CHANGELOG.md"
 "Data Releases" = "https://github.com/jccontrerasg08-cpu/arancel-mx/releases"
+
+[tool.fastapi]
+entrypoint = "arancel_mx.api.app:app"
 
 [tool.setuptools.packages.find]
 where = ["src"]

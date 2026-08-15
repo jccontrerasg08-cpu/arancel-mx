@@ -1,6 +1,6 @@
 # Contrato de consumo externo
 
-Guía canónica para aplicaciones que consumen `arancel-mx` como paquete de datos verificado (por ejemplo AduanaMap). No sustituye el pipeline interno ni convierte este repositorio en una plataforma aduanera.
+Guía canónica para aplicaciones que consumen `arancel-mx` como paquete de datos verificado o mediante su API HTTP pública de solo lectura (por ejemplo AduanaMap). No sustituye el pipeline interno ni convierte este repositorio en una plataforma aduanera.
 
 El recorrido de ingesta esperado es:
 
@@ -16,7 +16,7 @@ fijar arancel-mx==0.2.0
 
 ## Qué es y qué no es arancel-mx
 
-`arancel-mx` es un paquete de datos fail-closed de la LIGIE/NICO mexicana. Publica seis assets verificables en GitHub Releases y un paquete Python de consulta. No es asesoría legal, no es un clasificador arancelario y no es AduanaMap.
+`arancel-mx` es un paquete de datos fail-closed de la LIGIE/NICO mexicana. Publica seis assets verificables en GitHub Releases, un paquete Python de consulta y, desde el contrato en desarrollo `0.2.1`, una API HTTP pública GET-only y read-only. No es asesoría legal, no es un clasificador arancelario y no es AduanaMap.
 
 El software original se distribuye como `arancel-mx` (nombre en PyPI), se importa como `arancel_mx` y el comando de consola es `arancel-mx`. No existe la distribución `arancelmx`.
 
@@ -48,6 +48,60 @@ db = Dataset.version("data-YYYY.MM.DD")
 ```
 
 `Dataset.latest()` resuelve la release pública más reciente, la verifica y la abre. No uses “lo que haya en git” como identidad de datos.
+
+## API HTTP pública
+
+El servicio HTTP conserva tres identidades separadas:
+
+```text
+API v1
+package 0.2.1
+dataset data-2026.08.15
+```
+
+El contrato `/v1` es GET-only, read-only y no requiere API key. La API usa exactamente el mismo `Dataset` verificado del paquete y no implementa su propia lógica de clasificación o tarifas. `search` y `suggest` son retrieve-only: la API no clasifica mercancías y no constituye asesoría legal.
+
+La producción debe fijar una release inmutable de forma explícita:
+
+```text
+ARANCEL_MX_API_DATASET=data-2026.08.15
+```
+
+No existe fallback silencioso a `latest` durante el arranque del servicio. Si la configuración falta, la release no puede verificarse o el DuckDB no abre de forma válida, el servicio falla cerrado en vez de declarar readiness.
+
+Mientras no se haya verificado el hostname de producción, los ejemplos usan `ARANCEL_MX_API_URL` y no inventan un dominio:
+
+```bash
+export ARANCEL_MX_API_URL="https://<deployment-host>"
+curl "$ARANCEL_MX_API_URL/healthz"
+curl "$ARANCEL_MX_API_URL/readyz"
+curl "$ARANCEL_MX_API_URL/v1/meta"
+curl "$ARANCEL_MX_API_URL/v1/lookup/8517130100"
+```
+
+En documentación y scripts, `ARANCEL_MX_API_URL` representa únicamente el origen HTTP ya desplegado y verificado. El ejemplo de lookup es `/v1/lookup/8517130100`.
+
+Endpoints públicos iniciales:
+
+```text
+GET /
+GET /healthz
+GET /readyz
+GET /v1/meta
+GET /v1/lookup/{code}
+GET /v1/ficha/{code}
+GET /v1/search?q=...&limit=...
+GET /v1/suggest?q=...&limit=...
+GET /v1/chapters
+GET /v1/chapters/{chapter}/national-notes
+GET /v1/codes/{code}/parent
+GET /v1/codes/{code}/children
+GET /v1/codes/{code}/provenance
+```
+
+`/docs` y `/redoc` sirven la documentación interactiva generada desde OpenAPI. `/v1/meta` publica por separado la versión de API, la versión del paquete y la identidad del dataset cargado.
+
+El límite de seguridad del servicio es deliberado: no ofrece endpoints HTTP de actualización, reconciliación ni publicación, tampoco expone captura oficial, `compare` live contra VUCEM ni descarga WCO. Esas funciones continúan fuera del servicio web público.
 
 ## Verificar
 
@@ -156,7 +210,7 @@ No hay un séptimo asset `source_trace.json`. Una aplicación que necesite un ob
 
 ## Fuera de alcance
 
-`arancel-mx` **no publica** las siguientes medidas ni servicios. No están publicados en el contrato 0.2.x:
+`arancel-mx` **no publica** las siguientes medidas ni servicios. No están publicados en el contrato de datos 0.2.x ni se deben inferir del API v1:
 
 - IVA
 - franja / región
@@ -165,8 +219,8 @@ No hay un séptimo asset `source_trace.json`. Una aplicación que necesite un ob
 - TLC / T-MEC
 - PROSEC
 - columnas de descripción en inglés
-- API REST hospedada
 - Postgres hospedado
+- API REST de escritura, administración o mutación. La API REST pública v1 permanece estrictamente GET-only/read-only.
 - SIICEX-CAAAREM o HTML de VUCEM como identidad legal
 - cola humana para promover capturas incompletas
 - GIR, notas de sección/capítulo/subpartida o reglas complementarias (incluida la 10ª), y sugerencias HS6 WCO. Esos textos WCO no se publican como instrumento jurídico mexicano. Una caché local opcional de PDF WCO es sólo apoyo de lectura (copyright WCO; no es autoridad LIGIE/NICO). `suggest` es retrieve-only sobre el dataset oficial y no clasifica.

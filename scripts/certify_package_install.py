@@ -56,6 +56,11 @@ def smoke_commands(dist_path: Path, work_dir: Path) -> list[list[str]]:
             "-c",
             "import arancel_mx; print(arancel_mx.__version__)",
         ],
+        [
+            str(python),
+            "-c",
+            "from arancel_mx.api.app import app; assert app.title == 'Arancel MX API'",
+        ],
         [str(python), "-m", "arancel_mx", "--help"],
         [str(console_script), "--help"],
         [

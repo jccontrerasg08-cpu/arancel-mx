@@ -73,7 +73,10 @@ def test_ci_test_job_runs_ruff_mypy_and_pytest_coverage_after_install() -> None:
     job = _ci_test_job()
     install = 'python -m pip install -c requirements/production-build.txt -e ".[dev]"'
     ruff = "python -m ruff check src tests scripts"
-    mypy = "python -m mypy src/arancel_mx/consumer src/arancel_mx/__init__.py"
+    mypy = (
+        "python -m mypy src/arancel_mx/consumer src/arancel_mx/api "
+        "src/arancel_mx/__init__.py"
+    )
     pytest_cov = "python -m pytest -q --cov=arancel_mx --cov-report=term-missing"
 
     assert install in job

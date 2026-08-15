@@ -99,7 +99,7 @@ def _row_to_tariff_record(row: Iterable[object]) -> TariffRecord:
         parent_code=_parent_code(code),
         dataset_version=str(values[10]),
         schema_version=str(values[11]),
-        effective_from=values[12],  # DuckDB returns datetime.date for DATE columns.
+        effective_from=values[12],
         effective_to=values[13],
         is_current=bool(values[14]),
         hs2=_as_optional_str(values[15]),
@@ -232,7 +232,17 @@ def search(connection, text: str, *, limit: int) -> tuple[SearchResult, ...]:
     return tuple(results[:limit])
 
 
-def _national_notes(connection, chapter: str) -> tuple[NationalNote, ...]:
+def national_notes(connection, chapter: str) -> tuple[NationalNote, ...]:
+    """Return materialized National Notes for one exact two-digit chapter."""
+
+    if (
+        not isinstance(chapter, str)
+        or len(chapter) != 2
+        or not chapter.isascii()
+        or not chapter.isdigit()
+    ):
+        raise QueryError("chapter must be exactly two digits")
+
     exists = connection.execute(
         """
         SELECT 1 FROM information_schema.tables
@@ -276,7 +286,7 @@ def suggest(connection, text: str, *, limit: int = 5) -> tuple[SuggestHit, ...]:
         SuggestHit(
             search=item,
             ficha=ficha(connection, item.record.code),
-            national_notes=_national_notes(connection, _chapter(item.record)),
+            national_notes=national_notes(connection, _chapter(item.record)),
             disclaimer=SUGGEST_DISCLAIMER,
         )
         for item in chosen[:limit]
