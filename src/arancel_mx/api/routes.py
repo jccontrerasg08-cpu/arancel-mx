@@ -49,10 +49,12 @@ def healthz() -> dict[str, str]:
 
 
 @router.get("/v1/meta")
-def metadata(request: Request) -> dict[str, str | bool | None]:
+def metadata(
+    request: Request,
+    dataset: DatasetDependency,
+) -> dict[str, str | bool | None]:
     """Expose independent API, package, and verified dataset identities."""
 
-    dataset = request.app.state.dataset
     settings = request.app.state.settings
     info = dataset.info
     return {
