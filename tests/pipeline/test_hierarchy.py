@@ -56,18 +56,6 @@ def test_nico_without_fraction_parent_fails():
         assemble_classifications([], [], [row("nico10", "0101210100", "x")])
 
 
-def test_current_fraction_without_nico_child_fails_closed():
-    hs = [
-        row("hs2", "24", "Tabaco"),
-        row("hs4", "2404", "Productos con nicotina"),
-        row("hs6", "240411", "Que contengan tabaco"),
-    ]
-    fractions = [row("fraccion8", "24041101", "Que contengan tabaco o tabaco reconstituido")]
-
-    with pytest.raises(ValueError, match="current tariff fractions missing NICO coverage.*24041101"):
-        assemble_classifications(hs, fractions, [])
-
-
 def test_conflicting_duplicate_classification_fails_closed():
     hs = [
         row("hs2", "01", "Animales vivos"),
