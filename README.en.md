@@ -186,9 +186,30 @@ Downstream apps should pin, install, verify, and query `arancel-mx` as an upstre
 1. **Install** and pin: `pip install arancel-mx==0.2.0`, then select `--dataset data-YYYY.MM.DD`.
 2. **Verify** with `arancel-mx doctor`, `data download`, `data verify`, `SHA256SUMS`, and manifest schema v2.
 3. **Query** IGI/IGE via CLI or `Dataset` (`lookup`, `ficha`, `compare`, `provenance`). Display official `igi_text` / `ige_text` literals; do not rewrite them to percentages. `compare` against VUCEM is informative, not legal identity.
-4. **Out of scope:** IVA, NOM, T-MEC, hosted REST, and hosted Postgres are not published here.
+4. **Additional public surface:** the in-tree `0.2.1` contract includes the public HTTP API described below. IVA, NOM, T-MEC, and hosted Postgres remain outside this repository's published data model.
 
 Do not treat a self-ingested copy as upstream truth.
+
+### Public HTTP API
+
+The public HTTP API is **GET-only**, **read-only**, and requires **no API key**. Its stable contract is versioned under `/v1`; `/docs` exposes interactive OpenAPI documentation, `/readyz` reports readiness only after the pinned dataset is verified, and `/v1/meta` reports API, package, and dataset identities separately.
+
+Production startup must pin an immutable data release, for example:
+
+```text
+ARANCEL_MX_API_DATASET=data-2026.08.15
+```
+
+There is no implicit `latest` fallback. The HTTP layer uses the existing verified `Dataset` facade, **does not classify merchandise**, and is not legal advice. It exposes no source-update, reconciliation, publication, live VUCEM-compare, or WCO-download endpoint.
+
+Until a production hostname is verified, documentation deliberately uses a placeholder rather than inventing one:
+
+```bash
+export ARANCEL_MX_API_URL="https://<deployment-host>"
+curl "$ARANCEL_MX_API_URL/v1/lookup/8517130100"
+```
+
+The detailed contract and endpoint list live in [`docs/external-consumption.md`](docs/external-consumption.md).
 
 ## Quick CLI usage
 
@@ -444,9 +465,10 @@ See [`SECURITY.md`](SECURITY.md), [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CODE_O
 | GitHub Issue alerts and recovery | Available |
 | Live release/Issue write-boundary certification | Available |
 | Stable public search API | Available |
+| Public HTTP API | Available (`/v1`, GET-only/read-only, no API key) |
 | TIGIE card (`ficha` / `chapters`) | Available |
 | Compare HS6 / MX8 / NICO vs VUCEM | Available (informative, not legal identity) |
-| LIGIE national notes | Parser, official capture, and `arancel_mx_national_notes`; `data-2026.08.11` may stay empty until the next `data-*` |
+| LIGIE national notes | Parser, official capture, and `arancel_mx_national_notes`; `data-2026.08.15` contains 266 records from the official DOF source |
 | PyPI publication | Published: `arancel-mx==0.2.0` (`0.2.1` in-tree, not on PyPI until `pkg-v0.2.1`) |
 
 ## Contributing
