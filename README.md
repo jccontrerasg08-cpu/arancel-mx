@@ -185,6 +185,27 @@ python -m pip install -c requirements/production-build.txt -e ".[dev]"
 
 Las aplicaciones aguas abajo deben fijar, instalar, verificar y consultar `arancel-mx` como paquete de datos. La guía canónica es [`docs/external-consumption.md`](docs/external-consumption.md).
 
+### API HTTP pública
+
+La **API HTTP pública** es **GET-only**, **read-only** y funciona **sin API key**. Su contrato estable está versionado bajo `/v1`; `/docs` expone OpenAPI interactivo, `/readyz` sólo reporta readiness cuando el dataset fijado ya fue verificado y `/v1/meta` separa la identidad de API, paquete y dataset.
+
+Producción debe fijar una release inmutable explícita:
+
+```text
+ARANCEL_MX_API_DATASET=data-2026.08.15
+```
+
+No existe fallback silencioso a `latest`. La capa HTTP reutiliza el `Dataset` verificado, **no clasifica** mercancías y no constituye **asesoría legal**. Tampoco expone endpoints de captura, actualización, reconciliación, publicación, `compare` live contra VUCEM ni descarga WCO.
+
+Mientras no se haya verificado un hostname de producción, la documentación usa un placeholder:
+
+```bash
+export ARANCEL_MX_API_URL="https://<deployment-host>"
+curl "$ARANCEL_MX_API_URL/v1/lookup/8517130100"
+```
+
+El contrato completo y los endpoints están en [`docs/external-consumption.md`](docs/external-consumption.md).
+
 ## Uso rápido CLI
 
 El flujo para consumidores parte del dataset publicado y no requiere clonar el repositorio:
@@ -439,6 +460,7 @@ Ver [`SECURITY.md`](SECURITY.md), [`CONTRIBUTING.md`](CONTRIBUTING.md) y [`docs/
 | GitHub Issue alerts y recovery | Disponible |
 | Certificación live de release/Issue write-boundaries | Disponible |
 | API de búsqueda estable | Disponible |
+| API HTTP pública | Disponible (`/v1`, GET-only/read-only, sin API key) |
 | Ficha TIGIE (`ficha` / `chapters`) | Disponible |
 | Compare HS6 / MX8 / NICO vs VUCEM | Disponible (informativo, no identidad legal) |
 | Notas nacionales LIGIE | Parser, captura oficial y vista `arancel_mx_national_notes`; `data-2026.08.15` contiene 266 registros capturados desde la fuente oficial DOF |
