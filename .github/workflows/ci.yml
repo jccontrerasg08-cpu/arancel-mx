@@ -148,3 +148,23 @@ jobs:
         env:
           ARANCEL_MX_SKIP_URL_CHECKS: "1"
         run: python -m pytest -q tests/api tests/package/test_api_install_smoke.py
+
+      - name: Smoke-test default FastAPI startup
+        env:
+          ARANCEL_MX_API_DATASET: data-2026.08.15
+          ARANCEL_MX_CACHE_DIR: "${{ runner.temp }}/arancel-mx-api-cache"
+        run: |
+          python - <<'PY'
+          from fastapi.testclient import TestClient
+          from arancel_mx.api.app import app
+
+          with TestClient(app) as client:
+              ready = client.get("/readyz")
+              assert ready.status_code == 200, ready.text
+              meta = client.get("/v1/meta")
+              assert meta.status_code == 200, meta.text
+              payload = meta.json()
+              assert payload["dataset_tag"] == "data-2026.08.15"
+              assert payload["release_verified"] is True
+              assert payload["structural_valid"] is True
+          PY
