@@ -7,11 +7,15 @@ import tomllib
 
 
 HEAVY_MAINTAINER_DEPS = {"openpyxl", "PyMuPDF", "xlrd"}
-CORE_RUNTIME_PREFIXES = {"duckdb", "filelock", "requests"}
+CORE_RUNTIME_PREFIXES = {"duckdb", "fastapi", "filelock", "requests"}
+
+
+def _payload() -> dict[str, object]:
+    return tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
 
 
 def _project() -> dict[str, object]:
-    return tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["project"]
+    return _payload()["project"]
 
 
 def _dependency_names(values: list[str]) -> set[str]:
@@ -29,6 +33,14 @@ def test_base_install_contains_only_consumer_runtime_dependencies() -> None:
     names = _dependency_names(project["dependencies"])
     assert names == CORE_RUNTIME_PREFIXES
     assert names.isdisjoint(HEAVY_MAINTAINER_DEPS)
+
+
+def test_fastapi_cloud_runtime_and_entrypoint_are_declared() -> None:
+    payload = _payload()
+    dependencies = payload["project"]["dependencies"]
+
+    assert any(value.startswith("fastapi[standard]>=") for value in dependencies)
+    assert payload["tool"]["fastapi"]["entrypoint"] == "arancel_mx.api.app:app"
 
 
 def test_maintainer_extra_contains_pipeline_dependencies() -> None:
