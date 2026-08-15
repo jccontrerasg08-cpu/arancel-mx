@@ -66,11 +66,24 @@ def test_request_id_is_generated_and_returned(valid_settings, fake_dataset) -> N
     assert request_id.isalnum()
 
 
-def test_safe_request_id_is_propagated(valid_settings, fake_dataset) -> None:
+def test_incoming_request_id_cannot_spoof_server_identity(
+    valid_settings,
+    fake_dataset,
+) -> None:
+    incoming = "client-req-123"
     with _client(valid_settings, fake_dataset) as client:
-        response = client.get("/healthz", headers={"X-Request-ID": "client-req-123"})
+        first = client.get("/healthz", headers={"X-Request-ID": incoming})
+        second = client.get("/healthz", headers={"X-Request-ID": incoming})
 
-    assert response.headers["x-request-id"] == "client-req-123"
+    first_id = first.headers["x-request-id"]
+    second_id = second.headers["x-request-id"]
+    assert first_id != incoming
+    assert second_id != incoming
+    assert first_id != second_id
+    assert len(first_id) == 32
+    assert len(second_id) == 32
+    assert first_id.isalnum()
+    assert second_id.isalnum()
 
 
 def test_overlong_request_id_is_replaced(valid_settings, fake_dataset) -> None:
