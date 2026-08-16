@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "arancel-mx"
-version = "0.3.2"
+version = "0.3.3"
 description = "CLI y librería Python para consultar, verificar y construir datos arancelarios abiertos de México"
 readme = "README.md"
 requires-python = ">=3.11"

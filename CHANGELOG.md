@@ -24,7 +24,7 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Changed
 
-- Live docs match in-tree `0.3.2` vs PyPI `0.2.0`: cache paths, `compare`, national notes, the public source tree, and the FastAPI v1 consumption boundary.
+- Live docs match in-tree `0.3.3` vs PyPI `0.2.0`: cache paths, `compare`, national notes, the public source tree, and the FastAPI v1 consumption boundary.
 - Documented `/releases/latest` as `data-2026.08.15` (six public assets), Diputados `law_reform` 2025-12-29 / `tariff_decree` 2026-04-23 from that manifest, and that the PyPI long description is frozen at the `0.2.0` upload.
 - Development tests use `httpx2` with Starlette's current TestClient path; base package runtime stays independent of that test-only compatibility dependency.
 
@@ -44,7 +44,7 @@ All notable changes to the Python package are documented here. Dataset releases 
 - Restored `from arancel_mx.consumer import Dataset` and the other public consumer re-exports.
 - Dependabot no longer requests repository labels that do not exist.
 - Documented-URL checks wait 1.5s then 3s between connection retries, then retry only the URLs that failed the first pass.
-- Package certification retries the exact TestPyPI candidate for up to 10 minutes on each Ubuntu, Windows, and macOS runner before resolving runtime dependencies solely from PyPI. This replaces the insufficient global Simple-index substring check, which could observe the candidate before independent pip clients could resolve it.
+- Package certification retries the exact TestPyPI candidate for up to 10 minutes on each Ubuntu, Windows, and macOS runner before resolving runtime dependencies solely from PyPI. A credential-free sparse checkout now supplies only the versioned certification helper to each otherwise clean runner; it is executed by absolute path and is never installed or added to `PYTHONPATH`. This replaces the insufficient global Simple-index substring check, which could observe the candidate before independent pip clients could resolve it.
 
 ## [0.3.0] - 2026-08-13
 
@@ -65,7 +65,7 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Release status
 
-Historical TestPyPI candidates only. `pkg-v0.3.0` uploaded to TestPyPI but did not reach PyPI because macOS queried the Simple index before the new version propagated. `pkg-v0.3.1` added a global readiness check, but its direct Simple-index observation was still earlier than some independent pip clients. Neither candidate reached PyPI. The unchanged package source continues as the `0.3.2` in-tree candidate with bounded per-runner installation retries.
+Historical TestPyPI candidates only. `pkg-v0.3.0` uploaded to TestPyPI but did not reach PyPI because macOS queried the Simple index before the new version propagated. `pkg-v0.3.1` added a global readiness check, but its direct Simple-index observation was still earlier than some independent pip clients. `pkg-v0.3.2` added bounded per-runner retries but did not reach PyPI because the clean runners had no checkout from which to execute the versioned helper. None of these candidates reached PyPI. The unchanged package source continues as the `0.3.3` in-tree candidate with a credential-free sparse helper checkout and bounded per-runner installation retries.
 
 ## [0.2.0] - 2026-08-12
 
