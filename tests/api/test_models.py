@@ -140,6 +140,9 @@ def test_search_and_suggest_wire_models_keep_retrieval_metadata() -> None:
         note_number="1",
         text="Nota oficial.",
         source_document_id="dof-notes",
+        scope_type="chapter",
+        scope_value="01",
+        applicability_basis="explicit",
     )
     hit = SuggestHit(
         search=search,
@@ -149,12 +152,14 @@ def test_search_and_suggest_wire_models_keep_retrieval_metadata() -> None:
     )
 
     search_payload = SearchResponse.from_result(search).model_dump(mode="json")
+    note_payload = NationalNoteResponse.from_note(note).model_dump(mode="json")
     suggest_payload = SuggestResponse.from_hit(hit).model_dump(mode="json")
 
     assert search_payload["match_kind"] == "exact_code"
     assert search_payload["scorer_version"] == "1"
     assert search_payload["confidence"] == 1.0
+    assert note_payload["scope_type"] == "chapter"
+    assert note_payload["scope_value"] == "01"
+    assert note_payload["applicability_basis"] == "explicit"
     assert suggest_payload["disclaimer"] == "This is not a classification."
-    assert suggest_payload["national_notes"] == [
-        NationalNoteResponse.from_note(note).model_dump(mode="json")
-    ]
+    assert suggest_payload["national_notes"] == [note_payload]
