@@ -35,6 +35,17 @@ EXTRA_DOCUMENTED_URLS = (
     SNICE_INDIVIDUAL_CLASSIFIER_URL,
 )
 
+# VUCEM currently terminates or times out modern TLS clients (including GitHub
+# Actions) for these legacy HTML endpoints. Keep the official URLs documented
+# and syntax-validated; do not turn their independently confirmed transport
+# outage into a repository-code merge gate.
+EXTERNALLY_UNPROBEABLE_URLS = frozenset(
+    {
+        "https://www.ventanillaunica.gob.mx/vucem/Clasificador.html",
+        "https://www.ventanillaunica.gob.mx/Clasificador/data/buildHojas1/90014002.html",
+    }
+)
+
 README_RELEASE_URLS = (
     f"{REPOSITORY_URL}/releases/latest",
     f"{REPOSITORY_URL}/releases/latest/download/arancel_mx.duckdb",
@@ -79,6 +90,18 @@ def documented_public_urls() -> tuple[str, ...]:
             )
         )
     )
+
+
+def liveness_probe_urls() -> tuple[str, ...]:
+    """Return documented URLs that can be reliably checked from CI transport."""
+    documented = documented_public_urls()
+    unknown_exemptions = EXTERNALLY_UNPROBEABLE_URLS.difference(documented)
+    if unknown_exemptions:
+        raise RuntimeError(
+            "liveness-probe exemptions must remain in the documented URL set: "
+            f"{sorted(unknown_exemptions)}"
+        )
+    return tuple(url for url in documented if url not in EXTERNALLY_UNPROBEABLE_URLS)
 
 
 def extract_bare_http_urls(text: str) -> list[str]:
@@ -231,10 +254,14 @@ def main() -> int:
             print(f"  - {url}")
         return 1
 
+    probe_urls = liveness_probe_urls()
+    if EXTERNALLY_UNPROBEABLE_URLS:
+        print("Legacy endpoints retained for documentation but excluded from liveness probes:")
+        for url in sorted(EXTERNALLY_UNPROBEABLE_URLS):
+            print(f"  - {url}")
+
     session = build_session()
-    remaining = probe_documented_urls(
-        session, documented_public_urls(), timeout=args.timeout
-    )
+    remaining = probe_documented_urls(session, probe_urls, timeout=args.timeout)
     if remaining:
         print("\nRetrying previously unreachable URLs:")
         remaining = probe_documented_urls(session, remaining, timeout=args.timeout)

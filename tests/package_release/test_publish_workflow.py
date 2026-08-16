@@ -123,6 +123,19 @@ def test_workflow_never_creates_a_github_release(workflow_text: str) -> None:
         assert forbidden not in lowered
 
 
+def test_external_certification_resolves_dependencies_from_pypi_only(
+    workflow_text: str,
+) -> None:
+    matrix_job = _job_blocks(workflow_text)["external-certification-matrix"]
+
+    assert "--no-deps" in matrix_job
+    assert "https://test.pypi.org/simple/" in matrix_job
+    assert "https://pypi.org/simple/" in matrix_job
+    assert "--extra-index-url" not in matrix_job
+    assert "metadata.requires('arancel-mx')" in matrix_job
+    assert "python -m pip check" in matrix_job
+
+
 def test_production_publish_requires_the_os_python_matrix(workflow_text: str) -> None:
     jobs = _job_blocks(workflow_text)
     matrix_job = jobs["external-certification-matrix"]

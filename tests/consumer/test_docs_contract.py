@@ -43,6 +43,9 @@ def test_bilingual_readmes_show_install_and_consumer_first_commands() -> None:
         "arancel-mx wco cite",
         "arancel-mx data verify",
         "docs/consumer-cli.md",
+        "docs/consumer-quickstart.md",
+        "docs/official-source-roles.md",
+        "docs/nico-ligie-guide.md",
     )
     for document in (spanish, english):
         assert [value for value in required if value not in document] == []
@@ -222,6 +225,39 @@ def test_external_consumption_documents_fail_closed_consumer_behavior() -> None:
     )
     assert [value for value in required if value not in text] == []
     assert "asesoría legal" in text or "asesoria legal" in text
+
+
+def test_approved_source_role_nico_and_consumer_quickstart_guides_are_discoverable() -> None:
+    source_roles = _read("docs/official-source-roles.md")
+    nico_guide = _read("docs/nico-ligie-guide.md")
+    quickstart = _read("docs/consumer-quickstart.md")
+    consumer_hub = _read("docs/external-consumption.md")
+
+    assert "DOF" in source_roles
+    assert "SNICE" in source_roles
+    assert "VUCEM" in source_roles
+    assert "no es asesoría legal" in source_roles
+    assert "no clasifica mercancías" in source_roles
+
+    assert "HS6" in nico_guide
+    assert "fracción arancelaria de 8 dígitos" in nico_guide
+    assert "NICO de 2 dígitos" in nico_guide
+    assert "retrieve-only" in nico_guide
+
+    for command in (
+        "arancel-mx doctor",
+        "arancel-mx lookup",
+        "Dataset.version",
+        "/v1/meta",
+    ):
+        assert command in quickstart
+
+    for path in (
+        "docs/official-source-roles.md",
+        "docs/nico-ligie-guide.md",
+        "docs/consumer-quickstart.md",
+    ):
+        assert path in consumer_hub
 
 
 def test_no_second_full_english_external_consumption_guide() -> None:

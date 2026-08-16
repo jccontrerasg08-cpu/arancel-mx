@@ -150,7 +150,7 @@ Python 3.11 or newer is required.
 
 ### Published dataset consumer
 
-`arancel-mx==0.2.0` is published on PyPI (uploaded 2026-08-12 via Trusted Publishing). The 2026-08-11 design's full external OS/Python matrix was not a blocking gate for that upload. `0.2.1` blocks PyPI on Ubuntu/Windows/macOS × CPython 3.11–3.13 after TestPyPI.
+`arancel-mx==0.2.0` is published on PyPI (uploaded 2026-08-12 via Trusted Publishing). The 2026-08-11 design's full external OS/Python matrix was not a blocking gate for that upload. `0.3.0` blocks PyPI on Ubuntu/Windows/macOS × CPython 3.11–3.13 after TestPyPI.
 
 ```bash
 pip install arancel-mx==0.2.0
@@ -181,12 +181,12 @@ python -m pip install -c requirements/production-build.txt -e ".[dev]"
 
 ## Downstream ingest
 
-Downstream apps should pin, install, verify, and query `arancel-mx` as an upstream data package. The Spanish source of truth is [`docs/external-consumption.md`](docs/external-consumption.md). Short path:
+Downstream apps should pin, install, verify, and query `arancel-mx` as an upstream data package. The Spanish source of truth is [`docs/external-consumption.md`](docs/external-consumption.md). Spanish-first discovery guides cover the [consumer quickstart](docs/consumer-quickstart.md), [official source roles](docs/official-source-roles.md), and [NICO/LIGIE hierarchy](docs/nico-ligie-guide.md). Short path:
 
 1. **Install** and pin: `pip install arancel-mx==0.2.0`, then select `--dataset data-YYYY.MM.DD`.
 2. **Verify** with `arancel-mx doctor`, `data download`, `data verify`, `SHA256SUMS`, and manifest schema v2.
 3. **Query** IGI/IGE via CLI or `Dataset` (`lookup`, `ficha`, `compare`, `provenance`). Display official `igi_text` / `ige_text` literals; do not rewrite them to percentages. `compare` against VUCEM is informative, not legal identity.
-4. **Additional public surface:** the in-tree `0.2.1` contract includes the public HTTP API described below. IVA, NOM, T-MEC, and hosted Postgres remain outside this repository's published data model.
+4. **Additional public surface:** the in-tree `0.3.0` contract includes the public HTTP API described below. IVA, NOM, T-MEC, and hosted Postgres remain outside this repository's published data model.
 
 Do not treat a self-ingested copy as upstream truth.
 
@@ -469,7 +469,7 @@ See [`SECURITY.md`](SECURITY.md), [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CODE_O
 | TIGIE card (`ficha` / `chapters`) | Available |
 | Compare HS6 / MX8 / NICO vs VUCEM | Available (informative, not legal identity) |
 | LIGIE national notes | Parser, official capture, and `arancel_mx_national_notes`; `data-2026.08.15` contains 266 records from the official DOF source |
-| PyPI publication | Published: `arancel-mx==0.2.0` (`0.2.1` in-tree, not on PyPI until `pkg-v0.2.1`) |
+| PyPI publication | Published: `arancel-mx==0.2.0` (`0.3.0` in-tree, not on PyPI until `pkg-v0.3.0`) |
 
 ## Contributing
 
@@ -477,4 +477,4 @@ Open-source community contributions are welcome. Review [`CONTRIBUTING.md`](CONT
 
 Source, parser, reconciliation, and release-contract changes should add offline fixtures or tests for the expected behavior. Changes to the official build dependency environment should update `requirements/production-build.txt` in the same PR when appropriate.
 
-[Español](README.md) · [Documentation](docs/) · [Downstream ingest](docs/external-consumption.md) · [Sources](docs/sources.md) · [Certification](docs/production-certification.md) · [Contribute](CONTRIBUTING.md) · [Security](SECURITY.md)
+[Español](README.md) · [Documentation](docs/) · [Consumer quickstart](docs/consumer-quickstart.md) · [Source roles](docs/official-source-roles.md) · [NICO/LIGIE](docs/nico-ligie-guide.md) · [Downstream ingest](docs/external-consumption.md) · [Sources](docs/sources.md) · [Certification](docs/production-certification.md) · [Contribute](CONTRIBUTING.md) · [Security](SECURITY.md)
