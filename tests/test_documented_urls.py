@@ -7,12 +7,14 @@ import pytest
 import requests
 
 from scripts.check_documented_urls import (
+    EXTERNALLY_UNPROBEABLE_URLS,
     EXTRA_DOCUMENTED_URLS,
     MARKDOWN_LINK_PATTERN,
     README_RELEASE_URLS,
     build_session,
     check_reachable,
     documented_public_urls,
+    liveness_probe_urls,
     extract_bare_http_urls,
     fetch_html_body,
     is_parseable_url,
@@ -41,6 +43,18 @@ def test_documented_public_urls_include_registry_readme_and_governance_links() -
         assert url in documented
     for url in README_RELEASE_URLS:
         assert url in documented
+
+
+def test_legacy_vucem_urls_remain_documented_but_are_excluded_from_liveness_probes() -> None:
+    documented = set(documented_public_urls())
+    probe_urls = set(liveness_probe_urls())
+    assert EXTERNALLY_UNPROBEABLE_URLS == {
+        "https://www.ventanillaunica.gob.mx/vucem/Clasificador.html",
+        "https://www.ventanillaunica.gob.mx/Clasificador/data/buildHojas1/90014002.html",
+    }
+    assert EXTERNALLY_UNPROBEABLE_URLS <= documented
+    assert EXTERNALLY_UNPROBEABLE_URLS.isdisjoint(probe_urls)
+    assert len(probe_urls) == len(documented) - len(EXTERNALLY_UNPROBEABLE_URLS)
 
 
 def test_documented_public_urls_have_no_trailing_punctuation() -> None:
@@ -156,7 +170,7 @@ def test_probe_retries_only_urls_that_failed_the_first_pass(
 def test_documented_public_urls_are_reachable() -> None:
     session = build_session()
     failures: list[str] = []
-    for url in documented_public_urls():
+    for url in liveness_probe_urls():
         try:
             status, _final_url = check_reachable(session, url, timeout=30.0)
             assert 200 <= status < 400
