@@ -167,4 +167,13 @@ jobs:
               assert payload["dataset_tag"] == "data-2026.08.15"
               assert payload["release_verified"] is True
               assert payload["structural_valid"] is True
+              notes = client.get("/v1/chapters/85/national-notes")
+              assert notes.status_code == 200, notes.text
+              notes_payload = notes.json()
+              assert notes_payload, "expected chapter 85 national notes in data-2026.08.15"
+              assert all(note["scope_type"] is None for note in notes_payload)
+              assert all(note["scope_value"] is None for note in notes_payload)
+              assert all(
+                  note["applicability_basis"] == "unresolved" for note in notes_payload
+              )
           PY
