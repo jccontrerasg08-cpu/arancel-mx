@@ -57,6 +57,9 @@ class NationalNote:
     note_number: str
     text: str
     source_document_id: str
+    scope_type: str | None = None
+    scope_value: str | None = None
+    applicability_basis: str = "unresolved"
 
 
 @dataclass(frozen=True, slots=True)
