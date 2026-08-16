@@ -11,12 +11,19 @@ from arancel_mx.api import API_VERSION
 from arancel_mx.api.dependencies import get_dataset
 from arancel_mx.api.models import (
     FichaResponse,
+    HealthResponse,
     MetaResponse,
     NationalNoteResponse,
     ProvenanceResponse,
     SearchResponse,
     SuggestResponse,
     TariffResponse,
+)
+from arancel_mx.api.openapi import (
+    LOOKUP_ERROR_RESPONSES,
+    META_ERROR_RESPONSES,
+    NOTES_ERROR_RESPONSES,
+    RETRIEVAL_ERROR_RESPONSES,
 )
 from arancel_mx.consumer import Dataset
 
@@ -42,14 +49,19 @@ def root() -> dict[str, str]:
     }
 
 
-@router.get("/healthz")
-def healthz() -> dict[str, str]:
+@router.get("/healthz", response_model=HealthResponse)
+def healthz() -> HealthResponse:
     """Report process liveness without re-querying the dataset."""
 
-    return {"status": "ok"}
+    return HealthResponse(status="ok")
 
 
-@router.get("/v1/meta", response_model=MetaResponse, tags=["service"])
+@router.get(
+    "/v1/meta",
+    response_model=MetaResponse,
+    responses=META_ERROR_RESPONSES,
+    tags=["service"],
+)
 def metadata(
     request: Request,
     dataset: DatasetDependency,
@@ -70,21 +82,36 @@ def metadata(
     )
 
 
-@router.get("/v1/lookup/{code}", response_model=TariffResponse, tags=["tariff"])
+@router.get(
+    "/v1/lookup/{code}",
+    response_model=TariffResponse,
+    responses=LOOKUP_ERROR_RESPONSES,
+    tags=["tariff"],
+)
 def lookup(code: str, dataset: DatasetDependency) -> TariffResponse:
     """Return one exact current tariff record from the verified dataset."""
 
     return TariffResponse.from_record(dataset.lookup(code))
 
 
-@router.get("/v1/ficha/{code}", response_model=FichaResponse, tags=["tariff"])
+@router.get(
+    "/v1/ficha/{code}",
+    response_model=FichaResponse,
+    responses=LOOKUP_ERROR_RESPONSES,
+    tags=["tariff"],
+)
 def ficha(code: str, dataset: DatasetDependency) -> FichaResponse:
     """Return the existing verified hierarchy card for one code."""
 
     return FichaResponse.from_ficha(dataset.ficha(code))
 
 
-@router.get("/v1/search", response_model=list[SearchResponse], tags=["retrieval"])
+@router.get(
+    "/v1/search",
+    response_model=list[SearchResponse],
+    responses=RETRIEVAL_ERROR_RESPONSES,
+    tags=["retrieval"],
+)
 def search(
     q: SearchText,
     dataset: DatasetDependency,
@@ -95,7 +122,12 @@ def search(
     return [SearchResponse.from_result(result) for result in dataset.search(q, limit=limit)]
 
 
-@router.get("/v1/suggest", response_model=list[SuggestResponse], tags=["retrieval"])
+@router.get(
+    "/v1/suggest",
+    response_model=list[SuggestResponse],
+    responses=RETRIEVAL_ERROR_RESPONSES,
+    tags=["retrieval"],
+)
 def suggest(
     q: SearchText,
     dataset: DatasetDependency,
@@ -116,6 +148,7 @@ def chapters(dataset: DatasetDependency) -> list[TariffResponse]:
 @router.get(
     "/v1/chapters/{chapter}/national-notes",
     response_model=list[NationalNoteResponse],
+    responses=NOTES_ERROR_RESPONSES,
     tags=["legal-notes"],
 )
 def national_notes(
@@ -133,6 +166,7 @@ def national_notes(
 @router.get(
     "/v1/codes/{code}/parent",
     response_model=TariffResponse | None,
+    responses=LOOKUP_ERROR_RESPONSES,
     tags=["hierarchy"],
 )
 def parent(code: str, dataset: DatasetDependency) -> TariffResponse | None:
@@ -145,6 +179,7 @@ def parent(code: str, dataset: DatasetDependency) -> TariffResponse | None:
 @router.get(
     "/v1/codes/{code}/children",
     response_model=list[TariffResponse],
+    responses=LOOKUP_ERROR_RESPONSES,
     tags=["hierarchy"],
 )
 def children(code: str, dataset: DatasetDependency) -> list[TariffResponse]:
@@ -156,6 +191,7 @@ def children(code: str, dataset: DatasetDependency) -> list[TariffResponse]:
 @router.get(
     "/v1/codes/{code}/provenance",
     response_model=list[ProvenanceResponse],
+    responses=LOOKUP_ERROR_RESPONSES,
     tags=["provenance"],
 )
 def provenance(code: str, dataset: DatasetDependency) -> list[ProvenanceResponse]:
