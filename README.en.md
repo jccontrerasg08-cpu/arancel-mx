@@ -150,7 +150,7 @@ Python 3.11 or newer is required.
 
 ### Published dataset consumer
 
-`arancel-mx==0.2.0` is published on PyPI (uploaded 2026-08-12 via Trusted Publishing). The 2026-08-11 design's full external OS/Python matrix was not a blocking gate for that upload. `0.3.0` blocks PyPI on Ubuntu/Windows/macOS × CPython 3.11–3.13 after TestPyPI.
+`arancel-mx==0.2.0` is published on PyPI (uploaded 2026-08-12 via Trusted Publishing). The 2026-08-11 design's full external OS/Python matrix was not a blocking gate for that upload. `0.3.1` blocks PyPI on Ubuntu/Windows/macOS × CPython 3.11–3.13 after TestPyPI.
 
 ```bash
 pip install arancel-mx==0.2.0
@@ -186,7 +186,7 @@ Downstream apps should pin, install, verify, and query `arancel-mx` as an upstre
 1. **Install** and pin: `pip install arancel-mx==0.2.0`, then select `--dataset data-YYYY.MM.DD`.
 2. **Verify** with `arancel-mx doctor`, `data download`, `data verify`, `SHA256SUMS`, and manifest schema v2.
 3. **Query** IGI/IGE via CLI or `Dataset` (`lookup`, `ficha`, `compare`, `provenance`). Display official `igi_text` / `ige_text` literals; do not rewrite them to percentages. `compare` against VUCEM is informative, not legal identity.
-4. **Additional public surface:** the in-tree `0.3.0` contract includes the public HTTP API described below. IVA, NOM, T-MEC, and hosted Postgres remain outside this repository's published data model.
+4. **Additional public surface:** the in-tree `0.3.1` contract includes the public HTTP API described below. IVA, NOM, T-MEC, and hosted Postgres remain outside this repository's published data model.
 
 Do not treat a self-ingested copy as upstream truth.
 
@@ -469,7 +469,7 @@ See [`SECURITY.md`](SECURITY.md), [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CODE_O
 | TIGIE card (`ficha` / `chapters`) | Available |
 | Compare HS6 / MX8 / NICO vs VUCEM | Available (informative, not legal identity) |
 | LIGIE national notes | Parser, official capture, and `arancel_mx_national_notes`; `data-2026.08.15` contains 266 records from the official DOF source |
-| PyPI publication | Published: `arancel-mx==0.2.0` (`0.3.0` in-tree, not on PyPI until `pkg-v0.3.0`) |
+| PyPI publication | Published: `arancel-mx==0.2.0` (`0.3.1` in-tree, not on PyPI until `pkg-v0.3.1`) |
 
 ## Contributing
 

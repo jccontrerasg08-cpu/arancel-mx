@@ -152,7 +152,7 @@ Requiere Python 3.11 o superior.
 
 ### Consumo del dataset publicado
 
-`arancel-mx==0.2.0` está publicado en PyPI (carga del 2026-08-12 vía Trusted Publishing). La matriz externa de SO/Python no fue un gate bloqueante de esa carga. `0.3.0` bloquea PyPI con Ubuntu/Windows/macOS × CPython 3.11–3.13 después de TestPyPI. La guía canónica para aplicaciones aguas abajo es [`docs/external-consumption.md`](docs/external-consumption.md).
+`arancel-mx==0.2.0` está publicado en PyPI (carga del 2026-08-12 vía Trusted Publishing). La matriz externa de SO/Python no fue un gate bloqueante de esa carga. `0.3.1` bloquea PyPI con Ubuntu/Windows/macOS × CPython 3.11–3.13 después de TestPyPI. La guía canónica para aplicaciones aguas abajo es [`docs/external-consumption.md`](docs/external-consumption.md).
 
 ```bash
 pip install arancel-mx==0.2.0
@@ -464,7 +464,7 @@ Ver [`SECURITY.md`](SECURITY.md), [`CONTRIBUTING.md`](CONTRIBUTING.md) y [`docs/
 | Ficha TIGIE (`ficha` / `chapters`) | Disponible |
 | Compare HS6 / MX8 / NICO vs VUCEM | Disponible (informativo, no identidad legal) |
 | Notas nacionales LIGIE | Parser, captura oficial y vista `arancel_mx_national_notes`; `data-2026.08.15` contiene 266 registros capturados desde la fuente oficial DOF |
-| Publicación en PyPI | Publicado: `arancel-mx==0.2.0` (`0.3.0` in-tree, no en PyPI hasta `pkg-v0.3.0`) |
+| Publicación en PyPI | Publicado: `arancel-mx==0.2.0` (`0.3.1` in-tree, no en PyPI hasta `pkg-v0.3.1`) |
 
 ## Contribución
 

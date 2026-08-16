@@ -35,7 +35,7 @@ def test_package_release_doc_explains_lightweight_install_and_python_api() -> No
     assert 'pip install "arancel-mx[maintainer]"' in document
     assert "data-YYYY.MM.DD" in document
     assert "dataset is not embedded" in document.lower()
-    assert "pkg-v0.3.0" in document
+    assert "pkg-v0.3.1" in document
     assert "[`docs/consumer-cli.md`](consumer-cli.md)" in document
     assert "[`docs/external-consumption.md`](external-consumption.md)" in document
     assert "[`docs/release-process.md`](release-process.md)" in document
@@ -106,7 +106,7 @@ def test_package_release_doc_describes_020_as_published() -> None:
     assert "must not claim that the candidate has already been published" not in lowered
     assert "0.2.0" in document
     assert "published" in lowered
-    assert "0.3.0" in document
+    assert "0.3.1" in document
     assert "matrix" in lowered
     assert "production-certified" not in lowered
 
