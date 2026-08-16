@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import date
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
@@ -35,6 +36,25 @@ class ErrorEnvelope(FrozenModel):
     """Stable top-level error response shared by handled API failures."""
 
     error: ErrorDetail
+
+
+class HealthResponse(FrozenModel):
+    """Process-liveness response."""
+
+    status: Literal["ok"]
+
+
+class ReadyResponse(FrozenModel):
+    """Readiness response for a verified loaded dataset."""
+
+    status: Literal["ready"]
+    dataset_version: str
+
+
+class NotReadyResponse(FrozenModel):
+    """Readiness response while the verified dataset is unavailable."""
+
+    status: Literal["not_ready"]
 
 
 class MetaResponse(FrozenModel):
