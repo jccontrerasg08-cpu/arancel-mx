@@ -63,12 +63,20 @@ def test_candidate_install_raises_after_bounded_attempts() -> None:
 
 def test_workflow_retries_the_candidate_from_each_matrix_runner() -> None:
     workflow = WORKFLOW.read_text(encoding="utf-8")
+    matrix_job = workflow.split("  external-certification-matrix:\n", 1)[1].split(
+        "  publish-pypi:\n", 1
+    )[0]
 
     assert "wait-for-testpypi-index:" not in workflow
-    assert "needs: [validate-tag, publish-testpypi]" in workflow
-    assert "python scripts/certify_testpypi_candidate.py" in workflow
-    assert "--attempts 40" in workflow
-    assert "--delay-seconds 15" in workflow
+    assert "needs: [validate-tag, publish-testpypi]" in matrix_job
+    assert "actions/checkout@" in matrix_job
+    assert "persist-credentials: false" in matrix_job
+    assert "path: certification-helper" in matrix_job
+    assert "sparse-checkout: |" in matrix_job
+    assert "scripts/certify_testpypi_candidate.py" in matrix_job
+    assert 'python "$GITHUB_WORKSPACE/certification-helper/scripts/certify_testpypi_candidate.py"' in matrix_job
+    assert "--attempts 40" in matrix_job
+    assert "--delay-seconds 15" in matrix_job
     helper = HELPER.read_text(encoding="utf-8")
     assert "--no-cache-dir" in helper
     assert "https://test.pypi.org/simple/" in helper
