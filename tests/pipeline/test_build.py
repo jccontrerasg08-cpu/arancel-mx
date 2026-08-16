@@ -3,7 +3,7 @@ import json
 
 import pytest
 
-from arancel_mx.pipeline.build import materialize_arancel
+from arancel_mx.pipeline.build import _validate_database, materialize_arancel
 from arancel_mx.storage.duckdb import connect, init_tariff_db
 
 
@@ -34,6 +34,37 @@ def release_metadata():
             }
         ],
     }
+
+
+def note_build_inputs(chapter: str = "01"):
+    source = {
+        "source_document_id": "doc-1",
+        "authority": "Cámara de Diputados",
+        "publication_venue": "DOF",
+        "title": "LIGIE",
+        "source_url": "https://www.diputados.gob.mx/ligie.pdf",
+        "sha256": "a" * 64,
+        "observed_at": date(2026, 8, 9),
+        "retrieved_at": datetime(2026, 8, 9, 12, 0),
+    }
+    classification = {
+        "level": "hs2",
+        "code": chapter,
+        "description": "Capítulo de prueba.",
+        "ligie_version": "LIGIE-2022",
+        "validity_basis": "observed_snapshot",
+        "updated_at": date(2026, 8, 9),
+        "source_document_id": "doc-1",
+    }
+    release = {
+        "dataset_version": "2026.08.09",
+        "schema_version": "2",
+        "ligie_version": "LIGIE-2022",
+        "effective_as_of": date(2026, 8, 9),
+        "generated_at": datetime(2026, 8, 9, 12, 0),
+        "release_metadata": release_metadata(),
+    }
+    return source, classification, release
 
 
 def test_build_materializes_a_valid_public_record(tmp_path):
@@ -102,33 +133,62 @@ def test_build_materializes_a_valid_public_record(tmp_path):
 
 def test_build_materializes_national_notes_into_the_public_view(tmp_path):
     path = init_tariff_db(tmp_path / "arancel.duckdb")
-    source = {
-        "source_document_id": "doc-1",
-        "authority": "Cámara de Diputados",
-        "publication_venue": "DOF",
-        "title": "LIGIE",
-        "source_url": "https://www.diputados.gob.mx/ligie.pdf",
-        "sha256": "a" * 64,
-        "observed_at": date(2026, 8, 9),
-        "retrieved_at": datetime(2026, 8, 9, 12, 0),
-    }
-    classification = {
-        "level": "hs2",
-        "code": "01",
-        "description": "Animales vivos.",
-        "ligie_version": "LIGIE-2022",
-        "validity_basis": "observed_snapshot",
-        "updated_at": date(2026, 8, 9),
-        "source_document_id": "doc-1",
-    }
-    release = {
-        "dataset_version": "2026.08.09",
-        "schema_version": "2",
-        "ligie_version": "LIGIE-2022",
-        "effective_as_of": date(2026, 8, 9),
-        "generated_at": datetime(2026, 8, 9, 12, 0),
-        "release_metadata": release_metadata(),
-    }
+    source, classification, release = note_build_inputs("85")
+    notes = [
+        {
+            "chapter": "85",
+            "scope_type": "section",
+            "scope_value": "XVI",
+            "applicability_basis": "explicit",
+            "note_number": "1",
+            "text": "Nota nacional materializada desde la Sección XVI.",
+            "source_document_id": "doc-1",
+        }
+    ]
+
+    with connect(path) as connection:
+        materialize_arancel(
+            connection, [source], [classification], [], release, national_notes=notes
+        )
+        first_id = connection.execute(
+            "SELECT applicability_id FROM national_note_applicability"
+        ).fetchone()[0]
+        applicability = connection.execute(
+            """
+            SELECT scope_type, scope_value, applicability_basis, source_document_id
+            FROM national_note_applicability
+            """
+        ).fetchone()
+        public_note = connection.execute(
+            """
+            SELECT chapter, scope_type, scope_value, applicability_basis,
+                   note_number, text, source_document_id
+            FROM arancel_mx_national_notes
+            """
+        ).fetchone()
+        materialize_arancel(
+            connection, [source], [classification], [], release, national_notes=notes
+        )
+        second_id = connection.execute(
+            "SELECT applicability_id FROM national_note_applicability"
+        ).fetchone()[0]
+
+    assert first_id == second_id
+    assert applicability == ("section", "XVI", "explicit", "doc-1")
+    assert public_note == (
+        "85",
+        "section",
+        "XVI",
+        "explicit",
+        "1",
+        "Nota nacional materializada desde la Sección XVI.",
+        "doc-1",
+    )
+
+
+def test_build_clears_national_notes_when_next_materialization_has_none(tmp_path):
+    path = init_tariff_db(tmp_path / "arancel.duckdb")
+    source, classification, release = note_build_inputs("01")
     notes = [
         {
             "chapter": "01",
@@ -142,17 +202,37 @@ def test_build_materializes_national_notes_into_the_public_view(tmp_path):
         materialize_arancel(
             connection, [source], [classification], [], release, national_notes=notes
         )
-        row = connection.execute(
-            "SELECT chapter, note_number, text FROM arancel_mx_national_notes"
-        ).fetchone()
         empty = materialize_arancel(connection, [source], [classification], [], release)
         leftover = connection.execute(
             "SELECT COUNT(*) FROM arancel_mx_national_notes"
         ).fetchone()[0]
 
-    assert row == ("01", "1", "Los animales vivos de este capítulo.")
     assert leftover == 0
     assert empty["row_count"] == 1
+
+
+def test_validation_rejects_missing_national_note_applicability(tmp_path):
+    path = init_tariff_db(tmp_path / "arancel.duckdb")
+    source, classification, release = note_build_inputs("01")
+    notes = [
+        {
+            "chapter": "01",
+            "note_number": "1",
+            "text": "Los animales vivos de este capítulo.",
+            "source_document_id": "doc-1",
+        }
+    ]
+
+    with connect(path) as connection:
+        materialize_arancel(
+            connection, [source], [classification], [], release, national_notes=notes
+        )
+        connection.execute("DELETE FROM national_note_applicability")
+        with pytest.raises(
+            ValueError,
+            match="national_note_applicability_cardinality",
+        ):
+            _validate_database(connection)
 
 
 def test_build_rejects_national_notes_with_unknown_source_document(tmp_path):
