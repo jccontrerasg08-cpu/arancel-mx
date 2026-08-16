@@ -307,6 +307,35 @@ def _insert_national_notes(
                 source_id,
             ],
         )
+        scope_type = str(row.get("scope_type") or "chapter")
+        scope_value_obj = row.get("scope_value", row.get("chapter"))
+        scope_value = None if scope_value_obj is None else str(scope_value_obj)
+        applicability_basis = str(row.get("applicability_basis") or "explicit")
+        applicability_id = str(
+            row.get("applicability_id")
+            or hashlib.sha256(
+                canonical_json(
+                    [
+                        version_id,
+                        scope_type,
+                        scope_value,
+                        applicability_basis,
+                        source_id,
+                    ]
+                ).encode("utf-8")
+            ).hexdigest()
+        )
+        conn.execute(
+            "INSERT INTO national_note_applicability VALUES (?, ?, ?, ?, ?, ?)",
+            [
+                applicability_id,
+                version_id,
+                scope_type,
+                scope_value,
+                applicability_basis,
+                source_id,
+            ],
+        )
 
 
 def _build_view(conn: duckdb.DuckDBPyConnection) -> None:
@@ -335,11 +364,13 @@ def _build_view(conn: duckdb.DuckDBPyConnection) -> None:
         raise ValueError(f"Public view columns do not match contract: {columns}")
     conn.execute(
         """CREATE OR REPLACE VIEW arancel_mx_national_notes AS
-           SELECT n.national_note_id, n.chapter, n.note_number,
-                  v.national_note_version_id, v.text, v.effective_from,
-                  v.effective_to, v.source_document_id
+           SELECT n.national_note_id, n.chapter,
+                  a.scope_type, a.scope_value, a.applicability_basis,
+                  n.note_number, v.national_note_version_id, v.text,
+                  v.effective_from, v.effective_to, v.source_document_id
            FROM national_note n
-           JOIN national_note_version v USING (national_note_id)"""
+           JOIN national_note_version v USING (national_note_id)
+           JOIN national_note_applicability a USING (national_note_version_id)"""
     )
 
 
@@ -512,6 +543,19 @@ def _validate_database(conn: duckdb.DuckDBPyConnection) -> dict[str, object]:
                 OR n.ige_text IS DISTINCT FROM f.ige_text
                 OR n.ige_kind IS DISTINCT FROM f.ige_kind
                 OR n.ige_value IS DISTINCT FROM f.ige_value)
+            """
+        ).fetchone()[0],
+        "national_note_applicability_cardinality": conn.execute(
+            """
+            SELECT COUNT(*) FROM (
+                SELECT v.national_note_version_id,
+                       COUNT(a.applicability_id) AS applicability_count
+                FROM national_note_version v
+                LEFT JOIN national_note_applicability a
+                  USING (national_note_version_id)
+                GROUP BY v.national_note_version_id
+                HAVING COUNT(a.applicability_id) <> 1
+            )
             """
         ).fetchone()[0],
     }
