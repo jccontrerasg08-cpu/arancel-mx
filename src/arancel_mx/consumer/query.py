@@ -252,12 +252,48 @@ def national_notes(connection, chapter: str) -> tuple[NationalNote, ...]:
     ).fetchone()
     if exists is None:
         return ()
+
+    columns = {
+        str(row[0]).lower()
+        for row in connection.execute("DESCRIBE arancel_mx_national_notes").fetchall()
+    }
+    scoped = {
+        "scope_type",
+        "scope_value",
+        "applicability_basis",
+    }.issubset(columns)
+
+    if scoped:
+        rows = connection.execute(
+            """
+            SELECT chapter, note_number, text, source_document_id,
+                   scope_type, scope_value, applicability_basis
+            FROM arancel_mx_national_notes
+            WHERE chapter = ?
+            ORDER BY note_number, scope_type, scope_value NULLS LAST,
+                     source_document_id, national_note_version_id
+            """,
+            [chapter],
+        ).fetchall()
+        return tuple(
+            NationalNote(
+                chapter=str(row[0]),
+                note_number=str(row[1]),
+                text=str(row[2]),
+                source_document_id=str(row[3]),
+                scope_type=None if row[4] is None else str(row[4]),
+                scope_value=None if row[5] is None else str(row[5]),
+                applicability_basis=str(row[6]),
+            )
+            for row in rows
+        )
+
     rows = connection.execute(
         """
         SELECT chapter, note_number, text, source_document_id
         FROM arancel_mx_national_notes
         WHERE chapter = ?
-        ORDER BY note_number
+        ORDER BY note_number, source_document_id, national_note_version_id
         """,
         [chapter],
     ).fetchall()

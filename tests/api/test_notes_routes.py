@@ -53,6 +53,9 @@ class NotesDataset:
                 note_number="1",
                 text="Texto oficial de la nota nacional.",
                 source_document_id="dof-national-notes",
+                scope_type="section",
+                scope_value="XVI",
+                applicability_basis="explicit",
             ),
         )
 
@@ -86,6 +89,9 @@ def test_national_notes_return_only_requested_two_digit_chapter(valid_settings) 
             "note_number": "1",
             "text": "Texto oficial de la nota nacional.",
             "source_document_id": "dof-national-notes",
+            "scope_type": "section",
+            "scope_value": "XVI",
+            "applicability_basis": "explicit",
         }
     ]
 
