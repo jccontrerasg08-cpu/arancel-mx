@@ -221,12 +221,15 @@ class SearchResponse(FrozenModel):
 
 
 class NationalNoteResponse(FrozenModel):
-    """One materialized official National Note."""
+    """One materialized official National Note with preserved applicability."""
 
     chapter: str
     note_number: str
     text: str
     source_document_id: str
+    scope_type: str | None
+    scope_value: str | None
+    applicability_basis: str
 
     @classmethod
     def from_note(cls, note: NationalNote) -> NationalNoteResponse:
@@ -235,6 +238,9 @@ class NationalNoteResponse(FrozenModel):
             note_number=note.note_number,
             text=note.text,
             source_document_id=note.source_document_id,
+            scope_type=note.scope_type,
+            scope_value=note.scope_value,
+            applicability_basis=note.applicability_basis,
         )
 
 
