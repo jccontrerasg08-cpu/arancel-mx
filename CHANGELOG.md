@@ -35,6 +35,8 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Fixed
 
+- Preserve National Note applicability (`section` vs `chapter`) from materialization through DuckDB, the consumer API, and FastAPI. Newer clients remain compatible with older immutable datasets by reporting legacy note scope as unresolved instead of inferring legal scope.
+- OpenAPI now documents the sanitized `ErrorEnvelope` used by handled 400/404/422/500/503 responses and typed health/readiness schemas, including the legitimate 503 not-ready response.
 - Official capture, `check-updates`, and documented-URL probes share `build_official_session()`: urllib3 retries connect/read only (`status=0`, backoff 0.5, `total=6`) and HTTPS `DEFAULT:@SECLEVEL=1` for weak-DH gob.mx hosts. HTTP 4xx/5xx stay fail-closed. Script-level URL probes no longer stack a second 3-attempt loop on those transport retries.
 - `prepare_release_archive()` stages the source archive, `SHA256SUMS`, and latest pointer before replacing anything in the release directory, so a failed copy leaves the original checksums and no dangling `official-sources.tar.gz`. Cleanup still removes the staging directory if restoring checksums fails.
 - `verify_sources()` rejects non-object `source_capture.json` rows with `ValueError` instead of `AttributeError`.
