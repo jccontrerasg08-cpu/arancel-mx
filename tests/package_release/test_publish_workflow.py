@@ -131,7 +131,7 @@ def test_external_certification_resolves_dependencies_from_pypi_only(
         encoding="utf-8"
     )
 
-    assert "python scripts/certify_testpypi_candidate.py" in matrix_job
+    assert 'python "$GITHUB_WORKSPACE/certification-helper/scripts/certify_testpypi_candidate.py"' in matrix_job
     assert "--no-deps" in helper
     assert "--no-cache-dir" in helper
     assert "https://test.pypi.org/simple/" in helper
@@ -165,7 +165,11 @@ def test_production_publish_requires_the_os_python_matrix(workflow_text: str) ->
         "needs: [validate-tag, build-once, publish-testpypi, external-certification-matrix]"
         in pypi
     )
-    assert "actions/checkout@" not in matrix_job
+    assert "actions/checkout@" in matrix_job
+    assert "persist-credentials: false" in matrix_job
+    assert "path: certification-helper" in matrix_job
+    assert "sparse-checkout: |" in matrix_job
+    assert "scripts/certify_testpypi_candidate.py" in matrix_job
     assert "arancel-mx doctor" not in matrix_job
     assert "${EXPECTED_VERSION}" not in matrix_job
     assert "os.environ['EXPECTED_VERSION']" in matrix_job
