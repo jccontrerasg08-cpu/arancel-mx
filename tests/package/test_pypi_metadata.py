@@ -9,8 +9,8 @@ def _project() -> dict[str, object]:
     return payload["project"]
 
 
-def test_project_version_is_021_release() -> None:
-    assert _project()["version"] == "0.2.1"
+def test_project_version_is_030_release() -> None:
+    assert _project()["version"] == "0.3.0"
 
 
 def test_project_has_public_identity_urls_and_keywords() -> None:

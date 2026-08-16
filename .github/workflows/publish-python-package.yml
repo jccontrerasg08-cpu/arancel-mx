@@ -147,7 +147,11 @@ jobs:
           EXPECTED_VERSION: ${{ needs.validate-tag.outputs.version }}
         run: |
           python -m pip install pip==26.2.1
-          python -c "import os, subprocess, sys; v = os.environ['EXPECTED_VERSION']; subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--index-url', 'https://test.pypi.org/simple/', '--extra-index-url', 'https://pypi.org/simple/', f'arancel-mx=={v}'])"
+          # TestPyPI is trusted only for the candidate. Runtime dependencies must
+          # resolve from PyPI so an unrelated TestPyPI project cannot shadow them.
+          python -c "import os, subprocess, sys; v = os.environ['EXPECTED_VERSION']; subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--no-deps', '--index-url', 'https://test.pypi.org/simple/', f'arancel-mx=={v}'])"
+          python -c "from importlib import metadata; import subprocess, sys; requirements = metadata.requires('arancel-mx') or []; subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--index-url', 'https://pypi.org/simple/', *requirements])"
+          python -m pip check
       - name: Import the installed version
         env:
           EXPECTED_VERSION: ${{ needs.validate-tag.outputs.version }}

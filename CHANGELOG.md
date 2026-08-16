@@ -24,7 +24,7 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Changed
 
-- Live docs match in-tree `0.2.1` vs PyPI `0.2.0`: cache paths, `compare`, national notes, the public source tree, and the FastAPI v1 consumption boundary.
+- Live docs match in-tree `0.3.0` vs PyPI `0.2.0`: cache paths, `compare`, national notes, the public source tree, and the FastAPI v1 consumption boundary.
 - Documented `/releases/latest` as `data-2026.08.15` (six public assets), Diputados `law_reform` 2025-12-29 / `tariff_decree` 2026-04-23 from that manifest, and that the PyPI long description is frozen at the `0.2.0` upload.
 - Development tests use `httpx2` with Starlette's current TestClient path; base package runtime stays independent of that test-only compatibility dependency.
 
@@ -45,7 +45,7 @@ All notable changes to the Python package are documented here. Dataset releases 
 - Dependabot no longer requests repository labels that do not exist.
 - Documented-URL checks wait 1.5s then 3s between connection retries, then retry only the URLs that failed the first pass.
 
-## [0.2.1] - 2026-08-13
+## [0.3.0] - 2026-08-13
 
 ### Added
 
@@ -64,7 +64,7 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Release status
 
-In-tree only. `0.2.1` is not on PyPI until `pkg-v0.2.1` passes TestPyPI and the OS/Python matrix.
+In-tree only. `0.3.0` is not on PyPI until `pkg-v0.3.0` passes TestPyPI and the OS/Python matrix.
 
 ## [0.2.0] - 2026-08-12
 
@@ -98,4 +98,4 @@ In-tree only. `0.2.1` is not on PyPI until `pkg-v0.2.1` passes TestPyPI and the 
 
 ### Release status
 
-Trusted Publishing uploaded `arancel-mx==0.2.0` to PyPI on 2026-08-12. The original 2026-08-11 design's full external OS/Python matrix was not a blocking gate for that upload. `0.2.1` treats Ubuntu/Windows/macOS × CPython 3.11–3.13 as a blocking publish gate.
+Trusted Publishing uploaded `arancel-mx==0.2.0` to PyPI on 2026-08-12. The original 2026-08-11 design's full external OS/Python matrix was not a blocking gate for that upload. `0.3.0` treats Ubuntu/Windows/macOS × CPython 3.11–3.13 as a blocking publish gate.

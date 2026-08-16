@@ -18,7 +18,7 @@ Herramientas abiertas en Python para capturar, normalizar, reconciliar y publica
 [![DuckDB](https://img.shields.io/badge/DuckDB-embedded-FFF000?logo=duckdb&logoColor=000)](https://duckdb.org/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-**[Instalación](#instalación)** · **[CLI](#uso-rápido-cli)** · **[Python](#uso-desde-python)** · **[Consumo externo](docs/external-consumption.md)** · **[Datos](#modelo-de-datos)** · **[Fuentes](#fuentes-oficiales)** · **[Automatización](#pipeline-oficial-autónomo)** · **[Certificación](docs/production-certification.md)** · **[Contribuir](#contribución)**
+**[Instalación](#instalación)** · **[CLI](#uso-rápido-cli)** · **[Python](#uso-desde-python)** · **[Inicio consumidor](docs/consumer-quickstart.md)** · **[Consumo externo](docs/external-consumption.md)** · **[NICO y LIGIE](docs/nico-ligie-guide.md)** · **[Fuentes y roles](docs/official-source-roles.md)** · **[Datos](#modelo-de-datos)** · **[Automatización](#pipeline-oficial-autónomo)** · **[Certificación](docs/production-certification.md)** · **[Contribuir](#contribución)**
 
 </div>
 
@@ -152,7 +152,7 @@ Requiere Python 3.11 o superior.
 
 ### Consumo del dataset publicado
 
-`arancel-mx==0.2.0` está publicado en PyPI (carga del 2026-08-12 vía Trusted Publishing). La matriz externa de SO/Python no fue un gate bloqueante de esa carga. `0.2.1` bloquea PyPI con Ubuntu/Windows/macOS × CPython 3.11–3.13 después de TestPyPI. La guía canónica para aplicaciones aguas abajo es [`docs/external-consumption.md`](docs/external-consumption.md).
+`arancel-mx==0.2.0` está publicado en PyPI (carga del 2026-08-12 vía Trusted Publishing). La matriz externa de SO/Python no fue un gate bloqueante de esa carga. `0.3.0` bloquea PyPI con Ubuntu/Windows/macOS × CPython 3.11–3.13 después de TestPyPI. La guía canónica para aplicaciones aguas abajo es [`docs/external-consumption.md`](docs/external-consumption.md).
 
 ```bash
 pip install arancel-mx==0.2.0
@@ -183,7 +183,7 @@ python -m pip install -c requirements/production-build.txt -e ".[dev]"
 
 ## Consumo externo
 
-Las aplicaciones aguas abajo deben fijar, instalar, verificar y consultar `arancel-mx` como paquete de datos. La guía canónica es [`docs/external-consumption.md`](docs/external-consumption.md).
+Las aplicaciones aguas abajo deben fijar, instalar, verificar y consultar `arancel-mx` como paquete de datos. Empieza con [`docs/consumer-quickstart.md`](docs/consumer-quickstart.md), consulta el rol de DOF, SNICE y VUCEM en [`docs/official-source-roles.md`](docs/official-source-roles.md), y usa [`docs/nico-ligie-guide.md`](docs/nico-ligie-guide.md) para la jerarquía HS6/fracción/NICO. La guía canónica completa es [`docs/external-consumption.md`](docs/external-consumption.md).
 
 ### API HTTP pública
 
@@ -464,7 +464,7 @@ Ver [`SECURITY.md`](SECURITY.md), [`CONTRIBUTING.md`](CONTRIBUTING.md) y [`docs/
 | Ficha TIGIE (`ficha` / `chapters`) | Disponible |
 | Compare HS6 / MX8 / NICO vs VUCEM | Disponible (informativo, no identidad legal) |
 | Notas nacionales LIGIE | Parser, captura oficial y vista `arancel_mx_national_notes`; `data-2026.08.15` contiene 266 registros capturados desde la fuente oficial DOF |
-| Publicación en PyPI | Publicado: `arancel-mx==0.2.0` (`0.2.1` in-tree, no en PyPI hasta `pkg-v0.2.1`) |
+| Publicación en PyPI | Publicado: `arancel-mx==0.2.0` (`0.3.0` in-tree, no en PyPI hasta `pkg-v0.3.0`) |
 
 ## Contribución
 

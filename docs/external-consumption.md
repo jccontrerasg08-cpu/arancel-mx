@@ -16,7 +16,7 @@ fijar arancel-mx==0.2.0
 
 ## Qué es y qué no es arancel-mx
 
-`arancel-mx` es un paquete de datos fail-closed de la LIGIE/NICO mexicana. Publica seis assets verificables en GitHub Releases, un paquete Python de consulta y, desde el contrato en desarrollo `0.2.1`, una API HTTP pública GET-only y read-only. No es asesoría legal, no es un clasificador arancelario y no es AduanaMap.
+`arancel-mx` es un paquete de datos fail-closed de la LIGIE/NICO mexicana. Publica seis assets verificables en GitHub Releases, un paquete Python de consulta y, desde el contrato en desarrollo `0.3.0`, una API HTTP pública GET-only y read-only. No es asesoría legal, no es un clasificador arancelario y no es AduanaMap.
 
 El software original se distribuye como `arancel-mx` (nombre en PyPI), se importa como `arancel_mx` y el comando de consola es `arancel-mx`. No existe la distribución `arancelmx`.
 
@@ -32,7 +32,7 @@ arancel-mx --version
 arancel-mx doctor
 ```
 
-`arancel-mx==0.2.0` ya está en PyPI (carga del 2026-08-12). El checkout declara `0.2.1`; esa versión no está en PyPI hasta `pkg-v0.2.1`. Las aplicaciones aguas abajo siguen fijando `arancel-mx==0.2.0`. La descripción larga en pypi.org es la del upload `0.2.0` (README congelado en esa rueda); los contratos vivos están en git. Fijar el paquete **no** fija el dataset. El dataset usa tags inmutables `data-YYYY.MM.DD` independientes de la versión PEP 440. `/releases/latest` resuelve hoy a `data-2026.08.15`.
+`arancel-mx==0.2.0` ya está en PyPI (carga del 2026-08-12). El checkout declara `0.3.0`; esa versión no está en PyPI hasta `pkg-v0.3.0`. Las aplicaciones aguas abajo siguen fijando `arancel-mx==0.2.0`. La descripción larga en pypi.org es la del upload `0.2.0` (README congelado en esa rueda); los contratos vivos están en git. Fijar el paquete **no** fija el dataset. El dataset usa tags inmutables `data-YYYY.MM.DD` independientes de la versión PEP 440. `/releases/latest` resuelve hoy a `data-2026.08.15`.
 
 ```bash
 arancel-mx data download --dataset data-YYYY.MM.DD
@@ -55,7 +55,7 @@ El servicio HTTP conserva tres identidades separadas:
 
 ```text
 API v1
-package 0.2.1
+package 0.3.0
 dataset data-2026.08.15
 ```
 
@@ -242,6 +242,9 @@ Véanse [`LICENSE`](../LICENSE), [`NOTICE`](../NOTICE) y [`TERMS.md`](../TERMS.m
 
 ## Documentación relacionada
 
+- [`docs/consumer-quickstart.md`](consumer-quickstart.md) — elegir CLI, Python, DuckDB o API HTTP
+- [`docs/official-source-roles.md`](official-source-roles.md) — cuándo usar DOF, SNICE, VUCEM y una release verificable
+- [`docs/nico-ligie-guide.md`](nico-ligie-guide.md) — jerarquía HS6, fracción de 8 dígitos y NICO
 - [`docs/consumer-cli.md`](consumer-cli.md) — CLI, offline, formatos y `doctor`
 - [`docs/data-model.md`](data-model.md) — columnas públicas, vigencia y schema v2
 - [`docs/release-process.md`](release-process.md) — publicación fail-closed de `data-*`
