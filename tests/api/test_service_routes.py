@@ -36,6 +36,17 @@ def test_healthz_reports_process_health(valid_settings, fake_dataset) -> None:
     assert response.json() == {"status": "ok"}
 
 
+def test_readyz_reports_verified_dataset_version(valid_settings, fake_dataset) -> None:
+    with _client(valid_settings, fake_dataset) as client:
+        response = client.get("/readyz")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "ready",
+        "dataset_version": "2026.08.15",
+    }
+
+
 def test_meta_keeps_api_package_and_dataset_versions_separate(
     valid_settings,
     fake_dataset,
