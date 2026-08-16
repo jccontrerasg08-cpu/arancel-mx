@@ -136,10 +136,25 @@ def test_external_certification_resolves_dependencies_from_pypi_only(
     assert "python -m pip check" in matrix_job
 
 
+def test_external_certification_waits_for_testpypi_simple_index_propagation(
+    workflow_text: str,
+) -> None:
+    jobs = _job_blocks(workflow_text)
+    wait_job = jobs["wait-for-testpypi-index"]
+    matrix_job = jobs["external-certification-matrix"]
+
+    assert "needs: [validate-tag, publish-testpypi]" in wait_job
+    assert "https://test.pypi.org/simple/arancel-mx/" in wait_job
+    assert "arancel_mx-${EXPECTED_VERSION}" in wait_job
+    assert "for attempt in $(seq 1 40)" in wait_job
+    assert "sleep 15" in wait_job
+    assert "needs: [validate-tag, wait-for-testpypi-index]" in matrix_job
+
+
 def test_production_publish_requires_the_os_python_matrix(workflow_text: str) -> None:
     jobs = _job_blocks(workflow_text)
     matrix_job = jobs["external-certification-matrix"]
-    assert "needs: [validate-tag, publish-testpypi]" in matrix_job
+    assert "needs: [validate-tag, wait-for-testpypi-index]" in matrix_job
     assert "runs-on: ${{ matrix.os }}" in matrix_job
     assert "os: [ubuntu-latest, windows-latest, macos-latest]" in matrix_job
     assert 'python-version: ["3.11", "3.12", "3.13"]' in matrix_job
