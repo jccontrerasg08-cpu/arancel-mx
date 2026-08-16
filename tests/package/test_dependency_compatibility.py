@@ -40,7 +40,7 @@ def _build_wheel(tmp_path: Path) -> Path:
         capture_output=True,
         text=True,
     )
-    return next(dist.glob("arancel_mx-0.3.1-*.whl"))
+    return next(dist.glob("arancel_mx-0.3.2-*.whl"))
 
 
 def _dataset(tmp_path: Path) -> Path:
@@ -60,7 +60,7 @@ def _run_probe(tmp_path: Path, *, mode: str) -> dict[str, object]:
             "--mode",
             mode,
             "--expected-version",
-            "0.3.1",
+            "0.3.2",
             "--dataset",
             str(_dataset(tmp_path)),
         ],
