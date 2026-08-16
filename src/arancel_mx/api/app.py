@@ -15,11 +15,17 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from arancel_mx.api import API_VERSION
 from arancel_mx.api.config import ApiSettings, load_settings
-from arancel_mx.api.models import ErrorDetail, ErrorEnvelope
+from arancel_mx.api.models import (
+    ErrorDetail,
+    ErrorEnvelope,
+    NotReadyResponse,
+    ReadyResponse,
+)
 from arancel_mx.api.routes import router as service_router
 from arancel_mx.consumer import Dataset
 from arancel_mx.consumer.errors import (
     DatasetError,
+    DatasetUnavailableError,
     InvalidCodeError,
     QueryError,
     RecordNotFoundError,
@@ -251,15 +257,27 @@ def create_app(
 
     application.include_router(service_router)
 
-    @application.get("/readyz")
+    @application.get(
+        "/readyz",
+        response_model=ReadyResponse,
+        responses={
+            503: {
+                "model": NotReadyResponse,
+                "description": "Verified dataset is not ready.",
+            }
+        },
+    )
     def readiness():
         dataset = application.state.dataset
         if not application.state.ready or dataset is None:
-            return JSONResponse({"status": "not_ready"}, status_code=503)
-        return {
-            "status": "ready",
-            "dataset_version": dataset.info.dataset_version,
-        }
+            return JSONResponse(
+                NotReadyResponse(status="not_ready").model_dump(),
+                status_code=503,
+            )
+        dataset_version = dataset.info.dataset_version
+        if dataset_version is None:
+            raise DatasetUnavailableError("verified dataset version is missing")
+        return ReadyResponse(status="ready", dataset_version=dataset_version)
 
     return application
 
