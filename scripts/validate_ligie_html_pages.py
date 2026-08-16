@@ -13,7 +13,20 @@ from arancel_mx.sources.html_pages import (
     ensure_html_body_accessible,
     validate_ligie_html_page,
 )
-from scripts.check_documented_urls import build_session, check_reachable, fetch_html_body
+if __package__:
+    from .check_documented_urls import (
+        EXTERNALLY_UNPROBEABLE_URLS,
+        build_session,
+        check_reachable,
+        fetch_html_body,
+    )
+else:
+    from check_documented_urls import (
+        EXTERNALLY_UNPROBEABLE_URLS,
+        build_session,
+        check_reachable,
+        fetch_html_body,
+    )
 
 
 def _fetch_html(
@@ -88,6 +101,9 @@ def validate_ligie_html_site(
             print(f"FAIL {target.kind} ({target.url}) -> {exc}")
 
     for page in OPERATIONAL_HTML_PAGES:
+        if page.url in EXTERNALLY_UNPROBEABLE_URLS:
+            print(f"SKIP legacy transport {page.page_id}: {page.url}")
+            continue
         process_html_page(page.page_id, page.url, page.page_id)
 
     return failures

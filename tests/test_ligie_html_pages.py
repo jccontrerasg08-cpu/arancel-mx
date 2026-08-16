@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+import subprocess
+import sys
 
 import pytest
 
@@ -30,11 +32,28 @@ from arancel_mx.sources.vucem import (
     fraction_sheet_url,
     parse_fraction_sheet,
 )
-from scripts.validate_ligie_html_pages import main as validate_ligie_html_pages_main
+from scripts.validate_ligie_html_pages import (
+    main as validate_ligie_html_pages_main,
+    validate_ligie_html_site,
+)
 
 
+ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
+VALIDATOR_SCRIPT = ROOT / "scripts" / "validate_ligie_html_pages.py"
 _FAKE_HTML = "<!doctype html><html><body>" + ("consulta fracciones arancelarias " * 20) + "</body></html>"
+
+
+def test_live_html_validator_supports_direct_script_invocation() -> None:
+    completed = subprocess.run(
+        [sys.executable, str(VALIDATOR_SCRIPT), "--help"],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+    assert "Fetch and validate official LIGIE HTML pages" in completed.stdout
 
 
 def test_operational_html_page_catalog_covers_pipeline_and_consult_entrypoints() -> None:
@@ -256,6 +275,23 @@ def test_looks_like_html_url_detects_documented_html_endpoints() -> None:
 def test_individual_classifier_fixture_is_parseable_html_shell() -> None:
     html = (FIXTURES / "snice" / "hce.mi.fraccion.arancelaria.html").read_text(encoding="utf-8")
     validate_ligie_html_page("snice_individual_classifier", html)
+
+
+def test_live_validator_skips_legacy_vucem_transport_endpoints(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    vucem_pages = tuple(page for page in OPERATIONAL_HTML_PAGES if page.page_id.startswith("vucem_"))
+    monkeypatch.setattr("scripts.validate_ligie_html_pages.OPERATIONAL_HTML_PAGES", vucem_pages)
+
+    class _UnavailableSession:
+        def get(self, *args: object, **kwargs: object) -> object:
+            raise AssertionError("legacy VUCEM endpoint must not be fetched by the live validator")
+
+    assert validate_ligie_html_site(_UnavailableSession()) == []  # type: ignore[arg-type]
+    output = capsys.readouterr().out
+    assert "SKIP legacy transport" in output
+    assert "vucem_classifier_index" in output
+    assert "vucem_fraction_sheet" in output
 
 
 @pytest.mark.skipif(
