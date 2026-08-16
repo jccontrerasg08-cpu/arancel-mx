@@ -63,7 +63,7 @@ def test_external_consumption_guide_documents_unhosted_url_placeholder_and_versi
         "ARANCEL_MX_API_DATASET=data-2026.08.15",
         "/v1/lookup/8517130100",
         "API v1",
-        "package 0.3.1",
+        "package 0.3.2",
         "dataset data-2026.08.15",
     )
     for token in required:

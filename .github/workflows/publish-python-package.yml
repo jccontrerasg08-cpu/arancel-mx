@@ -126,33 +126,8 @@ jobs:
           packages-dir: dist
           print-hash: true
 
-  wait-for-testpypi-index:
-    needs: [validate-tag, publish-testpypi]
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: read
-    steps:
-      - name: Wait for the TestPyPI Simple index to expose the candidate
-        shell: bash
-        env:
-          EXPECTED_VERSION: ${{ needs.validate-tag.outputs.version }}
-        run: |
-          set -euo pipefail
-          url="https://test.pypi.org/simple/arancel-mx/"
-          for attempt in $(seq 1 40); do
-            if curl --fail --silent --show-error --location "$url" | grep --fixed-strings "arancel_mx-${EXPECTED_VERSION}" >/dev/null; then
-              echo "TestPyPI index exposes arancel-mx==${EXPECTED_VERSION}"
-              exit 0
-            fi
-            echo "TestPyPI index has not exposed arancel-mx==${EXPECTED_VERSION} (attempt ${attempt}/40)"
-            sleep 15
-          done
-          echo "TestPyPI index did not expose arancel-mx==${EXPECTED_VERSION} within 10 minutes" >&2
-          exit 1
-
   external-certification-matrix:
-    needs: [validate-tag, wait-for-testpypi-index]
+    needs: [validate-tag, publish-testpypi]
     strategy:
       fail-fast: false
       matrix:
@@ -174,9 +149,9 @@ jobs:
           python -m pip install pip==26.2.1
           # TestPyPI is trusted only for the candidate. Runtime dependencies must
           # resolve from PyPI so an unrelated TestPyPI project cannot shadow them.
-          python -c "import os, subprocess, sys; v = os.environ['EXPECTED_VERSION']; subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--no-deps', '--index-url', 'https://test.pypi.org/simple/', f'arancel-mx=={v}'])"
-          python -c "from importlib import metadata; import subprocess, sys; requirements = metadata.requires('arancel-mx') or []; subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--index-url', 'https://pypi.org/simple/', *requirements])"
-          python -m pip check
+          # Retry on each independent runner until its package-index route can
+          # resolve the exact candidate; the helper raises on any final failure.
+          python scripts/certify_testpypi_candidate.py "$EXPECTED_VERSION" --attempts 40 --delay-seconds 15
       - name: Import the installed version
         env:
           EXPECTED_VERSION: ${{ needs.validate-tag.outputs.version }}
