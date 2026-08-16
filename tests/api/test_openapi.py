@@ -14,6 +14,10 @@ def _app(valid_settings, fake_dataset):
     )
 
 
+def _json_schema(response_spec: dict) -> dict:
+    return response_spec["content"]["application/json"]["schema"]
+
+
 def test_application_defines_no_mutation_routes(valid_settings, fake_dataset) -> None:
     application = _app(valid_settings, fake_dataset)
     forbidden = {"POST", "PUT", "PATCH", "DELETE"}
@@ -51,6 +55,45 @@ def test_openapi_exposes_typed_metadata_contract(valid_settings, fake_dataset) -
         "application/json"
     ]["schema"]
     assert meta_schema == {"$ref": "#/components/schemas/MetaResponse"}
+
+
+def test_openapi_documents_sanitized_error_envelope(
+    valid_settings,
+    fake_dataset,
+) -> None:
+    application = _app(valid_settings, fake_dataset)
+    with TestClient(application) as client:
+        payload = client.get("/openapi.json").json()
+
+    assert "ErrorEnvelope" in payload["components"]["schemas"]
+    lookup = payload["paths"]["/v1/lookup/{code}"]["get"]["responses"]
+    for status in ("400", "404", "422", "503", "500"):
+        assert _json_schema(lookup[status]) == {
+            "$ref": "#/components/schemas/ErrorEnvelope"
+        }
+    search = payload["paths"]["/v1/search"]["get"]["responses"]
+    for status in ("422", "503", "500"):
+        assert _json_schema(search[status]) == {
+            "$ref": "#/components/schemas/ErrorEnvelope"
+        }
+
+
+def test_openapi_types_health_and_readiness(valid_settings, fake_dataset) -> None:
+    application = _app(valid_settings, fake_dataset)
+    with TestClient(application) as client:
+        payload = client.get("/openapi.json").json()
+
+    health = payload["paths"]["/healthz"]["get"]["responses"]
+    ready = payload["paths"]["/readyz"]["get"]["responses"]
+    assert _json_schema(health["200"]) == {
+        "$ref": "#/components/schemas/HealthResponse"
+    }
+    assert _json_schema(ready["200"]) == {
+        "$ref": "#/components/schemas/ReadyResponse"
+    }
+    assert _json_schema(ready["503"]) == {
+        "$ref": "#/components/schemas/NotReadyResponse"
+    }
 
 
 def test_openapi_keeps_interactive_documentation_enabled(valid_settings, fake_dataset) -> None:
