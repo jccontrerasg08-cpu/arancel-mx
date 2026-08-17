@@ -21,6 +21,13 @@ def _job(name: str) -> str:
     return workflow[start:end]
 
 
+def test_ci_allows_live_source_probes_to_report_before_job_timeout() -> None:
+    job = _job("test")
+
+    assert "timeout-minutes: 30" in job
+    assert "Verify documented official URLs are accessible" in job
+
+
 def test_required_ci_type_checks_the_full_package() -> None:
     job = _job("test")
 

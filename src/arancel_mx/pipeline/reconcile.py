@@ -8,7 +8,11 @@ from typing import Any, Mapping, Sequence
 from urllib.parse import urlparse
 
 from arancel_mx.sources.html_pages import extract_links
-from arancel_mx.sources.registry import RegistryEntry, classify_candidate
+from arancel_mx.sources.registry import (
+    RegistryEntry,
+    classify_candidate,
+    classify_corpus_candidate,
+)
 
 
 @dataclass(frozen=True)
@@ -29,6 +33,7 @@ class DiscoveredDocument:
     source_url: str
     title: str
     media_type: str
+    discovery_kind: str = "canonical_page"
 
 
 def _value(item: Any, key: str, default: Any = None) -> Any:
@@ -79,7 +84,12 @@ def select_current_document(
     candidates = [
         min(
             occurrences,
-            key=lambda item: (item.title, item.discovery_url, item.media_type),
+            key=lambda item: (
+                item.discovery_kind != "canonical_page",
+                item.title,
+                item.discovery_url,
+                item.media_type,
+            ),
         )
         for _, occurrences in sorted(by_url.items())
     ]
@@ -154,23 +164,50 @@ def discover_registered_sources(
         raise ValueError("timeout_s must be positive")
 
     found: list[DiscoveredDocument] = []
+    page_text: dict[str, str] = {}
     for key, entry in sorted(registry.items()):
-        response = client.get(entry.canonical_page, timeout=timeout_s)
-        if hasattr(response, "raise_for_status"):
-            response.raise_for_status()
-        for url, title in extract_links(response.text, entry.canonical_page):
-            if title == "iframe":
-                continue
-            source_url = url
-            suffix = source_url.rsplit("?", 1)[0].rsplit(".", 1)[-1].lower()
-            media_type = {
-                "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                "xls": "application/vnd.ms-excel",
-                "pdf": "application/pdf",
-                "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                "doc": "application/msword",
-            }.get(suffix, "application/octet-stream")
-            role = classify_candidate(entry, entry.canonical_page, source_url, media_type)
-            if role:
-                found.append(DiscoveredDocument(key, role, entry.canonical_page, source_url, title, media_type))
+        pages = (
+            (entry.canonical_page, "canonical_page"),
+            *((url, "corpus_index") for url in entry.corpus_index_pages),
+        )
+        for discovery_url, discovery_kind in pages:
+            text = page_text.get(discovery_url)
+            if text is None:
+                response = client.get(discovery_url, timeout=timeout_s)
+                if hasattr(response, "raise_for_status"):
+                    response.raise_for_status()
+                text = response.text
+                page_text[discovery_url] = text
+            for url, title in extract_links(text, discovery_url):
+                if title == "iframe":
+                    continue
+                source_url = url
+                suffix = source_url.rsplit("?", 1)[0].rsplit(".", 1)[-1].lower()
+                media_type = {
+                    "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    "xls": "application/vnd.ms-excel",
+                    "pdf": "application/pdf",
+                    "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    "doc": "application/msword",
+                }.get(suffix, "application/octet-stream")
+                classifier = (
+                    classify_candidate
+                    if discovery_kind == "canonical_page"
+                    else classify_corpus_candidate
+                )
+                role = classifier(entry, discovery_url, source_url, media_type)
+                if role is None:
+                    continue
+                document = DiscoveredDocument(
+                    key,
+                    role,
+                    discovery_url,
+                    source_url,
+                    title,
+                    media_type,
+                    discovery_kind,
+                )
+                if discovery_kind == "corpus_index" and not _snapshot_dates(document):
+                    continue
+                found.append(document)
     return tuple(sorted(found, key=lambda item: (item.dataset_key, item.document_role, item.source_url)))

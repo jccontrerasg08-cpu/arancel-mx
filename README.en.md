@@ -18,7 +18,7 @@ Open Python tools to capture, normalize, reconcile, and publish Mexican tariff d
 [![DuckDB](https://img.shields.io/badge/DuckDB-embedded-FFF000?logo=duckdb&logoColor=000)](https://duckdb.org/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-**[Installation](#installation)** · **[CLI](#quick-cli-usage)** · **[Python](#python-usage)** · **[Downstream ingest](#downstream-ingest)** · **[Data](#data-model)** · **[Sources](#official-sources)** · **[Automation](#official-data-pipeline)** · **[Certification](docs/production-certification.md)** · **[Contributing](#contributing)**
+**[Installation](#installation)** · **[CLI](#quick-cli-usage)** · **[Python](#python-usage)** · **[Downstream ingest](#downstream-ingest)** · **[Data](#data-model)** · **[Sources](#official-sources)** · **[Automation](#official-data-pipeline)** · **[Documentation](docs/README.md)** · **[Certification](docs/production-certification.md)** · **[Contributing](#contributing)**
 
 </div>
 
@@ -64,6 +64,7 @@ sha256sum -c SHA256SUMS
 ## Quick summary
 
 - Captures registered Diputados, DOF, and SNICE snapshots with SHA256 and real `retrieved_at` timestamps.
+- Can evidence-gate a uniquely newer, dated LIGIE or NICO candidate from the registered SNICE_DOCS corpus before the landing page updates; parsing and legal reconciliation still block publication on any failure.
 - Reconciles legal evidence before a candidate can be publishable.
 - Normalizes HS2, HS4, HS6, Mexican 8-digit tariff fractions, and 10-digit NICO identifiers.
 - Materializes DuckDB and exports CSV, JSON, and a schema v2 manifest.
@@ -143,6 +144,16 @@ Diputados / DOF / SNICE
 <p align="center">
   <img src="docs/assets/pipeline.svg" alt="Pipeline from official sources to DuckDB, CSV, JSON, manifest, and release" width="950" />
 </p>
+
+### Fast source promotion without weaker trust
+
+The LIGIE and NICO registries can also inspect the explicit public SNICE_DOCS corpus. A corpus document is eligible only when it is on the registered index, matches an allowed family and media type, contains a valid date, and is the unambiguous newest candidate. Its discovery origin is retained with the captured SHA256; parsing, validation, Diputados/DOF reconciliation, and release certification remain unchanged publication gates.
+
+<p align="center">
+  <img src="docs/assets/source-promotion.png" alt="Registered SNICE landing pages and the SNICEDOCS corpus converge on a dated candidate, then flow through capture, validation, legal reconciliation, and verified release gates" width="100%" />
+</p>
+
+Read the [source-promotion policy](docs/source-promotion.md) for the exact allowlist, NICO limits, and rollback procedure.
 
 ## Installation
 
@@ -358,7 +369,7 @@ Primary registered URLs include:
 - [SNICE, indicators](https://www.snice.gob.mx/cs/avi/snice/ligie.indicaranc22.html)
 - [Diario Oficial de la Federación, related publication](https://dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022)
 
-[`docs/sources.md`](docs/sources.md) explains how the registered Diputados ledger anchors reconciliation and how DOF evidence acts as a blocking publication gate. SIICEX-CAAAREM and dumps such as tigies-mx are not official sources.
+[`docs/sources.md`](docs/sources.md) explains how the registered Diputados ledger anchors reconciliation and how DOF evidence acts as a blocking publication gate. The [SNICE_DOCS promotion policy](docs/source-promotion.md) documents the evidence-gated aggressive discovery path and rollback. SIICEX-CAAAREM and dumps such as tigies-mx are not official sources.
 
 ## Official process visuals
 
@@ -477,4 +488,4 @@ Open-source community contributions are welcome. Review [`CONTRIBUTING.md`](CONT
 
 Source, parser, reconciliation, and release-contract changes should add offline fixtures or tests for the expected behavior. Changes to the official build dependency environment should update `requirements/production-build.txt` in the same PR when appropriate.
 
-[Español](README.md) · [Documentation](docs/) · [Consumer quickstart](docs/consumer-quickstart.md) · [Source roles](docs/official-source-roles.md) · [NICO/LIGIE](docs/nico-ligie-guide.md) · [Downstream ingest](docs/external-consumption.md) · [Sources](docs/sources.md) · [Certification](docs/production-certification.md) · [Contribute](CONTRIBUTING.md) · [Security](SECURITY.md)
+[Español](README.md) · [Documentation hub](docs/README.md) · [Consumer quickstart](docs/consumer-quickstart.md) · [Source roles](docs/official-source-roles.md) · [NICO/LIGIE](docs/nico-ligie-guide.md) · [Downstream ingest](docs/external-consumption.md) · [Sources](docs/sources.md) · [SNICE_DOCS policy](docs/source-promotion.md) · [Certification](docs/production-certification.md) · [Contribute](CONTRIBUTING.md) · [Security](SECURITY.md)

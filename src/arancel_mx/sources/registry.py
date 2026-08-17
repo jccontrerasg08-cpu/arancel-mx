@@ -15,6 +15,7 @@ class RegistryEntry:
     dataset_key: str
     registry_version: str
     canonical_page: str
+    corpus_index_pages: tuple[str, ...]
     allowed_hosts: tuple[str, ...]
     media_types: tuple[str, ...]
     families: tuple[tuple[str, tuple[str, ...]], ...]
@@ -54,6 +55,10 @@ def load_source_registry(
     for key, raw in payload["sources"].items():
         allowed_hosts = tuple(host.lower() for host in raw["allowed_hosts"])
         canonical_page = _validate_registered_url(raw["canonical_page"], allowed_hosts)
+        corpus_index_pages = tuple(
+            _validate_registered_url(str(url), allowed_hosts)
+            for url in raw.get("corpus_index_pages", ())
+        )
         families = tuple(
             (role, tuple(patterns)) for role, patterns in raw["families"].items()
         )
@@ -68,6 +73,7 @@ def load_source_registry(
             dataset_key=key,
             registry_version=version,
             canonical_page=canonical_page,
+            corpus_index_pages=corpus_index_pages,
             allowed_hosts=allowed_hosts,
             media_types=tuple(value.lower() for value in raw["media_types"]),
             families=families,
@@ -93,15 +99,11 @@ def registered_direct_document(entry: RegistryEntry, role: str) -> str:
     return matches[0]
 
 
-def classify_candidate(
+def _classify_family(
     entry: RegistryEntry,
-    discovery_url: str,
     href: str,
     media_type: str,
 ) -> str | None:
-    """Return the registered family only for a candidate on its canonical page."""
-    if _page_identity(discovery_url) != _page_identity(entry.canonical_page):
-        return None
     parsed_href = urlparse(href)
     if parsed_href.netloc and parsed_href.netloc.lower() not in entry.allowed_hosts:
         return None
@@ -112,3 +114,29 @@ def classify_candidate(
         if any(re.fullmatch(pattern, filename, flags=re.IGNORECASE) for pattern in patterns):
             return role
     return None
+
+
+def classify_candidate(
+    entry: RegistryEntry,
+    discovery_url: str,
+    href: str,
+    media_type: str,
+) -> str | None:
+    """Return the registered family only for a candidate on its canonical page."""
+    if _page_identity(discovery_url) != _page_identity(entry.canonical_page):
+        return None
+    return _classify_family(entry, href, media_type)
+
+
+def classify_corpus_candidate(
+    entry: RegistryEntry,
+    discovery_url: str,
+    href: str,
+    media_type: str,
+) -> str | None:
+    """Return a family only for a candidate from an explicitly registered corpus index."""
+    if _page_identity(discovery_url) not in {
+        _page_identity(url) for url in entry.corpus_index_pages
+    }:
+        return None
+    return _classify_family(entry, href, media_type)

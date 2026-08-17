@@ -27,6 +27,7 @@ LAW_REFORM_URL = "https://www.diputados.gob.mx/LeyesBiblio/ref/reforma02.pdf"
 TARIFF_DECREE_URL = "https://www.diputados.gob.mx/LeyesBiblio/ref/tarifa15.pdf"
 LIGIE_INDEX = "https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html"
 NICO_INDEX = "https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html"
+SNICE_DOCS_INDEX = "https://www.snice.gob.mx/~oracle/SNICE_DOCS/"
 LIGIE_URL = "https://www.snice.gob.mx/files/FRACCIONESARANCELARIAS_20260810.XLSX"
 NICO_URL = "https://www.snice.gob.mx/files/NICO-AGOSTO26-LIGIE_20260810-20260810.XLSX"
 NOTES_URL = "https://dof.gob.mx/nota_detalle.php?codigo=5673161&fecha=02/12/2022"
@@ -145,6 +146,7 @@ class FakeSession:
 def fake_session():
     ligie_html = f'<a href="{LIGIE_URL}">Fracciones 20260810</a>'
     nico_html = f'<a href="{NICO_URL}">NICO 20260810</a>'
+    corpus_html = ligie_html + nico_html
     ligie_bytes, nico_bytes, pdf_bytes = fixture_bytes()
     responses = {
         DIPUTADOS_URL: Response(
@@ -165,6 +167,12 @@ def fake_session():
         ),
         NICO_INDEX: Response(
             NICO_INDEX, nico_html.encode("utf-8"), "text/html", nico_html
+        ),
+        SNICE_DOCS_INDEX: Response(
+            SNICE_DOCS_INDEX,
+            corpus_html.encode("utf-8"),
+            "text/html",
+            corpus_html,
         ),
         LIGIE_URL: Response(LIGIE_URL, ligie_bytes, XLSX_TYPE),
         NICO_URL: Response(NICO_URL, nico_bytes, XLSX_TYPE),
@@ -217,6 +225,7 @@ def test_offline_build_produces_verified_release(tmp_path):
         TARIFF_DECREE_URL,
         LIGIE_INDEX,
         NICO_INDEX,
+        SNICE_DOCS_INDEX,
         LIGIE_URL,
         NICO_URL,
         NOTES_URL,
