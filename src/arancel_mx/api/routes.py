@@ -13,6 +13,7 @@ from arancel_mx.api.models import (
     FichaResponse,
     HealthResponse,
     MetaResponse,
+    RepositorySnapshotResponse,
     NationalNoteResponse,
     ProvenanceResponse,
     SearchResponse,
@@ -25,6 +26,7 @@ from arancel_mx.api.openapi import (
     NOTES_ERROR_RESPONSES,
     RETRIEVAL_ERROR_RESPONSES,
 )
+from arancel_mx.api.repository import repository_snapshot
 from arancel_mx.consumer import Dataset
 
 
@@ -36,7 +38,7 @@ SuggestLimit = Annotated[int, Query(ge=1, le=20)]
 ChapterPath = Annotated[str, Path(pattern=r"^\d{2}$")]
 
 
-@router.get("/")
+@router.get("/v1")
 def root() -> dict[str, str]:
     """Describe the public service and its discovery endpoints."""
 
@@ -80,6 +82,13 @@ def metadata(
         release_verified=info.release_verified,
         structural_valid=info.structural_valid,
     )
+
+
+@router.get("/v1/repository", response_model=RepositorySnapshotResponse, tags=["service"])
+def repository_metadata(request: Request) -> RepositorySnapshotResponse:
+    """Expose bounded public GitHub activity without disclosing credentials."""
+
+    return repository_snapshot(request.app.state.settings.github_token)
 
 
 @router.get(

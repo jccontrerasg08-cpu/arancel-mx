@@ -24,6 +24,7 @@ class ApiSettings:
     cache_dir: Path | None
     timeout: float
     offline: bool
+    github_token: str | None = None
 
 
 def load_settings(environ: Mapping[str, str] | None = None) -> ApiSettings:
@@ -54,9 +55,11 @@ def load_settings(environ: Mapping[str, str] | None = None) -> ApiSettings:
     except ValueError as exc:
         raise ValueError("ARANCEL_MX_API_OFFLINE must be a boolean value") from exc
 
+    github_token = source.get("ARANCEL_MX_GITHUB_TOKEN", "").strip() or None
     return ApiSettings(
         dataset_tag=dataset_tag,
         cache_dir=cache_dir,
         timeout=timeout,
         offline=offline,
+        github_token=github_token,
     )

@@ -12,6 +12,7 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from arancel_mx.api import API_VERSION
@@ -24,6 +25,7 @@ from arancel_mx.api.models import (
 )
 from arancel_mx.api.routes import router as service_router
 from arancel_mx.consumer import Dataset
+from arancel_mx.consumer.http import build_session
 from arancel_mx.consumer.errors import (
     DatasetError,
     DatasetUnavailableError,
@@ -36,6 +38,9 @@ from arancel_mx.consumer.errors import (
 logger = logging.getLogger(__name__)
 DatasetLoader = Callable[[ApiSettings], Dataset]
 _EXPLORER_PAGE = Path(__file__).with_name("static") / "index.html"
+_MARKETING_DIR = Path(__file__).with_name("static") / "site"
+_MARKETING_PAGE = _MARKETING_DIR / "index.html"
+_MARKETING_PAGES = ("/", "/features", "/pricing", "/analytics", "/documentation", "/community", "/trust")
 _API_DESCRIPTION = """
 Public, read-only HTTP access to the verified `arancel-mx` dataset through the
 versioned `/v1` contract.
@@ -55,6 +60,11 @@ def _load_dataset(settings: ApiSettings) -> Dataset:
         cache_dir=settings.cache_dir,
         timeout=settings.timeout,
         offline=settings.offline,
+        session=(
+            build_session(github_token=settings.github_token)
+            if settings.github_token
+            else None
+        ),
     )
 
 
@@ -258,6 +268,19 @@ def create_app(
         )
 
     application.include_router(service_router)
+    application.mount(
+        "/assets",
+        StaticFiles(directory=_MARKETING_DIR / "assets"),
+        name="marketing-assets",
+    )
+
+    def marketing_page() -> FileResponse:
+        """Serve the public product site while keeping API routes versioned."""
+
+        return FileResponse(_MARKETING_PAGE, media_type="text/html")
+
+    for public_path in _MARKETING_PAGES:
+        application.add_api_route(public_path, marketing_page, include_in_schema=False)
 
     @application.get("/app", include_in_schema=False)
     def explorer() -> FileResponse:

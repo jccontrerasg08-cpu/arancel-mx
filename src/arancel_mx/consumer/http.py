@@ -15,7 +15,7 @@ _CHUNK_SIZE = 1024 * 1024
 _RETRYABLE_STATUSES = {429, 500, 502, 503, 504}
 
 
-def build_session() -> requests.Session:
+def build_session(*, github_token: str | None = None) -> requests.Session:
     """Build a requests session with the exact bounded GET retry contract."""
 
     retry = Retry(
@@ -31,6 +31,13 @@ def build_session() -> requests.Session:
     )
     adapter = HTTPAdapter(max_retries=retry)
     session = requests.Session()
+    if github_token:
+        session.headers.update(
+            {
+                "Accept": "application/vnd.github+json",
+                "Authorization": f"Bearer {github_token}",
+            }
+        )
     session.mount("https://", adapter)
     session.mount("http://", adapter)
     return session

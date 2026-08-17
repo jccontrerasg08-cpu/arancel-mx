@@ -1,5 +1,13 @@
 import { expect, test } from '@playwright/test';
 
+test('serves the public marketing root and preserves the explorer handoff', async ({ page }) => {
+  await page.goto('/');
+
+  await expect(page.getByRole('heading', { name: /tariff intelligence/i })).toBeVisible();
+  await expect(page.getByText(/Apache-2\.0/i).first()).toBeVisible();
+  await expect(page.getByRole('link', { name: /open explorer/i })).toHaveAttribute('href', 'https://arancel-mx.vercel.app/app');
+});
+
 test('serves the verified tariff explorer', async ({ page }) => {
   await page.goto('/app');
 

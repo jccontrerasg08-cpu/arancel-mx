@@ -35,10 +35,20 @@ def test_wheel_contains_public_runtime_contract(distributions: tuple[Path, Path]
         "arancel_mx/cli.py",
         "arancel_mx/consumer/dataset.py",
         "arancel_mx/consumer/cli.py",
+        "arancel_mx/api/static/index.html",
+        "arancel_mx/api/static/site/index.html",
         "arancel_mx/sources/source_registry.json",
         "arancel_mx/py.typed",
     }
     assert required <= names
+    assert any(
+        name.startswith("arancel_mx/api/static/site/assets/") and name.endswith(".js")
+        for name in names
+    )
+    assert any(
+        name.startswith("arancel_mx/api/static/site/assets/") and name.endswith(".css")
+        for name in names
+    )
     assert any(name.endswith(".dist-info/METADATA") for name in names)
     assert any(name.endswith(".dist-info/entry_points.txt") for name in names)
     assert any(name.endswith(".dist-info/licenses/LICENSE") for name in names)
@@ -78,6 +88,8 @@ def test_sdist_contains_rebuild_inputs_and_public_package_docs(distributions: tu
         f"{root}/docs/release-process.md",
         f"{root}/docs/sources.md",
         f"{root}/src/arancel_mx/__init__.py",
+        f"{root}/src/arancel_mx/api/static/index.html",
+        f"{root}/src/arancel_mx/api/static/site/index.html",
         f"{root}/src/arancel_mx/py.typed",
         f"{root}/src/arancel_mx/sources/source_registry.json",
     }

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from contextlib import AbstractContextManager
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from arancel_mx.consumer.config import resolve_config
 from arancel_mx.consumer.integrity import validate_duckdb
@@ -12,6 +12,9 @@ from arancel_mx.consumer.manager import DatasetManager
 from arancel_mx.consumer.models import CompareRow, DatasetInfo, Ficha, NationalNote, ProvenanceRecord, SearchResult, SuggestHit, TariffRecord
 from arancel_mx.consumer import query
 from arancel_mx.storage.duckdb import connect as duckdb_connect
+
+if TYPE_CHECKING:
+    import requests
 
 
 class Dataset:
@@ -48,13 +51,14 @@ class Dataset:
         offline: bool | None = None,
         cache_dir: str | Path | None = None,
         timeout: float | None = None,
+        session: "requests.Session | None" = None,
     ) -> "Dataset":
         config = cls._config(
             offline=offline,
             cache_dir=cache_dir,
             timeout=timeout,
         )
-        manager = DatasetManager(config)
+        manager = DatasetManager(config, session=session)
         path = manager.ensure(tag)
         info = manager.verify(tag)
         return cls(path, info)
@@ -66,8 +70,14 @@ class Dataset:
         offline: bool | None = None,
         cache_dir: str | Path | None = None,
         timeout: float | None = None,
+        session: "requests.Session | None" = None,
     ) -> "Dataset":
-        return cls._managed(offline=offline, cache_dir=cache_dir, timeout=timeout)
+        return cls._managed(
+            offline=offline,
+            cache_dir=cache_dir,
+            timeout=timeout,
+            session=session,
+        )
 
     @classmethod
     def version(
@@ -77,8 +87,15 @@ class Dataset:
         offline: bool | None = None,
         cache_dir: str | Path | None = None,
         timeout: float | None = None,
+        session: "requests.Session | None" = None,
     ) -> "Dataset":
-        return cls._managed(tag, offline=offline, cache_dir=cache_dir, timeout=timeout)
+        return cls._managed(
+            tag,
+            offline=offline,
+            cache_dir=cache_dir,
+            timeout=timeout,
+            session=session,
+        )
 
     @classmethod
     def open(cls, path: str | Path) -> "Dataset":

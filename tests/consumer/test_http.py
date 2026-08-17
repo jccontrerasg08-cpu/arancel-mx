@@ -178,6 +178,15 @@ def test_build_session_retry_contract_is_exact() -> None:
     assert retry.allowed_methods == frozenset({"GET"})
 
 
+def test_build_session_adds_github_authorization_only_when_requested() -> None:
+    anonymous = build_session()
+    authenticated = build_session(github_token="test-token")  # noqa: S106
+
+    assert "Authorization" not in anonymous.headers
+    assert authenticated.headers["Authorization"] == "Bearer test-token"
+    assert authenticated.headers["Accept"] == "application/vnd.github+json"
+
+
 def test_interrupted_response_leaves_only_temporary_file_for_caller_cleanup(
     tmp_path: Path,
 ) -> None:

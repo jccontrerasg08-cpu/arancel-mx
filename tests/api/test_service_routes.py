@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from fastapi.testclient import TestClient
 
 from arancel_mx.api.app import create_app
@@ -14,9 +16,24 @@ def _client(valid_settings, fake_dataset) -> TestClient:
     )
 
 
-def test_root_describes_public_api(valid_settings, fake_dataset) -> None:
+def test_root_serves_the_public_marketing_site(valid_settings, fake_dataset) -> None:
     with _client(valid_settings, fake_dataset) as client:
         response = client.get("/")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/html")
+    assert '<div id="root"></div>' in response.text
+    asset = re.search(r'(/assets/index-[^"]+\.js)', response.text)
+    assert asset is not None
+    with _client(valid_settings, fake_dataset) as client:
+        asset_response = client.get(asset.group(1))
+    assert asset_response.status_code == 200
+    assert "javascript" in asset_response.headers["content-type"]
+
+
+def test_v1_describes_public_api(valid_settings, fake_dataset) -> None:
+    with _client(valid_settings, fake_dataset) as client:
+        response = client.get("/v1")
 
     assert response.status_code == 200
     assert response.json() == {
@@ -65,6 +82,28 @@ def test_meta_keeps_api_package_and_dataset_versions_separate(
         "release_verified": True,
         "structural_valid": True,
     }
+
+
+def test_repository_snapshot_uses_documented_fallback_without_token(
+    valid_settings,
+    fake_dataset,
+    monkeypatch,
+) -> None:
+    import arancel_mx.api.repository as repository
+
+    monkeypatch.setattr(
+        repository.requests,
+        "get",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("no network without token")
+        ),
+    )
+    with _client(valid_settings, fake_dataset) as client:
+        response = client.get("/v1/repository")
+
+    assert response.status_code == 200
+    assert response.json()["source"] == "snapshot"
+    assert response.json()["pipeline"]["conclusion"] == "success"
 
 
 def test_request_id_is_generated_and_returned(valid_settings, fake_dataset) -> None:
@@ -147,6 +186,17 @@ def test_explorer_serves_the_public_search_page(valid_settings, fake_dataset) ->
     assert 'data-testid="search-input"' in response.text
     assert 'data-testid="search-submit"' in response.text
     assert "No clasifica mercancías" in response.text
+
+
+def test_marketing_documentation_route_preserves_fastapi_docs(valid_settings, fake_dataset) -> None:
+    with _client(valid_settings, fake_dataset) as client:
+        marketing = client.get("/documentation")
+        api_docs = client.get("/docs")
+
+    assert marketing.status_code == 200
+    assert '<div id="root"></div>' in marketing.text
+    assert api_docs.status_code == 200
+    assert "Swagger UI" in api_docs.text
 
 
 def test_vercel_entrypoint_resolves_the_public_application() -> None:

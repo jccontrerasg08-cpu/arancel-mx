@@ -70,6 +70,43 @@ class MetaResponse(FrozenModel):
     structural_valid: bool
 
 
+class RepositoryReleaseResponse(FrozenModel):
+    """Public immutable-release reference from repository metadata."""
+
+    tag: str
+    publishedAt: str
+    url: str
+
+
+class RepositoryActivityResponse(FrozenModel):
+    """Public issue or pull-request reference from repository metadata."""
+
+    number: int
+    title: str
+    url: str
+    updatedAt: str
+
+
+class RepositoryPipelineResponse(FrozenModel):
+    """Public workflow status reference from repository metadata."""
+
+    status: str
+    conclusion: str | None
+    url: str
+
+
+class RepositorySnapshotResponse(FrozenModel):
+    """Bounded public repository telemetry for the marketing site."""
+
+    stars: int
+    observedAt: str
+    releases: list[RepositoryReleaseResponse]
+    recentPulls: list[RepositoryActivityResponse]
+    recentIssues: list[RepositoryActivityResponse]
+    pipeline: RepositoryPipelineResponse
+    source: str
+
+
 class RateResponse(FrozenModel):
     """Official tariff-rate representation without reinterpretation."""
 
