@@ -18,7 +18,9 @@ jobs:
   # the required status check documented in docs/operations/github-settings.md.
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Live official-source probes may consume several 45-second retries; keep the
+    # job longer than that bounded gate so a failed endpoint is reported, not cancelled.
+    timeout-minutes: 30
     permissions:
       contents: read
     steps:
