@@ -106,6 +106,8 @@ def _capture_source(
     title: str,
     url: str,
     entry: RegistryEntry,
+    discovery_url: str | None = None,
+    discovery_kind: str | None = None,
     config: OfficialDatasetConfig,
     session: Any,
 ) -> CapturedOfficialSource:
@@ -127,6 +129,9 @@ def _capture_source(
         "media_type": fetched.media_type,
         "title": title,
     }
+    if discovery_url is not None and discovery_kind is not None:
+        metadata["discovery_url"] = discovery_url
+        metadata["discovery_kind"] = discovery_kind
     capture = capture_document(fetched.content, metadata, config.work_dir / "raw")
     source_id = _source_document_id(dataset_key, fetched.final_url, capture.sha256)
     authority, venue = SOURCE_AUTHORITY[dataset_key]
@@ -145,6 +150,9 @@ def _capture_source(
         "observed_at": config.effective_as_of,
         "retrieved_at": retrieved_at,
     }
+    if discovery_url is not None and discovery_kind is not None:
+        source_document["discovery_url"] = discovery_url
+        source_document["discovery_kind"] = discovery_kind
     return CapturedOfficialSource(
         dataset_key=dataset_key,
         document_role=document_role,
@@ -365,6 +373,8 @@ def capture_official_inputs(
             title=ligie_document.title or _filename(ligie_document.source_url),
             url=ligie_document.source_url,
             entry=registry["ligie"],
+            discovery_url=ligie_document.discovery_url,
+            discovery_kind=ligie_document.discovery_kind,
             config=config,
             session=client,
         ),
@@ -374,6 +384,8 @@ def capture_official_inputs(
             title=nico_document.title or _filename(nico_document.source_url),
             url=nico_document.source_url,
             entry=registry["nico"],
+            discovery_url=nico_document.discovery_url,
+            discovery_kind=nico_document.discovery_kind,
             config=config,
             session=client,
         ),
@@ -463,22 +475,24 @@ def write_release_sources(
         target = source_dir / filename
         shutil.copyfile(item.capture.path, target)
         source_document = item.source_document
-        rows.append(
-            {
-                "dataset_key": item.dataset_key,
-                "document_role": item.document_role,
-                "filename": filename,
-                "media_type": item.fetched.media_type,
-                "sha256": item.capture.sha256,
-                "source_document_id": source_document["source_document_id"],
-                "source_url": source_document["source_url"],
-                "published_at": (
-                    source_document["published_at"].isoformat()
-                    if source_document.get("published_at")
-                    else None
-                ),
-            }
-        )
+        row: dict[str, object] = {
+            "dataset_key": item.dataset_key,
+            "document_role": item.document_role,
+            "filename": filename,
+            "media_type": item.fetched.media_type,
+            "sha256": item.capture.sha256,
+            "source_document_id": source_document["source_document_id"],
+            "source_url": source_document["source_url"],
+            "published_at": (
+                source_document["published_at"].isoformat()
+                if source_document.get("published_at")
+                else None
+            ),
+        }
+        if source_document.get("discovery_url") is not None:
+            row["discovery_url"] = source_document["discovery_url"]
+            row["discovery_kind"] = source_document["discovery_kind"]
+        rows.append(row)
     (source_dir / "source_capture.json").write_text(
         json.dumps(
             rows,

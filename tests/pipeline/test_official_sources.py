@@ -1,5 +1,6 @@
 from dataclasses import replace
 from datetime import date, datetime, timezone
+import json
 from pathlib import Path
 
 import pytest
@@ -22,7 +23,11 @@ LAW_REFORM_URL = "https://www.diputados.gob.mx/LeyesBiblio/ref/reforma02.pdf"
 TARIFF_DECREE_URL = "https://www.diputados.gob.mx/LeyesBiblio/ref/tarifa15.pdf"
 LIGIE_INDEX = "https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html"
 NICO_INDEX = "https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html"
+SNICE_DOCS_INDEX = "https://www.snice.gob.mx/~oracle/SNICE_DOCS/"
 LIGIE_URL = "https://www.snice.gob.mx/files/FRACCIONESARANCELARIAS_20260810.XLSX"
+PROMOTED_LIGIE_URL = (
+    "https://www.snice.gob.mx/~oracle/SNICE_DOCS/FRACCIONESARANCELARIAS_20260820.XLSX"
+)
 NICO_URL = "https://www.snice.gob.mx/files/NICO-AGOSTO26-LIGIE_20260810-20260810.XLSX"
 NOTES_URL = "https://dof.gob.mx/nota_detalle.php?codigo=5673161&fecha=02/12/2022"
 NOTES_HTML = (
@@ -67,9 +72,14 @@ class FakeSession:
         return self.responses[url]
 
 
-def fake_session():
+def fake_session(*, promote_ligie_from_corpus=False):
     ligie_html = f'<a href="{LIGIE_URL}">Fracciones 20260810</a>'
     nico_html = f'<a href="{NICO_URL}">NICO 20260810</a>'
+    corpus_ligie_url = PROMOTED_LIGIE_URL if promote_ligie_from_corpus else LIGIE_URL
+    corpus_html = (
+        f'<a href="{corpus_ligie_url}">Fracciones 20260820</a>'
+        f'<a href="{NICO_URL}">NICO 20260810</a>'
+    )
     responses = {
         DIPUTADOS_URL: Response(
             DIPUTADOS_URL,
@@ -90,7 +100,16 @@ def fake_session():
         NICO_INDEX: Response(
             NICO_INDEX, nico_html.encode("utf-8"), "text/html", nico_html
         ),
+        SNICE_DOCS_INDEX: Response(
+            SNICE_DOCS_INDEX,
+            corpus_html.encode("utf-8"),
+            "text/html",
+            corpus_html,
+        ),
         LIGIE_URL: Response(LIGIE_URL, b"ligie-workbook", XLSX_TYPE),
+        PROMOTED_LIGIE_URL: Response(
+            PROMOTED_LIGIE_URL, b"promoted-ligie-workbook", XLSX_TYPE
+        ),
         NICO_URL: Response(NICO_URL, b"nico-workbook", XLSX_TYPE),
         NOTES_URL: Response(
             NOTES_URL, NOTES_HTML.encode("utf-8"), "text/html; charset=utf-8", NOTES_HTML
@@ -124,10 +143,10 @@ def test_capture_official_inputs_returns_registered_and_required_legal_roles(tmp
         ("dof_tariff_decree", "tariff_decree"),
         ("national_notes", "national_notes"),
     }
-    assert snapshot.registry_version == "2026-08-15"
+    assert snapshot.registry_version == "2026-08-17"
     assert len(snapshot.registry_sha256) == 64
     assert len(snapshot.identities) == 7
-    assert all(identity.registry_version == "2026-08-15" for identity in snapshot.identities)
+    assert all(identity.registry_version == "2026-08-17" for identity in snapshot.identities)
     assert snapshot.reconciliation.publishable is True
     assert snapshot.reconciliation.discrepancies == ()
 
@@ -149,6 +168,19 @@ def test_capture_official_inputs_returns_registered_and_required_legal_roles(tmp
     assert national_notes.source_document["source_url"] == NOTES_URL
     assert national_notes.source_document["authority"] == "Secretaría de Economía / SHCP"
     assert national_notes.source_document["publication_venue"] == "Diario Oficial de la Federación"
+    assert by_role[("ligie", "ligie_snapshot")].source_document["discovery_url"] == LIGIE_INDEX
+    assert by_role[("ligie", "ligie_snapshot")].source_document["discovery_kind"] == "canonical_page"
+
+
+def test_capture_promotes_newer_corpus_ligie_with_provenance(tmp_path):
+    snapshot = capture_official_inputs(
+        config(tmp_path), session=fake_session(promote_ligie_from_corpus=True)
+    )
+    ligie = next(source for source in snapshot.sources if source.dataset_key == "ligie")
+
+    assert ligie.fetched.final_url == PROMOTED_LIGIE_URL
+    assert ligie.source_document["discovery_url"] == SNICE_DOCS_INDEX
+    assert ligie.source_document["discovery_kind"] == "corpus_index"
 
 
 def test_missing_captured_required_dof_role_blocks_reconciliation(tmp_path, monkeypatch):
@@ -198,6 +230,10 @@ def test_release_sources_preserve_required_dof_evidence(tmp_path):
         "nico.xlsx",
         "source_capture.json",
     ]
+    captured = json.loads((source_dir / "source_capture.json").read_text(encoding="utf-8"))
+    ligie_capture = next(row for row in captured if row["dataset_key"] == "ligie")
+    assert ligie_capture["discovery_url"] == LIGIE_INDEX
+    assert ligie_capture["discovery_kind"] == "canonical_page"
 
 
 def test_write_release_sources_rejects_unknown_diputados_role(tmp_path):

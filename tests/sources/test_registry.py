@@ -4,6 +4,7 @@ import pytest
 
 from arancel_mx.sources.registry import (
     classify_candidate,
+    classify_corpus_candidate,
     load_source_registry,
     registered_direct_document,
 )
@@ -53,6 +54,25 @@ def test_nico_snapshot_requires_its_authoritative_page():
             entry,
             "https://www.snice.gob.mx/ligie.info22.html",
             "NICO-MAYO99-LIGIE_20990501-20990501.XLSX",
+            media_type,
+        )
+        is None
+    )
+
+
+def test_nico_corpus_promotion_is_limited_to_the_registered_index():
+    entry = load_source_registry()["nico"]
+    media_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    corpus = entry.corpus_index_pages[0]
+    href = "NICO-MAYO26-LIGIE_20260501-20260501.XLSX"
+
+    assert classify_candidate(entry, corpus, href, media_type) is None
+    assert classify_corpus_candidate(entry, corpus, href, media_type) == "nico_snapshot"
+    assert (
+        classify_corpus_candidate(
+            entry,
+            "https://www.snice.gob.mx/~oracle/other-index/",
+            href,
             media_type,
         )
         is None

@@ -1,5 +1,5 @@
 {
-  "registry_version": "2026-08-15",
+  "registry_version": "2026-08-17",
   "sources": {
     "diputados_ligie": {
       "canonical_page": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm",
@@ -17,6 +17,7 @@
     },
     "ligie": {
       "canonical_page": "https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html",
+      "corpus_index_pages": ["https://www.snice.gob.mx/~oracle/SNICE_DOCS/"],
       "allowed_hosts": ["www.snice.gob.mx", "snice.gob.mx"],
       "media_types": ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.ms-excel", "application/pdf", "text/html"],
       "families": {
@@ -32,6 +33,7 @@
     },
     "nico": {
       "canonical_page": "https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html",
+      "corpus_index_pages": ["https://www.snice.gob.mx/~oracle/SNICE_DOCS/"],
       "allowed_hosts": ["www.snice.gob.mx", "snice.gob.mx"],
       "media_types": ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.ms-excel"],
       "families": {"nico_snapshot": ["^NICO-(?!SOLICITUD).*\\.XLSX?$"]},

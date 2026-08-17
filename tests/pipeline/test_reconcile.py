@@ -41,19 +41,21 @@ def discovered(url, title):
 
 
 class DiscoveryResponse:
-    text = ""
+    def __init__(self, text=""):
+        self.text = text
 
     def raise_for_status(self):
         return None
 
 
 class DiscoveryClient:
-    def __init__(self):
+    def __init__(self, pages=None):
+        self.pages = pages or {}
         self.calls = []
 
     def get(self, url, timeout=None):
         self.calls.append((url, timeout))
-        return DiscoveryResponse()
+        return DiscoveryResponse(self.pages.get(url, ""))
 
 
 def test_registered_discovery_uses_configured_timeout():
@@ -62,7 +64,47 @@ def test_registered_discovery_uses_configured_timeout():
 
     discover_registered_sources({"ligie": entry}, client, timeout_s=17.5)
 
-    assert client.calls == [(entry.canonical_page, 17.5)]
+    assert client.calls == [
+        (entry.canonical_page, 17.5),
+        (entry.corpus_index_pages[0], 17.5),
+    ]
+
+
+def test_shared_corpus_index_is_fetched_once():
+    registry = load_source_registry()
+    client = DiscoveryClient()
+
+    discover_registered_sources(
+        {"ligie": registry["ligie"], "nico": registry["nico"]}, client
+    )
+
+    assert client.calls.count((registry["ligie"].corpus_index_pages[0], 30.0)) == 1
+
+
+def test_corpus_discovery_promotes_unique_newer_dated_candidate():
+    entry = load_source_registry()["ligie"]
+    canonical = "https://www.snice.gob.mx/~oracle/SNICE_DOCS/FRACCIONESARANCELARIAS_20260420.XLSX"
+    promoted = "https://www.snice.gob.mx/~oracle/SNICE_DOCS/FRACCIONESARANCELARIAS_20260820.XLSX"
+    undated = "https://www.snice.gob.mx/~oracle/SNICE_DOCS/FRACCIONESARANCELARIAS_VIGENTE.XLSX"
+    client = DiscoveryClient(
+        {
+            entry.canonical_page: f'<a href="{canonical}">Current LIGIE</a>',
+            entry.corpus_index_pages[0]: (
+                f'<a href="{promoted}">Newer LIGIE</a>'
+                f'<a href="{undated}">Undated candidate</a>'
+            ),
+        }
+    )
+
+    selected = select_current_document(
+        discover_registered_sources({"ligie": entry}, client),
+        "ligie",
+        "ligie_snapshot",
+    )
+
+    assert selected.source_url == promoted
+    assert selected.discovery_url == entry.corpus_index_pages[0]
+    assert selected.discovery_kind == "corpus_index"
 
 
 def test_registered_discovery_rejects_non_positive_timeout_before_network_access():

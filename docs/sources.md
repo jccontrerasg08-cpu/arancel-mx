@@ -20,6 +20,12 @@ Los adaptadores aceptan únicamente hosts oficiales registrados. Redirecciones f
 
 Cada source role tiene expectativas explícitas. Las páginas de propuestas o indicadores pueden servir como contexto/observación, pero no sustituyen automáticamente la evidencia legal aplicable.
 
+## Promoción agresiva desde SNICE_DOCS
+
+Para LIGIE y NICO, el registro puede declarar el índice público `~oracle/SNICE_DOCS` como corpus de descubrimiento. Un candidato fechado, de familia permitida y estrictamente más reciente puede promoverse antes de que la página canónica se actualice. La promoción sigue pasando captura SHA256, parsers, validación y reconciliación: el directorio no es una sustitución de esos gates.
+
+La política completa, la procedencia registrada, los límites para propuestas NICO y el rollback están en [Promoción de snapshots desde SNICE_DOCS](source-promotion.md).
+
 ## Identidad de captura
 
 Cada descarga conserva como mínimo la URL final, SHA256, tamaño, tipo de medio, procedencia y `retrieved_at`.

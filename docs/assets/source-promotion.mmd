@@ -1,0 +1,24 @@
+flowchart LR
+    A[Registered SNICE landing page] --> B[Current linked workbook]
+    C[Registered SNICE_DOCS corpus index] --> D[Dated family-matched candidate]
+    B --> E{Select unique newest candidate}
+    D --> E
+    E --> F[Fetch official bytes]
+    F --> G[Capture SHA256 and discovery provenance]
+    G --> H[Offline parse and structural validation]
+    H --> I[Diputados and DOF reconciliation]
+    I --> J{All publication gates pass?}
+    J -->|yes| K[Verified immutable release]
+    J -->|no| L[Block publication and open data alert]
+
+    classDef official fill:#0f766e,stroke:#115e59,color:#ffffff
+    classDef candidate fill:#fef3c7,stroke:#d97706,color:#111827
+    classDef gate fill:#e0e7ff,stroke:#4338ca,color:#111827
+    classDef result fill:#dcfce7,stroke:#15803d,color:#111827
+    classDef blocked fill:#fee2e2,stroke:#b91c1c,color:#111827
+
+    class A,B,F,G official
+    class C,D candidate
+    class E,H,I,J gate
+    class K result
+    class L blocked

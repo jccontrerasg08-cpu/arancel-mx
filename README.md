@@ -18,7 +18,7 @@ Herramientas abiertas en Python para capturar, normalizar, reconciliar y publica
 [![DuckDB](https://img.shields.io/badge/DuckDB-embedded-FFF000?logo=duckdb&logoColor=000)](https://duckdb.org/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-**[Explorador web](https://arancel-mx.vercel.app/app)** · **[Instalación](#instalación)** · **[CLI](#uso-rápido-cli)** · **[Python](#uso-desde-python)** · **[Inicio consumidor](docs/consumer-quickstart.md)** · **[Consumo externo](docs/external-consumption.md)** · **[NICO y LIGIE](docs/nico-ligie-guide.md)** · **[Fuentes y roles](docs/official-source-roles.md)** · **[Datos](#modelo-de-datos)** · **[Automatización](#pipeline-oficial-autónomo)** · **[Certificación](docs/production-certification.md)** · **[Contribuir](#contribución)**
+**[Explorador web](https://arancel-mx.vercel.app/app)** · **[Instalación](#instalación)** · **[CLI](#uso-rápido-cli)** · **[Python](#uso-desde-python)** · **[Inicio consumidor](docs/consumer-quickstart.md)** · **[Consumo externo](docs/external-consumption.md)** · **[NICO y LIGIE](docs/nico-ligie-guide.md)** · **[Fuentes y roles](docs/official-source-roles.md)** · **[Datos](#modelo-de-datos)** · **[Automatización](#pipeline-oficial-autónomo)** · **[Documentación](docs/README.md)** · **[Certificación](docs/production-certification.md)** · **[Contribuir](#contribución)**
 
 </div>
 
@@ -66,6 +66,7 @@ Licencia del proyecto: **Apache-2.0**.
 ## Resumen rápido
 
 - Captura snapshots registrados de Diputados, DOF y SNICE con SHA256 y `retrieved_at` real.
+- Puede promover un candidato LIGIE o NICO fechado, inequívocamente más reciente y descubierto en el corpus SNICE_DOCS registrado antes de que cambie la página canónica; parseo y reconciliación legal siguen bloqueando cualquier fallo.
 - Reconcilia evidencia legal antes de permitir que un candidato sea publicable.
 - Normaliza HS2, HS4, HS6, fracción MX de 8 dígitos y NICO de 10 dígitos.
 - Materializa un warehouse DuckDB y exporta CSV, JSON y manifest schema v2.
@@ -145,6 +146,16 @@ Diputados / DOF / SNICE
 <p align="center">
   <img src="docs/assets/pipeline.svg" alt="Pipeline de fuentes oficiales a DuckDB, CSV, JSON y release" width="950" />
 </p>
+
+### Promoción rápida de fuentes sin debilitar la confianza
+
+Los registros LIGIE y NICO también pueden inspeccionar el corpus público SNICE_DOCS declarado explícitamente. Un documento del corpus sólo es elegible si proviene del índice registrado, coincide con una familia y tipo de medio permitidos, contiene una fecha válida y es el candidato más reciente sin ambigüedad. Su origen de descubrimiento se conserva junto al SHA256; parseo, validación, reconciliación Diputados/DOF y certificación de release siguen siendo gates obligatorios.
+
+<p align="center">
+  <img src="docs/assets/source-promotion.png" alt="Páginas SNICE registradas y el corpus SNICE_DOCS convergen en un candidato fechado, que pasa por captura, validación, reconciliación legal y gates de release verificado" width="100%" />
+</p>
+
+Consulta la [política de promoción de fuentes](docs/source-promotion.md) para la allowlist, los límites NICO y el procedimiento de rollback.
 
 ## Instalación
 
@@ -353,7 +364,7 @@ Fuentes principales:
 - [SNICE, indicadores](https://www.snice.gob.mx/cs/avi/snice/ligie.indicaranc22.html)
 - [Diario Oficial de la Federación, publicación relacionada](https://dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022)
 
-`docs/sources.md` explica cómo el ledger registrado de Diputados se usa como ancla y cómo la evidencia DOF participa como gate antes de publicar. SIICEX-CAAAREM y dumps como tigies-mx no son fuentes oficiales.
+`docs/sources.md` explica cómo el ledger registrado de Diputados se usa como ancla y cómo la evidencia DOF participa como gate antes de publicar. La [política de promoción SNICE_DOCS](docs/source-promotion.md) documenta el descubrimiento agresivo con evidencia y su rollback. SIICEX-CAAAREM y dumps como tigies-mx no son fuentes oficiales.
 
 ## Proceso y calendario visual
 
@@ -475,3 +486,5 @@ Para cambios de fuentes, parsers, reconciliación o release contract, agrega fix
 ## Notas de procedencia
 
 El proyecto conserva capture manifests y hashes para que una release pueda relacionarse con los snapshots observados. La presencia de una fuente o registro en el dataset describe evidencia técnica observada; no sustituye la publicación oficial ni una interpretación jurídica especializada.
+
+[Español](README.md) · [English](README.en.md) · [Centro de documentación](docs/README.md) · [Fuentes](docs/sources.md) · [Política SNICE_DOCS](docs/source-promotion.md) · [Certificación](docs/production-certification.md) · [Contribuir](CONTRIBUTING.md) · [Seguridad](SECURITY.md)
