@@ -34,3 +34,19 @@ test('explains when a query is required', async ({ page }) => {
 
   await expect(page.getByRole('alert')).toContainText(/ingresa un código arancelario/i);
 });
+
+
+test('shows the unified verified data hub', async ({ page }) => {
+  await page.goto('/app');
+
+  await expect(page.getByTestId('hub-status')).toContainText(/release data-2026\.08\.15/i);
+  await expect(page.getByRole('heading', { name: /del HS6 a la identificación comercial mexicana/i })).toBeVisible();
+  await expect(page.getByRole('link', { name: /ver paquete en PyPI/i })).toBeVisible();
+});
+
+test('opens a shared lookup URL', async ({ page }) => {
+  await page.goto('/app?q=85171301');
+
+  await expect(page.getByTestId('search-input')).toHaveValue('85171301');
+  await expect(page.getByTestId('result-card')).toContainText(/teléfonos inteligentes/i);
+});
