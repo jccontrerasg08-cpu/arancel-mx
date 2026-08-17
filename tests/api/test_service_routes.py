@@ -149,7 +149,7 @@ def test_explorer_serves_the_public_search_page(valid_settings, fake_dataset) ->
     assert "No clasifica mercancías" in response.text
 
 
-def test_vercel_entrypoint_reexports_the_public_application() -> None:
-    from app import app as vercel_app
+def test_vercel_entrypoint_resolves_the_public_application() -> None:
+    from src.arancel_mx.api.app import app as vercel_app
 
     assert vercel_app.title == "Arancel MX API"
