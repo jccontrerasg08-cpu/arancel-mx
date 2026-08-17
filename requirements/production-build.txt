@@ -1,7 +1,7 @@
 # Exact environment used for official CI and autonomous data builds.
 # Update only through a reviewed dependency change with the full test suite green.
 pip==26.2.1
-setuptools==83.0.0
+setuptools==84.0.0
 ast-serialize==0.8.0
 build==1.5.0
 check-wheel-contents==0.6.3
