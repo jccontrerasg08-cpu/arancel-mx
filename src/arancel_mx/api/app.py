@@ -54,7 +54,7 @@ def _load_dataset(settings: ApiSettings) -> Dataset:
         settings.dataset_tag,
         cache_dir=settings.cache_dir,
         timeout=settings.timeout,
-        offline=False,
+        offline=settings.offline,
     )
 
 

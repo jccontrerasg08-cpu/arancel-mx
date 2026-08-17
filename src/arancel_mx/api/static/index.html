@@ -61,6 +61,11 @@
     .examples { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; margin: 1rem 0 0; color: var(--muted); font-size: .86rem; }
     .example { min-height: auto; padding: .25rem .55rem; border: 1px solid var(--line); color: var(--ink); background: #f8fafc; font-size: .82rem; font-weight: 650; }
     .example:hover { background: #eaf5f1; color: var(--brand-dark); }
+    .filter-help { margin: .75rem 0 0; color: var(--muted); font-size: .82rem; }
+    .secondary-action, .hierarchy-action, .hierarchy-step, .chapter-link {
+      min-height: auto; border: 1px solid var(--line); color: var(--ink); background: #f8fafc;
+    }
+    .secondary-action { padding: .25rem .55rem; font-size: .82rem; font-weight: 650; }
     .metadata { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1.25rem 0 0; }
     .chip { display: inline-flex; padding: .3rem .55rem; border-radius: 999px; color: #334e68; background: #e6edf3; font-size: .8rem; font-weight: 700; }
     .chip.good { color: #07553f; background: #d5f5e9; }
@@ -81,6 +86,16 @@
     .provenance h3 { margin: 0 0 .4rem; font-size: 1rem; }
     .provenance ul { padding-left: 1.2rem; margin: .35rem 0 0; }
     .provenance li { margin: .3rem 0; }
+    .hierarchy-action { margin-top: 1rem; padding: .45rem .65rem; font-size: .85rem; }
+    .hierarchy-card { padding: 1.2rem; border: 1px solid #b9ead5; border-radius: 14px; background: #effcf6; }
+    .hierarchy-card h2, .hierarchy-card h3 { margin: 0; }
+    .hierarchy-card > p { margin: .45rem 0 0; color: var(--muted); }
+    .hierarchy-path, .chapter-grid, .child-grid { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: 1rem; }
+    .hierarchy-step, .chapter-link { padding: .45rem .65rem; text-align: left; font-size: .84rem; }
+    .hierarchy-step.current { color: #07553f; border-color: #68c99f; background: #d5f5e9; }
+    .path-separator { align-self: center; color: var(--muted); font-weight: 800; }
+    .child-grid { padding-top: 1rem; border-top: 1px solid #b9ead5; }
+    .child-grid h4 { width: 100%; margin: 0; font-size: .95rem; }
     .notice, .status-panel { padding: 1.2rem; }
     .notice h2, .status-panel h2 { margin: 0 0 .35rem; font-size: 1.1rem; }
     .notice p, .status-panel p { margin: 0; }
@@ -113,6 +128,7 @@
       .search-row button { width: 100%; }
       dl { grid-template-columns: 1fr; }
       .hierarchy, .tool-grid { grid-template-columns: 1fr; }
+      .hierarchy-path, .chapter-grid, .child-grid { gap: .4rem; }
     }
   </style>
 </head>
@@ -138,14 +154,16 @@
         <form class="search-panel" id="search-form" novalidate>
           <label for="query">Código arancelario o descripción</label>
           <div class="search-row">
-            <input id="query" name="query" type="search" inputmode="search" autocomplete="off" maxlength="300" placeholder="Ej. 8517.13.01 o teléfonos" data-testid="search-input" required>
+            <input id="query" name="query" type="search" inputmode="search" autocomplete="off" maxlength="300" placeholder="Ej. 8517.13.01 o teléfonos" aria-describedby="filter-help" data-testid="search-input" required>
             <button type="submit" data-testid="search-submit">Consultar</button>
           </div>
           <div class="examples">
             <span>Prueba con:</span>
             <button class="example" type="button" data-query="85171301">8517.13.01</button>
             <button class="example" type="button" data-query="teléfonos">teléfonos</button>
+            <button id="browse-chapters" class="secondary-action" type="button" data-testid="browse-chapters">Explorar capítulos</button>
           </div>
+          <p id="filter-help" class="filter-help">Los resultados verificados se filtran mientras escribes desde tres caracteres. Envía una consulta para recuperar una ficha exacta y su procedencia.</p>
         </form>
         <div id="metadata" class="metadata" aria-live="polite"></div>
       </div>
@@ -230,6 +248,9 @@
     const metadata = document.querySelector('#metadata');
     const verifiedStatus = document.querySelector('#verified-status');
     const releaseLink = document.querySelector('#release-link');
+    const browseChapters = document.querySelector('#browse-chapters');
+    let filterTimer;
+    let requestSequence = 0;
 
     const escapeHtml = (value) => String(value ?? '').replace(/[&<>'"]/g, (character) => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
@@ -247,9 +268,12 @@
       return payload;
     }
 
-    function recordCard(record, sources = []) {
+    function recordCard(record, sources = [], hierarchyAction = true) {
       const sourceList = sources.length
         ? `<div class="provenance"><h3>Procedencia registrada</h3><ul>${sources.map((source) => `<li><a href="${escapeHtml(source.source_url)}" rel="noreferrer" target="_blank">${escapeHtml(source.title || source.source_document_id)}</a> · ${escapeHtml(source.authority)}</li>`).join('')}</ul></div>`
+        : '';
+      const action = hierarchyAction
+        ? `<button class="hierarchy-action" type="button" data-hierarchy-code="${escapeHtml(record.code)}">Explorar jerarquía verificada</button>`
         : '';
       return `<article class="record" data-testid="result-card">
         <div class="record-head"><div><span class="code">${escapeHtml(record.code)}</span><h2>${escapeHtml(record.description)}</h2></div><span class="level">${escapeHtml(record.level)}</span></div>
@@ -258,8 +282,23 @@
           <div><dt>IGE</dt><dd>${formatRate(record.ige)}</dd></div>
           <div><dt>Unidad</dt><dd>${escapeHtml(record.unit_name || 'No disponible')}</dd></div>
           <div><dt>Dataset</dt><dd>${escapeHtml(record.dataset_version)}</dd></div>
-        </dl>${sourceList}
+        </dl>${sourceList}${action}
       </article>`;
+    }
+
+    function hierarchyCard(ficha) {
+      const trail = ficha.hierarchy.map((item) => `<button class="hierarchy-step ${item.code === ficha.record.code ? 'current' : ''}" type="button" data-hierarchy-code="${escapeHtml(item.code)}"><strong>${escapeHtml(item.code)}</strong> · ${escapeHtml(item.level)}</button>`).join('<span class="path-separator" aria-hidden="true">›</span>');
+      const children = ficha.children.length
+        ? `<div class="child-grid"><h4>Elementos descendientes verificados</h4>${ficha.children.map((item) => `<button class="hierarchy-step" type="button" data-hierarchy-code="${escapeHtml(item.code)}"><strong>${escapeHtml(item.code)}</strong> · ${escapeHtml(item.description)}</button>`).join('')}</div>`
+        : '';
+      const section = ficha.section
+        ? `<p>Sección ${escapeHtml(ficha.section.roman)} · ${escapeHtml(ficha.section.name)}</p>`
+        : '';
+      return `<section class="hierarchy-card" data-testid="hierarchy-card"><h2>Jerarquía verificada</h2>${section}<div class="hierarchy-path">${trail}</div>${children}</section>`;
+    }
+
+    function chapterCard(chapters) {
+      return `<section class="hierarchy-card" data-testid="chapter-browser"><h2>Explora por capítulo HS2</h2><p>Selecciona un capítulo para recuperar sus descendientes desde la release verificada.</p><div class="chapter-grid">${chapters.map((chapter) => `<button class="chapter-link" type="button" data-hierarchy-code="${escapeHtml(chapter.code)}"><strong>${escapeHtml(chapter.code)}</strong> · ${escapeHtml(chapter.description)}</button>`).join('')}</div></section>`;
     }
 
     function renderError(message) {
@@ -288,23 +327,71 @@
       }
     }
 
-    async function search(query) {
-      const normalizedCode = exactCode(query);
-      status.textContent = 'Consultando la release verificada…';
-      submitButton.disabled = true;
+    function resetResults(message = 'Ingresa un código completo para una ficha exacta o una descripción para recuperar coincidencias verificadas.') {
+      results.innerHTML = `<section class="notice"><h2 id="results-title">Empieza una consulta</h2><p>${escapeHtml(message)}</p></section>`;
+      status.textContent = '';
+    }
+
+    async function exploreHierarchy(code) {
+      const sequence = ++requestSequence;
+      status.textContent = 'Recuperando jerarquía verificada…';
       results.setAttribute('aria-busy', 'true');
       try {
-        if (isTariffCode(normalizedCode)) {
+        const [ficha, sources] = await Promise.all([
+          request(`/v1/ficha/${encodeURIComponent(code)}`),
+          request(`/v1/codes/${encodeURIComponent(code)}/provenance`),
+        ]);
+        if (sequence !== requestSequence) return;
+        results.innerHTML = `${recordCard(ficha.record, sources, false)}${hierarchyCard(ficha)}`;
+        status.textContent = 'Jerarquía verificada recuperada.';
+        syncQuery(code);
+      } catch (error) {
+        if (sequence !== requestSequence) return;
+        renderError(error instanceof Error ? error.message : 'No fue posible recuperar la jerarquía.');
+        status.textContent = 'La jerarquía no se completó.';
+      } finally {
+        if (sequence === requestSequence) results.removeAttribute('aria-busy');
+      }
+    }
+
+    async function showChapters() {
+      const sequence = ++requestSequence;
+      status.textContent = 'Recuperando capítulos verificados…';
+      results.setAttribute('aria-busy', 'true');
+      try {
+        const chapters = await request('/v1/chapters');
+        if (sequence !== requestSequence) return;
+        results.innerHTML = chapterCard(chapters);
+        status.textContent = `${chapters.length} capítulos disponibles en la release verificada.`;
+      } catch (error) {
+        if (sequence !== requestSequence) return;
+        renderError(error instanceof Error ? error.message : 'No fue posible recuperar los capítulos.');
+        status.textContent = 'Los capítulos no se pudieron recuperar.';
+      } finally {
+        if (sequence === requestSequence) results.removeAttribute('aria-busy');
+      }
+    }
+
+    async function search(query, { live = false } = {}) {
+      const normalizedCode = exactCode(query);
+      const sequence = ++requestSequence;
+      status.textContent = live ? 'Filtrando la release verificada…' : 'Consultando la release verificada…';
+      if (!live) submitButton.disabled = true;
+      results.setAttribute('aria-busy', 'true');
+      try {
+        if (isTariffCode(normalizedCode) && !live) {
           const [record, sources] = await Promise.all([
             request(`/v1/lookup/${encodeURIComponent(normalizedCode)}`),
             request(`/v1/codes/${encodeURIComponent(normalizedCode)}/provenance`),
           ]);
+          if (sequence !== requestSequence) return;
           results.innerHTML = recordCard(record, sources);
           status.textContent = 'Ficha exacta recuperada.';
           syncQuery(query);
           return;
         }
         const matches = await request(`/v1/search?q=${encodeURIComponent(query)}&limit=10`);
+        if (sequence !== requestSequence) return;
         if (!matches.length) {
           results.innerHTML = '<section class="notice"><h2>Sin coincidencias</h2><p>Prueba otro término o ingresa una fracción/NICO completa.</p></section>';
           status.textContent = 'La búsqueda no devolvió resultados.';
@@ -312,18 +399,36 @@
         }
         results.innerHTML = matches.map((match) => recordCard(match.record)).join('');
         status.textContent = `${matches.length} coincidencia${matches.length === 1 ? '' : 's'} recuperada${matches.length === 1 ? '' : 's'} de la release verificada.`;
-        syncQuery(query);
+        if (!live) syncQuery(query);
       } catch (error) {
+        if (sequence !== requestSequence) return;
         renderError(error instanceof Error ? error.message : 'No fue posible completar la consulta.');
         status.textContent = 'La consulta no se completó.';
       } finally {
-        submitButton.disabled = false;
-        results.removeAttribute('aria-busy');
+        if (!live) submitButton.disabled = false;
+        if (sequence === requestSequence) results.removeAttribute('aria-busy');
       }
+    }
+
+    function scheduleFilter() {
+      clearTimeout(filterTimer);
+      const query = queryInput.value.trim();
+      if (!query) {
+        requestSequence += 1;
+        resetResults();
+        return;
+      }
+      if (query.length < 3) {
+        requestSequence += 1;
+        resetResults('Escribe al menos tres caracteres para filtrar la release verificada o envía un código exacto.');
+        return;
+      }
+      filterTimer = window.setTimeout(() => search(query, { live: true }), 250);
     }
 
     form.addEventListener('submit', (event) => {
       event.preventDefault();
+      clearTimeout(filterTimer);
       const query = queryInput.value.trim();
       if (!query) {
         renderError('Ingresa un código arancelario o una descripción.');
@@ -338,6 +443,16 @@
         queryInput.value = button.dataset.query;
         form.requestSubmit();
       });
+    });
+
+    queryInput.addEventListener('input', scheduleFilter);
+    browseChapters.addEventListener('click', showChapters);
+    results.addEventListener('click', (event) => {
+      const target = event.target.closest('[data-hierarchy-code]');
+      if (!target) return;
+      const code = target.dataset.hierarchyCode;
+      queryInput.value = code;
+      exploreHierarchy(code);
     });
 
     loadMetadata();

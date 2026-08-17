@@ -204,6 +204,12 @@ jobs:
           python -m pip install pip==26.2.1
           python -m pip install -c requirements/production-build.txt -e .
 
+      - name: Seed verified browser-test dataset
+        env:
+          ARANCEL_MX_CACHE_DIR: /tmp/arancel-mx-playwright-cache
+          ARANCEL_MX_DATASET: data-2026.08.15
+        run: arancel-mx data download
+
       - name: Set up Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:

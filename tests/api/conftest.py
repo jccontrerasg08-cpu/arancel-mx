@@ -19,6 +19,7 @@ def valid_settings() -> ApiSettings:
         dataset_tag="data-2026.08.15",
         cache_dir=None,
         timeout=30.0,
+        offline=False,
     )
 
 
