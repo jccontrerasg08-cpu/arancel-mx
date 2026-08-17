@@ -18,7 +18,7 @@ Herramientas abiertas en Python para capturar, normalizar, reconciliar y publica
 [![DuckDB](https://img.shields.io/badge/DuckDB-embedded-FFF000?logo=duckdb&logoColor=000)](https://duckdb.org/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-**[Instalación](#instalación)** · **[CLI](#uso-rápido-cli)** · **[Python](#uso-desde-python)** · **[Inicio consumidor](docs/consumer-quickstart.md)** · **[Consumo externo](docs/external-consumption.md)** · **[NICO y LIGIE](docs/nico-ligie-guide.md)** · **[Fuentes y roles](docs/official-source-roles.md)** · **[Datos](#modelo-de-datos)** · **[Automatización](#pipeline-oficial-autónomo)** · **[Certificación](docs/production-certification.md)** · **[Contribuir](#contribución)**
+**[Explorador web](https://arancel-mx.vercel.app/app)** · **[Instalación](#instalación)** · **[CLI](#uso-rápido-cli)** · **[Python](#uso-desde-python)** · **[Inicio consumidor](docs/consumer-quickstart.md)** · **[Consumo externo](docs/external-consumption.md)** · **[NICO y LIGIE](docs/nico-ligie-guide.md)** · **[Fuentes y roles](docs/official-source-roles.md)** · **[Datos](#modelo-de-datos)** · **[Automatización](#pipeline-oficial-autónomo)** · **[Certificación](docs/production-certification.md)** · **[Contribuir](#contribución)**
 
 </div>
 
@@ -197,10 +197,10 @@ ARANCEL_MX_API_DATASET=data-2026.08.15
 
 No existe fallback silencioso a `latest`. La capa HTTP reutiliza el `Dataset` verificado, **no clasifica** mercancías y no constituye **asesoría legal**. Tampoco expone endpoints de captura, actualización, reconciliación, publicación, `compare` live contra VUCEM ni descarga WCO.
 
-Mientras no se haya verificado un hostname de producción, la documentación usa un placeholder:
+El hostname público verificado es [`https://arancel-mx.vercel.app`](https://arancel-mx.vercel.app). El explorador de navegador vive en [`/app`](https://arancel-mx.vercel.app/app) y utiliza la misma release verificada que la API:
 
 ```bash
-export ARANCEL_MX_API_URL="https://<deployment-host>"
+export ARANCEL_MX_API_URL="https://arancel-mx.vercel.app"
 curl "$ARANCEL_MX_API_URL/v1/lookup/8517130100"
 ```
 
