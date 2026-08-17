@@ -8,6 +8,8 @@ import os
 from pathlib import Path
 import re
 
+from arancel_mx.consumer.config import _parse_offline
+
 
 _DATASET_TAG = re.compile(r"^data-\d{4}\.\d{2}\.\d{2}$")
 _DEFAULT_TIMEOUT = 30.0
@@ -21,6 +23,7 @@ class ApiSettings:
     dataset_tag: str
     cache_dir: Path | None
     timeout: float
+    offline: bool
 
 
 def load_settings(environ: Mapping[str, str] | None = None) -> ApiSettings:
@@ -45,5 +48,15 @@ def load_settings(environ: Mapping[str, str] | None = None) -> ApiSettings:
 
     cache_text = source.get("ARANCEL_MX_API_CACHE_DIR", "").strip()
     cache_dir = Path(cache_text) if cache_text else None
+    offline_text = source.get("ARANCEL_MX_API_OFFLINE", "false").strip() or "false"
+    try:
+        offline = _parse_offline(offline_text)
+    except ValueError as exc:
+        raise ValueError("ARANCEL_MX_API_OFFLINE must be a boolean value") from exc
 
-    return ApiSettings(dataset_tag=dataset_tag, cache_dir=cache_dir, timeout=timeout)
+    return ApiSettings(
+        dataset_tag=dataset_tag,
+        cache_dir=cache_dir,
+        timeout=timeout,
+        offline=offline,
+    )

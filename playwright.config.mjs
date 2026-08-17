@@ -25,6 +25,7 @@ export default defineConfig({
     env: {
       ARANCEL_MX_API_DATASET: 'data-2026.08.15',
       ARANCEL_MX_API_CACHE_DIR: '/tmp/arancel-mx-playwright-cache',
+      ARANCEL_MX_API_OFFLINE: 'true',
     },
   },
 });
