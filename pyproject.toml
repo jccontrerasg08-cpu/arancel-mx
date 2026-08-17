@@ -76,12 +76,15 @@ Changelog = "https://github.com/jccontrerasg08-cpu/arancel-mx/blob/main/CHANGELO
 [tool.fastapi]
 entrypoint = "arancel_mx.api.app:app"
 
+[tool.vercel]
+entrypoint = "arancel_mx.api.app:app"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["arancel_mx*"]
 
 [tool.setuptools.package-data]
-arancel_mx = ["sources/source_registry.json", "py.typed"]
+arancel_mx = ["api/static/index.html", "sources/source_registry.json", "py.typed"]
 
 [tool.pytest.ini_options]
 pythonpath = [".", "src"]

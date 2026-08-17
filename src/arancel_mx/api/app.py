@@ -5,12 +5,13 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from contextlib import asynccontextmanager
 import logging
+from pathlib import Path
 from uuid import uuid4
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from arancel_mx.api import API_VERSION
@@ -34,6 +35,7 @@ from arancel_mx.consumer.errors import (
 
 logger = logging.getLogger(__name__)
 DatasetLoader = Callable[[ApiSettings], Dataset]
+_EXPLORER_PAGE = Path(__file__).with_name("static") / "index.html"
 _API_DESCRIPTION = """
 Public, read-only HTTP access to the verified `arancel-mx` dataset through the
 versioned `/v1` contract.
@@ -256,6 +258,12 @@ def create_app(
         )
 
     application.include_router(service_router)
+
+    @application.get("/app", include_in_schema=False)
+    def explorer() -> FileResponse:
+        """Serve the public, same-origin tariff explorer."""
+
+        return FileResponse(_EXPLORER_PAGE, media_type="text/html")
 
     @application.get(
         "/readyz",

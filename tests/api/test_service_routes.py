@@ -136,3 +136,14 @@ def test_public_cors_allows_get_without_credentials(valid_settings, fake_dataset
     assert response.headers.get("access-control-allow-credentials") is None
     assert "x-request-id" in response.headers["access-control-expose-headers"].lower()
     assert response.headers["x-request-id"]
+
+
+def test_explorer_serves_the_public_search_page(valid_settings, fake_dataset) -> None:
+    with _client(valid_settings, fake_dataset) as client:
+        response = client.get("/app")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/html")
+    assert 'data-testid="search-input"' in response.text
+    assert 'data-testid="search-submit"' in response.text
+    assert "No clasifica mercancías" in response.text
