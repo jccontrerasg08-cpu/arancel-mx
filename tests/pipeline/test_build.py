@@ -3,8 +3,14 @@ import json
 
 import pytest
 
-from arancel_mx.pipeline.build import _validate_database, materialize_arancel
+from arancel_mx.pipeline.build import _scalar_value, _validate_database, materialize_arancel
 from arancel_mx.storage.duckdb import connect, init_tariff_db
+
+
+def test_scalar_value_requires_one_aggregate_row():
+    assert _scalar_value((1,)) == 1
+    with pytest.raises(ValueError, match="aggregate query returned no row"):
+        _scalar_value(None)
 
 
 def release_metadata():

@@ -356,7 +356,7 @@ def build_official_dataset(
                 "SELECT level, COUNT(*) FROM arancel_mx GROUP BY level"
             ).fetchall()
         )
-        igi_count, ige_count = connection.execute(
+        duty_counts = connection.execute(
             """
             SELECT
                 COUNT(*) FILTER (
@@ -372,6 +372,9 @@ def build_official_dataset(
             FROM arancel_mx
             """
         ).fetchone()
+        if duty_counts is None:
+            raise ValueError("canonical duty-count query returned no row")
+        igi_count, ige_count = duty_counts
     row_count = build_summary.get("row_count")
     if not isinstance(row_count, int) or isinstance(row_count, bool) or row_count <= 0:
         raise ValueError("canonical dataset contains no rows")
