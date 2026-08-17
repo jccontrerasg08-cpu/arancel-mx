@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tomllib
@@ -40,16 +40,8 @@ def test_built_distributions_pass_twine_and_wheel_quality_checks(tmp_path: Path)
     )
     assert twine.returncode == 0, twine.stdout + twine.stderr
 
-    script_names = (
-        ("check-wheel-contents.exe", "check-wheel-contents")
-        if os.name == "nt"
-        else ("check-wheel-contents",)
-    )
-    checker = next(
-        (Path(sys.executable).with_name(name) for name in script_names if Path(sys.executable).with_name(name).is_file()),
-        None,
-    )
-    assert checker is not None
+    checker = shutil.which("check-wheel-contents")
+    assert checker is not None, "check-wheel-contents must be installed for the quality gate"
     contents = subprocess.run(
         [str(checker), str(wheel)],
         text=True,

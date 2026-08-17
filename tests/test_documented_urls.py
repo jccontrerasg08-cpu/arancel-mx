@@ -13,6 +13,7 @@ from scripts.check_documented_urls import (
     README_RELEASE_URLS,
     build_session,
     check_reachable,
+    describe_request_failure,
     documented_public_urls,
     liveness_probe_urls,
     extract_bare_http_urls,
@@ -104,6 +105,13 @@ def test_readme_official_sources_use_parseable_markdown_links() -> None:
         )
         assert linked_urls, f"{readme_path.name} must document at least one official HTTPS link"
         assert all(is_parseable_url(url) for url in linked_urls)
+
+
+def test_describe_request_failure_labels_tls_without_hiding_details() -> None:
+    detail = describe_request_failure(requests.exceptions.SSLError("SSL_ERROR_SYSCALL"))
+    assert detail.startswith("TLS transport failure")
+    assert "SSL_ERROR_SYSCALL" in detail
+    assert describe_request_failure(requests.Timeout("Read timed out.")) == "Read timed out."
 
 
 def test_fetch_html_body_does_not_stack_connection_retries(monkeypatch: pytest.MonkeyPatch) -> None:

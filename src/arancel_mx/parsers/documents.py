@@ -79,6 +79,7 @@ def parse_national_notes_html(html: str, source_document_id: str) -> list[dict]:
     text = re.sub(r"\n{2,}", "\n", text)
     rows: list[dict] = []
     for block in _SCOPE_BOUNDARY.split(text):
+        chapters: tuple[str, ...]
         chapter_heading = _CHAPTER_HEADING.search(block)
         section_heading = _SECTION_HEADING.search(block)
         if chapter_heading:

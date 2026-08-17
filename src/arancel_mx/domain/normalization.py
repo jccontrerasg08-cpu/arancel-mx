@@ -9,7 +9,7 @@ from decimal import Decimal
 import hashlib
 import json
 import re
-from typing import Any
+from typing import Any, cast
 import unicodedata
 
 PUBLIC_COLUMNS = (
@@ -290,7 +290,7 @@ def _hierarchy(code: str) -> dict[str, str | None]:
 
 
 def _latest_date(*values: object) -> object:
-    present = [value for value in values if value is not None]
+    present: list[Any] = [value for value in values if value is not None]
     return max(present) if present else None
 
 
@@ -305,8 +305,10 @@ def consolidate_records(
         raise ValueError("release.effective_as_of must be a date")
 
     rates_by_parent: dict[tuple[str, object], list[Mapping[str, object]]] = defaultdict(list)
-    for rate in rates:
-        rates_by_parent[(normalize_code(rate["code"]), rate.get("ligie_version"))].append(rate)
+    for rate_row in rates:
+        rates_by_parent[(normalize_code(rate_row["code"]), rate_row.get("ligie_version"))].append(
+            rate_row
+        )
     fractions_by_code: dict[tuple[str, object], list[Mapping[str, object]]] = defaultdict(list)
     for classification in classifications:
         if classification.get("level") == "fraccion8":
@@ -358,8 +360,13 @@ def consolidate_records(
 
         produced = 0
         for rate, parent_classification in applicability:
-            classification_start = classification.get("classification_effective_from")
-            classification_end = classification.get("classification_effective_to")
+            classification_start = cast(
+                date | None, classification.get("classification_effective_from")
+            )
+            classification_end = cast(
+                date | None, classification.get("classification_effective_to")
+            )
+            effective: tuple[date | None, date | None] | None
             if rate is None:
                 effective = (classification_start, classification_end)
             else:
@@ -369,8 +376,8 @@ def consolidate_records(
                     rate.get("rate_effective_from"),
                     rate.get("rate_effective_to"),
                 )
-                if effective is None:
-                    continue
+            if effective is None:
+                continue
             if parent_classification is not None:
                 effective = _interval_intersection(
                     effective[0],

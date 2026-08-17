@@ -217,6 +217,14 @@ def build_session() -> requests.Session:
     return session
 
 
+def describe_request_failure(exc: requests.RequestException) -> str:
+    """Add an actionable label to TLS transport failures without suppressing them."""
+    detail = str(exc)
+    if "ssl" in detail.casefold() or "tls" in detail.casefold():
+        return f"TLS transport failure; endpoint did not complete the HTTPS handshake: {detail}"
+    return detail
+
+
 def probe_documented_urls(
     session: requests.Session,
     urls: tuple[str, ...] | list[str],
@@ -231,7 +239,10 @@ def probe_documented_urls(
             status, final_url = check_documented_url(session, url, timeout=timeout)
             suffix = f" -> {final_url}" if final_url != sanitize_documented_url(url) else ""
             print(f"OK [{status}] {url}{suffix}")
-        except (requests.RequestException, ValueError) as exc:
+        except requests.RequestException as exc:
+            failed.append(url)
+            print(f"FAIL {url} -> {describe_request_failure(exc)}")
+        except ValueError as exc:
             failed.append(url)
             print(f"FAIL {url} -> {exc}")
     return failed

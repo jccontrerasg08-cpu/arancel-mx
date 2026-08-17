@@ -216,8 +216,8 @@ def _no_change_result(
     validation_status = str(previous_manifest.get("validation_status", ""))
     if validation_status != "passed":
         raise ValueError("previous manifest must describe a passed release")
-    row_count = int(previous_manifest.get("row_count", 0))
-    if row_count <= 0:
+    row_count = previous_manifest.get("row_count")
+    if not isinstance(row_count, int) or isinstance(row_count, bool) or row_count <= 0:
         raise ValueError("previous manifest must contain a positive row_count")
     return OfficialBuildResult(
         status="no_change",
@@ -372,7 +372,8 @@ def build_official_dataset(
             FROM arancel_mx
             """
         ).fetchone()
-    if int(build_summary["row_count"]) <= 0:
+    row_count = build_summary.get("row_count")
+    if not isinstance(row_count, int) or isinstance(row_count, bool) or row_count <= 0:
         raise ValueError("canonical dataset contains no rows")
     if int(level_counts.get("fraccion8", 0)) <= 0:
         raise ValueError("canonical dataset contains no tariff fractions")

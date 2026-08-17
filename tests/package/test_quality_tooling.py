@@ -73,10 +73,7 @@ def test_ci_test_job_runs_ruff_mypy_and_pytest_coverage_after_install() -> None:
     job = _ci_test_job()
     install = 'python -m pip install -c requirements/production-build.txt -e ".[dev]"'
     ruff = "python -m ruff check src tests scripts"
-    mypy = (
-        "python -m mypy src/arancel_mx/consumer src/arancel_mx/api "
-        "src/arancel_mx/__init__.py"
-    )
+    mypy = "python -m mypy src/arancel_mx"
     pytest_cov = "python -m pytest -q --cov=arancel_mx --cov-report=term-missing"
 
     assert install in job
@@ -123,9 +120,10 @@ def test_mypy_targets_the_public_consumer_api() -> None:
     assert mypy.get("python_version") == "3.11"
 
 
-def test_coverage_floor_is_conservative() -> None:
+def test_coverage_uses_branch_measurement_with_a_conservative_floor() -> None:
     coverage = _payload()["tool"]["coverage"]
     report = coverage.get("report", coverage)
     floor = report.get("fail_under")
+    assert coverage.get("run", coverage).get("branch") is True
     assert isinstance(floor, (int, float))
     assert floor >= 50
