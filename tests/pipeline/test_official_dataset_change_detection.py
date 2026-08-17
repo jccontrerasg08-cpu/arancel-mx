@@ -135,6 +135,22 @@ def test_identical_source_identity_skips_parsing_and_creates_no_release(
     assert not (build_config.work_dir / "candidate" / "arancel_mx.duckdb").exists()
 
 
+@pytest.mark.parametrize("row_count", ["123", True, 0])
+def test_no_change_requires_a_positive_integer_row_count(tmp_path, monkeypatch, row_count):
+    build_config = config(tmp_path, "invalid-row-count")
+    current = identities()
+    monkeypatch.setattr(
+        official_dataset,
+        "capture_official_inputs",
+        lambda config, session=None: snapshot(current),
+    )
+    previous = manifest(current)
+    previous["row_count"] = row_count
+
+    with pytest.raises(ValueError, match="positive row_count"):
+        build_official_dataset(build_config, previous_manifest=previous)
+
+
 def test_source_identity_order_does_not_create_false_change(tmp_path, monkeypatch):
     build_config = config(tmp_path, "reordered")
     current = identities()

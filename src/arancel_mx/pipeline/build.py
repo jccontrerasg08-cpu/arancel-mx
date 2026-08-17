@@ -67,6 +67,13 @@ def _required(value: object, label: str) -> object:
     return value
 
 
+def _scalar_value(row: tuple[Any, ...] | None) -> Any:
+    """Return the first column of a required one-row aggregate query result."""
+    if row is None:
+        raise ValueError("DuckDB aggregate query returned no row")
+    return row[0]
+
+
 def _validated_release_metadata(release: Mapping[str, object]) -> dict[str, object]:
     raw = _required(release.get("release_metadata"), "release.release_metadata")
     if not isinstance(raw, Mapping):
@@ -376,10 +383,10 @@ def _build_view(conn: duckdb.DuckDBPyConnection) -> None:
 
 def _validate_database(conn: duckdb.DuckDBPyConnection) -> dict[str, object]:
     checks = {
-        "duplicate_record_ids": conn.execute(
+        "duplicate_record_ids": _scalar_value(conn.execute(
             "SELECT COUNT(*) - COUNT(DISTINCT record_id) FROM arancel_mx"
-        ).fetchone()[0],
-        "missing_required_values": conn.execute(
+        ).fetchone()),
+        "missing_required_values": _scalar_value(conn.execute(
             """
             SELECT COUNT(*) FROM arancel_mx
             WHERE description IS NULL OR trim(description) = ''
@@ -387,8 +394,8 @@ def _validate_database(conn: duckdb.DuckDBPyConnection) -> dict[str, object]:
                OR primary_source_authority IS NULL OR trim(primary_source_authority) = ''
                OR primary_source_url IS NULL OR trim(primary_source_url) = ''
             """
-        ).fetchone()[0],
-        "invalid_hierarchy": conn.execute(
+        ).fetchone()),
+        "invalid_hierarchy": _scalar_value(conn.execute(
             """
             SELECT COUNT(*) FROM arancel_mx
             WHERE hs2 <> left(code, 2)
@@ -397,17 +404,17 @@ def _validate_database(conn: duckdb.DuckDBPyConnection) -> dict[str, object]:
                OR (fraccion8 IS NOT NULL AND fraccion8 <> left(code, 8))
                OR (nico10 IS NOT NULL AND (nico10 <> code OR nico2 <> right(code, 2)))
             """
-        ).fetchone()[0],
-        "reversed_intervals": conn.execute(
+        ).fetchone()),
+        "reversed_intervals": _scalar_value(conn.execute(
             "SELECT COUNT(*) FROM arancel_mx WHERE effective_from > effective_to"
-        ).fetchone()[0],
-        "provenance_count_mismatch": conn.execute(
+        ).fetchone()),
+        "provenance_count_mismatch": _scalar_value(conn.execute(
             """
             SELECT COUNT(*) FROM arancel_mx
             WHERE source_count <> json_array_length(source_document_ids_json)
             """
-        ).fetchone()[0],
-        "current_nico_without_parent": conn.execute(
+        ).fetchone()),
+        "current_nico_without_parent": _scalar_value(conn.execute(
             """
             SELECT COUNT(*) FROM arancel_mx n
             WHERE n.level = 'nico10' AND n.is_current
@@ -417,8 +424,8 @@ def _validate_database(conn: duckdb.DuckDBPyConnection) -> dict[str, object]:
                     AND f.ligie_version = n.ligie_version AND f.is_current
               )
             """
-        ).fetchone()[0],
-        "non_contiguous_versions": conn.execute(
+        ).fetchone()),
+        "non_contiguous_versions": _scalar_value(conn.execute(
             """
             SELECT COUNT(*) FROM (
                 SELECT level, code, ligie_version, count(*) AS rows,
@@ -431,8 +438,8 @@ def _validate_database(conn: duckdb.DuckDBPyConnection) -> dict[str, object]:
                     OR distinct_versions <> rows
             )
             """
-        ).fetchone()[0],
-        "overlapping_intervals": conn.execute(
+        ).fetchone()),
+        "overlapping_intervals": _scalar_value(conn.execute(
             """
             SELECT COUNT(*) FROM (
                 SELECT *, row_number() OVER timeline AS position,
@@ -447,8 +454,8 @@ def _validate_database(conn: duckdb.DuckDBPyConnection) -> dict[str, object]:
               AND (previous_end IS NULL OR effective_from IS NULL
                    OR effective_from <= previous_end)
             """
-        ).fetchone()[0],
-        "invalid_duty_values": conn.execute(
+        ).fetchone()),
+        "invalid_duty_values": _scalar_value(conn.execute(
             """
             SELECT COUNT(*) FROM arancel_mx
             WHERE (igi_kind = 'prohibida' AND igi_value IS NOT NULL)
@@ -456,8 +463,8 @@ def _validate_database(conn: duckdb.DuckDBPyConnection) -> dict[str, object]:
                OR (igi_kind IN ('especifica', 'compuesta', 'desconocida') AND igi_value IS NOT NULL)
                OR (ige_kind IN ('especifica', 'compuesta', 'desconocida') AND ige_value IS NOT NULL)
             """
-        ).fetchone()[0],
-        "invalid_value_origin": conn.execute(
+        ).fetchone()),
+        "invalid_value_origin": _scalar_value(conn.execute(
             """
             SELECT COUNT(*) FROM arancel_mx
             WHERE (level IN ('hs2', 'hs4', 'hs6') AND
@@ -465,8 +472,8 @@ def _validate_database(conn: duckdb.DuckDBPyConnection) -> dict[str, object]:
                     OR igi_text IS NOT NULL OR ige_text IS NOT NULL))
                OR (level IN ('fraccion8', 'nico10') AND values_from_level <> 'fraccion8')
             """
-        ).fetchone()[0],
-        "primary_source_count": conn.execute(
+        ).fetchone()),
+        "primary_source_count": _scalar_value(conn.execute(
             """
             SELECT COUNT(*) FROM (
                 SELECT c.record_id,
@@ -477,8 +484,8 @@ def _validate_database(conn: duckdb.DuckDBPyConnection) -> dict[str, object]:
                 HAVING primary_count <> 1
             )
             """
-        ).fetchone()[0],
-        "duplicate_current_records": conn.execute(
+        ).fetchone()),
+        "duplicate_current_records": _scalar_value(conn.execute(
             """
             SELECT COUNT(*) FROM (
                 SELECT code
@@ -488,15 +495,15 @@ def _validate_database(conn: duckdb.DuckDBPyConnection) -> dict[str, object]:
                 HAVING COUNT(*) > 1
             )
             """
-        ).fetchone()[0],
-        "missing_public_metadata": conn.execute(
+        ).fetchone()),
+        "missing_public_metadata": _scalar_value(conn.execute(
             """
             SELECT COUNT(*) FROM arancel_mx
             WHERE updated_at IS NULL OR ligie_version IS NULL
                OR dataset_version IS NULL OR schema_version IS NULL
             """
-        ).fetchone()[0],
-        "fraction_without_hs6_parent": conn.execute(
+        ).fetchone()),
+        "fraction_without_hs6_parent": _scalar_value(conn.execute(
             """
             SELECT COUNT(*) FROM arancel_mx f
             WHERE f.level = 'fraccion8' AND f.is_current
@@ -506,8 +513,8 @@ def _validate_database(conn: duckdb.DuckDBPyConnection) -> dict[str, object]:
                     AND h.code = f.hs6 AND h.ligie_version = f.ligie_version
               )
             """
-        ).fetchone()[0],
-        "hs6_without_hs4_parent": conn.execute(
+        ).fetchone()),
+        "hs6_without_hs4_parent": _scalar_value(conn.execute(
             """
             SELECT COUNT(*) FROM arancel_mx h6
             WHERE h6.level = 'hs6' AND h6.is_current
@@ -517,8 +524,8 @@ def _validate_database(conn: duckdb.DuckDBPyConnection) -> dict[str, object]:
                     AND h4.code = h6.hs4 AND h4.ligie_version = h6.ligie_version
               )
             """
-        ).fetchone()[0],
-        "hs4_without_hs2_parent": conn.execute(
+        ).fetchone()),
+        "hs4_without_hs2_parent": _scalar_value(conn.execute(
             """
             SELECT COUNT(*) FROM arancel_mx h4
             WHERE h4.level = 'hs4' AND h4.is_current
@@ -528,8 +535,8 @@ def _validate_database(conn: duckdb.DuckDBPyConnection) -> dict[str, object]:
                     AND h2.code = h4.hs2 AND h2.ligie_version = h4.ligie_version
               )
             """
-        ).fetchone()[0],
-        "nico_parent_value_mismatch": conn.execute(
+        ).fetchone()),
+        "nico_parent_value_mismatch": _scalar_value(conn.execute(
             """
             SELECT COUNT(*) FROM arancel_mx n
             JOIN arancel_mx f ON f.level = 'fraccion8' AND f.is_current
@@ -544,8 +551,8 @@ def _validate_database(conn: duckdb.DuckDBPyConnection) -> dict[str, object]:
                 OR n.ige_kind IS DISTINCT FROM f.ige_kind
                 OR n.ige_value IS DISTINCT FROM f.ige_value)
             """
-        ).fetchone()[0],
-        "national_note_applicability_cardinality": conn.execute(
+        ).fetchone()),
+        "national_note_applicability_cardinality": _scalar_value(conn.execute(
             """
             SELECT COUNT(*) FROM (
                 SELECT v.national_note_version_id,
@@ -557,7 +564,7 @@ def _validate_database(conn: duckdb.DuckDBPyConnection) -> dict[str, object]:
                 HAVING COUNT(a.applicability_id) <> 1
             )
             """
-        ).fetchone()[0],
+        ).fetchone()),
     }
     failed = {name: int(count) for name, count in checks.items() if count}
     if failed:
@@ -644,7 +651,7 @@ def materialize_arancel(
             )
         _build_view(conn)
         validation = _validate_database(conn)
-        row_count = int(conn.execute("SELECT COUNT(*) FROM arancel_mx").fetchone()[0])
+        row_count = int(_scalar_value(conn.execute("SELECT COUNT(*) FROM arancel_mx").fetchone()))
         source_documents_json = canonical_json(
             [
                 {

@@ -21,14 +21,11 @@ def _job(name: str) -> str:
     return workflow[start:end]
 
 
-def test_required_ci_type_checks_public_consumer_and_fastapi_surface() -> None:
+def test_required_ci_type_checks_the_full_package() -> None:
     job = _job("test")
 
-    assert "Type-check public consumer and API" in job
-    assert (
-        "python -m mypy src/arancel_mx/consumer src/arancel_mx/api "
-        "src/arancel_mx/__init__.py"
-    ) in job
+    assert "Type-check full package" in job
+    assert "python -m mypy src/arancel_mx" in job
 
 
 def test_ci_smokes_the_fastapi_cloud_python_runtime() -> None:

@@ -454,14 +454,14 @@ def collect_ligie_html_access_targets(
         from arancel_mx.pipeline.reconcile import discover_registered_sources
 
         discovered = discover_registered_sources({entry.dataset_key: entry}, _Client(html, base_url))
-        for document in discovered:
-            if document.document_role == required_role:
-                targets.append(HtmlAccessTarget(document.source_url, "snapshot", None))
+        for discovered_document in discovered:
+            if discovered_document.document_role == required_role:
+                targets.append(HtmlAccessTarget(discovered_document.source_url, "snapshot", None))
     if page_id == "diputados_ledger":
         snapshot = parse_ligie_ledger(html, base_url)
-        for document in snapshot.documents:
-            if document.category == "consolidated_text":
-                for link in document.links:
+        for ledger_document in snapshot.documents:
+            if ledger_document.category == "consolidated_text":
+                for link in ledger_document.links:
                     targets.append(HtmlAccessTarget(link.url, "document", None))
     return tuple(targets)
 

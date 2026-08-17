@@ -18,6 +18,7 @@ if __package__:
         EXTERNALLY_UNPROBEABLE_URLS,
         build_session,
         check_reachable,
+        describe_request_failure,
         fetch_html_body,
     )
 else:
@@ -25,6 +26,7 @@ else:
         EXTERNALLY_UNPROBEABLE_URLS,
         build_session,
         check_reachable,
+        describe_request_failure,
         fetch_html_body,
     )
 
@@ -75,6 +77,10 @@ def validate_ligie_html_site(
             print(f"OK [{status}] {label}: {final_url}")
             for target in collect_ligie_html_access_targets(page_id, html, base_url=final_url):
                 process_target(target)
+        except requests.RequestException as exc:
+            detail = describe_request_failure(exc)
+            failures.append(f"{label} ({url}): {detail}")
+            print(f"FAIL {label} ({url}) -> {detail}")
         except Exception as exc:
             failures.append(f"{label} ({url}): {exc}")
             print(f"FAIL {label} ({url}) -> {exc}")
@@ -96,6 +102,10 @@ def validate_ligie_html_site(
                 return
             status, final_url = _check_binary_target(session, target, timeout=timeout)
             print(f"OK [{status}] {target.kind}: {final_url}")
+        except requests.RequestException as exc:
+            detail = describe_request_failure(exc)
+            failures.append(f"{target.kind} ({target.url}): {detail}")
+            print(f"FAIL {target.kind} ({target.url}) -> {detail}")
         except Exception as exc:
             failures.append(f"{target.kind} ({target.url}): {exc}")
             print(f"FAIL {target.kind} ({target.url}) -> {exc}")
