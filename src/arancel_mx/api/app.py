@@ -25,6 +25,7 @@ from arancel_mx.api.models import (
 )
 from arancel_mx.api.routes import router as service_router
 from arancel_mx.consumer import Dataset
+from arancel_mx.consumer.http import build_session
 from arancel_mx.consumer.errors import (
     DatasetError,
     DatasetUnavailableError,
@@ -59,6 +60,11 @@ def _load_dataset(settings: ApiSettings) -> Dataset:
         cache_dir=settings.cache_dir,
         timeout=settings.timeout,
         offline=settings.offline,
+        session=(
+            build_session(github_token=settings.github_token)
+            if settings.github_token
+            else None
+        ),
     )
 
 

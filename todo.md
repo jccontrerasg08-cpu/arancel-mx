@@ -9,3 +9,4 @@
 - [ ] Confirm the Vercel production alias serves the marketing root and the verified `/app` explorer.
 - [ ] Keep FastAPI Cloud available as a temporary fallback until Vercel primary validation is complete.
 - [ ] Document the Vercel primary cutover criteria before any FastAPI Cloud redirect or retirement decision.
+- [ ] Use the optional server-side GitHub token for immutable release resolution and FastAPI Cloud startup reliability, with an unauthenticated fallback.
