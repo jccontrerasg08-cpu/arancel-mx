@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Consulta pública de datos arancelarios verificados de México.">
+  <title>Arancel MX | Consulta verificada</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #102a43;
+      --muted: #627d98;
+      --canvas: #f5f8fa;
+      --panel: #ffffff;
+      --line: #d9e2ec;
+      --brand: #007a5e;
+      --brand-dark: #005a45;
+      --accent: #d9f99d;
+      --danger: #b42318;
+      --shadow: 0 18px 48px rgba(16, 42, 67, .08);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      color: var(--ink);
+      background: var(--canvas);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+    a { color: var(--brand-dark); }
+    a:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid #2bb7a2; outline-offset: 3px; }
+    .site-header { background: var(--ink); color: #fff; }
+    .wrap { width: min(1120px, calc(100% - 2rem)); margin: 0 auto; }
+    .header-content { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 68px; }
+    .brand { color: #fff; font-size: 1.125rem; font-weight: 800; letter-spacing: -.02em; text-decoration: none; }
+    .brand span { color: var(--accent); }
+    .api-link { color: #d9e2ec; font-size: .9rem; }
+    .hero { padding: clamp(3rem, 8vw, 6.25rem) 0 2.5rem; background: radial-gradient(circle at 82% 12%, #e8fff4 0, transparent 28rem), var(--canvas); }
+    .eyebrow { margin: 0 0 .75rem; color: var(--brand-dark); font-size: .8rem; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; }
+    h1 { max-width: 760px; margin: 0; font-size: clamp(2.45rem, 7vw, 4.9rem); letter-spacing: -.06em; line-height: .98; }
+    .lede { max-width: 670px; margin: 1.25rem 0 0; color: var(--muted); font-size: clamp(1rem, 2.3vw, 1.23rem); }
+    .search-panel { margin-top: 2rem; padding: clamp(1rem, 3vw, 1.5rem); border: 1px solid var(--line); border-radius: 18px; background: var(--panel); box-shadow: var(--shadow); }
+    label { display: block; margin-bottom: .5rem; font-weight: 750; }
+    .search-row { display: flex; gap: .75rem; }
+    input {
+      width: 100%; min-height: 52px; padding: 0 .95rem; border: 1px solid #9fb3c8; border-radius: 10px;
+      color: var(--ink); font: inherit;
+    }
+    input::placeholder { color: #829ab1; }
+    button {
+      min-height: 52px; padding: 0 1.15rem; border: 0; border-radius: 10px; color: #fff; background: var(--brand);
+      cursor: pointer; font: inherit; font-weight: 800;
+    }
+    button:hover { background: var(--brand-dark); }
+    button:disabled { cursor: progress; opacity: .72; }
+    .examples { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; margin: 1rem 0 0; color: var(--muted); font-size: .86rem; }
+    .example { min-height: auto; padding: .25rem .55rem; border: 1px solid var(--line); color: var(--ink); background: #f8fafc; font-size: .82rem; font-weight: 650; }
+    .example:hover { background: #eaf5f1; color: var(--brand-dark); }
+    .main { padding: 0 0 4rem; }
+    .status { min-height: 1.5rem; margin: 1.25rem 0; color: var(--muted); font-size: .92rem; }
+    .metadata { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; }
+    .chip { display: inline-flex; padding: .3rem .55rem; border-radius: 999px; color: #334e68; background: #e6edf3; font-size: .8rem; font-weight: 700; }
+    .result-grid { display: grid; gap: 1rem; }
+    .record, .notice { border: 1px solid var(--line); border-radius: 14px; background: var(--panel); box-shadow: 0 8px 24px rgba(16, 42, 67, .04); }
+    .record { padding: clamp(1.15rem, 3vw, 1.65rem); }
+    .record-head { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; }
+    .record h2 { margin: .35rem 0 .55rem; font-size: clamp(1.25rem, 3vw, 1.65rem); letter-spacing: -.03em; line-height: 1.15; }
+    .code { color: var(--brand-dark); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .9rem; font-weight: 800; }
+    .level { flex: none; padding: .25rem .5rem; border-radius: 999px; color: #07553f; background: #d5f5e9; font-size: .76rem; font-weight: 800; text-transform: uppercase; }
+    dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; margin: 1.25rem 0 0; overflow: hidden; border: 1px solid var(--line); border-radius: 9px; background: var(--line); }
+    dl div { padding: .75rem; background: #fbfdff; }
+    dt { color: var(--muted); font-size: .76rem; font-weight: 750; text-transform: uppercase; letter-spacing: .04em; }
+    dd { margin: .18rem 0 0; font-size: .95rem; font-weight: 680; }
+    .provenance { margin-top: 1.1rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+    .provenance h3 { margin: 0 0 .4rem; font-size: 1rem; }
+    .provenance ul { padding-left: 1.2rem; margin: .35rem 0 0; }
+    .provenance li { margin: .3rem 0; }
+    .notice { padding: 1.2rem; }
+    .notice h2 { margin: 0 0 .35rem; font-size: 1.1rem; }
+    .notice p { margin: 0; }
+    .notice.error { border-color: #f5c2c0; color: #7a271a; background: #fff7f6; }
+    .disclaimer { margin-top: 1.25rem; padding: 1rem; border-left: 4px solid #e9b949; color: #52606d; background: #fffdf5; font-size: .9rem; }
+    footer { padding: 1.75rem 0; border-top: 1px solid var(--line); color: var(--muted); font-size: .85rem; }
+    footer p { margin: 0; }
+    @media (max-width: 620px) {
+      .search-row { flex-direction: column; }
+      .search-row button { width: 100%; }
+      dl { grid-template-columns: 1fr; }
+      .api-link { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap header-content">
+      <a class="brand" href="/app" aria-label="Inicio de Arancel MX">Arancel <span>MX</span></a>
+      <a class="api-link" href="/docs">Documentación de la API</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="wrap">
+        <p class="eyebrow">Datos abiertos y verificados</p>
+        <h1>Consulta arancelaria sin perder la procedencia.</h1>
+        <p class="lede">Busca por fracción, NICO o descripción. Los resultados se recuperan de una release verificada de la LIGIE/NICO mexicana.</p>
+        <form class="search-panel" id="search-form" novalidate>
+          <label for="query">Código arancelario o descripción</label>
+          <div class="search-row">
+            <input id="query" name="query" type="search" inputmode="search" autocomplete="off" maxlength="300" placeholder="Ej. 8517.13.01 o teléfonos" data-testid="search-input" required>
+            <button type="submit" data-testid="search-submit">Consultar</button>
+          </div>
+          <div class="examples">
+            <span>Prueba con:</span>
+            <button class="example" type="button" data-query="85171301">8517.13.01</button>
+            <button class="example" type="button" data-query="teléfonos">teléfonos</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="main" aria-labelledby="results-title">
+      <div class="wrap">
+        <div id="metadata" class="metadata" aria-live="polite"></div>
+        <p id="status" class="status" role="status" aria-live="polite"></p>
+        <div id="results" class="result-grid" aria-live="polite">
+          <section class="notice">
+            <h2 id="results-title">Empieza una consulta</h2>
+            <p>Ingresa un código completo para una ficha exacta o una descripción para recuperar coincidencias verificadas.</p>
+          </section>
+        </div>
+        <aside class="disclaimer">
+          Esta herramienta es informativa y de recuperación de datos. No clasifica mercancías ni constituye asesoría legal, fiscal o aduanera.
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap"><p>Arancel MX publica información de solo lectura con la identidad de su dataset. Consulta los detalles técnicos en la <a href="/docs">API pública</a>.</p></div>
+  </footer>
+
+  <script>
+    const form = document.querySelector('#search-form');
+    const queryInput = document.querySelector('#query');
+    const submitButton = document.querySelector('[data-testid="search-submit"]');
+    const results = document.querySelector('#results');
+    const status = document.querySelector('#status');
+    const metadata = document.querySelector('#metadata');
+
+    const escapeHtml = (value) => String(value ?? '').replace(/[&<>'"]/g, (character) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+    })[character]);
+
+    const formatRate = (rate) => escapeHtml(rate?.text || 'No disponible');
+    const errorMessage = (payload, fallback) => payload?.error?.message || fallback;
+    const exactCode = (query) => query.replace(/[.\s-]/g, '');
+    const isTariffCode = (code) => /^\d{2}(?:\d{2}){0,4}$/.test(code);
+
+    async function request(path) {
+      const response = await fetch(path, { headers: { Accept: 'application/json' } });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(errorMessage(payload, 'No fue posible completar la consulta.'));
+      return payload;
+    }
+
+    function recordCard(record, sources = []) {
+      const sourceList = sources.length
+        ? `<div class="provenance"><h3>Procedencia registrada</h3><ul>${sources.map((source) => `<li><a href="${escapeHtml(source.source_url)}" rel="noreferrer" target="_blank">${escapeHtml(source.title || source.source_document_id)}</a> · ${escapeHtml(source.authority)}</li>`).join('')}</ul></div>`
+        : '';
+      return `<article class="record" data-testid="result-card">
+        <div class="record-head"><div><span class="code">${escapeHtml(record.code)}</span><h2>${escapeHtml(record.description)}</h2></div><span class="level">${escapeHtml(record.level)}</span></div>
+        <dl>
+          <div><dt>IGI</dt><dd>${formatRate(record.igi)}</dd></div>
+          <div><dt>IGE</dt><dd>${formatRate(record.ige)}</dd></div>
+          <div><dt>Unidad</dt><dd>${escapeHtml(record.unit_name || 'No disponible')}</dd></div>
+          <div><dt>Dataset</dt><dd>${escapeHtml(record.dataset_version)}</dd></div>
+        </dl>${sourceList}
+      </article>`;
+    }
+
+    function renderError(message) {
+      results.innerHTML = `<section class="notice error" role="alert"><h2>No fue posible completar la consulta</h2><p>${escapeHtml(message)}</p></section>`;
+    }
+
+    async function loadMetadata() {
+      try {
+        const data = await request('/v1/meta');
+        metadata.innerHTML = `<span class="chip">Dataset ${escapeHtml(data.dataset_tag)}</span><span class="chip">${data.release_verified && data.structural_valid ? 'Release verificada' : 'Estado por verificar'}</span><span class="chip">API ${escapeHtml(data.api_version)}</span>`;
+      } catch {
+        metadata.innerHTML = '';
+      }
+    }
+
+    async function search(query) {
+      const normalizedCode = exactCode(query);
+      status.textContent = 'Consultando la release verificada…';
+      submitButton.disabled = true;
+      results.setAttribute('aria-busy', 'true');
+      try {
+        if (isTariffCode(normalizedCode)) {
+          const [record, sources] = await Promise.all([
+            request(`/v1/lookup/${encodeURIComponent(normalizedCode)}`),
+            request(`/v1/codes/${encodeURIComponent(normalizedCode)}/provenance`),
+          ]);
+          results.innerHTML = recordCard(record, sources);
+          status.textContent = 'Ficha exacta recuperada.';
+          return;
+        }
+        const matches = await request(`/v1/search?q=${encodeURIComponent(query)}&limit=10`);
+        if (!matches.length) {
+          results.innerHTML = '<section class="notice"><h2>Sin coincidencias</h2><p>Prueba otro término o ingresa una fracción/NICO completa.</p></section>';
+          status.textContent = 'La búsqueda no devolvió resultados.';
+          return;
+        }
+        results.innerHTML = matches.map((match) => recordCard(match.record)).join('');
+        status.textContent = `${matches.length} coincidencia${matches.length === 1 ? '' : 's'} recuperada${matches.length === 1 ? '' : 's'} de la release verificada.`;
+      } catch (error) {
+        renderError(error instanceof Error ? error.message : 'No fue posible completar la consulta.');
+        status.textContent = 'La consulta no se completó.';
+      } finally {
+        submitButton.disabled = false;
+        results.removeAttribute('aria-busy');
+      }
+    }
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const query = queryInput.value.trim();
+      if (!query) {
+        renderError('Ingresa un código arancelario o una descripción.');
+        queryInput.focus();
+        return;
+      }
+      search(query);
+    });
+
+    document.querySelectorAll('[data-query]').forEach((button) => {
+      button.addEventListener('click', () => {
+        queryInput.value = button.dataset.query;
+        form.requestSubmit();
+      });
+    });
+
+    loadMetadata();
+  </script>
+</body>
+</html>
