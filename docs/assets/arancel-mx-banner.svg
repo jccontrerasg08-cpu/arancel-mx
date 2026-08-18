@@ -1,66 +1,44 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
-  <title id="title">arancel-mx</title>
-  <desc id="desc">Banner for arancel-mx, open tooling for reproducible and traceable Mexican tariff data.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
+  <title id="title">arancel.mx</title>
+  <desc id="desc">README banner for arancel.mx, open verified Mexican tariff data through LIGIE, NICO, DuckDB, CLI, Python, and HTTP interfaces.</desc>
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#07111f"/>
-      <stop offset="0.55" stop-color="#102a43"/>
-      <stop offset="1" stop-color="#0b1f2a"/>
-    </linearGradient>
-    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#00c389"/>
-      <stop offset="0.52" stop-color="#f2f4f8"/>
-      <stop offset="1" stop-color="#ff5c5c"/>
-    </linearGradient>
-    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="18"/>
-    </filter>
     <pattern id="grid" width="36" height="36" patternUnits="userSpaceOnUse">
-      <path d="M36 0H0V36" fill="none" stroke="#8fb3c9" stroke-opacity="0.07" stroke-width="1"/>
+      <path d="M36 0H0V36" fill="none" stroke="#102A43" stroke-opacity=".045"/>
     </pattern>
   </defs>
+  <rect width="1200" height="360" rx="24" fill="#F8FAFC"/>
+  <rect width="1200" height="360" rx="24" fill="url(#grid)"/>
 
-  <rect width="1200" height="360" rx="28" fill="url(#bg)"/>
-  <rect width="1200" height="360" rx="28" fill="url(#grid)"/>
-
-  <circle cx="1000" cy="74" r="115" fill="#00c389" opacity="0.08" filter="url(#glow)"/>
-  <circle cx="1100" cy="300" r="105" fill="#ff5c5c" opacity="0.07" filter="url(#glow)"/>
-  <circle cx="760" cy="280" r="120" fill="#5f8cff" opacity="0.06" filter="url(#glow)"/>
-
-  <rect x="72" y="58" width="150" height="32" rx="16" fill="#ffffff" fill-opacity="0.07" stroke="#ffffff" stroke-opacity="0.13"/>
-  <text x="147" y="79" text-anchor="middle" fill="#d9e7ef" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="14" font-weight="600" letter-spacing="1.4">OPEN DATA CORE</text>
-
-  <text x="72" y="164" fill="#ffffff" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="76" font-weight="800" letter-spacing="-2">arancel-mx</text>
-  <rect x="72" y="190" width="460" height="5" rx="2.5" fill="url(#accent)"/>
-
-  <text x="72" y="236" fill="#d6e3ea" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="23" font-weight="500">Datos arancelarios de México</text>
-  <text x="72" y="270" fill="#9fb6c5" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="18">reproducibles · auditables · trazables</text>
-
-  <g transform="translate(72 302)">
-    <rect width="104" height="30" rx="15" fill="#00c389" fill-opacity="0.13" stroke="#00c389" stroke-opacity="0.42"/>
-    <text x="52" y="20" text-anchor="middle" fill="#87f5d0" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="700">LIGIE</text>
-    <rect x="116" width="94" height="30" rx="15" fill="#5f8cff" fill-opacity="0.13" stroke="#5f8cff" stroke-opacity="0.42"/>
-    <text x="163" y="20" text-anchor="middle" fill="#b9c8ff" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="700">NICO</text>
-    <rect x="222" width="116" height="30" rx="15" fill="#fff000" fill-opacity="0.10" stroke="#fff000" stroke-opacity="0.35"/>
-    <text x="280" y="20" text-anchor="middle" fill="#fff7a0" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="700">DuckDB</text>
-    <rect x="350" width="122" height="30" rx="15" fill="#ff5c5c" fill-opacity="0.10" stroke="#ff5c5c" stroke-opacity="0.35"/>
-    <text x="411" y="20" text-anchor="middle" fill="#ffb1b1" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="700">SHA256</text>
+  <!-- brand mark -->
+  <g transform="translate(54 48) scale(.78)">
+    <path fill="#102A43" d="M83 73V52C83 20 105 0 133 0s50 20 50 52v21h22c13 0 23 10 23 23v128c0 13-10 23-23 23H61c-13 0-23-10-23-23V96c0-13 10-23 23-23h22Zm28 0h44V52c0-15-9-25-22-25s-22 10-22 25v21Z"/>
+    <path fill="#008A5B" d="M14 105 54 89v119L14 192Z"/>
+    <path fill="#CE1126" d="m252 105-40-16v119l40-16Z"/>
+    <path fill="#F8FAFC" d="M75 89h105l31 31v92H75Z"/>
+    <path fill="#D8E2EA" d="M180 89v31h31Z"/>
+    <rect x="94" y="125" width="72" height="14" rx="3" fill="#102A43"/>
+    <rect x="94" y="151" width="84" height="10" rx="3" fill="#B9C9D6"/>
+    <rect x="94" y="172" width="48" height="10" rx="3" fill="#B9C9D6"/>
+    <path fill="#071827" d="M3 207h92l29 31H34Z"/>
+    <circle cx="174" cy="202" r="30" fill="#008A5B" stroke="#F8FAFC" stroke-width="7"/>
+    <path d="m159 202 10 10 20-23" fill="none" stroke="#F8FAFC" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
 
-  <g transform="translate(720 60)">
-    <rect width="400" height="240" rx="22" fill="#07131f" fill-opacity="0.72" stroke="#a9c3d3" stroke-opacity="0.16"/>
-    <rect x="0" y="0" width="400" height="44" rx="22" fill="#ffffff" fill-opacity="0.04"/>
-    <circle cx="24" cy="22" r="5" fill="#ff6b6b"/>
-    <circle cx="42" cy="22" r="5" fill="#ffd166"/>
-    <circle cx="60" cy="22" r="5" fill="#06d6a0"/>
-    <text x="82" y="27" fill="#7d97a7" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="13">arancel-mx</text>
+  <path d="M300 71h-16v178h16" fill="none" stroke="#008A5B" stroke-width="12" stroke-linecap="round"/>
+  <text x="326" y="182" fill="#102A43" font-family="Arial,Helvetica,sans-serif" font-size="104" font-weight="800" letter-spacing="-5">arancel</text>
+  <circle cx="757" cy="160" r="13" fill="#008A5B"/>
+  <text x="780" y="182" fill="#102A43" font-family="Arial,Helvetica,sans-serif" font-size="104" font-weight="800" letter-spacing="-5">mx</text>
+  <path d="M1016 71h16v178h-16" fill="none" stroke="#008A5B" stroke-width="12" stroke-linecap="round"/>
 
-    <text x="28" y="82" fill="#7ce7c1" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="15">$ python -m arancel_mx build</text>
-    <text x="28" y="116" fill="#b7c9d5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="14">source   → normalize → validate</text>
-    <text x="28" y="146" fill="#b7c9d5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="14">DuckDB   → CSV · JSON · manifest</text>
-    <text x="28" y="176" fill="#b7c9d5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="14">evidence → URL · document · SHA256</text>
+  <text x="657" y="242" text-anchor="middle" fill="#102A43" font-family="Arial,Helvetica,sans-serif" font-size="31" font-weight="800">Datos arancelarios abiertos de México</text>
+  <text x="657" y="284" text-anchor="middle" fill="#008A5B" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="700">LIGIE • NICO • DuckDB • CLI • Python • API</text>
+  <text x="657" y="321" text-anchor="middle" fill="#526B7A" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="600">Trazables · auditables · reproducibles</text>
 
-    <rect x="28" y="200" width="344" height="1" fill="#8fb3c9" opacity="0.18"/>
-    <text x="28" y="224" fill="#7d97a7" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="12">DOF · SNICE · Cámara de Diputados</text>
+  <g transform="translate(1064 72)" fill="#102A43" opacity=".16">
+    <rect x="0" y="0" width="10" height="10" rx="2"/><rect x="22" y="0" width="10" height="10" rx="2"/><rect x="44" y="0" width="10" height="10" rx="2"/>
+    <rect x="0" y="22" width="10" height="10" rx="2"/><rect x="22" y="22" width="10" height="10" rx="2"/><rect x="44" y="22" width="10" height="10" rx="2" fill="#008A5B" opacity="1"/>
   </g>
+  <rect x="0" y="350" width="1200" height="10" fill="#102A43"/>
+  <rect x="890" y="350" width="155" height="10" fill="#008A5B"/>
+  <rect x="1045" y="350" width="155" height="10" fill="#CE1126"/>
 </svg>
