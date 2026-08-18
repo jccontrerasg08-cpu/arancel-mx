@@ -1,23 +1,25 @@
 # Marca y presentación de `arancel-mx`
 
-Esta guía define la identidad visual y narrativa pública de `arancel-mx`. El objetivo no es decorar el proyecto: es hacer visible, desde el primer vistazo, qué problema resuelve, qué superficies ofrece y por qué sus datos son verificables.
+Esta guía define la identidad visual y narrativa pública de `arancel-mx`. El objetivo no es decorar el proyecto: es hacer visible, con el menor ruido posible, qué problema resuelve, qué superficies ofrece y por qué sus datos son verificables.
+
+**[Hub público](https://arancel-mx.vercel.app/)** · **[API / OpenAPI](https://arancel-mx.vercel.app/docs)** · **[Visión del proyecto](project-overview.md)** · **[Centro de documentación](README.md)**
 
 ## Idea de marca
 
 `arancel-mx` convierte publicaciones oficiales arancelarias de México en una capa de datos abierta, reproducible y auditable.
 
-La marca debe comunicar cuatro ideas sin exagerarlas:
+La marca comunica cuatro ideas:
 
-1. **México**: contexto aduanero y arancelario mexicano.
-2. **Datos**: una infraestructura consumible por archivos, DuckDB, Python, CLI y HTTP.
+1. **México**: contexto arancelario y aduanero mexicano.
+2. **Datos**: infraestructura consumible por archivos, DuckDB, Python, CLI y HTTP.
 3. **Verificación**: procedencia, hashes, validación y releases inmutables.
-4. **Apertura**: un núcleo público reusable por otras herramientas de comercio exterior.
+4. **Apertura**: un núcleo público reusable por otras herramientas.
 
-La frase corta de posicionamiento es:
+Posicionamiento corto:
 
 > **Datos arancelarios abiertos de México. Trazables, auditables y reproducibles.**
 
-Para material en inglés puede usarse:
+En inglés:
 
 > **Open tariff data for Mexico. Traceable. Auditable. Reproducible.**
 
@@ -30,96 +32,83 @@ Para material en inglés puede usarse:
 | Navy | `#102A43` | identidad, títulos, estructura y confianza |
 | Deep navy | `#071827` | portadas y superficies oscuras |
 | Mexico green | `#008A5B` | acción, validación, punto de `arancel.mx` y brackets |
-| Mexico red | `#CE1126` | acento aduanero mexicano, siempre secundario |
+| Mexico red | `#CE1126` | acento mexicano secundario |
 | Off-white | `#F8FAFC` | fondos claros y documento del mark |
 | Cool gray | `#D8E2EA` | detalle técnico secundario |
 
-El rojo no debe competir con el verde ni convertirse en color de llamada a la acción. Su función es dar contexto visual mexicano al mark y a detalles muy puntuales.
+El rojo nunca debe competir con el verde como color de acción. Su función es contextual y secundaria.
 
 ### Mark
 
-El símbolo combina:
-
-- un candado/gateway para representar control e integridad;
-- un documento para representar evidencia oficial;
-- una marca de verificación para representar validación;
-- paneles verde y rojo para representar el contexto mexicano y el flujo de mercancías.
-
-No significa certificación gubernamental ni sustituye sellos oficiales. Es una identidad visual del proyecto.
+El símbolo combina un gateway/candado, un documento y una marca de verificación con acentos verde y rojo. Representa integridad, evidencia y contexto mexicano. **No representa certificación gubernamental ni afiliación con una autoridad.**
 
 ### Wordmark
 
-El nombre se presenta como `arancel.mx` en minúsculas, con:
-
-- navy como color principal;
-- punto verde antes de `mx`;
-- brackets verdes para sugerir una herramienta de datos/programación sin convertir el logo en una consola literal.
+El nombre se presenta como `arancel.mx` en minúsculas, con navy como color principal, punto verde antes de `mx` y brackets verdes como referencia discreta a datos/programación.
 
 ## Assets canónicos
 
 | Asset | Función |
 |---|---|
-| `docs/assets/arancel-mx-logo.svg` | logo horizontal principal para documentación y presentaciones |
-| `website/assets/arancel-mx-mark.svg` | mark compacto para favicon y navegación |
-| `website/assets/arancel-mx-logo.svg` | wordmark horizontal desplegable en el sitio |
+| `docs/assets/arancel-mx-logo.svg` | logo horizontal principal |
+| `website/assets/arancel-mx-mark.svg` | mark compacto para navegación |
+| `website/assets/arancel-mx-logo.svg` | wordmark desplegable del sitio |
 | `docs/assets/arancel-mx-banner.svg` | hero del README |
-| `docs/assets/arancel-mx-social.svg` | fuente vectorial 1280×640 para sharing/social |
-| `website/assets/arancel-mx-social.svg` | copia desplegable de la composición social |
-| `docs/assets/arancel-mx-cover.svg` | portada oscura 1600×900 para presentaciones y documentación |
+| `docs/assets/arancel-mx-social.svg` | master social 1280×640 |
+| `website/assets/arancel-mx-social.svg` | copia desplegable social |
+| `docs/assets/arancel-mx-cover.svg` | portada 1600×900 para presentaciones |
 
-Los SVG son los masters de marca. Deben mantenerse como vector real: no incrustar PNG/JPEG ni payloads base64 dentro de ellos.
-
-Cuando una plataforma exija PNG/JPG para una imagen social, el raster debe exportarse desde `arancel-mx-social.svg`; no debe convertirse el master del repositorio en un archivo raster ni envolver una imagen raster dentro de un SVG.
+Los SVG son masters vectoriales. No incrustar PNG/JPEG, elementos `<image>` ni payloads base64. Si una plataforma exige raster, exportarlo desde el master SVG sin reemplazar el archivo canónico.
 
 ## Uso del logo
 
-### Sí
+**Sí:** conservar proporciones, colores, espacio libre, `<title>`/`<desc>` y usar el mark solo cuando el espacio sea reducido.
 
-- mantener espacio libre alrededor del mark y del wordmark;
-- conservar proporciones y colores canónicos;
-- usar el mark solo cuando el espacio es pequeño;
-- usar el wordmark completo cuando la identidad del proyecto necesita ser explícita;
-- usar fondos claros o deep navy con contraste suficiente;
-- conservar `<title>` y `<desc>` en assets SVG públicos.
-
-### No
-
-- estirar el logo horizontal o verticalmente;
-- cambiar el punto verde a rojo;
-- usar el rojo como color dominante;
-- añadir escudos, sellos o elementos que puedan sugerir afiliación gubernamental;
-- añadir sombras, 3D o ilustración ornamental que compita con el carácter técnico;
-- incrustar capturas raster dentro del SVG para simular un vector.
+**No:** estirar, dominar con rojo, añadir sellos/escudos oficiales, añadir 3D/sombras ornamentales o alterar el símbolo de forma que sugiera respaldo gubernamental.
 
 ## Storytelling
 
-La presentación pública debe seguir este orden:
+Hay dos niveles narrativos distintos.
+
+### Front door: README y home
+
+La primera experiencia debe ser breve y orientada a acción:
 
 ```text
 qué es
   ↓
-por qué existe
+qué puede hacer el usuario
   ↓
-qué quiero hacer con él
+pruébalo en 60 segundos
   ↓
-qué interfaz uso
+por qué confiar
   ↓
-por qué confiar en el resultado
+dónde profundizar
   ↓
-cómo funciona por dentro
+alcance y límites
 ```
 
-### 1. Qué es
+El README no debe intentar ser manual de CLI, runbook de release, catálogo de tablas y documentación operativa al mismo tiempo. Es una **landing técnica** que manda el detalle al centro de documentación.
 
-Una capa pública de datos arancelarios mexicanos que transforma fuentes oficiales observadas en releases verificables y fáciles de consumir.
+### Visión profunda del proyecto
 
-### 2. Por qué existe
+Cuando el lector ya decidió profundizar, [`project-overview.md`](project-overview.md) sigue una secuencia más completa:
 
-Un archivo oficial por sí solo no resuelve procedencia, cambios, jerarquía, normalización, reproducibilidad ni consumo aguas abajo. `arancel-mx` concentra ese trabajo para que cada aplicación consumidora no tenga que rehacerlo.
+```text
+problema
+  ↓
+frontera del proyecto
+  ↓
+fuentes → release verificable
+  ↓
+superficies de consumo
+  ↓
+Central Hub en Vercel
+  ↓
+modelo de confianza
+```
 
-### 3. Qué puede hacer el usuario
-
-Las cinco rutas canónicas son:
+## Cinco rutas de consumo
 
 | Intención | Superficie |
 |---|---|
@@ -129,9 +118,11 @@ Las cinco rutas canónicas son:
 | Construir un servicio o UI | HTTP / API read-only |
 | Verificar cómo se produjo | manifest, SHA256, fuentes capturadas, `provenance`, `data verify` |
 
-### 4. Confianza antes que claims
+El hub web es la entrada interactiva que reúne estas rutas, no una sexta fuente de verdad.
 
-La narrativa no debe basarse en “tenemos datos actualizados”. Debe mostrar la cadena verificable:
+## Confianza antes que claims
+
+Evitar “100% actualizado” o equivalentes. Mostrar la cadena que puede comprobarse:
 
 ```text
 fuentes oficiales
@@ -140,61 +131,61 @@ captura
   ↓
 identidad + SHA256 + retrieved_at
   ↓
-reconciliación legal
-  ↓
-parseo + normalización + validación
+reconciliación y validación
   ↓
 DuckDB canónico
   ↓
 release inmutable + manifest + checksums
 ```
 
-La release verificada es la fuente de verdad. Las capas de búsqueda, metadata y servicio son superficies de consumo, no sustitutos del pipeline de publicación.
+La release verificada es la fuente de verdad. Búsqueda, metadata, Neon, Vercel y FastAPI son superficies de consumo o proyecciones operacionales.
 
 ## Voz y copy
 
-Preferir:
+Preferir lenguaje:
 
 - concreto sobre promocional;
 - verificable sobre superlativo;
-- “read-only”, “fail-closed”, “release verificada” y “procedencia” cuando sean relevantes;
-- ejemplos reales de comandos y archivos;
-- separar claramente información técnica de interpretación jurídica.
+- breve en la portada y profundo en docs;
+- explícito sobre `read-only`, `fail-closed`, release y procedencia cuando sean relevantes;
+- claro al separar datos técnicos de interpretación jurídica.
 
 Evitar:
 
-- “la clasificación correcta garantizada”;
-- “100% actualizado” sin contexto verificable;
-- lenguaje que sugiera respaldo de SAT, ANAM, SNICE, DOF o cualquier otra autoridad;
-- convertir una herramienta de datos en promesa de asesoría aduanera.
+- “clasificación correcta garantizada”;
+- “100% actualizado” sin identidad de release;
+- claims que sugieran respaldo de SAT, ANAM, SNICE, DOF o cualquier autoridad;
+- prometer asesoría o cumplimiento automático;
+- repetir el mismo detalle técnico en README, hub y varias guías.
+
+## Sitio web y relación con Vercel
+
+El dominio público principal es [`https://arancel-mx.vercel.app/`](https://arancel-mx.vercel.app/). La documentación debe tratarlo como el **front door interactivo** y enlazar también su contrato OpenAPI en [`/docs`](https://arancel-mx.vercel.app/docs).
+
+La arquitectura vigente combina:
+
+- `/v1/meta` y `/v1/search` en la capa operacional read-only de Vercel/Neon;
+- las demás rutas `/v1/*`, `/docs` y `/readyz` bajo el mismo dominio mediante proxy al runtime FastAPI reusable;
+- la GitHub Release verificable como fuente canónica del dataset.
+
+Después de #136, el runtime Python de Vercel instala sus dependencias explícitas desde `requirements.txt`; esta decisión operativa no debe convertirse en copy promocional, pero las guías técnicas sí deben permanecer sincronizadas con ella.
+
+Los assets mantenibles del sitio viven bajo `website/assets/`. No editar manualmente los bundles `website/assets/index-*.js`, `index-*.css` ni el runtime generado en `website/index.html` sólo para cambiar branding.
 
 ## Presentaciones
 
-`docs/assets/arancel-mx-cover.svg` es la portada recomendada para decks. Una presentación debe llevar al lector de problema → capa de datos → superficies de consumo → cadena de confianza → arquitectura → caso de uso.
+`docs/assets/arancel-mx-cover.svg` es la portada recomendada. Una presentación puede profundizar más que el README, pero su primer minuto debe responder:
 
-El proyecto puede explicar capacidades avanzadas después, pero el primer minuto debe responder:
+> ¿Qué problema elimina `arancel-mx`, qué puedo consumir y cómo verifico la procedencia?
 
-> ¿Qué problema elimina `arancel-mx` y por qué debería consumir esta capa en vez de volver a construirla?
+## Checklist antes de publicar
 
-## Sitio web
-
-Los assets mantenibles del sitio viven bajo `website/assets/`. `site-brand.css` es la frontera estable para tokens visuales y selectores de marca.
-
-No se deben editar manualmente los bundles `website/assets/index-*.js` / `index-*.css` ni el runtime generado dentro de `website/index.html` sólo para cambiar branding. Un cambio de esa naturaleza debe hacerse en la fuente que genere esos artefactos y luego regenerarse de manera reproducible.
-
-## Relación con la arquitectura actual
-
-Desde la integración #132, el hub público combina metadata/búsqueda operational en Vercel/Neon con rutas proxificadas al runtime FastAPI reusable. El branding debe explicar esa superficie sin alterar sus fronteras. La release verificada sigue siendo la fuente canónica para sincronización y auditoría.
-
-El **Official data pipeline** usa actualmente una revisión programada semanal los lunes. El branding y la narrativa nunca deben convertir frecuencias de automatización en promesas de frescura legal; la confianza proviene de la identidad de la release y su evidencia.
-
-## Checklist antes de publicar una pieza nueva
-
-- [ ] Usa un asset canónico o una exportación directa de éste.
+- [ ] Usa un asset canónico o una exportación directa.
 - [ ] El logo conserva proporciones y colores.
 - [ ] No sugiere afiliación gubernamental.
-- [ ] El copy explica una capacidad real del repositorio.
+- [ ] El copy describe una capacidad real.
 - [ ] La superficie recomendada coincide con el caso de uso.
-- [ ] Los claims de confianza pueden relacionarse con una release, manifest, hash o fuente.
-- [ ] La pieza sigue siendo legible en tamaño pequeño o thumbnail.
+- [ ] Los claims de confianza se pueden relacionar con release, manifest, hash o fuente.
+- [ ] El README sigue siendo una landing breve y el detalle vive en `docs/`.
+- [ ] Los enlaces públicos apuntan al hub `https://arancel-mx.vercel.app/` cuando corresponde.
 - [ ] Si es SVG, sigue siendo vector real y conserva metadata accesible.
