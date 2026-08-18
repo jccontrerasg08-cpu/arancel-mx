@@ -10,6 +10,30 @@ test('serves the public marketing root and preserves the explorer handoff', asyn
   await expect(page.getByRole('link', { name: /open explorer/i })).toHaveAttribute('href', 'https://arancel-mx.vercel.app/app');
 });
 
+test('serves the local research records page without an account boundary', async ({ page }) => {
+  await page.goto('/records');
+
+  await expect(page.getByRole('heading', { name: /save evidence you can return to/i })).toBeVisible();
+  await expect(page.getByText(/stored only in this browser/i)).toBeVisible();
+  await expect(page.getByRole('button', { name: /check verified record/i })).toBeVisible();
+});
+
+test('serves verified chapter and fraction-change discovery routes', async ({ page }) => {
+  await page.goto('/chapters');
+  await expect(page.getByRole('heading', { name: /chapters and data updates/i })).toBeVisible();
+
+  await page.goto('/changes');
+  await expect(page.getByRole('heading', { name: /find what a verified fraction shows now/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /inspect release/i })).toBeVisible();
+});
+
+test('serves the source-cited trade-context route', async ({ page }) => {
+  await page.goto('/trade-context');
+
+  await expect(page.getByRole('heading', { name: /comercio exterior: datos para entender el contexto/i })).toBeVisible();
+  await expect(page.getByRole('link', { name: /abrir explicación completa de INEGI/i })).toHaveAttribute('href', 'https://cuentame.inegi.org.mx/explora/economia/comercio_exterior/');
+});
+
 test('serves the verified tariff explorer', async ({ page }) => {
   await page.goto('/app');
 

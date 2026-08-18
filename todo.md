@@ -7,6 +7,23 @@
 - [x] Add a secure optional GitHub metadata token boundary for live repository activity, with a verified documented fallback.
 - [ ] Run full repository validation and create a protected pull request for the unified Vercel deployment.
 - [ ] Confirm the Vercel production alias serves the marketing root and the verified `/app` explorer.
+- [x] Verify that Vercel production serves the unified marketing root and the preserved verified explorer at `/app` after merge commit `48990f4`.
+- [x] Verify that Vercel production returns a live, credential-safe repository snapshot at `/v1/repository` and serves the public documentation hub at `/documentation`.
 - [ ] Keep FastAPI Cloud available as a temporary fallback until Vercel primary validation is complete.
 - [ ] Document the Vercel primary cutover criteria before any FastAPI Cloud redirect or retirement decision.
 - [ ] Use the optional server-side GitHub token for immutable release resolution and FastAPI Cloud startup reliability, with an unauthenticated fallback.
+- [ ] Decide and document whether FastAPI Cloud remains a disaster-recovery fallback or is retired after the Vercel observation window.
+- [ ] Collect and analyze user-supplied website references for content, imagery, flows, diagrams, navigation, and documentation patterns.
+- [ ] Produce an evidence-based public-site upgrade brief and implement the approved high-leverage improvements.
+- [x] Analyze the supplied Secretaría de Economía, ANAM, AduaEasy, and SDV references for authoritative content, educational flows, diagrams, and reusable information architecture.
+- [x] Classify reference material into citable facts, adaptation-worthy interaction patterns, and elements that should not be copied into the verified arancel-mx trust model.
+- [ ] Implement the approved Waves 0–3 package: operating clarity, trust surfaces, `/learn`, and a task-led documentation hub.
+- [x] Produce ten concrete, authority-safe arancel-mx feature ideas for each supplied reference page and prioritize the resulting 50-item catalog.
+- [x] Produce and maintain a master architecture and construction blueprint covering macro topology, micro modules, web presentation, dependencies, delivery flows, quality gates, and governance.
+- [ ] Extract and classify every link from the supplied Comercio Exterior MX and Tratados con Links PDFs before publishing any new official-resource directory.
+- [x] Add a local, browser-only research-records page inspired by the supplied “Mi catálogo” reference without accounts, server storage, or legal-classification claims.
+- [x] Add an editorial chapter and verified-data update index inspired by the supplied chapter-grid and reform references, without using unsupported reform claims or a “catálogo” label.
+- [x] Add a fraction-change discovery surface that distinguishes release evidence, source status, and observed differences from any legal determination.
+- [x] Add a trade-context page that links official information and presents only independently sourced, dated economic context.
+- [x] Deliver the local research records, chapter discovery, fraction-change, and trade-context pages first; defer the official PDF-link directory until the underlying link-bearing source files are readable.
+- [ ] Publish the approved public-site expansion through a protected pull request and verify its Vercel preview before merge.
