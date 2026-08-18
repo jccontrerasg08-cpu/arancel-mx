@@ -54,8 +54,8 @@ jobs:
 
       - name: Verify documented official URLs are accessible
         run: |
-          python -m scripts.check_documented_urls --timeout 45
-          python -m scripts.validate_ligie_html_pages --timeout 45
+          python -m scripts.check_documented_urls --timeout 15
+          python -m scripts.validate_ligie_html_pages --timeout 15
 
       - name: Build distributions
         run: python -m build
