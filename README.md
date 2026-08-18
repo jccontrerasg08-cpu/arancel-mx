@@ -26,7 +26,7 @@
 
 Los datos arancelarios mexicanos se publican en documentos, páginas y archivos que cumplen funciones distintas. Para construir una aplicación sobre ellos no basta con descargar un XLSX: hay que saber **qué fuente se observó, cuándo se capturó, qué evidencia legal la acompaña, cómo se normalizó y qué bytes produjeron el dataset final**.
 
-`arancel-mx` nació para separar ese problema en una capa pública y reusable. Su responsabilidad es estrecha: convertir fuentes oficiales observadas en una representación canónica, reproducible y auditable. Dashboards, RAG, automatizaciones y productos de comercio exterior pueden consumir esa capa sin duplicar parsers ni inventar su propia versión de la LIGIE/NICO.
+`arancel-mx` nació para separar ese problema en una capa pública y reusable. Su responsabilidad es estrecha: convertir fuentes oficiales observadas en una representación canónica, reproducible y auditable. Interfaces analíticas, RAG, automatizaciones y productos de comercio exterior pueden consumir esa capa sin duplicar parsers ni inventar su propia versión de la LIGIE/NICO.
 
 > **Idea central:** no tienes que confiar en que el README diga “está actualizado”. Puedes verificar la release, sus hashes, su manifest y las fuentes capturadas.
 
