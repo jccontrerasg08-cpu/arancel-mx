@@ -1,6 +1,6 @@
 # Handoff de integración
 
-> **Baseline revisada:** `fb727ac87e451e3835afad315af29925452e7fc8`, después de PR #132 (`feat: centralize verified data hub on Vercel`). Antes de terminar cualquier rama, compara de nuevo contra `origin/main`.
+> **Baseline revisada:** `04badfc1e1a79de8b578cae6361cce897a21983a`, después de PR #134 (`fix: align Central Hub Vercel database configuration`). Antes de terminar cualquier rama, compara de nuevo contra `origin/main`.
 
 Esta guía mantiene integrables los cambios paralelos sin reintroducir acoplamientos que ya se eliminaron. Cada pull request debe respetar las fronteras actuales entre publicación oficial, capa operacional, hub público, API reusable y paquete Python.
 
@@ -15,9 +15,9 @@ Esta guía mantiene integrables los cambios paralelos sin reintroducir acoplamie
 | Releases y fuentes | La release verificada sigue siendo la fuente de verdad. El pipeline conserva snapshots, reconciliación, manifest e identidad inmutable. | `src/arancel_mx/sources/`, `src/arancel_mx/release/`, `tests/pipeline/`, `tests/sources/` |
 | CI | Los checks protegidos deben seguir cubriendo Python, runtime, análisis y publicación. | `.github/workflows/`, `tests/test_workflow_hardening.py` |
 
-## Qué cambió con #132
+## Arquitectura del Central Hub
 
-La separación anterior “sitio estático por un lado, toda la API por otro” ya no describe la superficie pública completa. Ahora el hub usa un modelo híbrido y deliberado:
+La separación anterior “sitio estático por un lado, toda la API por otro” ya no describe la superficie pública completa. El hub usa un modelo híbrido y deliberado:
 
 ```text
 release verificada
@@ -34,6 +34,14 @@ FastAPI reusable
 ```
 
 Esto **no** convierte Neon en la fuente canónica del dataset y **no** mueve el pipeline legal/de publicación a Vercel. La capa operational es una proyección read-only sincronizada desde releases certificadas. La identidad reproducible sigue viviendo en la release, manifest, hashes y fuentes capturadas.
+
+### Contrato operativo de configuración
+
+El Central Hub mantiene separadas la versión de la aplicación, la versión del paquete y la identidad inmutable del dataset. La versión de dataset visible en el sitio y la publicada por `/v1/meta` deben provenir de la misma release operativa promovida; si cualquiera no está disponible, el despliegue debe considerarse incompleto y no una versión alternativa válida.
+
+Para la función operativa de Vercel, `ARANCEL_MX_DATABASE_URL` es el nombre canónico de configuración. Cuando la base proviene de la integración administrada de Neon, la función admite `ARANCEL_MX_DATABASE_DATABASE_URL` como compatibilidad controlada; no se deben copiar los valores de la integración a un segundo secreto sólo para satisfacer el código. `CRON_SECRET` es un secreto sensible de **Production** y Vercel lo transmite como token Bearer al cron definido en `vercel.json`. No se registra, documenta ni reutiliza fuera de ese flujo.
+
+Antes de limpiar variables en Vercel, identifica si son creadas por la integración administrada. Las variables de conexión derivadas de Neon no son código muerto aunque el Central Hub consuma sólo la URL principal; eliminarlas puede romper la integración o despliegues posteriores. Las únicas eliminaciones permitidas son aliases manuales no referenciados y validados después de un despliegue satisfactorio.
 
 ## Secuencia mínima para una rama paralela
 
@@ -56,6 +64,8 @@ Los assets visuales y README pueden evolucionar sin tocar comportamiento de prod
 - `website/assets/arancel-mx-mark.svg`, `arancel-mx-logo.svg` y `site-brand.css` para identidad del hub;
 - no editar a mano `website/assets/index-*.js` ni `website/assets/index-*.css`, porque son bundles generados;
 - `website/index.html` contiene runtime generado inline: cualquier cambio de metadata debe venir **únicamente de una regeneración reproducible del origen que controla ese archivo**, nunca de un parche manual post-build.
+
+PR #134 eliminó el runtime/debug collector de Manus del sitio público. Cualquier regeneración futura debe conservar esa limpieza y los tests de `website/index.html` que la protegen.
 
 ## Estado de trabajos pendientes al crear esta guía
 
