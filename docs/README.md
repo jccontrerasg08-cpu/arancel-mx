@@ -1,46 +1,57 @@
 # Documentación de `arancel-mx`
 
-Esta guía organiza la documentación por objetivo. Empieza por la ruta que describa tu necesidad y evita tratar los archivos de ejemplo, la caché local o un visor de terceros como la fuente del dataset.
+La portada del repositorio explica **qué es** `arancel-mx` y cómo empezar. Este índice es la entrada canónica al detalle técnico: elige la ruta según lo que necesitas hacer.
 
-## Consumir un dataset verificado
+**[Hub público](https://arancel-mx.vercel.app/)** · **[API / OpenAPI](https://arancel-mx.vercel.app/docs)** · **[Metadata del dataset](https://arancel-mx.vercel.app/v1/meta)** · **[Última release](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest)** · **[README](../README.md)**
 
-| Si necesitas… | Lee… | Resultado |
+## Usar
+
+| Necesidad | Lee / abre | Resultado |
 |---|---|---|
-| Instalar, descargar y validar una release | [Inicio rápido de consumo](consumer-quickstart.md) | Un dataset local verificado y listo para consulta. |
-| Conocer cada comando, la caché y los formatos | [CLI de consumo](consumer-cli.md) | Uso correcto de `doctor`, `data`, `lookup`, `ficha` y `provenance`. |
-| Integrar el paquete o la API en otro sistema | [Consumo externo](external-consumption.md) | Contratos de descarga, Python y HTTP GET-only. |
-| Entender la jerarquía LIGIE/NICO | [Guía NICO y LIGIE](nico-ligie-guide.md) | Navegación HS2 → HS4 → HS6 → fracción → NICO. |
+| Buscar una fracción, HS o NICO sin instalar nada | [Hub público](https://arancel-mx.vercel.app/) | Búsqueda web sobre la release verificada activa. |
+| Instalar, descargar y validar una release | [Inicio rápido](consumer-quickstart.md) | Dataset local verificado y listo para consultar. |
+| Usar todos los comandos, formatos, caché y modo offline | [CLI de consumo](consumer-cli.md) | Referencia de `doctor`, `data`, `lookup`, `search`, `ficha`, `provenance` y más. |
+| Entender HS2 → HS4 → HS6 → fracción → NICO | [Guía NICO y LIGIE](nico-ligie-guide.md) | Jerarquía y navegación de códigos mexicanos. |
 
-## Verificar procedencia y datos
+## Integrar
 
-| Si necesitas… | Lee… | Resultado |
+| Necesidad | Lee / abre | Resultado |
 |---|---|---|
-| Entender la autoridad de cada fuente | [Roles de fuentes oficiales](official-source-roles.md) | Límites entre SNICE, Diputados, DOF y fuentes auxiliares. |
-| Revisar URLs, reconciliación y no-op | [Fuentes y reconciliación](sources.md) | Modelo de confianza y gates de publicación. |
-| Entender la promoción agresiva desde SNICE_DOCS | [Política de promoción SNICE_DOCS](source-promotion.md) | Criterios, procedencia, rollback y límites de la promoción. |
-| Consultar tablas, tiempos y semántica de release | [Modelo de datos](data-model.md) | Significado de los registros y del `manifest.json`. |
+| Integrar DuckDB/CSV/JSON, Python o HTTP | [Consumo externo](external-consumption.md) | Contratos de archivos, `Dataset` y API GET-only/read-only. |
+| Explorar el contrato HTTP | [OpenAPI público](https://arancel-mx.vercel.app/docs) | Endpoints y esquemas bajo el mismo dominio del hub. |
+| Identificar la release que sirve la capa pública | [`/v1/meta`](https://arancel-mx.vercel.app/v1/meta) | Identidad separada de API, paquete y dataset. |
+| Entender tablas, vigencia y manifest | [Modelo de datos](data-model.md) | Semántica del DuckDB y de una release verificable. |
 
-## Presentar el proyecto
+## Entender y verificar
 
-| Si necesitas… | Lee… | Resultado |
+| Necesidad | Lee | Resultado |
 |---|---|---|
-| Usar logos, paleta, portada o social artwork | [Marca y presentación](brand.md) | Assets canónicos, reglas de uso y sistema visual. |
-| Explicar qué problema resuelve y qué herramienta usar | [Marca y presentación](brand.md#storytelling) | Flow problema → interfaz → confianza → arquitectura. |
+| Saber qué autoridad cumple cada fuente | [Roles de fuentes oficiales](official-source-roles.md) | Límites entre Diputados, DOF, SNICE y fuentes auxiliares. |
+| Entender captura, reconciliación y no-op | [Fuentes y reconciliación](sources.md) | Cadena de confianza y gates de publicación. |
+| Entender cómo se evalúan candidatos SNICE_DOCS | [Política de promoción](source-promotion.md) | Allowlist, procedencia, rollback y límites. |
+| Revisar el mapa especializado del MOA | [Mapa ANAM / MOA](research/anam-moa-source-map.md) | Índice de navegación y procedencia hacia fuentes oficiales ANAM. |
 
-## Mantener y publicar
+## Mantener y contribuir
 
-| Si necesitas… | Lee… | Resultado |
+| Necesidad | Lee | Resultado |
 |---|---|---|
-| Ejecutar o depurar el pipeline semanal | [Proceso de release](release-process.md) | Estados, transacción y recuperación. |
-| Certificar permisos de producción sin alterar datos | [Certificación de producción](production-certification.md) | Runbook aislado para GitHub Releases e Issues. |
-| Publicar el paquete Python | [Release del paquete](package-release.md) | Flujo PyPI/TestPyPI y contrato de publicación. |
-| Configurar reglas de GitHub y seguridad | [Configuración de GitHub](operations/github-settings.md) | Protección de `main`, permisos y checks requeridos. |
-| Integrar cambios paralelos | [Handoff de integración](integration-handoff.md) | Baseline, fronteras de archivos y secuencia de merge segura. |
+| Ejecutar o depurar el pipeline semanal | [Proceso de release](release-process.md) | Estados, publicación, no-op y recuperación. |
+| Certificar permisos de producción | [Certificación de producción](production-certification.md) | Runbook aislado de write-boundaries y rollback. |
+| Publicar el paquete Python | [Release del paquete](package-release.md) | Flujo TestPyPI/PyPI y gates de publicación. |
+| Configurar GitHub y checks | [Configuración de GitHub](operations/github-settings.md) | Protección de `main`, permisos y required checks. |
+| Integrar cambios paralelos sin revertir arquitectura | [Handoff de integración](integration-handoff.md) | Baseline actual y fronteras de alto riesgo. |
+| Enviar cambios | [CONTRIBUTING.md](../CONTRIBUTING.md) | Flujo y criterios de contribución. |
+| Reportar un problema de seguridad | [SECURITY.md](../SECURITY.md) | Canal de reporte privado. |
 
-## Contribuir
+## Proyecto y presentación
 
-Los cambios que afecten fuentes, parsers, reconciliación o contratos de release deben incluir fixtures offline y pruebas de regresión. Empieza por [CONTRIBUTING.md](../CONTRIBUTING.md), luego consulta [SECURITY.md](../SECURITY.md) para reportes privados y [CODE_OF_CONDUCT.md](../CODE_OF_CONDUCT.md) para la colaboración.
+| Necesidad | Lee | Resultado |
+|---|---|---|
+| Entender por qué existe, qué posee y qué queda fuera | [Visión del proyecto](project-overview.md) | Arquitectura conceptual y fronteras de producto. |
+| Usar logos, paleta, copy o storytelling | [Marca y presentación](brand.md) | Assets canónicos y reglas de comunicación. |
+| Ver cambios relevantes | [CHANGELOG.md](../CHANGELOG.md) | Historial de versiones y entregas. |
+| Revisar reglas de comunidad | [CODE_OF_CONDUCT.md](../CODE_OF_CONDUCT.md) · [TERMS.md](../TERMS.md) | Colaboración y términos del proyecto. |
 
-> `arancel-mx` es una herramienta de datos técnicos, no asesoría legal. Las decisiones de clasificación o cumplimiento deben contrastarse con las publicaciones oficiales aplicables y profesionales calificados.
+> `arancel-mx` es una herramienta técnica de datos. No clasifica mercancías ni constituye asesoría legal. Para decisiones regulatorias o aduaneras deben consultarse las publicaciones oficiales aplicables y, cuando corresponda, profesionales especializados.
 
-[Español](../README.md) · [English](../README.en.md) · [Marca](brand.md) · [Última release](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest)
+**[Hub](https://arancel-mx.vercel.app/)** · **[API](https://arancel-mx.vercel.app/docs)** · **[Español](../README.md)** · **[English](../README.en.md)** · **[Última release](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest)**
