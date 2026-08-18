@@ -76,6 +76,30 @@ def test_readmes_lead_with_product_story_and_five_consumption_surfaces() -> None
     assert "docs/assets/arancel-mx-banner.svg" in english
 
 
+def test_public_brand_guide_is_discoverable_and_uses_current_schedule_language() -> None:
+    guide_path = ROOT / "docs/brand.md"
+    assert guide_path.is_file()
+    guide = guide_path.read_text(encoding="utf-8")
+    docs_index = _read("docs/README.md")
+
+    for phrase in (
+        "# Marca y presentación de `arancel-mx`",
+        "arancel-mx-logo.svg",
+        "arancel-mx-mark.svg",
+        "arancel-mx-social.svg",
+        "arancel-mx-cover.svg",
+        "#102A43",
+        "#008A5B",
+        "#CE1126",
+        "Traceable. Auditable. Reproducible.",
+    ):
+        assert phrase in guide
+
+    assert "[Marca y presentación](brand.md)" in docs_index
+    assert "pipeline semanal" in docs_index.lower()
+    assert "pipeline diario" not in docs_index.lower()
+
+
 def test_public_site_keeps_hub_assets_and_stable_brand_boundary() -> None:
     index = _read("website/index.html")
 
