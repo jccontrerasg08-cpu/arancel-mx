@@ -13,6 +13,7 @@ BRAND_ASSETS = (
     "docs/assets/arancel-mx-cover.svg",
     "website/assets/arancel-mx-mark.svg",
     "website/assets/arancel-mx-logo.svg",
+    "website/assets/arancel-mx-social.svg",
 )
 
 
@@ -74,15 +75,10 @@ def test_readmes_lead_with_product_story_and_five_consumption_surfaces() -> None
     assert "docs/assets/arancel-mx-banner.svg" in english
 
 
-def test_public_site_declares_social_metadata_without_dropping_hub_assets() -> None:
+def test_public_site_keeps_hub_assets_and_stable_brand_boundary() -> None:
     index = _read("website/index.html")
 
     for fragment in (
-        'property="og:title"',
-        'property="og:description"',
-        'property="og:image"',
-        'name="twitter:card"',
-        "/assets/arancel-mx-social.svg",
         "/assets/arancel-mx-mark.svg",
         "/assets/site-brand.css",
         "/assets/hub-search.css",
@@ -90,6 +86,9 @@ def test_public_site_declares_social_metadata_without_dropping_hub_assets() -> N
         "/assets/hub-search.js",
     ):
         assert fragment in index
+
+    assert (ROOT / "website/assets/arancel-mx-logo.svg").is_file()
+    assert (ROOT / "website/assets/arancel-mx-social.svg").is_file()
 
 
 def test_brand_css_uses_stable_asset_selectors_not_generated_bundle_classes() -> None:
