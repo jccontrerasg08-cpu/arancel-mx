@@ -29,7 +29,9 @@ Cada escritura vive dentro del job que la necesita; ningún workflow concede per
 
 ### Schedule del pipeline oficial
 
-GitHub deshabilita automáticamente los workflows programados de un repositorio público después de **60 días sin actividad** y notifica al mantenedor. Si el cron `17 11 * * *` deja de ejecutarse, revisa primero **Settings → Actions** y la pestaña **Actions** por el aviso de schedule deshabilitado antes de investigar el pipeline; reactivarlo es un paso manual. El canario `published-bundle-canary.yml` tampoco reinicia ese reloj: hace falta un commit o un PR.
+El schedule vigente del **Official data pipeline** es `17 11 * * 1`, una ejecución semanal los lunes en UTC. El cron anterior `17 11 * * *` era la revisión diaria previa a la integración #132 y ya no describe el workflow actual.
+
+GitHub deshabilita automáticamente los workflows programados de un repositorio público después de **60 días sin actividad** y notifica al mantenedor. Si el schedule semanal deja de ejecutarse, revisa primero **Settings → Actions** y la pestaña **Actions** por el aviso de schedule deshabilitado antes de investigar el pipeline; reactivarlo es un paso manual. El canario `published-bundle-canary.yml` tampoco reinicia ese reloj: hace falta un commit o un PR.
 
 On 2026-08-14 the `main-production` ruleset was **active** (required check `test`, strict up-to-date, conversation resolution, squash-only, linear history, block force-push/deletion). That API observation does **not** replace the UI checklist below. Release immutability and the default Actions token still need a maintainer click.
 
