@@ -52,7 +52,7 @@ BRAND_ASSETS = (
 )
 ```
 
-For each asset, parse the trusted repository XML, assert the root tag ends in `svg`, require `<title>`, `<desc>`, and `viewBox`, and reject `data:image`, `base64,`, `.png`, `.jpg`, and `.jpeg` references.
+For each asset, parse the trusted repository XML, assert the root tag ends in `svg`, require `<title>`, `<desc>`, and `viewBox`, reject `<image>` elements, and reject `data:image`, `base64,`, `.png`, `.jpg`, and `.jpeg` references.
 
 Require both READMEs to contain the five intent labels/surfaces and product-first headings. Require the existing public-site hub assets to remain referenced and require `site-brand.css` to expose both mark and horizontal logo without depending on generated bundle class names.
 
@@ -223,7 +223,8 @@ Expected: PASS.
 git diff fb727ac -- \
   vercel.json pyproject.toml requirements.txt requirements/ \
   .github/workflows api src/arancel_mx/operational \
-  website/index.html
+  website/index.html \
+  'website/assets/index-*.js' 'website/assets/index-*.css'
 ```
 
 Expected: no diff.
