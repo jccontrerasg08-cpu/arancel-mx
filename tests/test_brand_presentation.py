@@ -251,14 +251,17 @@ def test_integration_handoff_tracks_current_vercel_and_liveness_boundaries() -> 
     assert "proxy" in lowered
     assert "/v1/meta" in handoff
     assert "/readyz" in handoff
-    assert "e861aed" in handoff
+    assert re.search(r"Baseline revisada:\*\* `?[0-9a-f]{7,40}`?", handoff)
     assert "Vercel: /v1/meta + /v1/search + /readyz" in handoff
     assert "ARANCEL_MX_DATABASE_DATABASE_URL" in handoff
     assert "api/_vendor" in handoff
+    assert "api/_runtime.py" in handoff
     assert "python3.13" in handoff
     assert "psycopg[binary]>=3.3.4" in handoff
     assert "requirements.txt" in handoff
     assert "EXTERNALLY_UNPROBEABLE_URLS" in handoff
     assert "site-bridge.js" in handoff
     assert ".release-window code" in handoff
+    assert "maxDuration" in handoff
+    assert "must-revalidate" in handoff
     assert "installCommand" not in handoff
