@@ -4,13 +4,14 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
+PUBLIC_ORIGIN = "https://arancel-mx.vercel.app"
 
 
 def _text(path: str) -> str:
     return (ROOT / path).read_text(encoding="utf-8")
 
 
-def test_spanish_readme_documents_public_api_without_inventing_hostname() -> None:
+def test_spanish_readme_documents_current_public_api_front_door() -> None:
     text = _text("README.md")
     lowered = text.lower()
 
@@ -19,17 +20,17 @@ def test_spanish_readme_documents_public_api_without_inventing_hostname() -> Non
         "GET-only",
         "read-only",
         "sin API key",
-        "/v1",
+        PUBLIC_ORIGIN,
+        "/v1/meta",
         "/docs",
         "/readyz",
-        "/v1/meta",
-        "ARANCEL_MX_API_DATASET=data-2026.08.15",
         "8517130100",
     )
     for token in required:
         assert token in text
     assert "no clasifica" in lowered
     assert "asesoría legal" in lowered
+    assert "ARANCEL_MX_API_DATASET=data-" not in text
 
 
 def test_english_readme_documents_same_public_api_boundary() -> None:
@@ -41,38 +42,46 @@ def test_english_readme_documents_same_public_api_boundary() -> None:
         "GET-only",
         "read-only",
         "no API key",
-        "/v1",
+        PUBLIC_ORIGIN,
+        "/v1/meta",
         "/docs",
         "/readyz",
-        "/v1/meta",
-        "ARANCEL_MX_API_DATASET=data-2026.08.15",
         "8517130100",
     )
     for token in required:
         assert token in text
     assert "does not classify" in lowered
     assert "legal advice" in lowered
+    assert "ARANCEL_MX_API_DATASET=data-" not in text
 
 
-def test_external_consumption_guide_documents_unhosted_url_placeholder_and_versions() -> None:
+def test_external_consumption_guide_documents_hosted_vercel_contract() -> None:
     text = _text("docs/external-consumption.md")
     lowered = text.lower()
 
     required = (
-        "ARANCEL_MX_API_URL",
-        "ARANCEL_MX_API_DATASET=data-2026.08.15",
+        'ARANCEL_MX_API_URL="https://arancel-mx.vercel.app"',
         "/v1/lookup/8517130100",
-        "API v1",
-        "package 0.3.3",
-        "dataset data-2026.08.15",
+        "/v1/meta",
+        "/v1/search",
+        "/readyz",
+        "/docs",
+        "Vercel",
+        "Neon",
+        "proxy",
+        "data-YYYY.MM.DD",
     )
     for token in required:
         assert token in text
-    assert "api rest hospedada" not in lowered
-    assert "actualización, reconciliación ni publicación" in lowered
+    assert "actualización, reconciliación" in lowered
+    assert "read-only" in lowered
+    assert "get-only" in lowered
+    assert "fuente canónica" in lowered
+    assert "api.example.com" not in lowered
+    assert "el sitio no actúa como proxy" not in lowered
 
 
-def test_changelog_records_fastapi_v1_without_claiming_a_live_hostname() -> None:
+def test_changelog_preserves_historical_fastapi_release_context() -> None:
     text = _text("CHANGELOG.md")
 
     assert "FastAPI" in text
