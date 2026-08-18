@@ -36,6 +36,8 @@ The interactive experience lives at **[arancel-mx.vercel.app](https://arancel-mx
 | Consume a GET-only/read-only interface | **HTTP / API** | `GET /v1/meta`, `/v1/search`, `/v1/lookup/...` |
 | Verify how a result was produced | **Audit and reproduction** | `manifest.json`, `SHA256SUMS`, `provenance`, `data verify` |
 
+The **public HTTP API** is **GET-only**, **read-only**, and requires **no API key**. The interactive contract lives at `/docs`; `/readyz` reports readiness and `/v1/meta` identifies the served dataset.
+
 The Python package and the dataset have separate version cycles. A package version does not pin the data: dataset releases use immutable `data-YYYY.MM.DD` tags.
 
 **Direct downloads:** [DuckDB](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/arancel_mx.duckdb) · [CSV](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/arancel_mx.csv) · [JSON](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/arancel_mx.json) · [Manifest](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/manifest.json) · [SHA256SUMS](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/SHA256SUMS)
