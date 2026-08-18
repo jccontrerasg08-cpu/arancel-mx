@@ -10,6 +10,11 @@ from pathlib import Path
 import sys
 from urllib.parse import parse_qs, urlparse
 
+from api._runtime import ensure_project_source
+
+
+ensure_project_source()
+
 from arancel_mx.operational.query import active_release_metadata, search_active_release
 from arancel_mx.operational.runtime_config import operational_database_url
 
