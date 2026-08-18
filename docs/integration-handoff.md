@@ -55,7 +55,7 @@ Los assets visuales y README pueden evolucionar sin tocar comportamiento de prod
 - `docs/assets/arancel-mx-*.svg` para GitHub, README, documentación y presentaciones;
 - `website/assets/arancel-mx-mark.svg`, `arancel-mx-logo.svg` y `site-brand.css` para identidad del hub;
 - no editar a mano `website/assets/index-*.js` ni `website/assets/index-*.css`, porque son bundles generados;
-- tratar `website/index.html` con especial cuidado: contiene runtime generado inline, por lo que cambios de metadata deben venir de una regeneración reproducible o de una edición que pueda verificarse byte a byte.
+- `website/index.html` contiene runtime generado inline: cualquier cambio de metadata debe venir **únicamente de una regeneración reproducible del origen que controla ese archivo**, nunca de un parche manual post-build.
 
 ## Estado de trabajos pendientes al crear esta guía
 
