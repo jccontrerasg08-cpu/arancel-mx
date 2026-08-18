@@ -35,14 +35,16 @@ EXTRA_DOCUMENTED_URLS = (
     SNICE_INDIVIDUAL_CLASSIFIER_URL,
 )
 
-# VUCEM currently terminates or times out modern TLS clients (including GitHub
-# Actions) for these legacy HTML endpoints. Keep the official URLs documented
-# and syntax-validated; do not turn their independently confirmed transport
-# outage into a repository-code merge gate.
+# VUCEM and Diputados endpoints currently terminate or time out modern TLS
+# clients (including GitHub Actions). Keep these official URLs documented and
+# syntax-validated; do not turn independently confirmed transport outages into
+# repository-code merge gates. Canonical SNICE and DOF sources remain probed.
 EXTERNALLY_UNPROBEABLE_URLS = frozenset(
     {
         "https://www.ventanillaunica.gob.mx/vucem/Clasificador.html",
         "https://www.ventanillaunica.gob.mx/Clasificador/data/buildHojas1/90014002.html",
+        "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm",
+        "https://www.diputados.gob.mx/LeyesBiblio/pdf/LIGIE_2022.pdf",
     }
 )
 
