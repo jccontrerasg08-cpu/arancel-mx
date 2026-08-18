@@ -1,0 +1,143 @@
+from __future__ import annotations
+
+import xml.etree.ElementTree as ET
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+BRAND_ASSETS = (
+    "docs/assets/arancel-mx-logo.svg",
+    "docs/assets/arancel-mx-banner.svg",
+    "docs/assets/arancel-mx-social.svg",
+    "docs/assets/arancel-mx-cover.svg",
+    "website/assets/arancel-mx-mark.svg",
+    "website/assets/arancel-mx-logo.svg",
+    "website/assets/arancel-mx-social.svg",
+)
+
+
+def _read(path: str) -> str:
+    """Read a tracked presentation file as UTF-8 text."""
+    return (ROOT / path).read_text(encoding="utf-8")
+
+
+def test_brand_assets_are_accessible_vector_svgs_without_embedded_raster() -> None:
+    """Require accessible vector-only SVG masters with no raster escape hatch."""
+    forbidden = ("data:image", "base64,", ".png", ".jpg", ".jpeg")
+    for relative_path in BRAND_ASSETS:
+        path = ROOT / relative_path
+        assert path.is_file(), f"missing brand asset: {relative_path}"
+        text = path.read_text(encoding="utf-8")
+        # These are trusted, version-controlled project assets, never user-supplied XML.
+        root = ET.fromstring(text)  # noqa: S314
+        assert root.tag.endswith("svg")
+        assert root.attrib.get("viewBox"), f"missing viewBox: {relative_path}"
+        tags = {element.tag.rsplit("}", 1)[-1] for element in root.iter()}
+        assert "title" in tags, f"missing title: {relative_path}"
+        assert "desc" in tags, f"missing desc: {relative_path}"
+        assert "image" not in tags, f"embedded image element: {relative_path}"
+        lowered = text.lower()
+        assert not any(token in lowered for token in forbidden), relative_path
+
+
+def test_readmes_lead_with_product_story_and_five_consumption_surfaces() -> None:
+    """Keep Spanish and English onboarding aligned around five user intents."""
+    spanish = _read("README.md")
+    english = _read("README.en.md")
+
+    for phrase in (
+        "Por qué existe",
+        "Elige cómo usarlo",
+        "Datos / DuckDB",
+        "CLI",
+        "Python",
+        "HTTP / API",
+        "Auditoría y reproducción",
+        "pip install arancel-mx",
+        "arancel-mx data download",
+        "arancel-mx lookup 01012101",
+        "data-YYYY.MM.DD",
+    ):
+        assert phrase in spanish
+
+    for phrase in (
+        "Why it exists",
+        "Choose how to use it",
+        "Data / DuckDB",
+        "CLI",
+        "Python",
+        "HTTP / API",
+        "Audit and reproduction",
+        "pip install arancel-mx",
+        "arancel-mx data download",
+        "arancel-mx lookup 01012101",
+        "data-YYYY.MM.DD",
+    ):
+        assert phrase in english
+
+    assert "docs/assets/arancel-mx-banner.svg" in spanish
+    assert "docs/assets/arancel-mx-banner.svg" in english
+
+
+def test_public_brand_guide_is_discoverable_and_uses_current_schedule_language() -> None:
+    """Expose the canonical brand guide and current weekly automation wording."""
+    guide_path = ROOT / "docs/brand.md"
+    assert guide_path.is_file()
+    guide = guide_path.read_text(encoding="utf-8")
+    docs_index = _read("docs/README.md")
+
+    for phrase in (
+        "# Marca y presentación de `arancel-mx`",
+        "arancel-mx-logo.svg",
+        "arancel-mx-mark.svg",
+        "arancel-mx-social.svg",
+        "arancel-mx-cover.svg",
+        "#102A43",
+        "#008A5B",
+        "#CE1126",
+        "Traceable. Auditable. Reproducible.",
+    ):
+        assert phrase in guide
+
+    assert "[Marca y presentación](brand.md)" in docs_index
+    assert "pipeline semanal" in docs_index.lower()
+    assert "pipeline diario" not in docs_index.lower()
+
+
+def test_public_site_keeps_hub_assets_and_stable_brand_boundary() -> None:
+    """Preserve the generated hub wiring while exposing stable brand assets."""
+    index = _read("website/index.html")
+
+    for fragment in (
+        "/assets/arancel-mx-mark.svg",
+        "/assets/site-brand.css",
+        "/assets/hub-search.css",
+        "/assets/site-bridge.js",
+        "/assets/hub-search.js",
+    ):
+        assert fragment in index
+
+    assert (ROOT / "website/assets/arancel-mx-logo.svg").is_file()
+    assert (ROOT / "website/assets/arancel-mx-social.svg").is_file()
+
+
+def test_brand_css_uses_stable_asset_selectors_not_generated_bundle_classes() -> None:
+    """Keep brand CSS independent from generated or minified application classes."""
+    styles = _read("website/assets/site-brand.css")
+    assert "/assets/arancel-mx-mark.svg" in styles
+    assert "/assets/arancel-mx-logo.svg" in styles
+    assert "index-" not in styles
+
+
+def test_integration_handoff_describes_post_135_hub_boundary() -> None:
+    """Keep the integration handoff synchronized with the post-135 architecture."""
+    handoff = _read("docs/integration-handoff.md")
+    lowered = handoff.lower()
+    assert "operational" in lowered
+    assert "neon" in lowered
+    assert "proxy" in lowered
+    assert "/v1/meta" in handoff
+    assert "6297433" in handoff
+    assert "ARANCEL_MX_DATABASE_DATABASE_URL" in handoff
+    assert 'installCommand: "python -m pip install -r requirements.txt"' in handoff

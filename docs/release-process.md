@@ -1,6 +1,6 @@
 # Proceso de publicación
 
-`arancel-mx` usa un pipeline autónomo y fail-closed para construir y publicar snapshots oficiales. El workflow de producción es **Official data pipeline**, definido en [`.github/workflows/official-data-pipeline.yml`](../.github/workflows/official-data-pipeline.yml), y corre diariamente con cron `17 11 * * *` además de admitir `workflow_dispatch`.
+`arancel-mx` usa un pipeline autónomo y fail-closed para construir y publicar snapshots oficiales. El workflow de producción es **Official data pipeline**, definido en [`.github/workflows/official-data-pipeline.yml`](../.github/workflows/official-data-pipeline.yml), y su schedule vigente es semanal los lunes con cron `17 11 * * 1`, además de admitir `workflow_dispatch`. El cron histórico `17 11 * * *` correspondía a la revisión diaria anterior y fue sustituido por la integración #132; se conserva aquí sólo como contexto de migración.
 
 Las ejecuciones que pueden mutar (cron y `publish=true`) comparten un único grupo de concurrency y nunca se solapan. Los dry runs usan un grupo propio por ref: GitHub mantiene una sola ejecución pendiente por grupo y cancela la anterior, así que compartir el grupo permitiría que un dry run manual desplazara en silencio una ejecución de producción encolada.
 
