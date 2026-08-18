@@ -12,7 +12,7 @@ def test_vercel_declares_a_weekly_private_operational_sync_cron() -> None:
     handler = (ROOT / "api" / "sync_operational.py").read_text(encoding="utf-8")
 
     assert config["crons"] == [{"path": "/api/sync_operational", "schedule": "30 12 * * 1"}]
-    assert 'os.environ.get("ARANCEL_MX_DATABASE_URL")' in handler
+    assert "operational_database_url" in handler
     assert 'os.environ.get("CRON_SECRET")' in handler
     assert "synchronize_latest_release" in handler
     assert "HTTPStatus.UNAUTHORIZED" in handler

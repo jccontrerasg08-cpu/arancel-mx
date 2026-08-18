@@ -54,6 +54,9 @@ def test_public_site_contains_its_logo_and_route_bridge() -> None:
     assert "/assets/site-bridge.js" in index
     assert "/assets/hub-search.css" in index
     assert "/assets/hub-search.js" in index
+    assert "id=\"root\"" in index
+    assert "manus-runtime" not in index
+    assert "/__manus__/debug-collector.js" not in index
     assert "consumer-quickstart.md" in bridge
 
     search = (ROOT / "website" / "assets" / "hub-search.js").read_text(encoding="utf-8")
