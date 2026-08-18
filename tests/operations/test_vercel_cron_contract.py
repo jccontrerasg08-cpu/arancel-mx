@@ -25,8 +25,14 @@ def test_vercel_bundles_the_operational_driver_only_for_operational_functions() 
 
     assert config["buildCommand"] == "python3.13 -m pip install --target api/_vendor 'psycopg[binary]>=3.3.4'"
     assert config["functions"] == {
-        "api/operational.py": {"includeFiles": "api/_vendor/**"},
-        "api/sync_operational.py": {"includeFiles": "api/_vendor/**"},
+        "api/operational.py": {
+            "includeFiles": "{api/_vendor/**,src/arancel_mx/**}",
+            "maxDuration": 30,
+        },
+        "api/sync_operational.py": {
+            "includeFiles": "{api/_vendor/**,src/arancel_mx/**}",
+            "maxDuration": 60,
+        },
     }
     assert not (ROOT / "requirements.txt").exists()
     assert 'Path(__file__).with_name("_vendor")' in read_handler
