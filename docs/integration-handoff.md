@@ -1,80 +1,96 @@
 # Handoff de integración
 
-> **Baseline revisada:** `62974330f1170504fd8b7a5005402bf4dd682e6f`, después de PR #135 (`fix: install operational dependencies in Vercel`). Antes de terminar cualquier rama, compara de nuevo contra `origin/main`.
+> **Baseline revisada:** `6ea740e7e22e81c3aff1b05c03f174d68f9a7769`, después de PR #136 (`fix: declare Vercel operational driver directly`). Antes de terminar cualquier rama, compara de nuevo contra `origin/main`.
 
-Esta guía mantiene integrables los cambios paralelos sin reintroducir acoplamientos que ya se eliminaron. Cada pull request debe respetar las fronteras actuales entre publicación oficial, capa operacional, hub público, API reusable y paquete Python.
+Esta guía evita que un cambio correcto de forma aislada revierta decisiones arquitectónicas posteriores. Cada PR debe preservar las fronteras entre publicación oficial, capa operacional, hub público, API reusable y paquete Python.
 
 ## Fronteras que deben preservarse
 
-| Área | Contrato vigente | Archivos con mayor riesgo de solapamiento |
+| Área | Contrato vigente | Archivos de alto riesgo |
 |---|---|---|
-| Hub público | `https://arancel-mx.vercel.app` sirve `website/`, mantiene rutas SPA, búsqueda arancelaria y metadata de confianza. | `website/`, `vercel.json`, `tests/test_public_site.py` |
-| Capa operational de Vercel | `/v1/meta` y `/v1/search` se resuelven en funciones read-only respaldadas por Neon; la sincronización operacional parte de releases verificadas. | `api/operational.py`, `api/sync_operational.py`, `src/arancel_mx/operational/`, tests de `operations/` |
-| FastAPI reusable | El runtime FastAPI sigue siendo desplegable por separado. Vercel presenta bajo el mismo dominio las rutas restantes mediante **proxy** hacia `arancel-mx.fastapicloud.dev`. | `src/arancel_mx/api/`, `docs/external-consumption.md`, rutas proxy en `vercel.json` |
-| Paquete y dependencias | Las actualizaciones coordinan `pyproject.toml`, `requirements/` y pruebas de instalación/distribución. | `pyproject.toml`, `requirements/`, `tests/package*`, workflows de publicación |
-| Releases y fuentes | La release verificada sigue siendo la fuente de verdad. El pipeline conserva snapshots, reconciliación, manifest e identidad inmutable. | `src/arancel_mx/sources/`, `src/arancel_mx/release/`, `tests/pipeline/`, `tests/sources/` |
-| CI | Los checks protegidos deben seguir cubriendo Python, runtime, análisis y publicación. | `.github/workflows/`, `tests/test_workflow_hardening.py` |
+| Hub público | `https://arancel-mx.vercel.app` sirve `website/`, búsqueda, metadata y rutas públicas bajo un solo dominio. | `website/`, `vercel.json`, `tests/test_public_site.py` |
+| Capa operacional | `/v1/meta` y `/v1/search` son read-only, respaldados por Neon y sincronizados desde releases verificadas. | `api/operational.py`, `api/sync_operational.py`, `src/arancel_mx/operational/` |
+| FastAPI reusable | El resto de `/v1/*`, `/docs` y `/readyz` se presenta en Vercel mediante proxy al runtime FastAPI. | `src/arancel_mx/api/`, `vercel.json`, `docs/external-consumption.md` |
+| Paquete y dependencias | Packaging, runtime Vercel y builds deben declarar sus dependencias en la superficie que realmente instala cada plataforma. | `pyproject.toml`, `requirements.txt`, `requirements/` |
+| Releases y fuentes | La release verificable sigue siendo la fuente de verdad. | `src/arancel_mx/sources/`, `src/arancel_mx/release/`, tests de pipeline/fuentes |
+| CI | Los checks deben cubrir Python, runtime, browser, distribución y publicación. | `.github/workflows/`, tests de hardening |
+| Presentación | README raíz es front door compacto; `docs/README.md` es navegación profunda. | `README*.md`, `docs/`, assets de marca |
 
 ## Arquitectura del Central Hub
 
-La separación anterior “sitio estático por un lado, toda la API por otro” ya no describe la superficie pública completa. El hub usa un modelo híbrido y deliberado:
-
 ```text
-release verificada
-      ↓
+GitHub Release verificada
+          ↓
 sync operacional idempotente
-      ↓
-Neon
-      ↓
+          ↓
+        Neon
+          ↓
 Vercel: /v1/meta + /v1/search
 
 Vercel: /v1/* restante + /docs + /readyz
-      ↓ proxy
-FastAPI reusable
+          ↓ proxy
+   FastAPI reusable
 ```
 
-Esto **no** convierte Neon en la fuente canónica del dataset y **no** mueve el pipeline legal/de publicación a Vercel. La capa operational es una proyección read-only sincronizada desde releases certificadas. La identidad reproducible sigue viviendo en la release, manifest, hashes y fuentes capturadas.
+Neon no sustituye el dataset canónico y Vercel no mueve el pipeline legal/de publicación a la capa web. La identidad reproducible permanece en la release, manifest, hashes y fuentes capturadas.
 
-### Contrato operativo de configuración
+## Contrato operativo de Vercel
 
-El Central Hub mantiene separadas la versión de la aplicación, la versión del paquete y la identidad inmutable del dataset. La versión de dataset visible en el sitio y la publicada por `/v1/meta` deben provenir de la misma release operativa promovida; si cualquiera no está disponible, el despliegue debe considerarse incompleto y no una versión alternativa válida.
+La versión de dataset visible en el hub y la publicada por `/v1/meta` deben corresponder a la misma release promovida. Si esa identidad no está disponible o no puede validarse, el despliegue no debe presentar una versión alternativa como equivalente.
 
-Para la función operativa de Vercel, `ARANCEL_MX_DATABASE_URL` es el nombre canónico de configuración. Cuando la base proviene de la integración administrada de Neon, la función admite `ARANCEL_MX_DATABASE_DATABASE_URL` como compatibilidad controlada; no se deben copiar los valores de la integración a un segundo secreto sólo para satisfacer el código. `CRON_SECRET` es un secreto sensible de **Production** y Vercel lo transmite como token Bearer al cron definido en `vercel.json`. No se registra, documenta ni reutiliza fuera de ese flujo.
+Configuración relevante:
 
-Vercel debe instalar las dependencias operativas antes de construir el hub mediante `installCommand: "python -m pip install -r requirements.txt"`. No se debe volver a dejar ese comando vacío mientras `/v1/meta`, `/v1/search` y la sincronización operacional dependan del runtime Python desplegado en Vercel.
+- `ARANCEL_MX_DATABASE_URL` es el nombre canónico de la conexión operacional.
+- `ARANCEL_MX_DATABASE_DATABASE_URL` se admite como compatibilidad controlada cuando la integración administrada de Neon genera ese nombre.
+- `CRON_SECRET` es un secreto de Production enviado como Bearer token al cron operacional; no se registra ni reutiliza.
+- `vercel.json` debe conservar `installCommand: "python -m pip install -r requirements.txt"` mientras las funciones Python operativas formen parte del despliegue.
+- Desde #136, `requirements.txt` declara directamente `psycopg[binary]>=3.3.4`. Vercel instala ese archivo como requerimientos de runtime; no debe depender de que un editable extra de `pyproject.toml` sea descubierto implícitamente por el empaquetador.
 
-Antes de limpiar variables en Vercel, identifica si son creadas por la integración administrada. Las variables de conexión derivadas de Neon no son código muerto aunque el Central Hub consuma sólo la URL principal; eliminarlas puede romper la integración o despliegues posteriores. Las únicas eliminaciones permitidas son aliases manuales no referenciados y validados después de un despliegue satisfactorio.
+No elimines variables creadas por la integración administrada de Neon sólo porque una de ellas no se lea directamente en el código. Antes de limpiar aliases, verifica su origen y realiza un despliegue satisfactorio con la configuración resultante.
 
 ## Secuencia mínima para una rama paralela
 
-1. Parte de `main` actualizado y registra el SHA base.
-2. Conserva el cambio más pequeño que respete la frontera del área.
-3. Ejecuta primero las pruebas específicas de la zona afectada.
-4. Antes del PR, compara otra vez contra `main` y revisa conflictos de archivos, no sólo conflictos de Git.
-5. Deja los checks completos y el preview de Vercel como gate de integración.
-6. Usa squash merge, que es el método permitido por la configuración actual del repositorio.
+1. Parte del `main` actualizado y registra el SHA base.
+2. Relee los archivos/contratos del área que tocarás.
+3. Introduce el cambio más pequeño que respete esa frontera.
+4. Ejecuta primero las pruebas específicas de la zona.
+5. Compara otra vez contra `main` antes del PR o merge.
+6. Revisa conflictos semánticos de archivos, no sólo el indicador de merge de Git.
+7. Usa CI completo, browser/runtime smoke y preview de Vercel como gates cuando correspondan.
+8. Conserva el método de merge permitido por la configuración vigente del repositorio.
 
-Cuando una rama toca el hub, confirma raíz y ruta directa, conserva `hub-search.js`/`hub-search.css` si no estás modificando búsqueda y verifica que `/v1/meta` siga resolviendo a la función operational. Las rutas generales `/v1/:path*`, `/docs` y `/readyz` deben conservar el proxy FastAPI mientras esa arquitectura siga vigente.
+Si `main` avanza durante una revisión, detén la validación final, inspecciona el nuevo commit/PR y después integra o rebasea de forma explícita. No reutilices un CI verde de un head anterior como evidencia del head nuevo.
 
-Cuando una rama toca dependencias o certificación del paquete, revísala después de las ramas de producto/sitio que también modifiquen `pyproject.toml`, `requirements/` o documentación raíz. Esto reduce conflictos y hace que la certificación pruebe el estado final.
+## Hub y routing
 
-## Presentación y branding
+Cuando una rama toca la superficie pública:
 
-Los assets visuales y README pueden evolucionar sin tocar comportamiento de producción. La frontera segura actual es:
+- confirma raíz y rutas directas;
+- conserva `hub-search.js` / `hub-search.css` si no estás cambiando búsqueda;
+- verifica que `/v1/meta` y `/v1/search` sigan resolviendo a la capa operacional;
+- conserva el proxy para `/v1/:path*`, `/docs` y `/readyz` mientras la arquitectura siga vigente;
+- no agregues una segunda URL “canónica” en documentación si el dominio público puede servir el mismo contrato.
 
-- `docs/assets/arancel-mx-*.svg` para GitHub, README, documentación y presentaciones;
+## Presentación y documentación
+
+La frontera mantenible de marca es:
+
+- `docs/assets/arancel-mx-*.svg` para GitHub, documentación y presentaciones;
 - `website/assets/arancel-mx-mark.svg`, `arancel-mx-logo.svg` y `site-brand.css` para identidad del hub;
-- no editar a mano `website/assets/index-*.js` ni `website/assets/index-*.css`, porque son bundles generados;
-- `website/index.html` contiene runtime generado inline: cualquier cambio de metadata debe venir **únicamente de una regeneración reproducible del origen que controla ese archivo**, nunca de un parche manual post-build.
+- `README.md` / `README.en.md` como landing técnica breve;
+- `docs/README.md` como índice canónico de documentación profunda;
+- `docs/project-overview.md` para arquitectura conceptual y límites de producto.
 
-PR #134 eliminó el runtime/debug collector de Manus del sitio público. Cualquier regeneración futura debe conservar esa limpieza y los tests de `website/index.html` que la protegen.
+No edites manualmente `website/assets/index-*.js`, `website/assets/index-*.css` ni el runtime generado dentro de `website/index.html` para cambios de branding. Esos cambios deben entrar mediante la fuente y regeneración reproducible correspondiente.
 
-## Estado de trabajos pendientes al crear esta guía
+PR #134 eliminó el runtime/debug collector de Manus del sitio público. Regeneraciones futuras deben conservar esa limpieza y sus tests.
 
-| Candidato | Área | Acción recomendada |
-|---|---|---|
-| PR #124, `httpx2` | Dependencias | Dejar que Dependabot termine rebase; no mezclar cambios manuales de branding en esa rama |
-| PR #125, `setuptools` | Dependencias/build | Igual: rebase y checks completos después de cambios activos que toquen packaging |
-| `fix/windows-helper-env-path-034` | Publicación/Windows | Comparar su único cambio útil contra `main` actual antes de rescatarlo; no mergear la rama obsoleta completa |
+## Dependencias y certificación
 
-Esta guía no sustituye `CONTRIBUTING.md`, las protecciones de `main` ni los checks requeridos. Es el mapa de integración para evitar que un cambio correcto localmente revierta una decisión arquitectónica posterior.
+Cuando una rama toca dependencias o publicación de paquete, revísala después de cambios activos que también modifiquen `pyproject.toml`, `requirements.txt`, `requirements/` o documentación raíz. Vercel y el paquete Python no necesariamente usan el mismo mecanismo de instalación, por lo que cada plataforma debe probar el contrato que realmente ejecuta.
+
+## Trabajos fuera de este handoff
+
+Dependabot, ramas antiguas o issues funcionales deben evaluarse por separado. No mezcles una actualización de dependencias, una corrección de pipeline o una reconciliación NICO dentro de un PR puramente documental sólo para reducir el número de ramas.
+
+Esta guía no sustituye [CONTRIBUTING.md](../CONTRIBUTING.md), [SECURITY.md](../SECURITY.md), las protecciones de `main` ni los checks requeridos. Es el mapa de integración para preservar decisiones ya verificadas.
