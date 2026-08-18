@@ -73,7 +73,7 @@ def test_external_consumption_guide_documents_hosted_vercel_contract() -> None:
     )
     for token in required:
         assert token in text
-    assert "actualización, reconciliación" in lowered
+    assert "api de escritura o administración" in lowered
     assert "read-only" in lowered
     assert "get-only" in lowered
     assert "fuente canónica" in lowered
