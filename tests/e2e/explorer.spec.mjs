@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises';
+
 import { expect, test } from '@playwright/test';
 
 test('serves the public marketing root and preserves the explorer handoff', async ({ page }) => {
@@ -104,7 +106,13 @@ test('saves and exports a browser-local research snapshot', async ({ page }) => 
   await expect(page.getByTestId('snapshot-list')).toContainText('85171301');
   const download = page.waitForEvent('download');
   await page.getByTestId('export-snapshots').click();
-  await expect((await download).suggestedFilename()).toBe('arancel-mx-fichas-locales.json');
+  const backup = await download;
+  await expect(backup.suggestedFilename()).toBe('arancel-mx-fichas-locales.json');
+  const payload = JSON.parse(await readFile(await backup.path(), 'utf-8'));
+  expect(payload.schema_version).toBe(1);
+  expect(payload.snapshots).toEqual(expect.arrayContaining([
+    expect.objectContaining({ code: '85171301', dataset_version: '2026.08.15' }),
+  ]));
 });
 
 
