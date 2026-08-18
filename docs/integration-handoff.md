@@ -1,6 +1,6 @@
 # Handoff de integración
 
-> **Baseline revisada:** `04badfc1e1a79de8b578cae6361cce897a21983a`, después de PR #134 (`fix: align Central Hub Vercel database configuration`). Antes de terminar cualquier rama, compara de nuevo contra `origin/main`.
+> **Baseline revisada:** `62974330f1170504fd8b7a5005402bf4dd682e6f`, después de PR #135 (`fix: install operational dependencies in Vercel`). Antes de terminar cualquier rama, compara de nuevo contra `origin/main`.
 
 Esta guía mantiene integrables los cambios paralelos sin reintroducir acoplamientos que ya se eliminaron. Cada pull request debe respetar las fronteras actuales entre publicación oficial, capa operacional, hub público, API reusable y paquete Python.
 
@@ -40,6 +40,8 @@ Esto **no** convierte Neon en la fuente canónica del dataset y **no** mueve el 
 El Central Hub mantiene separadas la versión de la aplicación, la versión del paquete y la identidad inmutable del dataset. La versión de dataset visible en el sitio y la publicada por `/v1/meta` deben provenir de la misma release operativa promovida; si cualquiera no está disponible, el despliegue debe considerarse incompleto y no una versión alternativa válida.
 
 Para la función operativa de Vercel, `ARANCEL_MX_DATABASE_URL` es el nombre canónico de configuración. Cuando la base proviene de la integración administrada de Neon, la función admite `ARANCEL_MX_DATABASE_DATABASE_URL` como compatibilidad controlada; no se deben copiar los valores de la integración a un segundo secreto sólo para satisfacer el código. `CRON_SECRET` es un secreto sensible de **Production** y Vercel lo transmite como token Bearer al cron definido en `vercel.json`. No se registra, documenta ni reutiliza fuera de ese flujo.
+
+Vercel debe instalar las dependencias operativas antes de construir el hub mediante `installCommand: "python -m pip install -r requirements.txt"`. No se debe volver a dejar ese comando vacío mientras `/v1/meta`, `/v1/search` y la sincronización operacional dependan del runtime Python desplegado en Vercel.
 
 Antes de limpiar variables en Vercel, identifica si son creadas por la integración administrada. Las variables de conexión derivadas de Neon no son código muerto aunque el Central Hub consuma sólo la URL principal; eliminarlas puede romper la integración o despliegues posteriores. Las únicas eliminaciones permitidas son aliases manuales no referenciados y validados después de un despliegue satisfactorio.
 

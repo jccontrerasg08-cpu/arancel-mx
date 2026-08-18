@@ -130,13 +130,14 @@ def test_brand_css_uses_stable_asset_selectors_not_generated_bundle_classes() ->
     assert "index-" not in styles
 
 
-def test_integration_handoff_describes_post_134_hub_boundary() -> None:
-    """Keep the integration handoff synchronized with the post-134 architecture."""
+def test_integration_handoff_describes_post_135_hub_boundary() -> None:
+    """Keep the integration handoff synchronized with the post-135 architecture."""
     handoff = _read("docs/integration-handoff.md")
     lowered = handoff.lower()
     assert "operational" in lowered
     assert "neon" in lowered
     assert "proxy" in lowered
     assert "/v1/meta" in handoff
-    assert "04badfc" in handoff
+    assert "6297433" in handoff
     assert "ARANCEL_MX_DATABASE_DATABASE_URL" in handoff
+    assert 'installCommand: "python -m pip install -r requirements.txt"' in handoff
