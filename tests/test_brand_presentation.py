@@ -137,6 +137,24 @@ def test_repository_front_door_markdown_links_resolve_locally() -> None:
         assert not missing, f"broken local Markdown links in {source}: {missing}"
 
 
+def test_consumer_docs_use_vercel_as_the_public_http_front_door() -> None:
+    """Keep consumer guidance aligned with the deployed Vercel/FastAPI hybrid surface."""
+    quickstart = _read("docs/consumer-quickstart.md")
+    external = _read("docs/external-consumption.md")
+
+    for document in (quickstart, external):
+        assert "https://arancel-mx.vercel.app" in document
+        assert "/v1/meta" in document
+        assert "/readyz" in document
+        assert "/docs" in document
+
+    assert 'ARANCEL_MX_API_URL="https://arancel-mx.vercel.app"' in external
+    assert "Vercel" in external
+    assert "Neon" in external
+    assert "proxy" in external.lower()
+    assert "el sitio no actúa como proxy" not in external.lower()
+
+
 def test_public_brand_guide_is_discoverable_and_uses_current_schedule_language() -> None:
     """Expose the canonical brand guide and current weekly automation wording."""
     guide_path = ROOT / "docs/brand.md"
