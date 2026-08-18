@@ -61,6 +61,8 @@ def test_public_site_contains_its_logo_and_route_bridge() -> None:
     assert "consumer-quickstart.md" in bridge
     assert "fetch('/v1/meta'" in bridge
     assert "synchronizeDisplayedRelease" in bridge
+    assert "updateDisplayedRelease" in bridge
+    assert "let activeDatasetTag" in bridge
 
     search = (ROOT / "website" / "assets" / "hub-search.js").read_text(encoding="utf-8")
     styles = (ROOT / "website" / "assets" / "hub-search.css").read_text(encoding="utf-8")
