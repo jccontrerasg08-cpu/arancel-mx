@@ -76,19 +76,20 @@ sincronización operacional idempotente
           ↓
         Neon
           ↓
-Vercel: /v1/meta + /v1/search
+Vercel: /v1/meta + /v1/search + /readyz
 
-Vercel: /v1/* restante + /docs + /readyz
+Vercel: /v1/* restante + /docs
           ↓ proxy
    runtime FastAPI reusable
 ```
 
-`/v1/meta` y `/v1/search` se resuelven mediante una proyección operacional read-only sincronizada desde releases verificadas. Las demás rutas públicas se presentan bajo el mismo dominio y se proxifican al runtime FastAPI. **Neon y Vercel son superficies de servicio, no sustituyen la release verificable como fuente de verdad.**
+`/v1/meta`, `/v1/search` y `/readyz` se resuelven mediante una proyección operacional read-only sincronizada desde releases verificadas. Las demás rutas `/v1/*` y `/docs` se presentan bajo el mismo dominio y se proxifican al runtime FastAPI. **Neon y Vercel son superficies de servicio, no sustituyen la release verificable como fuente de verdad.**
 
 Para consumidores, esto permite usar un solo origen público:
 
 ```bash
 export ARANCEL_MX_API_URL="https://arancel-mx.vercel.app"
+curl "$ARANCEL_MX_API_URL/readyz"
 curl "$ARANCEL_MX_API_URL/v1/meta"
 curl "$ARANCEL_MX_API_URL/v1/lookup/8517130100"
 ```
