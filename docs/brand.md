@@ -164,13 +164,15 @@ El dominio público principal es [`https://arancel-mx.vercel.app/`](https://aran
 
 La arquitectura vigente combina:
 
-- `/v1/meta` y `/v1/search` en la capa operacional read-only de Vercel/Neon;
-- las demás rutas `/v1/*`, `/docs` y `/readyz` bajo el mismo dominio mediante proxy al runtime FastAPI reusable;
+- `/v1/meta`, `/v1/search` y `/readyz` en la capa operacional read-only de Vercel/Neon;
+- las demás rutas `/v1/*` y `/docs` bajo el mismo dominio mediante proxy al runtime FastAPI reusable;
 - la GitHub Release verificable como fuente canónica del dataset.
 
 Desde #139, Vercel bundlea `psycopg[binary]>=3.3.4` de forma aislada en `api/_vendor` mediante `buildCommand` y sólo lo incluye en las funciones operativas. `requirements.txt` fue eliminado para que ese driver no se convierta en dependencia base del paquete. Esta decisión no es copy promocional, pero las guías técnicas deben permanecer sincronizadas con ella.
 
-Los assets mantenibles del sitio viven bajo `website/assets/`. No editar manualmente los bundles `website/assets/index-*.js`, `index-*.css` ni el runtime generado en `website/index.html` sólo para cambiar branding.
+Desde #143–#144, el bridge público sincroniza la identidad visible de la release con `/v1/meta` incluso después de render tardío, y `website/index.html` referencia `site-bridge.js` con un query de versión para invalidar caché cuando cambia ese comportamiento. La documentación no debe hardcodear una release como identidad operativa del hub.
+
+Los assets mantenibles del sitio viven bajo `website/assets/`. No editar manualmente los bundles `website/assets/index-*.js`, `index-*.css` ni runtime generado sólo para cambiar branding.
 
 ## Presentaciones
 
