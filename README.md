@@ -18,7 +18,7 @@ Herramientas abiertas en Python para capturar, normalizar, reconciliar y publica
 [![DuckDB](https://img.shields.io/badge/DuckDB-embedded-FFF000?logo=duckdb&logoColor=000)](https://duckdb.org/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-**[Explorador web](https://arancel-mx.vercel.app/app)** · **[Instalación](#instalación)** · **[CLI](#uso-rápido-cli)** · **[Python](#uso-desde-python)** · **[Inicio consumidor](docs/consumer-quickstart.md)** · **[Consumo externo](docs/external-consumption.md)** · **[NICO y LIGIE](docs/nico-ligie-guide.md)** · **[Fuentes y roles](docs/official-source-roles.md)** · **[Datos](#modelo-de-datos)** · **[Automatización](#pipeline-oficial-autónomo)** · **[Documentación](docs/README.md)** · **[Certificación](docs/production-certification.md)** · **[Contribuir](#contribución)**
+**[Sitio web](https://arancel-mx.vercel.app/)** · **[Instalación](#instalación)** · **[CLI](#uso-rápido-cli)** · **[Python](#uso-desde-python)** · **[Inicio consumidor](docs/consumer-quickstart.md)** · **[Consumo externo](docs/external-consumption.md)** · **[NICO y LIGIE](docs/nico-ligie-guide.md)** · **[Fuentes y roles](docs/official-source-roles.md)** · **[Datos](#modelo-de-datos)** · **[Automatización](#pipeline-oficial-autónomo)** · **[Documentación](docs/README.md)** · **[Certificación](docs/production-certification.md)** · **[Contribuir](#contribución)**
 
 </div>
 
@@ -208,10 +208,12 @@ ARANCEL_MX_API_DATASET=data-2026.08.15
 
 No existe fallback silencioso a `latest`. La capa HTTP reutiliza el `Dataset` verificado, **no clasifica** mercancías y no constituye **asesoría legal**. Tampoco expone endpoints de captura, actualización, reconciliación, publicación, `compare` live contra VUCEM ni descarga WCO.
 
-El hostname público verificado es [`https://arancel-mx.vercel.app`](https://arancel-mx.vercel.app). El explorador de navegador vive en [`/app`](https://arancel-mx.vercel.app/app) y utiliza la misma release verificada que la API:
+El sitio público principal es [`https://arancel-mx.vercel.app`](https://arancel-mx.vercel.app). Publica la guía de producto, las rutas de documentación, el modelo de confianza y los enlaces a releases, PyPI, CLI y GitHub.
+
+La API FastAPI es una superficie reutilizable **separada**: se despliega en el hostname que el integrador elija y no forma parte del sitio público de Vercel. La producción de cada integración debe fijar una release inmutable y configurar su propia base URL:
 
 ```bash
-export ARANCEL_MX_API_URL="https://arancel-mx.vercel.app"
+export ARANCEL_MX_API_URL="https://api.example.com"
 curl "$ARANCEL_MX_API_URL/v1/lookup/8517130100"
 ```
 

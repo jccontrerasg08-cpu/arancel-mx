@@ -76,9 +76,6 @@ Changelog = "https://github.com/jccontrerasg08-cpu/arancel-mx/blob/main/CHANGELO
 [tool.fastapi]
 entrypoint = "arancel_mx.api.app:app"
 
-[tool.vercel]
-entrypoint = "src.arancel_mx.api.app:app"
-
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["arancel_mx*"]
