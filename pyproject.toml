@@ -40,13 +40,11 @@ dependencies = [
   "duckdb>=1.1",
   "fastapi[standard]>=0.141.1",
   "filelock>=3.16",
+  "psycopg[binary]>=3.3.4",
   "requests>=2.32",
 ]
 
 [project.optional-dependencies]
-operational = [
-    "psycopg[binary]>=3.3.4",
-]
 maintainer = [
     "openpyxl>=3.1",
     "PyMuPDF>=1.24",

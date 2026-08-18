@@ -1,7 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "installCommand": "python -m pip install -r requirements.txt",
   "outputDirectory": "website",
   "cleanUrls": true,
   "crons": [

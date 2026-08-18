@@ -41,7 +41,7 @@ El Central Hub mantiene separadas la versión de la aplicación, la versión del
 
 Para la función operativa de Vercel, `ARANCEL_MX_DATABASE_URL` es el nombre canónico de configuración. Cuando la base proviene de la integración administrada de Neon, la función admite `ARANCEL_MX_DATABASE_DATABASE_URL` como compatibilidad controlada; no se deben copiar los valores de la integración a un segundo secreto sólo para satisfacer el código. `CRON_SECRET` es un secreto sensible de **Production** y Vercel lo transmite como token Bearer al cron definido en `vercel.json`. No se registra, documenta ni reutiliza fuera de ese flujo.
 
-Vercel debe instalar las dependencias operativas antes de construir el hub mediante `installCommand: "python -m pip install -r requirements.txt"`. No se debe volver a dejar ese comando vacío mientras `/v1/meta`, `/v1/search` y la sincronización operacional dependan del runtime Python desplegado en Vercel.
+Vercel resuelve el runtime Python de las funciones desde `pyproject.toml`; por ello `psycopg[binary]` figura en las dependencias principales del proyecto y no en un `requirements.txt` ni en un extra editable. No se debe duplicar esa declaración: `/v1/meta`, `/v1/search` y la sincronización operacional comparten la misma gráfica de dependencias del runtime.
 
 Antes de limpiar variables en Vercel, identifica si son creadas por la integración administrada. Las variables de conexión derivadas de Neon no son código muerto aunque el Central Hub consuma sólo la URL principal; eliminarlas puede romper la integración o despliegues posteriores. Las únicas eliminaciones permitidas son aliases manuales no referenciados y validados después de un despliegue satisfactorio.
 

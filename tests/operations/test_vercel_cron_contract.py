@@ -18,8 +18,9 @@ def test_vercel_declares_a_weekly_private_operational_sync_cron() -> None:
     assert "HTTPStatus.UNAUTHORIZED" in handler
 
 
-def test_vercel_runtime_requirements_declare_the_operational_driver_directly() -> None:
-    requirements = (ROOT / "requirements.txt").read_text(encoding="utf-8")
+def test_vercel_runtime_dependencies_declare_the_operational_driver_in_pyproject() -> None:
+    project = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
 
-    assert "psycopg[binary]>=3.3.4" in requirements
-    assert "-e .[operational]" not in requirements
+    assert '"psycopg[binary]>=3.3.4"' in project
+    assert "operational = [" not in project
+    assert not (ROOT / "requirements.txt").exists()
