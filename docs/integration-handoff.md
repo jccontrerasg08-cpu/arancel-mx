@@ -1,6 +1,6 @@
 # Handoff de integración
 
-> **Baseline revisada:** `c1be4bf4e8da831ab7bd1da0667d794076cc16e2`, después de PR #139 (`fix: bundle Vercel operational driver in isolation`). Antes de terminar cualquier rama, compara de nuevo contra `origin/main`.
+> **Baseline revisada:** `90840779e752ac7ef257923edda95f188d4d35ac`, después de PR #141 (`fix: build Vercel driver with Python 3.13`). Esta baseline también incorpora #140, que separa URLs oficiales documentadas de endpoints temporalmente no confiables como liveness gates. Antes de terminar cualquier rama, compara de nuevo contra `origin/main`.
 
 Esta guía evita que un cambio correcto de forma aislada revierta decisiones arquitectónicas posteriores. Cada PR debe preservar las fronteras entre publicación oficial, capa operacional, hub público, API reusable y paquete Python.
 
@@ -13,6 +13,7 @@ Esta guía evita que un cambio correcto de forma aislada revierta decisiones arq
 | FastAPI reusable | El resto de `/v1/*`, `/docs` y `/readyz` se presenta en Vercel mediante proxy al runtime FastAPI. | `src/arancel_mx/api/`, `vercel.json`, `docs/external-consumption.md` |
 | Runtime operacional de Vercel | `psycopg[binary]` se bundlea de forma aislada en `api/_vendor` y sólo se incluye en las dos funciones operativas. | `vercel.json`, `api/operational.py`, `api/sync_operational.py`, `.gitignore` |
 | Paquete y dependencias | La librería pública conserva dependencias base y el extra `operational`; Vercel no debe convertir su driver aislado en dependencia base. | `pyproject.toml`, `requirements/`, packaging tests |
+| Fuentes y liveness | Una URL puede seguir siendo fuente/documentación válida aunque su transporte externo sea inestable; la excepción debe ser explícita y testeada. | `scripts/check_documented_urls.py`, `tests/test_documented_urls.py`, docs de fuentes |
 | Releases y fuentes | La release verificable sigue siendo la fuente de verdad. | `src/arancel_mx/sources/`, `src/arancel_mx/release/`, tests de pipeline/fuentes |
 | CI | Los checks deben cubrir Python, runtime, browser, distribución y publicación. | `.github/workflows/`, tests de hardening |
 | Presentación | README raíz es front door compacto; `docs/README.md` es navegación profunda. | `README*.md`, `docs/`, assets de marca |
@@ -44,13 +45,21 @@ Configuración relevante:
 - `ARANCEL_MX_DATABASE_URL` es el nombre canónico de la conexión operacional.
 - `ARANCEL_MX_DATABASE_DATABASE_URL` se admite como compatibilidad controlada cuando la integración administrada de Neon genera ese nombre.
 - `CRON_SECRET` es un secreto de Production enviado como Bearer token al cron operacional; no se registra ni reutiliza.
-- Desde #139, `vercel.json` usa un `buildCommand` que instala `psycopg[binary]>=3.3.4` en `api/_vendor`.
+- `vercel.json` usa `python3.13 -m pip install --target api/_vendor 'psycopg[binary]>=3.3.4'` para construir el driver operacional con la misma familia de Python del runtime desplegado.
 - `api/operational.py` y `api/sync_operational.py` cargan `api/_vendor` antes de importar el driver y son las únicas funciones que incluyen ese directorio mediante `functions.includeFiles`.
 - `api/_vendor/` permanece ignorado por Git. Es un artefacto de build, no código fuente versionado.
-- `requirements.txt` ya no debe existir para este runtime: #139 eliminó el archivo para evitar que el driver operacional se convierta en dependencia global por accidente.
+- `requirements.txt` no debe reaparecer para este runtime: el driver aislado no debe convertirse en dependencia global por accidente.
 - La librería Python mantiene su extra `operational` para instalaciones que sí necesiten conectividad PostgreSQL fuera del bundle de Vercel.
 
 No elimines variables creadas por la integración administrada de Neon sólo porque una de ellas no se lea directamente en el código. Antes de limpiar aliases, verifica su origen y realiza un despliegue satisfactorio con la configuración resultante.
+
+## Fuentes documentadas vs liveness de CI
+
+#140 formalizó una frontera importante: **documentar una URL oficial y exigir que siempre responda desde GitHub Actions son contratos distintos**.
+
+VUCEM y algunos endpoints de Diputados pueden terminar TLS o agotar timeout desde runners modernos. Deben seguir documentados y validados sintácticamente, pero sólo quedar fuera del probe live mediante `EXTERNALLY_UNPROBEABLE_URLS`, con tests que garanticen que cada excepción siga perteneciendo al conjunto documentado. SNICE y DOF canónicos continúan siendo probes activos.
+
+No elimines una fuente oficial sólo para volver verde CI. Tampoco agregues una excepción de liveness sin evidencia de fallo de transporte y sin conservar la URL en el conjunto documentado.
 
 ## Secuencia mínima para una rama paralela
 
