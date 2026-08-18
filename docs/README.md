@@ -20,11 +20,18 @@ Esta guía organiza la documentación por objetivo. Empieza por la ruta que desc
 | Entender la promoción agresiva desde SNICE_DOCS | [Política de promoción SNICE_DOCS](source-promotion.md) | Criterios, procedencia, rollback y límites de la promoción. |
 | Consultar tablas, tiempos y semántica de release | [Modelo de datos](data-model.md) | Significado de los registros y del `manifest.json`. |
 
+## Presentar el proyecto
+
+| Si necesitas… | Lee… | Resultado |
+|---|---|---|
+| Usar logos, paleta, portada o social artwork | [Marca y presentación](brand.md) | Assets canónicos, reglas de uso y sistema visual. |
+| Explicar qué problema resuelve y qué herramienta usar | [Marca y presentación](brand.md#storytelling) | Flow problema → interfaz → confianza → arquitectura. |
+
 ## Mantener y publicar
 
 | Si necesitas… | Lee… | Resultado |
 |---|---|---|
-| Ejecutar o depurar el pipeline diario | [Proceso de release](release-process.md) | Estados, transacción y recuperación. |
+| Ejecutar o depurar el pipeline semanal | [Proceso de release](release-process.md) | Estados, transacción y recuperación. |
 | Certificar permisos de producción sin alterar datos | [Certificación de producción](production-certification.md) | Runbook aislado para GitHub Releases e Issues. |
 | Publicar el paquete Python | [Release del paquete](package-release.md) | Flujo PyPI/TestPyPI y contrato de publicación. |
 | Configurar reglas de GitHub y seguridad | [Configuración de GitHub](operations/github-settings.md) | Protección de `main`, permisos y checks requeridos. |
@@ -36,4 +43,4 @@ Los cambios que afecten fuentes, parsers, reconciliación o contratos de release
 
 > `arancel-mx` es una herramienta de datos técnicos, no asesoría legal. Las decisiones de clasificación o cumplimiento deben contrastarse con las publicaciones oficiales aplicables y profesionales calificados.
 
-[Español](../README.md) · [English](../README.en.md) · [Última release](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest)
+[Español](../README.md) · [English](../README.en.md) · [Marca](brand.md) · [Última release](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest)
