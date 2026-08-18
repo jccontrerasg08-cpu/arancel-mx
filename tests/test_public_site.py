@@ -52,7 +52,7 @@ def test_public_site_contains_its_logo_and_route_bridge() -> None:
 
     assert (ROOT / "website" / "assets" / "arancel-mx-mark.svg").is_file()
     assert "/assets/arancel-mx-mark.svg" in index
-    assert "/assets/site-bridge.js" in index
+    assert "/assets/site-bridge.js?v=" in index
     assert "/assets/hub-search.css" in index
     assert "/assets/hub-search.js" in index
     assert "id=\"root\"" in index
