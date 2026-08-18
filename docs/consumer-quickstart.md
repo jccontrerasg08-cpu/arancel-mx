@@ -59,9 +59,9 @@ curl "$ARANCEL_MX_API_URL/v1/lookup/8517130100"
 
 Abre [`https://arancel-mx.vercel.app/docs`](https://arancel-mx.vercel.app/docs) para el contrato OpenAPI interactivo.
 
-La superficie pública es híbrida de forma deliberada: `/v1/meta` y `/v1/search` se resuelven en la capa operacional read-only de Vercel respaldada por Neon y sincronizada desde releases verificadas. Las demás rutas `/v1/*`, `/docs` y `/readyz` se presentan bajo el mismo dominio mediante proxy al runtime FastAPI reusable. La release verificable sigue siendo la fuente de verdad; Vercel y Neon son superficies de consumo.
+La superficie pública es híbrida de forma deliberada: `/v1/meta`, `/v1/search` y `/readyz` se resuelven en la capa operacional read-only de Vercel respaldada por Neon y sincronizada desde releases verificadas. Las demás rutas `/v1/*` y `/docs` se presentan bajo el mismo dominio mediante proxy al runtime FastAPI reusable. La release verificable sigue siendo la fuente de verdad; Vercel y Neon son superficies de consumo.
 
-La API es GET-only y read-only. `/v1/meta` separa la versión de API, la versión del paquete y la identidad del dataset servido.
+La API es GET-only y read-only. `/v1/meta` separa la versión de API, la versión del paquete y la identidad del dataset servido; `/readyz` refleja la disponibilidad de esa release operacional activa.
 
 ## Continuar
 
