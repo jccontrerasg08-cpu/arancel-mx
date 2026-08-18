@@ -212,18 +212,22 @@ def test_public_brand_guide_is_discoverable_and_uses_current_schedule_language()
     assert "pipeline diario" not in docs_index.lower()
 
 
-def test_public_site_keeps_hub_assets_and_stable_brand_boundary() -> None:
-    """Preserve the generated hub wiring while exposing stable brand assets."""
+def test_public_site_keeps_original_landing_and_stable_brand_boundary() -> None:
+    """Keep the generated landing intact while branding only the project-owned shell."""
     index = _read("website/index.html")
 
     for fragment in (
         "/assets/arancel-mx-mark.svg",
-        "/assets/site-brand.css",
-        "/assets/hub-search.css",
-        "/assets/hub-search.js",
+        "/assets/arancel-mx-logo.svg",
+        "/assets/site-brand.css?v=",
+        "/assets/site-bridge.js?v=",
     ):
         assert fragment in index
-    assert "/assets/site-bridge.js?v=" in index
+
+    assert 'class="arancel-brand-header"' in index
+    assert "/assets/hub-search.css" not in index
+    assert "/assets/hub-search.js" not in index
+    assert "manus-analytics.com" not in index
 
     assert (ROOT / "website/assets/arancel-mx-logo.svg").is_file()
     assert (ROOT / "website/assets/arancel-mx-social.svg").is_file()
@@ -234,6 +238,7 @@ def test_brand_css_uses_stable_asset_selectors_not_generated_bundle_classes() ->
     styles = _read("website/assets/site-brand.css")
     assert "/assets/arancel-mx-mark.svg" in styles
     assert "/assets/arancel-mx-logo.svg" in styles
+    assert ".arancel-brand-header" in styles
     assert "index-" not in styles
 
 
@@ -246,7 +251,7 @@ def test_integration_handoff_tracks_current_vercel_and_liveness_boundaries() -> 
     assert "proxy" in lowered
     assert "/v1/meta" in handoff
     assert "/readyz" in handoff
-    assert "e861aed" in handoff
+    assert "2572405" in handoff
     assert "Vercel: /v1/meta + /v1/search + /readyz" in handoff
     assert "ARANCEL_MX_DATABASE_DATABASE_URL" in handoff
     assert "api/_vendor" in handoff
@@ -255,5 +260,4 @@ def test_integration_handoff_tracks_current_vercel_and_liveness_boundaries() -> 
     assert "requirements.txt" in handoff
     assert "EXTERNALLY_UNPROBEABLE_URLS" in handoff
     assert "site-bridge.js" in handoff
-    assert ".release-window code" in handoff
     assert "installCommand" not in handoff
