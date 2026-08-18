@@ -162,69 +162,91 @@ def test_official_dataset_build_entrypoints_are_public() -> None:
     assert [path for path in required if not (ROOT / path).is_file()] == []
 
 
-def test_readme_describes_the_focused_public_project() -> None:
+def test_readme_is_a_focused_public_front_door() -> None:
     readme = " ".join((ROOT / "README.md").read_text(encoding="utf-8").lower().split())
     required = (
         "arancel-mx",
         "apache-2.0",
-        "python -m arancel_mx",
         "contributing.md",
         "security.md",
         "terms.md",
-        "opensource-checklist.md",
+        "no clasifica mercancías",
         "no constituye asesoría legal",
         "fuentes oficiales",
+        "## qué puedes hacer",
+        "## empieza en 60 segundos",
+        "## por qué confiar",
+        "## documentación",
         "## alcance",
-        "## instalación",
-        "## uso desde python",
-        "## estructura del repositorio",
-        "## pruebas",
+        "https://arancel-mx.vercel.app/",
+        "docs/readme.md",
     )
 
     assert [phrase for phrase in required if phrase not in readme] == []
+    for deep_heading in ("## estructura del repositorio", "## pruebas", "## instalación"):
+        assert deep_heading not in readme
 
 
-def test_readme_preserves_existing_public_information() -> None:
-    readme = (ROOT / "README.md").read_text(encoding="utf-8").lower()
-    required = (
+def test_detailed_public_information_lives_in_canonical_docs() -> None:
+    source_docs = (ROOT / "docs" / "sources.md").read_text(encoding="utf-8").lower()
+    release_docs = (ROOT / "docs" / "release-process.md").read_text(encoding="utf-8").lower()
+    cli_docs = (ROOT / "docs" / "consumer-cli.md").read_text(encoding="utf-8").lower()
+    docs_hub = (ROOT / "docs" / "README.md").read_text(encoding="utf-8").lower()
+
+    for asset in (
         "docs/demo.gif",
         "docs/dof_timeline.png",
         "docs/dof_timeline2.png",
         "docs/nico_flow.png",
+    ):
+        assert (ROOT / asset).is_file()
+
+    for value in (
         "src/arancel_mx/sources/source_registry.json",
-        "docs/",
-        "tests/",
-        "license",
-        "notice",
-        "propuestas nico",
-        "capture manifests y hashes",
+        "propuestas",
         "https://www.diputados.gob.mx/leyesbiblio/ref/ligie_2022.htm",
         "https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html",
         "https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html",
         "https://www.snice.gob.mx/cs/avi/snice/ligie.notasnac22.html",
         "https://www.snice.gob.mx/cs/avi/snice/ligie.indicaranc22.html",
         "https://dof.gob.mx/nota_detalle.php?codigo=5656249&fecha=27/06/2022",
-        "python -m arancel_mx --help",
-        "python -m arancel_mx build --database data/arancel.duckdb --output-dir out/release",
-        "python -m arancel_mx check-updates --state-path data/update_state/ligie.json --report-path out/update.json",
-        "python -m arancel_mx reconcile --ledger-json ledger.json --dof-json dof.json --snice-json snice.json",
-        "python -m arancel_mx release --release-dir out/release --source-dir data/raw/release --latest-dir out/latest",
-        "python -m pytest -q",
-        "python -m build",
         "diputados",
         "snice",
-        "diario oficial de la federación",
-        "comunidad de código abierto",
-    )
+        "dof",
+    ):
+        assert value in source_docs
 
-    assert [value for value in required if value not in readme] == []
+    for value in (
+        "scripts/build_official_dataset.py",
+        ".github/workflows/official-data-pipeline.yml",
+        "python -m pytest -q",
+        "official-sources.tar.gz",
+        "sha256sums",
+    ):
+        assert value in release_docs
+
+    for value in (
+        "python -m arancel_mx",
+        "arancel-mx data download",
+        "arancel-mx data verify",
+    ):
+        assert value in cli_docs
+
+    for value in ("contributing.md", "security.md", "code_of_conduct.md"):
+        assert value in docs_hub
 
 
-def test_readmes_document_autonomous_verified_official_dataset_releases() -> None:
+def test_release_detail_lives_in_release_runbook_while_readmes_keep_trust_summary() -> None:
     spanish = (ROOT / "README.md").read_text(encoding="utf-8").lower()
     english = (ROOT / "README.en.md").read_text(encoding="utf-8").lower()
     release_process = (ROOT / "docs" / "release-process.md").read_text(encoding="utf-8").lower()
-    common = (
+
+    for document in (spanish, english):
+        for value in ("arancel_mx.duckdb", "manifest", "sha256sums", "github release"):
+            assert value in document
+        assert ".github/workflows/official-data-pipeline.yml" not in document
+
+    for value in (
         "scripts/build_official_dataset.py",
         ".github/workflows/official-data-pipeline.yml",
         "official data pipeline",
@@ -235,21 +257,12 @@ def test_readmes_document_autonomous_verified_official_dataset_releases() -> Non
         "sha256sums",
         "official-sources.tar.gz",
         "github issue",
-    )
-
-    for document in (spanish, english, release_process):
-        assert [value for value in common if value not in document] == []
-        assert "build-official-dataset.yml" not in document
-
-    assert "revisión diaria automatizada" in spanish
-    assert "publicación automática" in spanish
-    assert "cualquier falla bloquea la publicación" in spanish
-    assert "daily automated check" in english
-    assert "automatic publication" in english
-    assert "any failure blocks publication" in english
-    assert "17 11 * * *" in release_process
-    assert "publicación automática" in release_process
-    assert "cualquier falla bloquea la publicación" in release_process
+        "17 11 * * 1",
+        "publicación automática",
+        "cualquier falla bloquea la publicación",
+    ):
+        assert value in release_process
+    assert "build-official-dataset.yml" not in release_process
 
 
 def test_bilingual_readmes_stay_linked() -> None:
@@ -269,6 +282,7 @@ def test_focused_documentation_exists_and_has_no_legacy_instructions() -> None:
         "docs/data-model.md",
         "docs/sources.md",
         "docs/release-process.md",
+        "docs/project-overview.md",
     )
     assert [path for path in required if not (ROOT / path).is_file()] == []
 
@@ -276,7 +290,7 @@ def test_focused_documentation_exists_and_has_no_legacy_instructions() -> None:
         path.read_text(encoding="utf-8").lower()
         for path in (ROOT / "docs").glob("*.md")
     ) + (ROOT / "README.md").read_text(encoding="utf-8").lower()
-    forbidden = ("banxico", "maplibre", "python app.py", "docker compose", "dashboard")
+    forbidden = ("banxico", "maplibre", "python app.py", "docker compose")
     assert [value for value in forbidden if value in documentation] == []
 
 
@@ -295,9 +309,6 @@ def test_ci_workflow_builds_package_without_secrets_or_network_updates() -> None
         "python -m build",
         "git diff --check",
     )
-    # Verify checkout and setup-python are pinned to a full 40-hex commit SHA
-    # without hard-coding the exact value, which Dependabot rotates. Full action
-    # pinning and approved-repository coverage live in tests/package/test_action_pinning.py.
     pinned_actions = ("actions/checkout", "actions/setup-python")
     unpinned = [
         action
