@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 320" role="img" aria-labelledby="title desc">
+  <title id="title">arancel.mx</title>
+  <desc id="desc">Primary arancel.mx logo with a verified customs document mark and green code brackets.</desc>
+  <defs>
+    <style>
+      .word { font: 800 142px/1 Arial, Helvetica, sans-serif; letter-spacing: -6px; }
+    </style>
+  </defs>
+
+  <!-- trade and verification mark -->
+  <g transform="translate(30 35)">
+    <path fill="#102A43" d="M83 73V52C83 20 105 0 133 0s50 20 50 52v21h22c13 0 23 10 23 23v128c0 13-10 23-23 23H61c-13 0-23-10-23-23V96c0-13 10-23 23-23h22Zm28 0h44V52c0-15-9-25-22-25s-22 10-22 25v21Z"/>
+    <path fill="#008A5B" d="M14 105 54 89v119L14 192Z"/>
+    <path fill="#CE1126" d="m252 105-40-16v119l40-16Z"/>
+    <path fill="#F8FAFC" d="M75 89h105l31 31v92H75Z"/>
+    <path fill="#D8E2EA" d="M180 89v31h31Z"/>
+    <rect x="94" y="125" width="72" height="14" rx="3" fill="#102A43"/>
+    <rect x="94" y="151" width="84" height="10" rx="3" fill="#B9C9D6"/>
+    <rect x="94" y="172" width="48" height="10" rx="3" fill="#B9C9D6"/>
+    <path fill="#071827" d="M3 207h92l29 31H34Z"/>
+    <rect x="28" y="217" width="58" height="7" rx="3.5" fill="#F8FAFC"/>
+    <circle cx="174" cy="202" r="30" fill="#008A5B" stroke="#F8FAFC" stroke-width="7"/>
+    <path d="m159 202 10 10 20-23" fill="none" stroke="#F8FAFC" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M29 118v53M42 112v64M224 112v64M237 118v53" stroke="#F8FAFC" stroke-width="5" stroke-linecap="round" opacity=".92"/>
+  </g>
+
+  <!-- bracketed wordmark -->
+  <path d="M345 66h-25v188h25" fill="none" stroke="#008A5B" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="383" y="211" class="word" fill="#102A43">arancel</text>
+  <circle cx="903" cy="188" r="18" fill="#008A5B"/>
+  <text x="930" y="211" class="word" fill="#102A43">mx</text>
+  <path d="M1160 66h25v188h-25" fill="none" stroke="#008A5B" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" role="img" aria-labelledby="title desc">
+  <title id="title">arancel.mx open tariff data for Mexico</title>
+  <desc id="desc">Social preview for arancel.mx highlighting LIGIE, NICO, HS mappings, CLI, API, DuckDB, and verifiable tariff data.</desc>
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#102A43" stroke-opacity=".045"/>
+    </pattern>
+  </defs>
+  <rect width="1280" height="640" fill="#F8FAFC"/>
+  <rect width="1280" height="640" fill="url(#grid)"/>
+
+  <!-- abstract Mexico/data motif -->
+  <g opacity=".13" fill="#102A43">
+    <circle cx="94" cy="82" r="5"/><circle cx="110" cy="90" r="5"/><circle cx="126" cy="99" r="5"/><circle cx="142" cy="109" r="5"/>
+    <circle cx="156" cy="122" r="5"/><circle cx="168" cy="137" r="5"/><circle cx="177" cy="154" r="5"/><circle cx="183" cy="172" r="5"/>
+    <circle cx="190" cy="190" r="5"/><circle cx="202" cy="207" r="5"/><circle cx="220" cy="218" r="5"/><circle cx="240" cy="222" r="5"/>
+    <circle cx="258" cy="229" r="5"/><circle cx="277" cy="243" r="5"/><circle cx="290" cy="260" r="5"/><circle cx="306" cy="273" r="5"/>
+  </g>
+  <circle cx="205" cy="205" r="6" fill="#008A5B" opacity=".7"/>
+  <circle cx="272" cy="244" r="5" fill="#CE1126" opacity=".65"/>
+
+  <!-- compact brand mark -->
+  <g transform="translate(235 132) scale(.65)">
+    <path fill="#102A43" d="M83 73V52C83 20 105 0 133 0s50 20 50 52v21h22c13 0 23 10 23 23v128c0 13-10 23-23 23H61c-13 0-23-10-23-23V96c0-13 10-23 23-23h22Zm28 0h44V52c0-15-9-25-22-25s-22 10-22 25v21Z"/>
+    <path fill="#008A5B" d="M14 105 54 89v119L14 192Z"/>
+    <path fill="#CE1126" d="m252 105-40-16v119l40-16Z"/>
+    <path fill="#F8FAFC" d="M75 89h105l31 31v92H75Z"/>
+    <path fill="#D8E2EA" d="M180 89v31h31Z"/>
+    <rect x="94" y="125" width="72" height="14" rx="3" fill="#102A43"/>
+    <rect x="94" y="151" width="84" height="10" rx="3" fill="#B9C9D6"/>
+    <circle cx="174" cy="202" r="30" fill="#008A5B" stroke="#F8FAFC" stroke-width="7"/>
+    <path d="m159 202 10 10 20-23" fill="none" stroke="#F8FAFC" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <path d="M436 163h-18v122h18" fill="none" stroke="#008A5B" stroke-width="12" stroke-linecap="round"/>
+  <text x="464" y="260" fill="#102A43" font-family="Arial,Helvetica,sans-serif" font-size="88" font-weight="800" letter-spacing="-4">arancel</text>
+  <circle cx="830" cy="239" r="11" fill="#008A5B"/>
+  <text x="850" y="260" fill="#102A43" font-family="Arial,Helvetica,sans-serif" font-size="88" font-weight="800" letter-spacing="-4">mx</text>
+  <path d="M1036 163h18v122h-18" fill="none" stroke="#008A5B" stroke-width="12" stroke-linecap="round"/>
+
+  <text x="640" y="365" text-anchor="middle" fill="#102A43" font-family="Arial,Helvetica,sans-serif" font-size="58" font-weight="800">Open tariff data for Mexico</text>
+  <text x="640" y="428" text-anchor="middle" fill="#008A5B" font-family="Arial,Helvetica,sans-serif" font-size="26" font-weight="700">LIGIE • NICO • HS mappings • CLI • API • DuckDB</text>
+  <text x="640" y="496" text-anchor="middle" fill="#102A43" font-family="Arial,Helvetica,sans-serif" font-size="28" font-weight="700">Traceable. Auditable. Reproducible.</text>
+
+  <g transform="translate(938 490)" opacity=".16" stroke="#102A43" fill="none">
+    <rect x="0" y="0" width="230" height="92" rx="14"/>
+    <path d="M0 30h230M72 0v92M150 0v92"/>
+    <circle cx="185" cy="47" r="5" fill="#008A5B" stroke="none"/>
+    <circle cx="204" cy="66" r="5" fill="#CE1126" stroke="none"/>
+  </g>
+  <rect x="0" y="622" width="1280" height="18" fill="#102A43"/>
+  <rect x="900" y="622" width="190" height="18" fill="#008A5B"/>
+  <rect x="1090" y="622" width="190" height="18" fill="#CE1126"/>
+</svg>
