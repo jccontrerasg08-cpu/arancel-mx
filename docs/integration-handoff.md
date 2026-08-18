@@ -1,6 +1,6 @@
 # Handoff de integración
 
-> **Baseline revisada:** `2572405e35a5f83c8058ec755ed672382f5f7694`, después de PR #144 (`fix: version Central Hub bridge asset`). Esta baseline incorpora también #140 (separación entre documentación y liveness externo), #142 (`/readyz` servido por la capa operacional), y #143–#144 (sincronización y versionado del bridge público). Antes de terminar cualquier rama, compara de nuevo contra `origin/main`.
+> **Baseline revisada:** `e861aed65ed347504ec4a0c24c41b72c8e9c1341`, después de PR #145 (`fix: target legacy release card label`). Esta baseline incorpora también #140 (separación entre documentación y liveness externo), #142 (`/readyz` servido por la capa operacional), y #143–#145 (sincronización, versionado y targeting acotado del bridge público). Antes de terminar cualquier rama, compara de nuevo contra `origin/main`.
 
 Esta guía evita que un cambio correcto de forma aislada revierta decisiones arquitectónicas posteriores. Cada PR debe preservar las fronteras entre publicación oficial, capa operacional, hub público, API reusable, paquete Python y documentación.
 
@@ -55,12 +55,15 @@ No elimines variables creadas por la integración administrada de Neon sólo por
 
 ## Sincronización visual del hub
 
-El bridge público no es la fuente de verdad de la release. Consulta `/v1/meta`, conserva la `dataset_tag` activa y actualiza el label heredado después del render cuando sea necesario. `website/index.html` referencia `site-bridge.js` con un query de versión para invalidar caché cuando cambia ese comportamiento.
+El bridge público no es la fuente de verdad de la release. Consulta `/v1/meta`, conserva la `dataset_tag` activa y actualiza únicamente el label heredado de la tarjeta de release después del render cuando sea necesario. Desde #145, el targeting está acotado a `.release-window code` y exige que su texto completo tenga el formato `release / data-YYYY.MM.DD`; no debe volver a recorrer o reemplazar texto arbitrario del DOM.
+
+`website/index.html` referencia `site-bridge.js` con un query de versión para invalidar caché cuando cambia ese comportamiento.
 
 Reglas:
 
 - no hardcodear una release como identidad operativa del hub;
 - conservar la sincronización con `/v1/meta` después de mutaciones/render tardío;
+- limitar cualquier reescritura visual al elemento semántico que representa la release;
 - versionar la referencia del bridge cuando cambie su comportamiento y la política de caché lo requiera;
 - no editar bundles `website/assets/index-*.js` o `index-*.css` manualmente.
 
@@ -94,6 +97,7 @@ Cuando una rama toca la superficie pública:
 - verifica que `/v1/meta`, `/v1/search` y `/readyz` sigan resolviendo a la capa operacional;
 - conserva el proxy para `/v1/:path*` y `/docs` mientras la arquitectura siga vigente;
 - conserva la carga versionada de `site-bridge.js` mientras ese asset requiera invalidación de caché;
+- conserva el targeting `.release-window code` para el label de release mientras exista ese componente;
 - no agregues una segunda URL “canónica” en documentación si `https://arancel-mx.vercel.app` puede servir el mismo contrato.
 
 ## Presentación y documentación
