@@ -14,6 +14,7 @@ def test_readmes_contain_pip_install_and_first_query() -> None:
         assert "pip install arancel-mx" in text
         assert "arancel-mx data download" in text
         assert "arancel-mx lookup 01012101" in text
+        assert "https://arancel-mx.vercel.app/" in text
 
 
 def test_readmes_distinguish_package_and_dataset_versions() -> None:
@@ -48,7 +49,9 @@ def test_consumer_docs_cover_install_and_python_api() -> None:
     assert "from arancel_mx import Dataset" in cli
     assert "Dataset.latest()" in cli
     assert "XDG_CACHE_HOME" in cli
-    assert "Dataset.compare" in ingest
+    assert "db.compare" in ingest
+    for public_type in ("TariffRecord", "Ficha", "ProvenanceRecord", "SearchResult", "DatasetInfo", "HsSection", "CompareRow"):
+        assert public_type in ingest
 
 
 def test_package_release_doc_keeps_code_and_data_release_channels_separate() -> None:
@@ -60,33 +63,17 @@ def test_package_release_doc_keeps_code_and_data_release_channels_separate() -> 
     assert "not create a GitHub Release" in document
 
 
-def _status_row(text: str, capability: str) -> str:
-    for line in text.splitlines():
-        if capability in line and line.strip().startswith("|"):
-            return line
-    raise AssertionError(f"missing status-table row for {capability!r}")
+def test_package_release_doc_is_the_source_of_truth_for_pypi_status() -> None:
+    document = _read("docs/package-release.md")
+    lowered = document.lower()
+    assert "arancel-mx==0.2.0" in document
+    assert "published on pypi" in lowered
+    assert "0.3.3" in document
+    assert "not on pypi" in lowered
 
-
-def test_readmes_state_pypi_020_is_published_not_roadmap() -> None:
-    spanish = _read("README.md")
-    english = _read("README.en.md")
-
-    spanish_row = _status_row(spanish, "Publicación en PyPI")
-    english_row = _status_row(english, "PyPI publication")
-    assert "Roadmap" not in spanish_row
-    assert "Roadmap" not in english_row
-    assert "0.2.0" in spanish_row
-    assert "0.2.0" in english_row
-    assert "Publicado" in spanish_row or "publicado" in spanish_row
-    assert "Published" in english_row or "published" in english_row
-
-    for text in (spanish, english):
-        lowered = text.lower()
-        assert "production-certified" not in lowered
-        assert "producción certificada" not in lowered
-        assert "cuando se publique" not in lowered
-        assert "once the package is published" not in lowered
-        assert "pip install arancel-mx==0.2.0" in text
+    for readme in (_read("README.md"), _read("README.en.md")):
+        assert "pip install arancel-mx" in readme
+        assert "pip install arancel-mx==0.2.0" not in readme
 
 
 def test_changelog_020_heading_is_pypi_upload_date_not_unreleased_candidate() -> None:
