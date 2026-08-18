@@ -46,12 +46,14 @@ def test_documented_public_urls_include_registry_readme_and_governance_links() -
         assert url in documented
 
 
-def test_legacy_vucem_urls_remain_documented_but_are_excluded_from_liveness_probes() -> None:
+def test_transport_unprobeable_urls_remain_documented_but_are_excluded_from_liveness() -> None:
     documented = set(documented_public_urls())
     probe_urls = set(liveness_probe_urls())
     assert EXTERNALLY_UNPROBEABLE_URLS == {
         "https://www.ventanillaunica.gob.mx/vucem/Clasificador.html",
         "https://www.ventanillaunica.gob.mx/Clasificador/data/buildHojas1/90014002.html",
+        "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm",
+        "https://www.diputados.gob.mx/LeyesBiblio/pdf/LIGIE_2022.pdf",
     }
     assert EXTERNALLY_UNPROBEABLE_URLS <= documented
     assert EXTERNALLY_UNPROBEABLE_URLS.isdisjoint(probe_urls)
