@@ -12,7 +12,37 @@ def test_vercel_deploys_the_standalone_public_site() -> None:
 
     assert config["framework"] is None
     assert config["outputDirectory"] == "website"
-    assert config["rewrites"] == [{"source": "/(.*)", "destination": "/"}]
+    assert config["rewrites"] == [
+        {
+            "source": "/v1/meta",
+            "destination": "/api/operational?resource=meta",
+        },
+        {
+            "source": "/v1/search",
+            "destination": "/api/operational?resource=search",
+        },
+        {
+            "source": "/v1/:path*",
+            "destination": "https://arancel-mx.fastapicloud.dev/v1/:path*",
+        },
+        {
+            "source": "/openapi.json",
+            "destination": "https://arancel-mx.fastapicloud.dev/openapi.json",
+        },
+        {
+            "source": "/docs/:path*",
+            "destination": "https://arancel-mx.fastapicloud.dev/docs/:path*",
+        },
+        {
+            "source": "/docs",
+            "destination": "https://arancel-mx.fastapicloud.dev/docs",
+        },
+        {
+            "source": "/readyz",
+            "destination": "https://arancel-mx.fastapicloud.dev/readyz",
+        },
+        {"source": "/(.*)", "destination": "/"},
+    ]
 
 
 def test_public_site_contains_its_logo_and_route_bridge() -> None:
@@ -22,7 +52,18 @@ def test_public_site_contains_its_logo_and_route_bridge() -> None:
     assert (ROOT / "website" / "assets" / "arancel-mx-mark.svg").is_file()
     assert "/assets/arancel-mx-mark.svg" in index
     assert "/assets/site-bridge.js" in index
+    assert "/assets/hub-search.css" in index
+    assert "/assets/hub-search.js" in index
     assert "consumer-quickstart.md" in bridge
+
+    search = (ROOT / "website" / "assets" / "hub-search.js").read_text(encoding="utf-8")
+    styles = (ROOT / "website" / "assets" / "hub-search.css").read_text(encoding="utf-8")
+    assert "fetch(\"/v1/meta\")" in search
+    assert "release_published_at" in search
+    assert "fetch(`/v1/search?q=${encodeURIComponent(query)}&limit=8`)" in search
+    assert "Datos verificados" in search
+    assert "Búsqueda arancelaria" in search
+    assert "hub-search" in styles
 
 
 def test_public_site_does_not_declare_a_vercel_fastapi_entrypoint() -> None:
