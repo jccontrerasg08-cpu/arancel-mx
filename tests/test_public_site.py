@@ -50,11 +50,12 @@ def test_public_site_preserves_the_original_landing_with_canonical_branding() ->
     index = (ROOT / "website" / "index.html").read_text(encoding="utf-8")
     bridge = (ROOT / "website" / "assets" / "site-bridge.js").read_text(encoding="utf-8")
     styles = (ROOT / "website" / "assets" / "site-brand.css").read_text(encoding="utf-8")
+    logo = (ROOT / "website" / "assets" / "arancel-mx-logo.svg").read_text(encoding="utf-8")
 
     assert (ROOT / "website" / "assets" / "arancel-mx-mark.svg").is_file()
-    assert (ROOT / "website" / "assets" / "arancel-mx-logo.webp").is_file()
+    assert (ROOT / "website" / "assets" / "arancel-mx-logo.svg").is_file()
     assert "/assets/arancel-mx-mark.svg" in index
-    assert "/assets/arancel-mx-logo.webp" in index
+    assert "/assets/arancel-mx-logo.svg" in index
     assert 'class="arancel-brand-header"' in index
     assert 'id="root"' in index
 
@@ -79,8 +80,13 @@ def test_public_site_preserves_the_original_landing_with_canonical_branding() ->
     assert "querySelectorAll('.release-window code')" in bridge
 
     assert ".arancel-brand-header" in styles
-    assert "/assets/arancel-mx-logo.webp" in styles
+    assert "/assets/arancel-mx-logo.svg" in styles
     assert "index-" not in styles
+
+    # The approved identity is dimensional rather than the previous flat
+    # approximation, so keep gradient/shadow primitives in the vector master.
+    assert "linearGradient" in logo
+    assert "filter" in logo
 
 
 def test_public_site_does_not_declare_a_vercel_fastapi_entrypoint() -> None:
