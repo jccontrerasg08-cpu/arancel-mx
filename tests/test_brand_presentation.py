@@ -7,6 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 README_MAX_CHARS = 10_000
+PUBLIC_HUB_URL = "https://arancel-mx.vercel.app/"
 
 BRAND_ASSETS = (
     "docs/assets/arancel-mx-logo.svg",
@@ -24,12 +25,16 @@ def _read(path: str) -> str:
     return (ROOT / path).read_text(encoding="utf-8")
 
 
+def _markdown_links(path: str) -> list[str]:
+    """Return complete Markdown link targets from one tracked document."""
+    return re.findall(r"\[[^\]]+\]\(([^)]+)\)", _read(path))
+
+
 def _local_markdown_targets(path: str) -> list[Path]:
     """Return local Markdown targets referenced by one Markdown document."""
-    text = _read(path)
     source_dir = (ROOT / path).parent
     targets: list[Path] = []
-    for target in re.findall(r"\[[^\]]+\]\(([^)]+)\)", text):
+    for target in _markdown_links(path):
         if target.startswith(("http://", "https://", "#", "mailto:")):
             continue
         clean_target = target.split("#", 1)[0]
@@ -80,7 +85,6 @@ def test_readmes_are_compact_landing_pages_with_matching_user_routes() -> None:
         "arancel-mx data download",
         "arancel-mx lookup 01012101",
         "data-YYYY.MM.DD",
-        "https://arancel-mx.vercel.app/",
     ):
         assert phrase in spanish
 
@@ -99,10 +103,11 @@ def test_readmes_are_compact_landing_pages_with_matching_user_routes() -> None:
         "arancel-mx data download",
         "arancel-mx lookup 01012101",
         "data-YYYY.MM.DD",
-        "https://arancel-mx.vercel.app/",
     ):
         assert phrase in english
 
+    assert PUBLIC_HUB_URL in _markdown_links("README.md")
+    assert PUBLIC_HUB_URL in _markdown_links("README.en.md")
     assert spanish.count("\n## ") <= 7
     assert english.count("\n## ") <= 7
     assert "docs/assets/arancel-mx-banner.svg" in spanish
@@ -122,7 +127,7 @@ def test_documentation_hub_routes_by_intent_and_keeps_specialized_research_off_r
     ):
         assert heading in docs_index
 
-    assert "https://arancel-mx.vercel.app/" in docs_index
+    assert PUBLIC_HUB_URL in _markdown_links("docs/README.md")
     assert "research/anam-moa-source-map.md" in docs_index
     assert not (ROOT / "ANAM_MOA_SOURCE_MAP.md").exists()
     assert (ROOT / "docs/research/anam-moa-source-map.md").is_file()
@@ -142,13 +147,16 @@ def test_consumer_docs_use_vercel_as_the_public_http_front_door() -> None:
     quickstart = _read("docs/consumer-quickstart.md")
     external = _read("docs/external-consumption.md")
 
+    assert PUBLIC_HUB_URL in _markdown_links("docs/consumer-quickstart.md")
+    assert PUBLIC_HUB_URL in _markdown_links("docs/external-consumption.md")
     for document in (quickstart, external):
-        assert "https://arancel-mx.vercel.app" in document
         assert "/v1/meta" in document
         assert "/readyz" in document
         assert "/docs" in document
 
-    assert 'ARANCEL_MX_API_URL="https://arancel-mx.vercel.app"' in external
+    api_url_match = re.search(r'export ARANCEL_MX_API_URL="([^"]+)"', external)
+    assert api_url_match is not None
+    assert api_url_match.group(1) == PUBLIC_HUB_URL.rstrip("/")
     assert "Vercel" in external
     assert "Neon" in external
     assert "proxy" in external.lower()
