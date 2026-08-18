@@ -40,7 +40,7 @@ def test_vercel_deploys_the_standalone_public_site() -> None:
         },
         {
             "source": "/readyz",
-            "destination": "https://arancel-mx.fastapicloud.dev/readyz",
+            "destination": "/api/operational?resource=ready",
         },
         {"source": "/(.*)", "destination": "/"},
     ]
@@ -59,6 +59,8 @@ def test_public_site_contains_its_logo_and_route_bridge() -> None:
     assert "manus-runtime" not in index
     assert "/__manus__/debug-collector.js" not in index
     assert "consumer-quickstart.md" in bridge
+    assert "fetch('/v1/meta'" in bridge
+    assert "synchronizeDisplayedRelease" in bridge
 
     search = (ROOT / "website" / "assets" / "hub-search.js").read_text(encoding="utf-8")
     styles = (ROOT / "website" / "assets" / "hub-search.css").read_text(encoding="utf-8")
