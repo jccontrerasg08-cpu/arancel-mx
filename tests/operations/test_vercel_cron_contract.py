@@ -23,7 +23,7 @@ def test_vercel_bundles_the_operational_driver_only_for_operational_functions() 
     read_handler = (ROOT / "api" / "operational.py").read_text(encoding="utf-8")
     sync_handler = (ROOT / "api" / "sync_operational.py").read_text(encoding="utf-8")
 
-    assert config["buildCommand"] == "python -m pip install --target api/_vendor 'psycopg[binary]>=3.3.4'"
+    assert config["buildCommand"] == "python3.13 -m pip install --target api/_vendor 'psycopg[binary]>=3.3.4'"
     assert config["functions"] == {
         "api/operational.py": {"includeFiles": "api/_vendor/**"},
         "api/sync_operational.py": {"includeFiles": "api/_vendor/**"},
