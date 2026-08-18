@@ -40,7 +40,20 @@ DatasetLoader = Callable[[ApiSettings], Dataset]
 _EXPLORER_PAGE = Path(__file__).with_name("static") / "index.html"
 _MARKETING_DIR = Path(__file__).with_name("static") / "site"
 _MARKETING_PAGE = _MARKETING_DIR / "index.html"
-_MARKETING_PAGES = ("/", "/features", "/pricing", "/analytics", "/documentation", "/community", "/trust")
+_MARKETING_PAGES = (
+    "/",
+    "/features",
+    "/pricing",
+    "/analytics",
+    "/documentation",
+    "/community",
+    "/trust",
+    "/records",
+    "/chapters",
+    "/changes",
+    "/moa",
+    "/trade-context",
+)
 _API_DESCRIPTION = """
 Public, read-only HTTP access to the verified `arancel-mx` dataset through the
 versioned `/v1` contract.

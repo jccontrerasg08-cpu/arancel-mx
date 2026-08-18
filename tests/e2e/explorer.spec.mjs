@@ -10,6 +10,50 @@ test('serves the public marketing root and preserves the explorer handoff', asyn
   await expect(page.getByRole('link', { name: /open explorer/i })).toHaveAttribute('href', 'https://arancel-mx.vercel.app/app');
 });
 
+test('serves the local research records page without an account boundary', async ({ page }) => {
+  await page.goto('/records');
+
+  await expect(page.getByRole('heading', { name: /save evidence you can return to/i })).toBeVisible();
+  await expect(page.getByText(/stored only in this browser/i)).toBeVisible();
+  await expect(page.getByRole('button', { name: /check verified record/i })).toBeVisible();
+});
+
+test('serves verified chapter and fraction-change discovery routes', async ({ page }) => {
+  await page.goto('/chapters');
+  await expect(page.getByRole('heading', { name: /capítulos, familias y jerarquía/i })).toBeVisible();
+
+  await page.goto('/changes');
+  await expect(page.getByRole('heading', { name: /find what a verified fraction shows now/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /inspect release/i })).toBeVisible();
+});
+
+test('opens a verified chapter section and family hierarchy from the keyboard', async ({ page }) => {
+  await page.goto('/chapters');
+
+  const section = page.getByRole('button', { name: /^sección I /i });
+  await section.focus();
+  await page.keyboard.press('Enter');
+  const chapter = page.getByRole('button', { name: /capítulo 01/i });
+  await expect(chapter).toBeVisible();
+  await chapter.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('button', { name: /partida · familia HS4.*01\.01/i })).toBeVisible();
+});
+
+test('serves the source-cited trade-context route', async ({ page }) => {
+  await page.goto('/trade-context');
+
+  await expect(page.getByRole('heading', { name: /comercio exterior: datos para entender el contexto/i })).toBeVisible();
+  await expect(page.getByRole('link', { name: /abrir explicación completa de INEGI/i })).toHaveAttribute('href', 'https://cuentame.inegi.org.mx/explora/economia/comercio_exterior/');
+});
+
+test('serves the official ANAM MOA source-index route', async ({ page }) => {
+  await page.goto('/moa');
+
+  await expect(page.getByRole('heading', { name: /manual de operación aduanera, en contexto/i })).toBeVisible();
+  await expect(page.getByRole('link', { name: /abrir manual de ANAM/i })).toHaveAttribute('href', 'https://www.anam.gob.mx/manual-de-operacion-aduanera-moa/');
+});
+
 test('serves the verified tariff explorer', async ({ page }) => {
   await page.goto('/app');
 

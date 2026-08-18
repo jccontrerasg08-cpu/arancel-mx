@@ -17,6 +17,7 @@ from arancel_mx.api.models import (
     NationalNoteResponse,
     ProvenanceResponse,
     SearchResponse,
+    SectionResponse,
     SuggestResponse,
     TariffResponse,
 )
@@ -28,6 +29,7 @@ from arancel_mx.api.openapi import (
 )
 from arancel_mx.api.repository import repository_snapshot
 from arancel_mx.consumer import Dataset
+from arancel_mx.consumer.hs_sections import hs_sections
 
 
 router = APIRouter()
@@ -152,6 +154,13 @@ def chapters(dataset: DatasetDependency) -> list[TariffResponse]:
     """Return current HS2 chapters from the verified dataset."""
 
     return [TariffResponse.from_record(record) for record in dataset.chapters()]
+
+
+@router.get("/v1/sections", response_model=list[SectionResponse], tags=["hierarchy"])
+def sections() -> list[SectionResponse]:
+    """Return canonical HS/LIGIE section ranges used to group verified chapters."""
+
+    return [SectionResponse.from_section(section) for section in hs_sections()]
 
 
 @router.get(
