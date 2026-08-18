@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+README_MAX_CHARS = 10_000
 
 BRAND_ASSETS = (
     "docs/assets/arancel-mx-logo.svg",
@@ -20,6 +22,20 @@ BRAND_ASSETS = (
 def _read(path: str) -> str:
     """Read a tracked presentation file as UTF-8 text."""
     return (ROOT / path).read_text(encoding="utf-8")
+
+
+def _local_markdown_targets(path: str) -> list[Path]:
+    """Return local Markdown targets referenced by one Markdown document."""
+    text = _read(path)
+    source_dir = (ROOT / path).parent
+    targets: list[Path] = []
+    for target in re.findall(r"\[[^\]]+\]\(([^)]+)\)", text):
+        if target.startswith(("http://", "https://", "#", "mailto:")):
+            continue
+        clean_target = target.split("#", 1)[0]
+        if clean_target.endswith(".md"):
+            targets.append((source_dir / clean_target).resolve())
+    return targets
 
 
 def test_brand_assets_are_accessible_vector_svgs_without_embedded_raster() -> None:
@@ -41,14 +57,20 @@ def test_brand_assets_are_accessible_vector_svgs_without_embedded_raster() -> No
         assert not any(token in lowered for token in forbidden), relative_path
 
 
-def test_readmes_lead_with_product_story_and_five_consumption_surfaces() -> None:
-    """Keep Spanish and English onboarding aligned around five user intents."""
+def test_readmes_are_compact_landing_pages_with_matching_user_routes() -> None:
+    """Keep both repository front pages short, symmetrical and action-oriented."""
     spanish = _read("README.md")
     english = _read("README.en.md")
 
+    assert len(spanish) <= README_MAX_CHARS
+    assert len(english) <= README_MAX_CHARS
+
     for phrase in (
-        "Por qué existe",
-        "Elige cómo usarlo",
+        "## Qué puedes hacer",
+        "## Empieza en 60 segundos",
+        "## Por qué confiar",
+        "## Documentación",
+        "## Alcance",
         "Datos / DuckDB",
         "CLI",
         "Python",
@@ -58,12 +80,16 @@ def test_readmes_lead_with_product_story_and_five_consumption_surfaces() -> None
         "arancel-mx data download",
         "arancel-mx lookup 01012101",
         "data-YYYY.MM.DD",
+        "https://arancel-mx.vercel.app/",
     ):
         assert phrase in spanish
 
     for phrase in (
-        "Why it exists",
-        "Choose how to use it",
+        "## What you can do",
+        "## Start in 60 seconds",
+        "## Why trust it",
+        "## Documentation",
+        "## Scope",
         "Data / DuckDB",
         "CLI",
         "Python",
@@ -73,11 +99,42 @@ def test_readmes_lead_with_product_story_and_five_consumption_surfaces() -> None
         "arancel-mx data download",
         "arancel-mx lookup 01012101",
         "data-YYYY.MM.DD",
+        "https://arancel-mx.vercel.app/",
     ):
         assert phrase in english
 
+    assert spanish.count("\n## ") <= 7
+    assert english.count("\n## ") <= 7
     assert "docs/assets/arancel-mx-banner.svg" in spanish
     assert "docs/assets/arancel-mx-banner.svg" in english
+
+
+def test_documentation_hub_routes_by_intent_and_keeps_specialized_research_off_root() -> None:
+    """Make docs/ the canonical deep-navigation layer instead of the root README."""
+    docs_index = _read("docs/README.md")
+
+    for heading in (
+        "## Usar",
+        "## Integrar",
+        "## Entender y verificar",
+        "## Mantener y contribuir",
+        "## Proyecto y presentación",
+    ):
+        assert heading in docs_index
+
+    assert "https://arancel-mx.vercel.app/" in docs_index
+    assert "research/anam-moa-source-map.md" in docs_index
+    assert not (ROOT / "ANAM_MOA_SOURCE_MAP.md").exists()
+    assert (ROOT / "docs/research/anam-moa-source-map.md").is_file()
+
+
+def test_repository_front_door_markdown_links_resolve_locally() -> None:
+    """Keep README and docs-hub links valid after documentation moves."""
+    for source in ("README.md", "README.en.md", "docs/README.md"):
+        targets = _local_markdown_targets(source)
+        assert targets, f"expected local documentation links in {source}"
+        missing = [target for target in targets if not target.exists()]
+        assert not missing, f"broken local Markdown links in {source}: {missing}"
 
 
 def test_public_brand_guide_is_discoverable_and_uses_current_schedule_language() -> None:
@@ -130,14 +187,15 @@ def test_brand_css_uses_stable_asset_selectors_not_generated_bundle_classes() ->
     assert "index-" not in styles
 
 
-def test_integration_handoff_describes_post_135_hub_boundary() -> None:
-    """Keep the integration handoff synchronized with the post-135 architecture."""
+def test_integration_handoff_describes_post_136_hub_boundary() -> None:
+    """Keep the integration handoff synchronized with the post-136 architecture."""
     handoff = _read("docs/integration-handoff.md")
     lowered = handoff.lower()
     assert "operational" in lowered
     assert "neon" in lowered
     assert "proxy" in lowered
     assert "/v1/meta" in handoff
-    assert "6297433" in handoff
+    assert "6ea740e" in handoff
     assert "ARANCEL_MX_DATABASE_DATABASE_URL" in handoff
     assert 'installCommand: "python -m pip install -r requirements.txt"' in handoff
+    assert "psycopg[binary]>=3.3.4" in handoff
