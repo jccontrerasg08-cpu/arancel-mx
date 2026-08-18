@@ -10,6 +10,11 @@ import os
 from pathlib import Path
 import sys
 
+from api._runtime import ensure_project_source
+
+
+ensure_project_source()
+
 from arancel_mx.operational.runtime_config import operational_database_url
 from arancel_mx.operational.sync import OperationalSyncError, synchronize_latest_release
 
