@@ -1,11 +1,17 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "buildCommand": "python3.13 -m pip install --target api/_vendor 'psycopg[binary]>=3.3.4'",
+  "buildCommand": "python -m pip install --target api/_vendor 'psycopg[binary]>=3.3.4'",
   "outputDirectory": "website",
   "functions": {
-    "api/operational.py": {"includeFiles": "api/_vendor/**"},
-    "api/sync_operational.py": {"includeFiles": "api/_vendor/**"}
+    "api/operational.py": {
+      "includeFiles": "{api/_vendor/**,src/arancel_mx/**}",
+      "maxDuration": 30
+    },
+    "api/sync_operational.py": {
+      "includeFiles": "{api/_vendor/**,src/arancel_mx/**}",
+      "maxDuration": 60
+    }
   },
   "cleanUrls": true,
   "crons": [
@@ -44,17 +50,26 @@
       "destination": "/api/operational?resource=ready"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!assets/|api/).*)",
       "destination": "/"
     }
   ],
   "headers": [
     {
-      "source": "/assets/(.*)",
+      "source": "/assets/index-(.*)",
       "headers": [
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/assets/((?!index-).*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
         }
       ]
     }
