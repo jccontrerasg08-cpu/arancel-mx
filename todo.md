@@ -30,3 +30,6 @@
 - [x] Map the official ANAM Manual de Operación Aduanera navigation, first-party source pages, and update notices into a maintainable source index rather than copying an unbounded external site.
 - [x] Add a non-advisory public guidance surface for MOA structure, normative source roles, operational-stage references, and official next-step links, with explicit boundaries against legal or customs determinations.
 - [x] Add route, link, and browser regression coverage for the ANAM official-source guidance surface.
+- [x] Add original transparent SVG-style section icons to the verified chapter catalogue without copying third-party visual assets.
+- [x] Add accessible expandable navigation from section to chapter, heading, and verified family data using the existing source-backed hierarchy.
+- [x] Add unit and browser coverage for the chapter hierarchy interactions, including keyboard-accessible disclosure controls.

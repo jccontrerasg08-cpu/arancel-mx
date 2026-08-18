@@ -20,11 +20,24 @@ test('serves the local research records page without an account boundary', async
 
 test('serves verified chapter and fraction-change discovery routes', async ({ page }) => {
   await page.goto('/chapters');
-  await expect(page.getByRole('heading', { name: /chapters and data updates/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /capítulos, familias y jerarquía/i })).toBeVisible();
 
   await page.goto('/changes');
   await expect(page.getByRole('heading', { name: /find what a verified fraction shows now/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /inspect release/i })).toBeVisible();
+});
+
+test('opens a verified chapter section and family hierarchy from the keyboard', async ({ page }) => {
+  await page.goto('/chapters');
+
+  const section = page.getByRole('button', { name: /^sección I /i });
+  await section.focus();
+  await page.keyboard.press('Enter');
+  const chapter = page.getByRole('button', { name: /capítulo 01/i });
+  await expect(chapter).toBeVisible();
+  await chapter.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('button', { name: /partida · familia HS4.*01\.01/i })).toBeVisible();
 });
 
 test('serves the source-cited trade-context route', async ({ page }) => {
