@@ -34,6 +34,13 @@ test('serves the source-cited trade-context route', async ({ page }) => {
   await expect(page.getByRole('link', { name: /abrir explicación completa de INEGI/i })).toHaveAttribute('href', 'https://cuentame.inegi.org.mx/explora/economia/comercio_exterior/');
 });
 
+test('serves the official ANAM MOA source-index route', async ({ page }) => {
+  await page.goto('/moa');
+
+  await expect(page.getByRole('heading', { name: /manual de operación aduanera, en contexto/i })).toBeVisible();
+  await expect(page.getByRole('link', { name: /abrir manual de ANAM/i })).toHaveAttribute('href', 'https://www.anam.gob.mx/manual-de-operacion-aduanera-moa/');
+});
+
 test('serves the verified tariff explorer', async ({ page }) => {
   await page.goto('/app');
 

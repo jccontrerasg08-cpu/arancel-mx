@@ -51,6 +51,7 @@ _MARKETING_PAGES = (
     "/records",
     "/chapters",
     "/changes",
+    "/moa",
     "/trade-context",
 )
 _API_DESCRIPTION = """

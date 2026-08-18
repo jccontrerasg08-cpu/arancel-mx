@@ -27,3 +27,6 @@
 - [x] Add a trade-context page that links official information and presents only independently sourced, dated economic context.
 - [x] Deliver the local research records, chapter discovery, fraction-change, and trade-context pages first; defer the official PDF-link directory until the underlying link-bearing source files are readable.
 - [ ] Publish the approved public-site expansion through a protected pull request and verify its Vercel preview before merge.
+- [x] Map the official ANAM Manual de Operación Aduanera navigation, first-party source pages, and update notices into a maintainable source index rather than copying an unbounded external site.
+- [x] Add a non-advisory public guidance surface for MOA structure, normative source roles, operational-stage references, and official next-step links, with explicit boundaries against legal or customs determinations.
+- [x] Add route, link, and browser regression coverage for the ANAM official-source guidance surface.
