@@ -1,6 +1,6 @@
 # Handoff de integración
 
-> **Baseline revisada:** `62974330f1170504fd8b7a5005402bf4dd682e6f`, después de PR #135 (`fix: install operational dependencies in Vercel`). Antes de terminar cualquier rama, compara de nuevo contra `origin/main`.
+> **Baseline revisada:** `90840779e752ac7ef257923edda95f188d4d35ac`, después de PR #141 (`fix: build Vercel driver with Python 3.13`). Antes de terminar cualquier rama, compara de nuevo contra `origin/main`.
 
 Esta guía mantiene integrables los cambios paralelos sin reintroducir acoplamientos que ya se eliminaron. Cada pull request debe respetar las fronteras actuales entre publicación oficial, capa operacional, hub público, API reusable y paquete Python.
 
@@ -9,7 +9,7 @@ Esta guía mantiene integrables los cambios paralelos sin reintroducir acoplamie
 | Área | Contrato vigente | Archivos con mayor riesgo de solapamiento |
 |---|---|---|
 | Hub público | `https://arancel-mx.vercel.app` sirve `website/`, mantiene rutas SPA, búsqueda arancelaria y metadata de confianza. | `website/`, `vercel.json`, `tests/test_public_site.py` |
-| Capa operational de Vercel | `/v1/meta` y `/v1/search` se resuelven en funciones read-only respaldadas por Neon; la sincronización operacional parte de releases verificadas. | `api/operational.py`, `api/sync_operational.py`, `src/arancel_mx/operational/`, tests de `operations/` |
+| Capa operational de Vercel | `/v1/meta`, `/v1/search` y `/readyz` se resuelven en funciones read-only respaldadas por Neon; la sincronización operacional parte de releases verificadas. | `api/operational.py`, `api/sync_operational.py`, `src/arancel_mx/operational/`, tests de `operations/` |
 | FastAPI reusable | El runtime FastAPI sigue siendo desplegable por separado. Vercel presenta bajo el mismo dominio las rutas restantes mediante **proxy** hacia `arancel-mx.fastapicloud.dev`. | `src/arancel_mx/api/`, `docs/external-consumption.md`, rutas proxy en `vercel.json` |
 | Paquete y dependencias | Las actualizaciones coordinan `pyproject.toml`, `requirements/` y pruebas de instalación/distribución. | `pyproject.toml`, `requirements/`, `tests/package*`, workflows de publicación |
 | Releases y fuentes | La release verificada sigue siendo la fuente de verdad. El pipeline conserva snapshots, reconciliación, manifest e identidad inmutable. | `src/arancel_mx/sources/`, `src/arancel_mx/release/`, `tests/pipeline/`, `tests/sources/` |
@@ -26,9 +26,9 @@ sync operacional idempotente
       ↓
 Neon
       ↓
-Vercel: /v1/meta + /v1/search
+Vercel: /v1/meta + /v1/search + /readyz
 
-Vercel: /v1/* restante + /docs + /readyz
+Vercel: /v1/* restante + /docs
       ↓ proxy
 FastAPI reusable
 ```
@@ -54,7 +54,7 @@ Antes de limpiar variables en Vercel, identifica si son creadas por la integraci
 5. Deja los checks completos y el preview de Vercel como gate de integración.
 6. Usa squash merge, que es el método permitido por la configuración actual del repositorio.
 
-Cuando una rama toca el hub, confirma raíz y ruta directa, conserva `hub-search.js`/`hub-search.css` si no estás modificando búsqueda y verifica que `/v1/meta` siga resolviendo a la función operational. Las rutas generales `/v1/:path*`, `/docs` y `/readyz` deben conservar el proxy FastAPI mientras esa arquitectura siga vigente.
+Cuando una rama toca el hub, confirma raíz y ruta directa, conserva `hub-search.js`/`hub-search.css` si no estás modificando búsqueda y verifica que `/v1/meta` y `/readyz` sigan resolviendo a la función operational. Las rutas generales `/v1/:path*` y `/docs` deben conservar el proxy FastAPI mientras esa arquitectura siga vigente.
 
 Cuando una rama toca dependencias o certificación del paquete, revísala después de las ramas de producto/sitio que también modifiquen `pyproject.toml`, `requirements/` o documentación raíz. Esto reduce conflictos y hace que la certificación pruebe el estado final.
 

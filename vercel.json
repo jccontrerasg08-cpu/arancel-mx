@@ -41,7 +41,7 @@
     },
     {
       "source": "/readyz",
-      "destination": "https://arancel-mx.fastapicloud.dev/readyz"
+      "destination": "/api/operational?resource=ready"
     },
     {
       "source": "/(.*)",

@@ -28,6 +28,25 @@ function updateStandaloneCopy() {
   }
 }
 
+function synchronizeDisplayedRelease() {
+  fetch('/v1/meta', { cache: 'no-store' })
+    .then((response) => (response.ok ? response.json() : null))
+    .then((metadata) => {
+      if (!metadata || typeof metadata.dataset_tag !== 'string') return;
+      const root = document.getElementById('root') || document.body;
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        if (/release\s*\/\s*data-\d{4}\.\d{2}\.\d{2}/.test(node.nodeValue)) {
+          node.nodeValue = node.nodeValue.replace(
+            /release\s*\/\s*data-\d{4}\.\d{2}\.\d{2}/,
+            `release / ${metadata.dataset_tag}`,
+          );
+        }
+      }
+    })
+    .catch(() => {});
+}
+
 function applyPublicSiteBridge() {
   redirectFormerExplorerLinks();
   updateStandaloneCopy();
@@ -35,3 +54,4 @@ function applyPublicSiteBridge() {
 
 applyPublicSiteBridge();
 new MutationObserver(applyPublicSiteBridge).observe(document.body, { childList: true, subtree: true });
+window.addEventListener('load', synchronizeDisplayedRelease, { once: true });
