@@ -101,7 +101,7 @@ Profundiza en [roles de fuentes oficiales](docs/official-source-roles.md), [fuen
 
 ## Alcance
 
-`arancel-mx` es una capa técnica y pública de datos para LIGIE/NICO, procedencia y consumo reproducible. No pretende ser un sistema completo de comercio exterior y **no clasifica mercancías ni constituye asesoría legal**.
+`arancel-mx` es una capa técnica y pública de datos para LIGIE/NICO, procedencia y consumo reproducible. No pretende ser un sistema completo de comercio exterior. **No clasifica mercancías. No constituye asesoría legal.**
 
 El código se distribuye bajo [Apache-2.0](LICENSE). Para colaborar consulta [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) y [TERMS.md](TERMS.md).
 
