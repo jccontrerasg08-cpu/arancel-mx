@@ -203,3 +203,15 @@ def test_vercel_entrypoint_resolves_the_public_application() -> None:
     from src.arancel_mx.api.app import app as vercel_app
 
     assert vercel_app.title == "Arancel MX API"
+
+
+def test_explorer_serves_durable_client_routes(valid_settings, fake_dataset) -> None:
+    with _client(valid_settings, fake_dataset) as client:
+        record = client.get("/app/record/85171301")
+        chapter = client.get("/app/chapter/85")
+
+    assert record.status_code == 200
+    assert chapter.status_code == 200
+    assert 'data-testid="snapshot-list"' in record.text
+    assert "Guardar ficha local" in record.text
+    assert "Vigencia y evidencia registrada" in record.text
