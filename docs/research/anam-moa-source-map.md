@@ -1,6 +1,8 @@
 # Mapa de fuentes oficiales: Manual de Operación Aduanera (ANAM)
 
-Este documento registra las fuentes de primer nivel que sustentan la futura superficie pública de orientación del MOA en arancel-mx. Se usa como **índice de navegación y procedencia**, no como sustituto ni transcripción del Manual de Operación Aduanera, de la Ley Aduanera, de las RGCE o de una determinación individual.
+> [Centro de documentación](../README.md) · [Visión del proyecto](../project-overview.md) · [Hub público](https://arancel-mx.vercel.app/)
+
+Este documento registra las fuentes de primer nivel que sustentan la futura superficie pública de orientación del MOA en `arancel-mx`. Se usa como **índice de navegación y procedencia**, no como sustituto ni transcripción del Manual de Operación Aduanera, de la Ley Aduanera, de las RGCE o de una determinación individual.
 
 ## Alcance editorial
 
@@ -15,7 +17,7 @@ La integración debe explicar cómo se organiza la fuente oficial, distinguir la
 | Documento del MOA | Documento oficial enlazado por ANAM; se abre en la fuente primaria | [PDF del MOA, mayo de 2022](https://www.anam.gob.mx/wp-content/uploads/2022/05/Manual-de-Operacion-Aduanera-MOA-may2022.pdf) |
 | Portal de normatividad | Hub oficial de ANAM para normas, MOA, RGCE y consultas a fuentes legislativas | [ANAM: Normatividad](https://www.anam.gob.mx/normatividad_2022/) |
 
-> **Límite de vigencia.** La página oficial de ANAM indica que el manual está en proceso de actualización. Por ello, arancel-mx debe mostrar la fecha y el enlace de cada fuente, no presentar el contenido como una regla vigente por sí mismo.
+> **Límite de vigencia.** La página oficial de ANAM indica que el manual está en proceso de actualización. Por ello, `arancel-mx` debe mostrar la fecha y el enlace de cada fuente, no presentar el contenido como una regla vigente por sí mismo.
 
 ## Taxonomía oficial del MOA
 
@@ -44,4 +46,4 @@ La petición de incluir “toda la información y sus subdominios” se interpre
 
 ## Observación de navegación
 
-En la revisión interactiva del micrositio, los controles visibles **Modificaciones** y **Comentarios** permanecieron en la misma URL con ancla (`/#`) y no revelaron un destino de contenido independiente. La interfaz de arancel-mx no debe tratarlos como un feed de modificaciones, un canal de consulta ni una fuente verificable hasta que ANAM publique una URL concreta y accesible para ese material.
+En la revisión interactiva del micrositio, los controles visibles **Modificaciones** y **Comentarios** permanecieron en la misma URL con ancla (`/#`) y no revelaron un destino de contenido independiente. La interfaz de `arancel-mx` no debe tratarlos como un feed de modificaciones, un canal de consulta ni una fuente verificable hasta que ANAM publique una URL concreta y accesible para ese material.

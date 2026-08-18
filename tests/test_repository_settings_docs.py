@@ -60,7 +60,11 @@ def test_github_settings_runbook_is_exact_and_actionable():
     assert [value for value in required if value not in runbook] == []
 
 
-def test_both_readmes_link_github_settings_runbook():
+def test_documentation_hub_links_github_settings_runbook() -> None:
+    hub = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
+    assert "operations/github-settings.md" in hub
+    assert "Configuración de GitHub" in hub
+
     for name in ("README.md", "README.en.md"):
         text = (ROOT / name).read_text(encoding="utf-8")
-        assert "docs/operations/github-settings.md" in text
+        assert "docs/README.md" in text

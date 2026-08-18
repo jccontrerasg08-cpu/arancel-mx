@@ -1,120 +1,67 @@
 # Contrato de consumo externo
 
-Guía canónica para aplicaciones que consumen `arancel-mx` como paquete de datos verificado o mediante su API HTTP pública de solo lectura (por ejemplo AduanaMap). No sustituye el pipeline interno ni convierte este repositorio en una plataforma aduanera.
+Esta es la guía canónica para aplicaciones que consumen `arancel-mx` mediante releases verificadas, Python, CLI o la API HTTP pública. El **front door público** es [`https://arancel-mx.vercel.app/`](https://arancel-mx.vercel.app/), mientras GitHub Releases conserva la identidad canónica del dataset.
 
-El recorrido de ingesta esperado es:
-
-```text
-fijar arancel-mx==0.2.0
-  -> pip install arancel-mx==0.2.0
-  -> arancel-mx doctor
-  -> descargar una release exacta data-YYYY.MM.DD
-  -> verificar SHA256SUMS + manifest.json + DuckDB
-  -> consultar IGI/IGE, jerarquía, vigencia y procedencia
-  -> opcionalmente autoingerir CSV/JSON/DuckDB en el almacén del consumidor
-```
+**[Hub](https://arancel-mx.vercel.app/)** · **[OpenAPI](https://arancel-mx.vercel.app/docs)** · **[Metadata](https://arancel-mx.vercel.app/v1/meta)** · **[Readiness](https://arancel-mx.vercel.app/readyz)** · **[Última release](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest)**
 
 ## Qué es y qué no es arancel-mx
 
-`arancel-mx` es un paquete de datos fail-closed de la LIGIE/NICO mexicana. Publica seis assets verificables en GitHub Releases, un paquete Python de consulta y, desde el contrato en desarrollo `0.3.3`, una API HTTP pública GET-only y read-only. No es asesoría legal, no es un clasificador arancelario y no es AduanaMap.
+`arancel-mx` es una capa técnica y reproducible para consultar LIGIE/NICO y su procedencia. Publica artefactos verificables, una API Python, una CLI y una API HTTP GET-only/read-only.
 
-El software original se distribuye como `arancel-mx` (nombre en PyPI), se importa como `arancel_mx` y el comando de consola es `arancel-mx`. No existe la distribución `arancelmx`.
+No es un motor de clasificación, una resolución aduanera ni asesoría legal. `search`, `suggest`, `compare` y las fuentes auxiliares ayudan a recuperar o contrastar evidencia; no convierten un resultado en una determinación jurídica.
 
-Tipos públicos documentados: `Dataset`, `TariffRecord`, `Ficha`, `ProvenanceRecord`, `SearchResult`, `DatasetInfo`, `HsSection` y `CompareRow`, más las excepciones exportadas desde `arancel_mx`.
+| Necesidad | Contrato recomendado |
+|---|---|
+| SQL, BI, ETL o notebooks | DuckDB/CSV/JSON de una release `data-YYYY.MM.DD` |
+| Aplicación Python | `Dataset.version("data-YYYY.MM.DD")` |
+| Terminal o automatización local | CLI `arancel-mx` |
+| Servicio o UI remota | `https://arancel-mx.vercel.app/v1/...` |
+| Auditoría | `manifest.json`, `SHA256SUMS`, `provenance` y fuentes capturadas |
 
 ## Instalar y fijar versiones
 
-Python 3.11 o superior.
+Python 3.11 o superior:
 
 ```bash
-pip install arancel-mx==0.2.0
+python -m pip install arancel-mx
 arancel-mx --version
 arancel-mx doctor
-```
-
-`arancel-mx==0.2.0` ya está en PyPI (carga del 2026-08-12). El checkout declara `0.3.3`; esa versión no está en PyPI hasta `pkg-v0.3.3`. Las aplicaciones aguas abajo siguen fijando `arancel-mx==0.2.0`. La descripción larga en pypi.org es la del upload `0.2.0` (README congelado en esa rueda); los contratos vivos están en git. Fijar el paquete **no** fija el dataset. El dataset usa tags inmutables `data-YYYY.MM.DD` independientes de la versión PEP 440. `/releases/latest` resuelve hoy a `data-2026.08.15`.
-
-```bash
 arancel-mx data download --dataset data-YYYY.MM.DD
-arancel-mx lookup 01012101 --dataset data-YYYY.MM.DD
+arancel-mx data verify --dataset data-YYYY.MM.DD
 ```
+
+La versión del paquete y la versión de los datos son identidades distintas. El estado exacto de publicación del paquete vive en [package-release.md](package-release.md); esta guía evita fijar una versión “latest” que se vuelva obsoleta.
 
 En Python:
 
 ```python
 from arancel_mx import Dataset
 
+# Release inmutable y explícita.
 db = Dataset.version("data-YYYY.MM.DD")
+record = db.lookup("01012101")
+print(record.code, record.description)
 ```
 
-`Dataset.latest()` resuelve la release pública más reciente, la verifica y la abre. No uses “lo que haya en git” como identidad de datos.
+- `Dataset.version(...)` fija una release pública inmutable.
+- `Dataset.latest()` resuelve la release pública más reciente y la verifica antes de abrirla.
+- `Dataset.open(path)` abre un DuckDB local y valida su estructura, pero no lo marca automáticamente como `release_verified`.
 
-## API HTTP pública
-
-El servicio HTTP conserva tres identidades separadas:
-
-```text
-API v1
-package 0.3.3
-dataset data-2026.08.15
-```
-
-El contrato `/v1` es GET-only, read-only y no requiere API key. La API usa exactamente el mismo `Dataset` verificado del paquete y no implementa su propia lógica de clasificación o tarifas. `search` y `suggest` son retrieve-only: la API no clasifica mercancías y no constituye asesoría legal.
-
-La producción debe fijar una release inmutable de forma explícita:
-
-```text
-ARANCEL_MX_API_DATASET=data-2026.08.15
-```
-
-No existe fallback silencioso a `latest` durante el arranque del servicio. Si la configuración falta, la release no puede verificarse o el DuckDB no abre de forma válida, el servicio falla cerrado en vez de declarar readiness.
-
-El sitio público principal es [`https://arancel-mx.vercel.app`](https://arancel-mx.vercel.app). La API FastAPI se despliega de forma independiente en el origen que configure cada integración; el sitio no actúa como proxy ni catálogo de esa API:
-
-```bash
-export ARANCEL_MX_API_URL="https://api.example.com"
-curl "$ARANCEL_MX_API_URL/healthz"
-curl "$ARANCEL_MX_API_URL/readyz"
-curl "$ARANCEL_MX_API_URL/v1/meta"
-curl "$ARANCEL_MX_API_URL/v1/lookup/8517130100"
-```
-
-En documentación y scripts, `ARANCEL_MX_API_URL` representa únicamente el origen HTTP ya desplegado y verificado. El ejemplo de lookup es `/v1/lookup/8517130100`.
-
-Endpoints públicos iniciales:
-
-```text
-GET /
-GET /healthz
-GET /readyz
-GET /v1/meta
-GET /v1/lookup/{code}
-GET /v1/ficha/{code}
-GET /v1/search?q=...&limit=...
-GET /v1/suggest?q=...&limit=...
-GET /v1/chapters
-GET /v1/chapters/{chapter}/national-notes
-GET /v1/codes/{code}/parent
-GET /v1/codes/{code}/children
-GET /v1/codes/{code}/provenance
-```
-
-`/docs` y `/redoc` sirven la documentación interactiva generada desde OpenAPI. `/v1/meta` publica por separado la versión de API, la versión del paquete y la identidad del dataset cargado. El sitio público de [`arancel-mx`](https://arancel-mx.vercel.app) enlaza las guías, releases, PyPI, CLI y GitHub; no depende de la API desplegada.
-
-El límite de seguridad del servicio es deliberado: no ofrece endpoints HTTP de actualización, reconciliación ni publicación, tampoco expone captura oficial, `compare` live contra VUCEM ni descarga WCO. Esas funciones continúan fuera del servicio web público.
+El dataset no viene embebido en el wheel. Una actualización del paquete no cambia silenciosamente una release fijada.
 
 ## Verificar
 
-Orden de verificación para una release `data-YYYY.MM.DD`:
+El flujo de consumo es **fail-closed**:
 
-1. Resolver **un** tag exacto.
-2. `arancel-mx doctor` — instalación, cache, DuckDB y acceso remoto.
-3. `arancel-mx data download` — descarga a estado temporal; no promueve un cache parcial.
-4. `arancel-mx data verify --bundle` — revalida integridad local y el contrato de seis assets.
-5. `sha256sum -c SHA256SUMS` sólo si descargaste **todos** los assets de la GitHub Release al mismo directorio. No lo uses sobre el cache de `data download`: `SHA256SUMS` cubre cinco archivos y `data download` no los deja juntos.
-6. Comprobar `manifest.json` **schema v2** (también lo cubre `data verify`).
+```text
+resolver una release exacta
+  → descargar a estado temporal
+  → verificar manifest + SHA256 + estructura DuckDB
+  → promover al cache sólo si todo pasó
+  → abrir read-only
+```
 
-Los seis assets, ni uno más ni uno menos:
+Una release válida publica exactamente seis assets:
 
 ```text
 arancel_mx.duckdb
@@ -125,127 +72,152 @@ SHA256SUMS
 official-sources.tar.gz
 ```
 
-`Dataset.open(path)` abre un DuckDB local tras validación estructural. Esa apertura **no** es `release_verified`: un archivo local que abre no hereda procedencia de release.
+`manifest.json` usa **schema v2** y conserva identidad de dataset, fuentes, hashes y procedencia de ejecución. Si descargaste los seis assets al mismo directorio, puedes verificar el bundle con:
 
-El modo `--offline` es estricto: no hay fallback de red. Si el dataset falta o falla la verificación local, el comando falla. Un código desconocido o no vigente levanta `RecordNotFoundError` (o fallo de CLI); no se inventa una fila.
+```bash
+sha256sum -c SHA256SUMS
+```
+
+La CLI aplica el mismo contrato:
+
+```bash
+arancel-mx doctor --dataset data-YYYY.MM.DD
+arancel-mx data download --dataset data-YYYY.MM.DD
+arancel-mx data verify --dataset data-YYYY.MM.DD
+```
+
+El `cache` sólo promueve una descarga después de verificarla. `--offline` es estricto: si falta el dataset solicitado o la verificación local falla, no hay fallback silencioso a red ni a otra versión.
+
+Los errores públicos permiten manejar fallos de forma explícita. Por ejemplo, `RecordNotFoundError` representa un código inexistente en el dataset seleccionado; los errores de descarga, schema o integridad pertenecen a la jerarquía pública de errores de dataset.
 
 ## Consultar
 
-Dos consultas de apoyo a la revisión. Ninguna publica una clasificación ni sustituye LIGIE/NICO. El dataset oficial verificado es la evidencia; WCO y VUCEM son únicamente fuentes informativas de apoyo.
-
-1. **`search` (dos etapas, sin LLM, offline).** `arancel-mx search "camisas de algodón de punto"`. En consultas por descripción ordena primero los capítulos HS2 coincidentes y después las filas vigentes de esos capítulos. El ranking por código exacto o prefijo no cambia. Los resultados incluyen `scorer_version` (`"1"`; se incrementa si cambia el ranking) y un `confidence` de 0 a 1 para analítica. No es una clasificación.
-2. **`suggest`.** `arancel-mx suggest "camisas de algodón de punto"` / `Dataset.suggest(text, limit=5)`. Mismo recorte. Imprime ficha y notas nacionales (`arancel_mx_national_notes` cuando la vista tiene filas; `data-2026.08.15` contiene 266 registros) para los N primeros, con preferencia por `fraccion8`. Retrieve-only: no afirma una clasificación. Una persona decide la clasificación; la evidencia permanece en el dataset oficial.
-
-CLI:
+### CLI
 
 ```bash
 arancel-mx lookup 01012101
 arancel-mx ficha 01012101
-arancel-mx compare 010121
-arancel-mx compare 01012101
-arancel-mx compare 0101210100
-arancel-mx chapters
 arancel-mx search "refrigeradores"
-arancel-mx search "camisas de algodón de punto"
 arancel-mx suggest "camisas de algodón de punto"
-arancel-mx wco cite 61
+arancel-mx chapters
 arancel-mx parent 01012101
 arancel-mx children 010121
 arancel-mx provenance 01012101
-arancel-mx lookup 01012101 --offline --format json
+arancel-mx compare 01012101
+arancel-mx wco cite 01
 ```
 
-`wco cite`/`wco download` son apoyo de lectura HS 2022 de la OMA, no autoridad LIGIE/NICO ni consulta DuckDB. `cite` no descarga.
+`search` y `suggest` son retrieve-only. `compare` contrasta el dataset verificado con la superficie VUCEM correspondiente cuando aplica; es una ayuda de verificación, no un clasificador.
 
-Python:
+### Python
 
 ```python
 from arancel_mx import Dataset
 
-db = Dataset.latest()
+db = Dataset.version("data-YYYY.MM.DD")
 record = db.lookup("01012101")
-print(record.code, record.level, record.igi_text, record.ige_text)
 card = db.ficha("01012101")
-sources = db.provenance("01012101")  # Dataset.provenance
-for chapter in db.chapters():
-    print(chapter.code, chapter.description)
-parent = db.parent("01012101")
-children = db.children("01012101")
-hits = db.search("raza pura")
-db.suggest("camisas de algodón de punto", limit=5)  # retrieve-only; not a classification
-rows = db.compare("01012101")  # Dataset.compare vs VUCEM; not legal identity
+sources = db.provenance("01012101")
+comparison = db.compare("01012101")
 ```
 
-Consultas públicas: `lookup`, `search`, `suggest`, `ficha`, `chapters`, `parent`, `children`, `provenance`, `compare`.
+La superficie pública reexporta modelos de lectura como `TariffRecord`, `Ficha`, `ProvenanceRecord`, `SearchResult`, `DatasetInfo`, `HsSection` y `CompareRow`. Usa esos tipos en vez de depender de estructuras internas del DuckDB cuando necesites un contrato Python estable.
 
-IGI/IGE se muestran con los literales oficiales `igi_text` / `ige_text` (por ejemplo `10` o `Ex.`). No reescribas esos literales a `"16%"` ni trates `igi_value` como IVA.
+Los campos canónicos usan `fraccion8` para la fracción mexicana y `nico10` para el código completo. Si una aplicación downstream expone aliases como `fraction8` o `classification10`, debe documentar el mapeo y no mezclar semánticas de ocho y diez dígitos.
 
-Ejemplo de fixture de consumidor: la fracción vigente `01012101` (`fraccion8`) tiene `igi_text` `10` e `ige_text` `Ex.`; su NICO es `0101210100`.
+IGI/IGE se conservan como literales oficiales, por ejemplo `igi_text` y `ige_text`; no se reinterpretan automáticamente como otros impuestos.
 
-Ejemplo documental SIICEX (no es una consulta live al DuckDB publicado): `11063001` **no está** en el snapshot oficial actual y `arancel-mx ficha 11063001` falla cerrado. `11062002` es la fracción documentada de sagú con IGI oficial `10`.
+### Goldens documentales, no consultas live
 
-### Alias JSON de aplicaciones downstream
+Los siguientes ejemplos existen para fijar semántica de tests y documentación. **No son una promesa de vigencia futura ni una instrucción de clasificación.**
 
-El CSV/JSON público y la vista `arancel_mx` usan las columnas canónicas `fraccion8` y `nico10`. Si una aplicación expone nombres en inglés:
+- El fixture `01012101` tiene un hijo NICO `0101210100`; en ese golden `igi_text` es `10` y `ige_text` es `Ex.`.
+- El ejemplo histórico SIICEX `11063001` para harina de sagú **no está** en el snapshot oficial usado por la comparación documental y debe fallar cerrado. El par vigente documentado para sagú es `11062002`, con literal IGI `10`. La fuente y el contexto completo están en [sources.md](sources.md).
 
-- JSON `fraction8` corresponde a la columna `fraccion8` (8 dígitos).
-- JSON `classification10` corresponde a la columna `nico10` (10 dígitos).
+### API HTTP pública
 
-Nunca mapees 10 dígitos sobre `fraccion8`.
+Usa un solo origen público:
+
+```bash
+export ARANCEL_MX_API_URL="https://arancel-mx.vercel.app"
+curl "$ARANCEL_MX_API_URL/readyz"
+curl "$ARANCEL_MX_API_URL/v1/meta"
+curl "$ARANCEL_MX_API_URL/v1/search?q=telefonos&limit=5"
+curl "$ARANCEL_MX_API_URL/v1/lookup/8517130100"
+```
+
+La documentación interactiva está en [`/docs`](https://arancel-mx.vercel.app/docs). La superficie `/v1` pública es **GET-only**, **read-only** y no requiere API key para las rutas documentadas.
+
+La arquitectura pública es híbrida sin duplicar la fuente de verdad:
+
+```text
+GitHub Release verificada
+          ↓
+sincronización operacional
+          ↓
+        Neon
+          ↓
+Vercel: /v1/meta + /v1/search + /readyz
+
+Vercel: /v1/* restante + /docs
+          ↓ proxy
+   runtime FastAPI reusable
+```
+
+`/v1/meta`, `/v1/search` y `/readyz` se resuelven en la capa operacional read-only de Vercel respaldada por Neon. Las demás rutas `/v1/*` y `/docs` se presentan bajo el mismo dominio mediante proxy al runtime FastAPI. **Vercel y Neon son superficies de servicio; la GitHub Release verificada sigue siendo la fuente canónica.**
 
 ## Autoingesta
 
-Una aplicación puede leer `arancel_mx.duckdb`, `arancel_mx.csv` o `arancel_mx.json` e insertarlos en su propio almacén (Postgres, API propia, etc.). Ese almacén del consumidor **no** es la verdad aguas arriba.
+Una aplicación puede cargar DuckDB, CSV o JSON en Postgres, un warehouse u otro almacén propio. Esa copia downstream no se convierte en la fuente upstream.
 
-La identidad verificada sigue siendo la release `data-YYYY.MM.DD` con `SHA256SUMS` y `manifest.json` schema v2. No scrapees Diputados/DOF/SNICE en paralelo y trates ese scrape como equivalente a una release de `arancel-mx`.
+Conserva, como mínimo:
+
+- tag `data-YYYY.MM.DD` de origen;
+- `manifest.json` y checksums de la release;
+- momento de ingesta downstream;
+- transformaciones adicionales aplicadas por tu sistema.
+
+No ejecutes un scrape paralelo de Diputados/DOF/SNICE y lo presentes como equivalente a una release de `arancel-mx`.
 
 ## Mapeo de procedencia
 
-No hay un séptimo asset `source_trace.json`. Una aplicación que necesite un objeto de trazabilidad lo compone de:
+La trazabilidad se reconstruye desde las columnas por fila, `Dataset.provenance(code)` / `arancel-mx provenance`, `manifest.json` y los bytes preservados en `official-sources.tar.gz`.
 
-- columnas por fila `primary_source_document_id`, `primary_source_authority`, `primary_source_url`, `source_document_ids_json`, `source_count`;
-- `Dataset.provenance(code)` / `arancel-mx provenance`;
-- `manifest.json` (`source_documents`, `source_identity`);
-- bytes oficiales y `source_capture.json` dentro de `official-sources.tar.gz`.
+No hace falta inventar un séptimo asset para representar procedencia. Para el schema exacto consulta [data-model.md](data-model.md), y para roles/autoridad de fuente consulta [official-source-roles.md](official-source-roles.md) y [sources.md](sources.md).
 
 ## Fuera de alcance
 
-`arancel-mx` **no publica** las siguientes medidas ni servicios. No están publicados en el contrato de datos 0.2.x ni se deben inferir del API v1:
+No infieras del dataset o de la API medidas que el contrato no publica. Entre otros, `arancel-mx` no publica por defecto:
 
-- IVA
-- franja / región
-- permisos
-- NOM
-- TLC / T-MEC
-- PROSEC
-- columnas de descripción en inglés
-- Postgres hospedado
-- API REST de escritura, administración o mutación. La API REST pública v1 permanece estrictamente GET-only/read-only.
-- SIICEX-CAAAREM o HTML de VUCEM como identidad legal
-- cola humana para promover capturas incompletas
-- GIR, notas de sección/capítulo/subpartida o reglas complementarias (incluida la 10ª), y sugerencias HS6 WCO. Esos textos WCO no se publican como instrumento jurídico mexicano. Una caché local opcional de PDF WCO es sólo apoyo de lectura (copyright WCO; no es autoridad LIGIE/NICO). `suggest` es retrieve-only sobre el dataset oficial y no clasifica.
-- RGCE Anexos 1–30, instructivos de pedimento y dumps TIGIE no oficiales (`tigieX`). El cruce es `fraccion8`/`nico10`; Anexo 9 no sustituye `igi_text`
+- IVA, GIR u otros conceptos que no estén modelados como campos del dataset;
+- NOM, permisos, franja/región, TLC/T-MEC o PROSEC como un motor de cumplimiento;
+- una resolución de clasificación;
+- una API de escritura o administración;
+- Postgres/Neon como fuente canónica del dataset;
+- SIICEX, VUCEM, RGCE o dumps `tigieX` como sustitutos de la identidad LIGIE/NICO de la release;
+- interpretación jurídica automática de fuentes auxiliares.
 
-Las notas nacionales LIGIE tienen tablas (`national_note*`, vista `arancel_mx_national_notes`) y un parser HTML. El pipeline oficial ya captura esa fuente oficial DOF. La release publicada `data-2026.08.15` contiene 266 registros. No se inventan instrumentos legales.
+VUCEM puede participar como superficie informativa de contraste y RGCE puede ser relevante para un caso jurídico, pero eso no significa que sus contenidos completos formen parte del schema publicado por este proyecto.
 
-Una discrepancia, parser dudoso o gate fallido bloquea la publicación. No hay “publicar de todos modos”.
+La ausencia de un campo nunca debe rellenarse mediante suposición.
 
 ## Licencia y atribución
 
-El código original del proyecto es **Apache-2.0**. Las publicaciones de la Cámara de Diputados, el DOF y SNICE conservan su propio estatus jurídico; el texto oficial **no** se reliquida como CC0.
+El código original se distribuye bajo [Apache-2.0](../LICENSE). Revisa también [NOTICE](../NOTICE) y [TERMS.md](../TERMS.md).
 
-La redistribución de bytes oficiales capturados en `official-sources.tar.gz` es para verificación, no una cesión de derechos de esas autoridades.
+Las publicaciones de Cámara de Diputados, DOF, SNICE, ANAM u otras autoridades conservan su propio estatus jurídico. Preservar bytes capturados para verificación no implica relicenciar las publicaciones oficiales.
 
-`arancel-mx` **no constituye asesoría legal**. Consulta las publicaciones oficiales y, cuando corresponda, profesionales especializados.
-
-Véanse [`LICENSE`](../LICENSE), [`NOTICE`](../NOTICE) y [`TERMS.md`](../TERMS.md).
+`arancel-mx` **no constituye asesoría legal**. Para clasificación, cumplimiento, importación o exportación consulta las publicaciones oficiales aplicables y, cuando corresponda, profesionales especializados.
 
 ## Documentación relacionada
 
-- [`docs/consumer-quickstart.md`](consumer-quickstart.md) — elegir CLI, Python, DuckDB o API HTTP
-- [`docs/official-source-roles.md`](official-source-roles.md) — cuándo usar DOF, SNICE, VUCEM y una release verificable
-- [`docs/nico-ligie-guide.md`](nico-ligie-guide.md) — jerarquía HS6, fracción de 8 dígitos y NICO
-- [`docs/consumer-cli.md`](consumer-cli.md) — CLI, offline, formatos y `doctor`
-- [`docs/data-model.md`](data-model.md) — columnas públicas, vigencia y schema v2
-- [`docs/release-process.md`](release-process.md) — publicación fail-closed de `data-*`
-- [`docs/sources.md`](sources.md) — Diputados, DOF, SNICE y el contraejemplo SIICEX
+- [Inicio rápido](consumer-quickstart.md): elegir web, CLI, Python, DuckDB o HTTP.
+- [CLI de consumo](consumer-cli.md): comandos, caché, offline y formatos.
+- [Modelo de datos](data-model.md): tablas, tipos y manifest.
+- [Guía NICO/LIGIE](nico-ligie-guide.md): jerarquía HS → fracción → NICO.
+- [Roles de fuentes oficiales](official-source-roles.md): función de cada publicación.
+- [Fuentes y reconciliación](sources.md): cadena de confianza y goldens de contraste.
+- [Proceso de release](release-process.md): publicación autónoma y fail-closed.
+- [Release del paquete](package-release.md): estado PyPI/TestPyPI y separación código/datos.
+- [Visión del proyecto](project-overview.md): arquitectura y fronteras.
+- [Centro de documentación](README.md): índice completo por intención.

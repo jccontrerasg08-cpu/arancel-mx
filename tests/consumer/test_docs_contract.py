@@ -27,7 +27,7 @@ def _section(text: str, heading: str) -> str:
     return rest if next_heading < 0 else rest[:next_heading]
 
 
-def test_bilingual_readmes_show_install_and_consumer_first_commands() -> None:
+def test_bilingual_readmes_show_compact_consumer_first_commands() -> None:
     spanish = _read("README.md")
     english = _read("README.en.md")
 
@@ -36,30 +36,37 @@ def test_bilingual_readmes_show_install_and_consumer_first_commands() -> None:
         "arancel-mx doctor",
         "arancel-mx data download",
         "arancel-mx lookup 01012101",
-        "arancel-mx ficha 01012101",
-        "arancel-mx compare 01012101",
-        "arancel-mx chapters",
-        "arancel-mx suggest",
-        "arancel-mx wco cite",
         "arancel-mx data verify",
         "docs/consumer-cli.md",
         "docs/consumer-quickstart.md",
         "docs/official-source-roles.md",
         "docs/nico-ligie-guide.md",
+        "https://arancel-mx.vercel.app/",
     )
     for document in (spanish, english):
         assert [value for value in required if value not in document] == []
 
+    cli = _read("docs/consumer-cli.md")
+    for command in (
+        "arancel-mx ficha 01012101",
+        "arancel-mx compare 01012101",
+        "arancel-mx chapters",
+        "arancel-mx suggest",
+        "arancel-mx wco cite",
+    ):
+        assert command in cli
 
-def test_bilingual_readmes_document_sha256sum_check_without_pinning_asset_megabytes() -> None:
+
+def test_checksum_verification_lives_in_deep_consumer_docs_without_asset_size_pins() -> None:
     spanish = _read("README.md")
     english = _read("README.en.md")
+    deep_guide = _read("docs/external-consumption.md")
+
     for document in (spanish, english):
-        assert "sha256sum -c SHA256SUMS" in document
+        assert "SHA256SUMS" in document
         assert " MB" not in document
         assert "MiB" not in document
-    assert "GitHub muestra el tamaño" in spanish
-    assert "GitHub lists the size" in english
+    assert "sha256sum -c SHA256SUMS" in deep_guide
 
 
 def test_contributing_lists_github_review_extensions_as_install_only() -> None:
@@ -119,12 +126,10 @@ def test_external_consumption_guide_exists_with_required_sections_in_order() -> 
     assert positions == sorted(positions)
 
 
-def test_external_consumption_guide_locks_install_verify_query_and_public_surface() -> None:
+def test_external_consumption_guide_locks_durable_consumer_contracts() -> None:
     text = _read("docs/external-consumption.md")
     required = (
-        "pip install arancel-mx==0.2.0",
-        "  -> pip install arancel-mx==0.2.0",
-        "data-2026.08.15",
+        "pip install arancel-mx",
         "data-YYYY.MM.DD",
         "--dataset data-YYYY.MM.DD",
         "arancel-mx doctor",
@@ -138,7 +143,7 @@ def test_external_consumption_guide_locks_install_verify_query_and_public_surfac
         "Dataset.open",
         "release_verified",
         "Dataset.provenance",
-        "Dataset.compare",
+        "db.compare",
         "lookup",
         "search",
         "suggest",
@@ -170,12 +175,13 @@ def test_external_consumption_guide_locks_install_verify_query_and_public_surfac
         "Apache-2.0",
         "NOTICE",
         "TERMS.md",
-        "docs/consumer-cli.md",
-        "docs/data-model.md",
-        "docs/release-process.md",
-        "docs/sources.md",
+        "consumer-cli.md",
+        "data-model.md",
+        "release-process.md",
+        "sources.md",
         "01012101",
         "arancel-mx wco cite",
+        "https://arancel-mx.vercel.app",
     )
     assert [value for value in required if value not in text] == []
     assert "pip install arancelmx" not in text
@@ -184,25 +190,13 @@ def test_external_consumption_guide_locks_install_verify_query_and_public_surfac
     assert "IGI 16%" not in text
 
 
-def test_external_consumption_out_of_scope_says_iva_nom_and_tmec_are_not_published() -> None:
+def test_external_consumption_out_of_scope_is_explicit_without_mislabeling_core_fields() -> None:
     section = _section(_read("docs/external-consumption.md"), "## Fuera de alcance")
-    for term in ("IVA", "NOM", "T-MEC", "GIR"):
-        assert term in section
-    for term in (
-        "franja",
-        "permisos",
-        "PROSEC",
-        "REST",
-        "Postgres",
-        "SIICEX",
-        "VUCEM",
-        "RGCE",
-        "tigieX",
-        "fraccion8",
-    ):
+    for term in ("IVA", "NOM", "T-MEC", "GIR", "franja", "permisos", "PROSEC", "Postgres", "SIICEX", "VUCEM", "RGCE", "tigieX"):
         assert term in section
     lowered = section.lower()
-    assert "no publica" in lowered or "no están publicados" in lowered or "no publicados" in lowered
+    assert "no publica" in lowered
+    assert "fraccion8" not in lowered
 
 
 def test_siicex_sagu_pair_is_a_docs_golden_not_a_live_query() -> None:
@@ -253,9 +247,9 @@ def test_approved_source_role_nico_and_consumer_quickstart_guides_are_discoverab
         assert command in quickstart
 
     for path in (
-        "docs/official-source-roles.md",
-        "docs/nico-ligie-guide.md",
-        "docs/consumer-quickstart.md",
+        "official-source-roles.md",
+        "nico-ligie-guide.md",
+        "consumer-quickstart.md",
     ):
         assert path in consumer_hub
 

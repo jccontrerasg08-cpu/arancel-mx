@@ -1,59 +1,72 @@
 # Inicio rápido para consumidores
 
-Esta página ayuda a elegir el punto de entrada más pequeño para consumir una release verificable de `arancel-mx`. Usa la documentación detallada para contratos completos, formatos y límites. El proyecto recupera datos; no es asesoría legal y no clasifica mercancías.
+Esta página ayuda a elegir el punto de entrada más pequeño para consumir una release verificable de `arancel-mx`. El **hub público** es [`https://arancel-mx.vercel.app/`](https://arancel-mx.vercel.app/); usa la documentación detallada para contratos completos, formatos y límites.
+
+`arancel-mx` recupera y estructura datos. No clasifica mercancías ni constituye asesoría legal.
 
 | Necesidad | Punto de entrada recomendado |
 |---|---|
-| Validar una instalación y release | CLI: `arancel-mx doctor` |
+| Buscar sin instalar nada | [Hub web](https://arancel-mx.vercel.app/) |
+| Validar instalación y release | CLI: `arancel-mx doctor` |
 | Consultar una fila o su jerarquía | CLI o `Dataset.version(...)` |
 | Analizar localmente muchas filas | `arancel_mx.duckdb` de una release verificada |
-| Integrar una aplicación ya desplegada | API HTTP GET-only, empezando con `/v1/meta` |
+| Integrar un servicio o UI | API HTTP GET-only/read-only bajo `https://arancel-mx.vercel.app` |
 
 ## 1. Instalar y verificar
 
 ```bash
 python -m pip install arancel-mx
-arancel-mx doctor --dataset data-2026.08.15
-arancel-mx data download --dataset data-2026.08.15
-arancel-mx data verify --dataset data-2026.08.15
+arancel-mx doctor --dataset data-YYYY.MM.DD
+arancel-mx data download --dataset data-YYYY.MM.DD
+arancel-mx data verify --dataset data-YYYY.MM.DD
 ```
 
-El identificador anterior es un ejemplo. Fija la release aprobada por tu proceso y conserva `SHA256SUMS` y `manifest.json` junto con cualquier resultado derivado.
+`data-YYYY.MM.DD` representa una release exacta. Fija la aprobada por tu proceso y conserva `SHA256SUMS` y `manifest.json` junto con cualquier resultado derivado.
 
 ## 2. Consultar desde la CLI
 
 ```bash
-arancel-mx lookup 01012101 --dataset data-2026.08.15 --format json
-arancel-mx ficha 01012101 --dataset data-2026.08.15
-arancel-mx provenance 01012101 --dataset data-2026.08.15
+arancel-mx lookup 01012101 --dataset data-YYYY.MM.DD --format json
+arancel-mx ficha 01012101 --dataset data-YYYY.MM.DD
+arancel-mx provenance 01012101 --dataset data-YYYY.MM.DD
 ```
 
-Si el proceso debe funcionar sin red, descarga y verifica la release antes de ejecutar comandos con `--offline`. Consulta la referencia completa en [`docs/consumer-cli.md`](consumer-cli.md).
+Si el proceso debe funcionar sin red, descarga y verifica la release antes de ejecutar comandos con `--offline`. La referencia completa está en [CLI de consumo](consumer-cli.md).
 
 ## 3. Consultar desde Python
 
 ```python
 from arancel_mx import Dataset
 
-catalog = Dataset.version("data-2026.08.15")
+catalog = Dataset.version("data-YYYY.MM.DD")
 record = catalog.lookup("01012101")
 print(record.code, record.description)
 ```
 
-`Dataset.version` fija una release inmutable. `Dataset.open` sirve para archivos locales, pero una apertura estructuralmente válida no implica la misma procedencia verificada de una release pública.
+`Dataset.version` fija una release inmutable. `Dataset.open` sirve para archivos locales, pero una apertura estructuralmente válida no implica la misma procedencia verificable de una release pública.
 
 ## 4. Consumir la API HTTP pública
 
-Cuando exista un origen HTTP desplegado y verificado para tu entorno, empieza por sus identidades y estado:
+El origen público canónico es el mismo dominio del hub:
 
 ```bash
-curl "$ARANCEL_MX_API_URL/healthz"
+export ARANCEL_MX_API_URL="https://arancel-mx.vercel.app"
 curl "$ARANCEL_MX_API_URL/readyz"
 curl "$ARANCEL_MX_API_URL/v1/meta"
+curl "$ARANCEL_MX_API_URL/v1/search?q=telefonos&limit=5"
+curl "$ARANCEL_MX_API_URL/v1/lookup/8517130100"
 ```
 
-La API es GET-only y read-only. `/v1/meta` separa la versión de API, versión del paquete y versión del dataset. Revisa `/docs` y `/openapi.json` en el mismo origen para el contrato interactivo. La URL del despliegue, los límites de servicio y la disponibilidad deben proceder de la documentación del entorno que lo opere.
+Abre [`https://arancel-mx.vercel.app/docs`](https://arancel-mx.vercel.app/docs) para el contrato OpenAPI interactivo.
+
+La superficie pública es híbrida de forma deliberada: `/v1/meta`, `/v1/search` y `/readyz` se resuelven en la capa operacional read-only de Vercel respaldada por Neon y sincronizada desde releases verificadas. Las demás rutas `/v1/*` y `/docs` se presentan bajo el mismo dominio mediante proxy al runtime FastAPI reusable. La release verificable sigue siendo la fuente de verdad; Vercel y Neon son superficies de consumo.
+
+La API es GET-only y read-only. `/v1/meta` separa la versión de API, la versión del paquete y la identidad del dataset servido; `/readyz` refleja la disponibilidad de esa release operacional activa.
 
 ## Continuar
 
-Lee [`docs/official-source-roles.md`](official-source-roles.md) antes de usar un resultado para una decisión de comercio exterior. Para interpretar la jerarquía HS6, fracción de 8 dígitos y NICO de 2 dígitos, consulta [`docs/nico-ligie-guide.md`](nico-ligie-guide.md). Para contratos de artefactos, procedencia y autoingesta, consulta [`docs/external-consumption.md`](external-consumption.md).
+- [Consumo externo](external-consumption.md): contratos completos de archivos, Python, HTTP, integridad y despliegue.
+- [CLI de consumo](consumer-cli.md): comandos, caché, formatos y modo offline.
+- [Roles de fuentes oficiales](official-source-roles.md): qué función cumple cada publicación.
+- [Guía NICO y LIGIE](nico-ligie-guide.md): HS6, fracción mexicana y NICO.
+- [Centro de documentación](README.md): todas las rutas por intención.
