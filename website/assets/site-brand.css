@@ -1,14 +1,31 @@
-a[href="/"][aria-label], a[href="/"][title] {
+:root {
+  --arancel-brand-navy: #102a43;
+  --arancel-brand-green: #008a5b;
+  --arancel-brand-red: #ce1126;
+  --arancel-brand-mark: url("/assets/arancel-mx-mark.svg");
+  --arancel-brand-logo: url("/assets/arancel-mx-logo.svg");
+}
+
+a[href="/"][aria-label],
+a[href="/"][title] {
   align-items: center;
   display: inline-flex;
   gap: 0.45rem;
 }
 
-a[href="/"][aria-label]::before, a[href="/"][title]::before {
-  background: url("/assets/arancel-mx-mark.svg") center / contain no-repeat;
+a[href="/"][aria-label]::before,
+a[href="/"][title]::before {
+  background: var(--arancel-brand-mark) center / contain no-repeat;
   content: "";
   display: inline-block;
   flex: 0 0 1.35rem;
   height: 1.35rem;
   width: 1.35rem;
+}
+
+/* The horizontal asset is intentionally exposed as a stable brand token.
+   The generated application bundle owns layout, so this compatibility layer
+   does not inject a second wordmark or depend on minified class names. */
+.arancel-brand-logo {
+  background: var(--arancel-brand-logo) center / contain no-repeat;
 }
