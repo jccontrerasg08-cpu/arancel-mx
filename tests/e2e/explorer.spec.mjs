@@ -24,7 +24,7 @@ test('looks up a complete tariff fraction', async ({ page }) => {
   const card = page.getByTestId('result-card').first();
   await expect(card).toContainText('85171301');
   await expect(card).toContainText(/teléfonos inteligentes/i);
-  await expect(page.getByRole('status')).toHaveText(/ficha exacta recuperada/i);
+  await expect(page.getByRole('status')).toHaveText(/ficha durable verificada recuperada/i);
 });
 
 test('searches verified descriptions', async ({ page }) => {
@@ -78,6 +78,43 @@ test('browses the verified hierarchy from chapters and a result', async ({ page 
 
   await page.getByTestId('search-input').fill('85171301');
   await page.getByTestId('search-submit').click();
-  await page.getByTestId('result-card').first().getByRole('button', { name: /explorar jerarquía verificada/i }).click();
   await expect(page.getByTestId('hierarchy-card')).toContainText('85171301');
+});
+
+test('serves a durable verified record URL with evidence and next steps', async ({ page }) => {
+  await page.goto('/app/record/85171301');
+
+  await expect(page.getByTestId('result-card')).toContainText(/teléfonos inteligentes/i);
+  await expect(page.getByRole('heading', { name: /vigencia y evidencia registrada/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /siguientes pasos con la misma evidencia/i })).toBeVisible();
+  await expect(page.getByRole('link', { name: /API JSON/i })).toHaveAttribute('href', /\/v1\/ficha\/85171301$/);
+});
+
+test('serves a durable verified chapter URL', async ({ page }) => {
+  await page.goto('/app/chapter/85');
+
+  await expect(page.getByTestId('result-card')).toContainText('85');
+  await expect(page.getByRole('status')).toHaveText(/capítulo durable verificado recuperado/i);
+});
+
+test('saves and exports a browser-local research snapshot', async ({ page }) => {
+  await page.goto('/app/record/85171301');
+  await page.getByRole('button', { name: /guardar ficha local/i }).click();
+
+  await expect(page.getByTestId('snapshot-list')).toContainText('85171301');
+  const download = page.waitForEvent('download');
+  await page.getByTestId('export-snapshots').click();
+  await expect((await download).suggestedFilename()).toBe('arancel-mx-fichas-locales.json');
+});
+
+
+test('keeps durable research controls keyboard-reachable and announced', async ({ page }) => {
+  await page.goto('/app/record/85171301');
+
+  await expect(page.getByRole('status')).toHaveAttribute('aria-live', 'polite');
+  await expect(page.getByTestId('snapshot-list')).toHaveAttribute('aria-live', 'polite');
+  await page.getByTestId('search-input').focus();
+  await page.keyboard.press('Tab');
+  await expect(page.getByTestId('search-submit')).toBeFocused();
+  await expect(page.getByRole('button', { name: /guardar ficha local/i })).toBeVisible();
 });

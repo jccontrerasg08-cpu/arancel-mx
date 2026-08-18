@@ -283,8 +283,9 @@ def create_app(
         application.add_api_route(public_path, marketing_page, include_in_schema=False)
 
     @application.get("/app", include_in_schema=False)
-    def explorer() -> FileResponse:
-        """Serve the public, same-origin tariff explorer."""
+    @application.get("/app/{client_path:path}", include_in_schema=False)
+    def explorer(client_path: str = "") -> FileResponse:
+        """Serve the public explorer and its durable client-side routes."""
 
         return FileResponse(_EXPLORER_PAGE, media_type="text/html")
 
