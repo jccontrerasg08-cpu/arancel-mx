@@ -4,7 +4,7 @@
 
 # arancel-mx
 
-### De publicaciones oficiales dispersas a datos arancelarios verificables y listos para usar
+## De publicaciones oficiales dispersas a datos arancelarios verificables y listos para usar
 
 `arancel-mx` captura, reconcilia, normaliza y publica LIGIE/NICO con procedencia verificable para que puedas **consultar, integrar, analizar y auditar** datos arancelarios de México sin reconstruir el pipeline desde cero.
 
