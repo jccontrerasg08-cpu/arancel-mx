@@ -26,7 +26,7 @@ from scripts.check_documented_urls import (
 
 
 ROOT = Path(__file__).resolve().parents[1]
-README_PATHS = (ROOT / "README.md", ROOT / "README.en.md")
+SOURCE_DOC_PATH = ROOT / "docs" / "sources.md"
 
 
 def test_registered_public_urls_are_https_and_unique() -> None:
@@ -75,36 +75,35 @@ def test_sanitize_documented_url_strips_trailing_colons_and_commas() -> None:
 
 def _official_sources_section(text: str) -> str:
     lowered = text.lower()
-    for heading in ("## fuentes oficiales", "## official sources"):
-        if heading in lowered:
-            start = lowered.index(heading)
-            section = text[start + len(heading) :]
-            if "\n## " in section:
-                section = section.split("\n## ", 1)[0]
-            return section
-    raise AssertionError("README is missing an official sources section")
+    heading = "## páginas canónicas documentadas"
+    if heading not in lowered:
+        raise AssertionError("docs/sources.md is missing its canonical source-links section")
+    start = lowered.index(heading)
+    section = text[start + len(heading) :]
+    if "\n## " in section:
+        section = section.split("\n## ", 1)[0]
+    return section
 
 
-def test_readme_official_sources_use_parseable_markdown_links() -> None:
-    for readme_path in README_PATHS:
-        text = readme_path.read_text(encoding="utf-8")
-        section = _official_sources_section(text)
-        linked_urls = {
-            match.group(1)
-            for match in MARKDOWN_LINK_PATTERN.finditer(section)
-            if match.group(1).startswith("https://")
-        }
-        bare_urls = {
-            url
-            for url in extract_bare_http_urls(section)
-            if url.startswith("https://")
-        }
-        assert bare_urls == set(), (
-            f"{readme_path.name} must expose official source URLs as markdown links, "
-            f"not bare text: {sorted(bare_urls)}"
-        )
-        assert linked_urls, f"{readme_path.name} must document at least one official HTTPS link"
-        assert all(is_parseable_url(url) for url in linked_urls)
+def test_source_guide_exposes_official_urls_as_parseable_markdown_links() -> None:
+    text = SOURCE_DOC_PATH.read_text(encoding="utf-8")
+    section = _official_sources_section(text)
+    linked_urls = {
+        match.group(1)
+        for match in MARKDOWN_LINK_PATTERN.finditer(section)
+        if match.group(1).startswith("https://")
+    }
+    bare_urls = {
+        url
+        for url in extract_bare_http_urls(section)
+        if url.startswith("https://")
+    }
+    assert bare_urls == set(), (
+        "docs/sources.md must expose canonical official URLs as markdown links, "
+        f"not bare text: {sorted(bare_urls)}"
+    )
+    assert linked_urls, "docs/sources.md must document at least one official HTTPS link"
+    assert all(is_parseable_url(url) for url in linked_urls)
 
 
 def test_describe_request_failure_labels_tls_without_hiding_details() -> None:
