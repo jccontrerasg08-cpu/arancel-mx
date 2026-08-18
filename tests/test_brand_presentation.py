@@ -27,7 +27,8 @@ def test_brand_assets_are_accessible_vector_svgs_without_embedded_raster() -> No
         path = ROOT / relative_path
         assert path.is_file(), f"missing brand asset: {relative_path}"
         text = path.read_text(encoding="utf-8")
-        root = ET.fromstring(text)
+        # These are trusted, version-controlled project assets, never user-supplied XML.
+        root = ET.fromstring(text)  # noqa: S314
         assert root.tag.endswith("svg")
         assert root.attrib.get("viewBox"), f"missing viewBox: {relative_path}"
         tags = {element.tag.rsplit("}", 1)[-1] for element in root.iter()}
