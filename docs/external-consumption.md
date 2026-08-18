@@ -2,7 +2,7 @@
 
 Esta es la guía canónica para aplicaciones que consumen `arancel-mx` mediante releases verificadas, Python, CLI o la API HTTP pública. El **front door público** es [`https://arancel-mx.vercel.app/`](https://arancel-mx.vercel.app/), mientras GitHub Releases conserva la identidad canónica del dataset.
 
-**[Hub](https://arancel-mx.vercel.app/)** · **[OpenAPI](https://arancel-mx.vercel.app/docs)** · **[Metadata](https://arancel-mx.vercel.app/v1/meta)** · **[Última release](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest)**
+**[Hub](https://arancel-mx.vercel.app/)** · **[OpenAPI](https://arancel-mx.vercel.app/docs)** · **[Metadata](https://arancel-mx.vercel.app/v1/meta)** · **[Readiness](https://arancel-mx.vercel.app/readyz)** · **[Última release](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest)**
 
 ## Qué es y qué no es arancel-mx
 
@@ -157,14 +157,14 @@ sincronización operacional
           ↓
         Neon
           ↓
-Vercel: /v1/meta + /v1/search
+Vercel: /v1/meta + /v1/search + /readyz
 
-Vercel: /v1/* restante + /docs + /readyz
+Vercel: /v1/* restante + /docs
           ↓ proxy
    runtime FastAPI reusable
 ```
 
-`/v1/meta` y `/v1/search` se resuelven en la capa operacional read-only de Vercel respaldada por Neon. Las demás rutas se presentan bajo el mismo dominio mediante proxy al runtime FastAPI. **Vercel y Neon son superficies de servicio; la GitHub Release verificada sigue siendo la fuente canónica.**
+`/v1/meta`, `/v1/search` y `/readyz` se resuelven en la capa operacional read-only de Vercel respaldada por Neon. Las demás rutas `/v1/*` y `/docs` se presentan bajo el mismo dominio mediante proxy al runtime FastAPI. **Vercel y Neon son superficies de servicio; la GitHub Release verificada sigue siendo la fuente canónica.**
 
 ## Autoingesta
 
