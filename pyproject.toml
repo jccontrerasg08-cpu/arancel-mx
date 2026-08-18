@@ -44,6 +44,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+operational = [
+    "psycopg[binary]>=3.3.4",
+]
 maintainer = [
     "openpyxl>=3.1",
     "PyMuPDF>=1.24",
@@ -75,9 +78,6 @@ Changelog = "https://github.com/jccontrerasg08-cpu/arancel-mx/blob/main/CHANGELO
 
 [tool.fastapi]
 entrypoint = "arancel_mx.api.app:app"
-
-[tool.vercel]
-entrypoint = "src.arancel_mx.api.app:app"
 
 [tool.setuptools.packages.find]
 where = ["src"]
