@@ -6,6 +6,8 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler
 import json
 import logging
+from pathlib import Path
+import sys
 from urllib.parse import parse_qs, urlparse
 
 from arancel_mx.operational.query import active_release_metadata, search_active_release
@@ -16,6 +18,11 @@ logger = logging.getLogger(__name__)
 
 
 def _connect(database_url: str):
+    vendor_directory = Path(__file__).with_name("_vendor")
+    vendor_path = str(vendor_directory)
+    if vendor_directory.is_dir() and vendor_path not in sys.path:
+        sys.path.insert(0, vendor_path)
+
     import psycopg
 
     return psycopg.connect(database_url)

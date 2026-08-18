@@ -1,3 +1,0 @@
-# Runtime dependency for Vercel file-based operational functions.
-# Keep this explicit: Vercel packages direct requirements for Python functions.
-psycopg[binary]>=3.3.4

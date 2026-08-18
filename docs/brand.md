@@ -168,7 +168,7 @@ La arquitectura vigente combina:
 - las demás rutas `/v1/*`, `/docs` y `/readyz` bajo el mismo dominio mediante proxy al runtime FastAPI reusable;
 - la GitHub Release verificable como fuente canónica del dataset.
 
-Después de #136, el runtime Python de Vercel instala sus dependencias explícitas desde `requirements.txt`; esta decisión operativa no debe convertirse en copy promocional, pero las guías técnicas sí deben permanecer sincronizadas con ella.
+Desde #139, Vercel bundlea `psycopg[binary]>=3.3.4` de forma aislada en `api/_vendor` mediante `buildCommand` y sólo lo incluye en las funciones operativas. `requirements.txt` fue eliminado para que ese driver no se convierta en dependencia base del paquete. Esta decisión no es copy promocional, pero las guías técnicas deben permanecer sincronizadas con ella.
 
 Los assets mantenibles del sitio viven bajo `website/assets/`. No editar manualmente los bundles `website/assets/index-*.js`, `index-*.css` ni el runtime generado en `website/index.html` sólo para cambiar branding.
 

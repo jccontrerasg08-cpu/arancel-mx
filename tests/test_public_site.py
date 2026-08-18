@@ -12,7 +12,7 @@ def test_vercel_deploys_the_standalone_public_site() -> None:
 
     assert config["framework"] is None
     assert config["outputDirectory"] == "website"
-    assert config["installCommand"] == "python -m pip install -r requirements.txt"
+    assert "installCommand" not in config
     assert config["rewrites"] == [
         {
             "source": "/v1/meta",
@@ -75,10 +75,3 @@ def test_public_site_does_not_declare_a_vercel_fastapi_entrypoint() -> None:
 
     assert "[tool.vercel]" not in project
     assert "[tool.fastapi]" in project
-
-
-def test_vercel_function_runtime_dependencies_are_direct() -> None:
-    requirements = (ROOT / "requirements.txt").read_text(encoding="utf-8")
-
-    assert "psycopg[binary]>=3.3.4" in requirements
-    assert "-e .[operational]" not in requirements

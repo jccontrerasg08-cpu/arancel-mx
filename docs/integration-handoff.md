@@ -1,6 +1,6 @@
 # Handoff de integración
 
-> **Baseline revisada:** `6ea740e7e22e81c3aff1b05c03f174d68f9a7769`, después de PR #136 (`fix: declare Vercel operational driver directly`). Antes de terminar cualquier rama, compara de nuevo contra `origin/main`.
+> **Baseline revisada:** `c1be4bf4e8da831ab7bd1da0667d794076cc16e2`, después de PR #139 (`fix: bundle Vercel operational driver in isolation`). Antes de terminar cualquier rama, compara de nuevo contra `origin/main`.
 
 Esta guía evita que un cambio correcto de forma aislada revierta decisiones arquitectónicas posteriores. Cada PR debe preservar las fronteras entre publicación oficial, capa operacional, hub público, API reusable y paquete Python.
 
@@ -11,7 +11,8 @@ Esta guía evita que un cambio correcto de forma aislada revierta decisiones arq
 | Hub público | `https://arancel-mx.vercel.app` sirve `website/`, búsqueda, metadata y rutas públicas bajo un solo dominio. | `website/`, `vercel.json`, `tests/test_public_site.py` |
 | Capa operacional | `/v1/meta` y `/v1/search` son read-only, respaldados por Neon y sincronizados desde releases verificadas. | `api/operational.py`, `api/sync_operational.py`, `src/arancel_mx/operational/` |
 | FastAPI reusable | El resto de `/v1/*`, `/docs` y `/readyz` se presenta en Vercel mediante proxy al runtime FastAPI. | `src/arancel_mx/api/`, `vercel.json`, `docs/external-consumption.md` |
-| Paquete y dependencias | Packaging, runtime Vercel y builds deben declarar sus dependencias en la superficie que realmente instala cada plataforma. | `pyproject.toml`, `requirements.txt`, `requirements/` |
+| Runtime operacional de Vercel | `psycopg[binary]` se bundlea de forma aislada en `api/_vendor` y sólo se incluye en las dos funciones operativas. | `vercel.json`, `api/operational.py`, `api/sync_operational.py`, `.gitignore` |
+| Paquete y dependencias | La librería pública conserva dependencias base y el extra `operational`; Vercel no debe convertir su driver aislado en dependencia base. | `pyproject.toml`, `requirements/`, packaging tests |
 | Releases y fuentes | La release verificable sigue siendo la fuente de verdad. | `src/arancel_mx/sources/`, `src/arancel_mx/release/`, tests de pipeline/fuentes |
 | CI | Los checks deben cubrir Python, runtime, browser, distribución y publicación. | `.github/workflows/`, tests de hardening |
 | Presentación | README raíz es front door compacto; `docs/README.md` es navegación profunda. | `README*.md`, `docs/`, assets de marca |
@@ -43,8 +44,11 @@ Configuración relevante:
 - `ARANCEL_MX_DATABASE_URL` es el nombre canónico de la conexión operacional.
 - `ARANCEL_MX_DATABASE_DATABASE_URL` se admite como compatibilidad controlada cuando la integración administrada de Neon genera ese nombre.
 - `CRON_SECRET` es un secreto de Production enviado como Bearer token al cron operacional; no se registra ni reutiliza.
-- `vercel.json` debe conservar `installCommand: "python -m pip install -r requirements.txt"` mientras las funciones Python operativas formen parte del despliegue.
-- Desde #136, `requirements.txt` declara directamente `psycopg[binary]>=3.3.4`. Vercel instala ese archivo como requerimientos de runtime; no debe depender de que un editable extra de `pyproject.toml` sea descubierto implícitamente por el empaquetador.
+- Desde #139, `vercel.json` usa un `buildCommand` que instala `psycopg[binary]>=3.3.4` en `api/_vendor`.
+- `api/operational.py` y `api/sync_operational.py` cargan `api/_vendor` antes de importar el driver y son las únicas funciones que incluyen ese directorio mediante `functions.includeFiles`.
+- `api/_vendor/` permanece ignorado por Git. Es un artefacto de build, no código fuente versionado.
+- `requirements.txt` ya no debe existir para este runtime: #139 eliminó el archivo para evitar que el driver operacional se convierta en dependencia global por accidente.
+- La librería Python mantiene su extra `operational` para instalaciones que sí necesiten conectividad PostgreSQL fuera del bundle de Vercel.
 
 No elimines variables creadas por la integración administrada de Neon sólo porque una de ellas no se lea directamente en el código. Antes de limpiar aliases, verifica su origen y realiza un despliegue satisfactorio con la configuración resultante.
 
@@ -87,7 +91,9 @@ PR #134 eliminó el runtime/debug collector de Manus del sitio público. Regener
 
 ## Dependencias y certificación
 
-Cuando una rama toca dependencias o publicación de paquete, revísala después de cambios activos que también modifiquen `pyproject.toml`, `requirements.txt`, `requirements/` o documentación raíz. Vercel y el paquete Python no necesariamente usan el mismo mecanismo de instalación, por lo que cada plataforma debe probar el contrato que realmente ejecuta.
+Cuando una rama toca dependencias o publicación de paquete, revísala después de cambios activos que también modifiquen `pyproject.toml`, `requirements/` o la configuración de build de Vercel. El paquete Python y las funciones operativas de Vercel no usan necesariamente el mismo mecanismo de instalación, por lo que cada plataforma debe probar el contrato que realmente ejecuta.
+
+No reintroduzcas `requirements.txt` sólo para hacer visible el driver de Vercel. Si cambia el mecanismo de bundle, debe actualizarse conjuntamente `vercel.json`, los handlers operativos, sus tests y este handoff.
 
 ## Trabajos fuera de este handoff
 
