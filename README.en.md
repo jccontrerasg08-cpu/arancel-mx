@@ -26,7 +26,7 @@
 
 Mexican tariff data is published across documents, landing pages, and files with different legal and operational roles. Building a reliable application on top of those sources requires more than downloading a spreadsheet: you need to know **which source was observed, when it was captured, what legal evidence supports it, how it was normalized, and which exact bytes produced the published dataset**.
 
-`arancel-mx` isolates that problem as a reusable public layer. Its responsibility is deliberately narrow: turn observed official sources into a canonical, reproducible, auditable representation. Dashboards, RAG systems, automation, and broader foreign-trade products can consume that layer without duplicating parsers or inventing their own LIGIE/NICO truth.
+`arancel-mx` isolates that problem as a reusable public layer. Its responsibility is deliberately narrow: turn observed official sources into a canonical, reproducible, auditable representation. Analytical interfaces, RAG systems, automation, and broader foreign-trade products can consume that layer without duplicating parsers or inventing their own LIGIE/NICO truth.
 
 > **Core idea:** you do not have to trust a README claim that the data is current. You can verify the release, hashes, manifest, and captured sources.
 
