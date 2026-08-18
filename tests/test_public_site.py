@@ -12,7 +12,7 @@ def test_vercel_deploys_the_standalone_public_site() -> None:
 
     assert config["framework"] is None
     assert config["outputDirectory"] == "website"
-    assert config["rewrites"] == [{"source": "/(.*)", "destination": "/index.html"}]
+    assert config["rewrites"] == [{"source": "/(.*)", "destination": "/"}]
 
 
 def test_public_site_contains_its_logo_and_route_bridge() -> None:
