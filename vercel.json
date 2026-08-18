@@ -4,7 +4,41 @@
   "installCommand": "",
   "outputDirectory": "website",
   "cleanUrls": true,
+  "crons": [
+    {
+      "path": "/api/sync_operational",
+      "schedule": "30 12 * * 1"
+    }
+  ],
   "rewrites": [
+    {
+      "source": "/v1/meta",
+      "destination": "/api/operational?resource=meta"
+    },
+    {
+      "source": "/v1/search",
+      "destination": "/api/operational?resource=search"
+    },
+    {
+      "source": "/v1/:path*",
+      "destination": "https://arancel-mx.fastapicloud.dev/v1/:path*"
+    },
+    {
+      "source": "/openapi.json",
+      "destination": "https://arancel-mx.fastapicloud.dev/openapi.json"
+    },
+    {
+      "source": "/docs/:path*",
+      "destination": "https://arancel-mx.fastapicloud.dev/docs/:path*"
+    },
+    {
+      "source": "/docs",
+      "destination": "https://arancel-mx.fastapicloud.dev/docs"
+    },
+    {
+      "source": "/readyz",
+      "destination": "https://arancel-mx.fastapicloud.dev/readyz"
+    },
     {
       "source": "/(.*)",
       "destination": "/"
