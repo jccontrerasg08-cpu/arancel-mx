@@ -213,17 +213,19 @@ def test_brand_css_uses_stable_asset_selectors_not_generated_bundle_classes() ->
     assert "index-" not in styles
 
 
-def test_integration_handoff_describes_isolated_operational_driver_boundary() -> None:
-    """Keep the handoff synchronized with the isolated Vercel driver bundle."""
+def test_integration_handoff_tracks_current_vercel_and_liveness_boundaries() -> None:
+    """Keep the handoff synchronized with the current main architecture."""
     handoff = _read("docs/integration-handoff.md")
     lowered = handoff.lower()
     assert "operational" in lowered
     assert "neon" in lowered
     assert "proxy" in lowered
     assert "/v1/meta" in handoff
-    assert "c1be4bf" in handoff
+    assert "9084077" in handoff
     assert "ARANCEL_MX_DATABASE_DATABASE_URL" in handoff
     assert "api/_vendor" in handoff
+    assert "python3.13" in handoff
     assert "psycopg[binary]>=3.3.4" in handoff
     assert "requirements.txt" in handoff
+    assert "EXTERNALLY_UNPROBEABLE_URLS" in handoff
     assert "installCommand" not in handoff
