@@ -12,6 +12,7 @@ def test_vercel_deploys_the_standalone_public_site() -> None:
 
     assert config["framework"] is None
     assert config["outputDirectory"] == "website"
+    assert config["installCommand"] == "python -m pip install -r requirements.txt"
     assert config["rewrites"] == [
         {
             "source": "/v1/meta",
