@@ -4,7 +4,7 @@
 
 # arancel-mx
 
-### From scattered official publications to verifiable, ready-to-use Mexican tariff data
+## From scattered official publications to verifiable, ready-to-use Mexican tariff data
 
 `arancel-mx` captures, reconciles, normalizes, and publishes LIGIE/NICO data with verifiable provenance so you can **query, integrate, analyze, and audit** Mexican tariff data without rebuilding the pipeline yourself.
 
