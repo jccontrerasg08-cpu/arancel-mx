@@ -196,10 +196,10 @@ def test_public_site_keeps_hub_assets_and_stable_brand_boundary() -> None:
         "/assets/arancel-mx-mark.svg",
         "/assets/site-brand.css",
         "/assets/hub-search.css",
-        "/assets/site-bridge.js",
         "/assets/hub-search.js",
     ):
         assert fragment in index
+    assert "/assets/site-bridge.js?v=" in index
 
     assert (ROOT / "website/assets/arancel-mx-logo.svg").is_file()
     assert (ROOT / "website/assets/arancel-mx-social.svg").is_file()
@@ -221,11 +221,14 @@ def test_integration_handoff_tracks_current_vercel_and_liveness_boundaries() -> 
     assert "neon" in lowered
     assert "proxy" in lowered
     assert "/v1/meta" in handoff
-    assert "9084077" in handoff
+    assert "/readyz" in handoff
+    assert "2572405" in handoff
+    assert "Vercel: /v1/meta + /v1/search + /readyz" in handoff
     assert "ARANCEL_MX_DATABASE_DATABASE_URL" in handoff
     assert "api/_vendor" in handoff
     assert "python3.13" in handoff
     assert "psycopg[binary]>=3.3.4" in handoff
     assert "requirements.txt" in handoff
     assert "EXTERNALLY_UNPROBEABLE_URLS" in handoff
+    assert "site-bridge.js" in handoff
     assert "installCommand" not in handoff
