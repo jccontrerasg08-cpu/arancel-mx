@@ -18,10 +18,12 @@ BRAND_ASSETS = (
 
 
 def _read(path: str) -> str:
+    """Read a tracked presentation file as UTF-8 text."""
     return (ROOT / path).read_text(encoding="utf-8")
 
 
 def test_brand_assets_are_accessible_vector_svgs_without_embedded_raster() -> None:
+    """Require accessible vector-only SVG masters with no raster escape hatch."""
     forbidden = ("data:image", "base64,", ".png", ".jpg", ".jpeg")
     for relative_path in BRAND_ASSETS:
         path = ROOT / relative_path
@@ -34,11 +36,13 @@ def test_brand_assets_are_accessible_vector_svgs_without_embedded_raster() -> No
         tags = {element.tag.rsplit("}", 1)[-1] for element in root.iter()}
         assert "title" in tags, f"missing title: {relative_path}"
         assert "desc" in tags, f"missing desc: {relative_path}"
+        assert "image" not in tags, f"embedded image element: {relative_path}"
         lowered = text.lower()
         assert not any(token in lowered for token in forbidden), relative_path
 
 
 def test_readmes_lead_with_product_story_and_five_consumption_surfaces() -> None:
+    """Keep Spanish and English onboarding aligned around five user intents."""
     spanish = _read("README.md")
     english = _read("README.en.md")
 
@@ -77,6 +81,7 @@ def test_readmes_lead_with_product_story_and_five_consumption_surfaces() -> None
 
 
 def test_public_brand_guide_is_discoverable_and_uses_current_schedule_language() -> None:
+    """Expose the canonical brand guide and current weekly automation wording."""
     guide_path = ROOT / "docs/brand.md"
     assert guide_path.is_file()
     guide = guide_path.read_text(encoding="utf-8")
@@ -101,6 +106,7 @@ def test_public_brand_guide_is_discoverable_and_uses_current_schedule_language()
 
 
 def test_public_site_keeps_hub_assets_and_stable_brand_boundary() -> None:
+    """Preserve the generated hub wiring while exposing stable brand assets."""
     index = _read("website/index.html")
 
     for fragment in (
@@ -117,6 +123,7 @@ def test_public_site_keeps_hub_assets_and_stable_brand_boundary() -> None:
 
 
 def test_brand_css_uses_stable_asset_selectors_not_generated_bundle_classes() -> None:
+    """Keep brand CSS independent from generated or minified application classes."""
     styles = _read("website/assets/site-brand.css")
     assert "/assets/arancel-mx-mark.svg" in styles
     assert "/assets/arancel-mx-logo.svg" in styles
@@ -124,6 +131,7 @@ def test_brand_css_uses_stable_asset_selectors_not_generated_bundle_classes() ->
 
 
 def test_integration_handoff_describes_post_132_hub_boundary() -> None:
+    """Keep the integration handoff synchronized with the post-132 architecture."""
     handoff = _read("docs/integration-handoff.md")
     lowered = handoff.lower()
     assert "operational" in lowered
