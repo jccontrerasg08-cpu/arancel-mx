@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "buildCommand": "python -m pip install --target api/_vendor 'psycopg[binary]>=3.3.4'",
+  "buildCommand": "python3.13 -m pip install --target api/_vendor 'psycopg[binary]>=3.3.4'",
   "outputDirectory": "website",
   "functions": {
     "api/operational.py": {"includeFiles": "api/_vendor/**"},
