@@ -54,3 +54,35 @@ def test_vercel_sync_handler_reports_missing_database_configuration_after_valid_
     request.do_GET()
 
     assert response == [module.HTTPStatus.SERVICE_UNAVAILABLE, {"status": "not_configured"}]
+
+
+def test_vercel_sync_handler_accepts_vercel_neon_database_url(monkeypatch):
+    module = _handler_module()
+    response: list[object] = []
+    request = module.handler.__new__(module.handler)
+    request.headers = {"Authorization": "Bearer expected"}
+    request._respond = lambda status, payload: response.extend((status, payload))
+    monkeypatch.setenv("CRON_SECRET", "expected")
+    monkeypatch.delenv("ARANCEL_MX_DATABASE_URL", raising=False)
+    monkeypatch.setenv("ARANCEL_MX_DATABASE_DATABASE_URL", "postgresql://vercel-neon")
+
+    class Connection:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_value, traceback):
+            return False
+
+    monkeypatch.setattr(module, "_connect", lambda url: Connection())
+    monkeypatch.setattr(
+        module,
+        "synchronize_latest_release",
+        lambda connection: {"dataset_tag": "data-2026.08.18", "changed": False},
+    )
+
+    request.do_GET()
+
+    assert response == [
+        module.HTTPStatus.OK,
+        {"status": "promoted", "dataset_tag": "data-2026.08.18", "changed": False},
+    ]

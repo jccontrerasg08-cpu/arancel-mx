@@ -6,10 +6,10 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler
 import json
 import logging
-import os
 from urllib.parse import parse_qs, urlparse
 
 from arancel_mx.operational.query import active_release_metadata, search_active_release
+from arancel_mx.operational.runtime_config import operational_database_url
 
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ class handler(BaseHTTPRequestHandler):
     """Expose only metadata and bounded retrieval from the active release view."""
 
     def do_GET(self) -> None:  # noqa: N802 - Vercel uses BaseHTTPRequestHandler
-        database_url = os.environ.get("ARANCEL_MX_DATABASE_URL")
+        database_url = operational_database_url()
         if not database_url:
             self._respond(HTTPStatus.SERVICE_UNAVAILABLE, {"status": "not_configured"})
             return

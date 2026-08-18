@@ -8,6 +8,7 @@ import json
 import logging
 import os
 
+from arancel_mx.operational.runtime_config import operational_database_url
 from arancel_mx.operational.sync import OperationalSyncError, synchronize_latest_release
 
 
@@ -33,7 +34,7 @@ class handler(BaseHTTPRequestHandler):
             self._respond(HTTPStatus.UNAUTHORIZED, {"status": "unauthorized"})
             return
 
-        database_url = os.environ.get("ARANCEL_MX_DATABASE_URL")
+        database_url = operational_database_url()
         if not database_url:
             self._respond(HTTPStatus.SERVICE_UNAVAILABLE, {"status": "not_configured"})
             return
