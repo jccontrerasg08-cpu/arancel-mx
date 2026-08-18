@@ -7,6 +7,8 @@ from http.server import BaseHTTPRequestHandler
 import json
 import logging
 import os
+from pathlib import Path
+import sys
 
 from arancel_mx.operational.runtime_config import operational_database_url
 from arancel_mx.operational.sync import OperationalSyncError, synchronize_latest_release
@@ -16,6 +18,11 @@ logger = logging.getLogger(__name__)
 
 
 def _connect(database_url: str):
+    vendor_directory = Path(__file__).with_name("_vendor")
+    vendor_path = str(vendor_directory)
+    if vendor_directory.is_dir() and vendor_path not in sys.path:
+        sys.path.insert(0, vendor_path)
+
     import psycopg
 
     return psycopg.connect(database_url)

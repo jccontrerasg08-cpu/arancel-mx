@@ -18,8 +18,16 @@ def test_vercel_declares_a_weekly_private_operational_sync_cron() -> None:
     assert "HTTPStatus.UNAUTHORIZED" in handler
 
 
-def test_vercel_runtime_requirements_declare_the_operational_driver_directly() -> None:
-    requirements = (ROOT / "requirements.txt").read_text(encoding="utf-8")
+def test_vercel_bundles_the_operational_driver_only_for_operational_functions() -> None:
+    config = json.loads((ROOT / "vercel.json").read_text(encoding="utf-8"))
+    read_handler = (ROOT / "api" / "operational.py").read_text(encoding="utf-8")
+    sync_handler = (ROOT / "api" / "sync_operational.py").read_text(encoding="utf-8")
 
-    assert "psycopg[binary]>=3.3.4" in requirements
-    assert "-e .[operational]" not in requirements
+    assert config["buildCommand"] == "python -m pip install --target api/_vendor 'psycopg[binary]>=3.3.4'"
+    assert config["functions"] == {
+        "api/operational.py": {"includeFiles": "api/_vendor/**"},
+        "api/sync_operational.py": {"includeFiles": "api/_vendor/**"},
+    }
+    assert not (ROOT / "requirements.txt").exists()
+    assert 'Path(__file__).with_name("_vendor")' in read_handler
+    assert 'Path(__file__).with_name("_vendor")' in sync_handler
