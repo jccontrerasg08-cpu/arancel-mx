@@ -33,16 +33,11 @@ let releaseMetadataRequest = null;
 
 function updateDisplayedRelease() {
   if (!activeDatasetTag) return;
-  const root = document.getElementById('root') || document.body;
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-    if (/release\s*\/\s*data-\d{4}\.\d{2}\.\d{2}/.test(node.nodeValue)) {
-      node.nodeValue = node.nodeValue.replace(
-        /release\s*\/\s*data-\d{4}\.\d{2}\.\d{2}/,
-        `release / ${activeDatasetTag}`,
-      );
+  document.querySelectorAll('.release-window code').forEach((label) => {
+    if (/^release\s*\/\s*data-\d{4}\.\d{2}\.\d{2}$/.test(label.textContent)) {
+      label.textContent = `release / ${activeDatasetTag}`;
     }
-  }
+  });
 }
 
 function synchronizeDisplayedRelease() {
