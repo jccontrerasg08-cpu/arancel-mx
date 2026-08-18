@@ -226,7 +226,7 @@ def test_detailed_public_information_lives_in_canonical_docs() -> None:
         assert value in release_docs
 
     for value in (
-        "python -m arancel_mx",
+        "pip install arancel-mx",
         "arancel-mx data download",
         "arancel-mx data verify",
     ):
