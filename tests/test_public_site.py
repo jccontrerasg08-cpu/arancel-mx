@@ -11,11 +11,12 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_vercel_deploys_the_standalone_public_site() -> None:
     config = json.loads((ROOT / "vercel.json").read_text(encoding="utf-8"))
+    runtime_version = (ROOT / ".python-version").read_text(encoding="utf-8").strip()
 
     assert config["framework"] is None
     assert config["outputDirectory"] == "website"
     assert "installCommand" not in config
-    assert config["buildCommand"].startswith("python -m pip install ")
+    assert config["buildCommand"].startswith(f"python{runtime_version} -m pip install ")
     assert config["rewrites"] == [
         {
             "source": "/v1/meta",
@@ -89,7 +90,7 @@ def test_vercel_cache_policy_only_marks_hashed_bundles_immutable() -> None:
     ]
 
 
-def test_vercel_runtime_bootstrap_imports_src_layout_without_site_packages() -> None:
+def test_vercel_runtime_bootstrap_adds_the_src_layout_first() -> None:
     probe = subprocess.run(
         [
             sys.executable,
@@ -98,7 +99,8 @@ def test_vercel_runtime_bootstrap_imports_src_layout_without_site_packages() -> 
             (
                 "from api._runtime import ensure_project_source; "
                 "ensure_project_source(); "
-                "import arancel_mx.operational.query"
+                "from pathlib import Path; import sys; "
+                "assert Path(sys.path[0]).resolve() == (Path.cwd() / 'src').resolve()"
             ),
         ],
         cwd=ROOT,
