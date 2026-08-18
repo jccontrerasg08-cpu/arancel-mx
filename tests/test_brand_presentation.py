@@ -163,6 +163,30 @@ def test_consumer_docs_use_vercel_as_the_public_http_front_door() -> None:
     assert "el sitio no actúa como proxy" not in external.lower()
 
 
+def test_public_docs_keep_readyz_on_the_operational_surface() -> None:
+    """Prevent public docs from describing readiness as a FastAPI proxy route."""
+    stale_fragments = (
+        "Vercel: /v1/* restante + /docs + /readyz",
+        "las demás rutas `/v1/*`, `/docs` y `/readyz`",
+        "las demás rutas `/v1/*`, `/docs` y `/readyz` se presentan",
+    )
+    for path in (
+        "docs/project-overview.md",
+        "docs/consumer-quickstart.md",
+        "docs/external-consumption.md",
+        "docs/brand.md",
+    ):
+        text = _read(path)
+        assert "/readyz" in text, path
+        assert "operacional" in text.lower(), path
+        assert not any(fragment in text for fragment in stale_fragments), path
+
+    for path in ("docs/project-overview.md", "docs/external-consumption.md"):
+        text = _read(path)
+        assert "Vercel: /v1/meta + /v1/search + /readyz" in text
+        assert "Vercel: /v1/* restante + /docs" in text
+
+
 def test_public_brand_guide_is_discoverable_and_uses_current_schedule_language() -> None:
     """Expose the canonical brand guide and current weekly automation wording."""
     guide_path = ROOT / "docs/brand.md"
