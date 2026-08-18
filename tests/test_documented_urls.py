@@ -52,6 +52,8 @@ def test_legacy_vucem_urls_remain_documented_but_are_excluded_from_liveness_prob
     assert EXTERNALLY_UNPROBEABLE_URLS == {
         "https://www.ventanillaunica.gob.mx/vucem/Clasificador.html",
         "https://www.ventanillaunica.gob.mx/Clasificador/data/buildHojas1/90014002.html",
+        "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm",
+        "https://www.diputados.gob.mx/LeyesBiblio/pdf/LIGIE_2022.pdf",
     }
     assert EXTERNALLY_UNPROBEABLE_URLS <= documented
     assert EXTERNALLY_UNPROBEABLE_URLS.isdisjoint(probe_urls)
