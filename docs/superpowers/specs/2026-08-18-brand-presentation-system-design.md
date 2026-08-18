@@ -33,7 +33,7 @@ The README and public site should answer, in this order:
 
 ## Scope boundary
 
-This is presentation and documentation work. It may modify brand assets, README information architecture, public-site metadata and brand CSS, focused presentation tests, and the integration handoff documentation.
+This is presentation and documentation work. It may modify brand assets, README information architecture, stable public-site brand CSS, focused presentation tests, and integration handoff documentation.
 
 It must not modify:
 
@@ -44,7 +44,10 @@ It must not modify:
 - Neon synchronization logic;
 - GitHub release semantics;
 - dependency versions;
-- production workflows.
+- production workflows;
+- `vercel.json`;
+- generated `website/assets/index-*.js` / `index-*.css` bundles;
+- the large generated inline runtime in `website/index.html` by hand.
 
 ## Brand system
 
@@ -74,10 +77,11 @@ Create or replace:
 
 - `docs/assets/arancel-mx-logo.svg`: horizontal primary logo for README/docs.
 - `docs/assets/arancel-mx-banner.svg`: README hero/social-style presentation banner.
-- `docs/assets/arancel-mx-social.svg`: 1280×640 repository/social preview composition.
+- `docs/assets/arancel-mx-social.svg`: 1280×640 repository/social source composition.
 - `docs/assets/arancel-mx-cover.svg`: 1600×900 dark presentation cover.
 - `website/assets/arancel-mx-mark.svg`: small-size site/fav icon mark.
 - `website/assets/arancel-mx-logo.svg`: horizontal site wordmark.
+- `website/assets/arancel-mx-social.svg`: deployable sharing-art source for a future reproducible metadata regeneration.
 
 All assets must include accessible `<title>` and `<desc>` metadata and use fixed `viewBox` dimensions.
 
@@ -103,13 +107,19 @@ The README must continue to distinguish package versioning from immutable datase
 
 ## Website presentation integration
 
-Do not edit the generated React bundle (`website/assets/index-*.js` or generated CSS). Use the maintained boundary instead:
+The current `website/index.html` contains the generated application runtime inline and references generated bundle assets. Hand-editing it only to inject social metadata would create a high-risk, hard-to-review diff, so this branding change deliberately stays behind maintained stable boundaries.
 
-- `website/index.html` for metadata, favicon/brand asset links, Open Graph and Twitter card metadata;
-- `website/assets/site-brand.css` for stable brand styling and logo sizing;
+Use instead:
+
+- `website/assets/arancel-mx-mark.svg` for the favicon/nav mark already referenced by the site;
+- `website/assets/arancel-mx-logo.svg` as the canonical deployable horizontal wordmark;
+- `website/assets/arancel-mx-social.svg` as a deployable social-art source for a later reproducible site regeneration;
+- `website/assets/site-brand.css` for stable brand variables and selectors;
 - existing `hub-search.js` / `hub-search.css` remain functionally unchanged.
 
-The website should advertise the current verified hub, not the earlier "separate API only" architecture.
+Do not edit `website/assets/index-*.js`, generated CSS, `vercel.json`, or the inline application runtime in `website/index.html` in this PR. Social `<meta>` tags should be introduced later only through the source/regeneration path that owns `website/index.html`, not as a manual post-build patch.
+
+The website presentation and README must describe the current verified hub, not the earlier "separate API only" architecture.
 
 ## Storytelling and tool flow
 
@@ -133,16 +143,28 @@ The user should be able to see that the project does not ask them to trust a REA
 
 The README must preserve the fail-closed principle, the distinction between legal/current-source evidence and convenience/discovery sources, and the warning that the project does not constitute legal advice.
 
+## Current integration facts that presentation must reflect
+
+At baseline #132:
+
+- the Official data pipeline schedule is `17 11 * * 1`, a weekly Monday check;
+- the previous `17 11 * * *` daily schedule is historical and may be mentioned only as migration context;
+- Vercel serves operational `/v1/meta` and `/v1/search` from the Neon-backed read-only projection;
+- remaining `/v1/*`, `/docs`, and `/readyz` are presented on the public domain through proxying to the reusable FastAPI runtime;
+- the verified release remains the source of truth for synchronization and audit.
+
 ## Tests and verification
 
 Add focused presentation contracts before implementation:
 
 - required brand assets exist and are valid SVG text;
 - no brand SVG embeds raster/base64 images;
-- README hero references the new banner/logo and retains existing package/data quickstart contracts;
+- README hero references the new banner and retains existing package/data quickstart contracts;
 - Spanish and English README contain the same five interface categories;
-- website metadata includes Open Graph/social image references and keeps current hub assets and `/v1` architecture untouched;
-- `vercel.json` remains byte-for-byte unchanged by this work.
+- the public site keeps its existing hub scripts/styles and stable mark reference;
+- `site-brand.css` exposes the new mark/logo through stable selectors without depending on generated class names;
+- the integration handoff documents the post-#132 operational/Neon/proxy boundary;
+- `vercel.json`, application/API code, workflows, and generated bundles remain unchanged by this work.
 
 Run at minimum:
 
@@ -150,7 +172,7 @@ Run at minimum:
 - `ARANCEL_MX_SKIP_URL_CHECKS=1 pytest -q tests/test_documented_urls.py`
 - `python -m ruff check tests/test_brand_presentation.py`
 - XML parse all new SVG assets.
-- `git diff --check` equivalent through final patch inspection.
+- inspect the complete PR diff and reject protected-scope changes.
 
 Full CI remains the merge gate.
 
