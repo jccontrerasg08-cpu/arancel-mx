@@ -28,6 +28,7 @@ Esta guía organiza la documentación por objetivo. Empieza por la ruta que desc
 | Certificar permisos de producción sin alterar datos | [Certificación de producción](production-certification.md) | Runbook aislado para GitHub Releases e Issues. |
 | Publicar el paquete Python | [Release del paquete](package-release.md) | Flujo PyPI/TestPyPI y contrato de publicación. |
 | Configurar reglas de GitHub y seguridad | [Configuración de GitHub](operations/github-settings.md) | Protección de `main`, permisos y checks requeridos. |
+| Integrar cambios paralelos | [Handoff de integración](integration-handoff.md) | Baseline, fronteras de archivos y secuencia de merge segura. |
 
 ## Contribuir
 

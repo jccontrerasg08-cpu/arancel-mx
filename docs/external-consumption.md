@@ -69,10 +69,10 @@ ARANCEL_MX_API_DATASET=data-2026.08.15
 
 No existe fallback silencioso a `latest` durante el arranque del servicio. Si la configuración falta, la release no puede verificarse o el DuckDB no abre de forma válida, el servicio falla cerrado en vez de declarar readiness.
 
-El hostname público verificado es `https://arancel-mx.vercel.app`. El explorador de navegador en [`/app`](https://arancel-mx.vercel.app/app) consulta la misma release que la API; no es un catálogo separado ni un clasificador:
+El sitio público principal es [`https://arancel-mx.vercel.app`](https://arancel-mx.vercel.app). La API FastAPI se despliega de forma independiente en el origen que configure cada integración; el sitio no actúa como proxy ni catálogo de esa API:
 
 ```bash
-export ARANCEL_MX_API_URL="https://arancel-mx.vercel.app"
+export ARANCEL_MX_API_URL="https://api.example.com"
 curl "$ARANCEL_MX_API_URL/healthz"
 curl "$ARANCEL_MX_API_URL/readyz"
 curl "$ARANCEL_MX_API_URL/v1/meta"
@@ -99,7 +99,7 @@ GET /v1/codes/{code}/children
 GET /v1/codes/{code}/provenance
 ```
 
-`/docs` y `/redoc` sirven la documentación interactiva generada desde OpenAPI. `/v1/meta` publica por separado la versión de API, la versión del paquete y la identidad del dataset cargado. El explorador público en [`/app`](https://arancel-mx.vercel.app/app) muestra estas identidades y enlaza la release inmutable, PyPI, CLI y API sin duplicar la lógica de datos.
+`/docs` y `/redoc` sirven la documentación interactiva generada desde OpenAPI. `/v1/meta` publica por separado la versión de API, la versión del paquete y la identidad del dataset cargado. El sitio público de [`arancel-mx`](https://arancel-mx.vercel.app) enlaza las guías, releases, PyPI, CLI y GitHub; no depende de la API desplegada.
 
 El límite de seguridad del servicio es deliberado: no ofrece endpoints HTTP de actualización, reconciliación ni publicación, tampoco expone captura oficial, `compare` live contra VUCEM ni descarga WCO. Esas funciones continúan fuera del servicio web público.
 

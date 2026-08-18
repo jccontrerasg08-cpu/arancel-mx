@@ -222,7 +222,9 @@ jobs:
         run: npm ci
 
       - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+        # GitHub-hosted Ubuntu already provides the shared libraries required by Chromium.
+        # Avoid --with-deps: its apt mirror fetch can stall before the browser suite starts.
+        run: npx playwright install chromium
 
       - name: Run browser smoke tests
         run: npm run test:e2e

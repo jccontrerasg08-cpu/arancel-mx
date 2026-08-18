@@ -86,6 +86,21 @@
     .provenance h3 { margin: 0 0 .4rem; font-size: 1rem; }
     .provenance ul { padding-left: 1.2rem; margin: .35rem 0 0; }
     .provenance li { margin: .3rem 0; }
+    .source-hash { color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .76rem; }
+    .evidence-grid, .next-steps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin-top: 1rem; }
+    .evidence-grid div, .next-steps a { padding: .8rem; border: 1px solid var(--line); border-radius: 9px; background: #fbfdff; }
+    .evidence-grid strong, .next-steps strong { display: block; margin-bottom: .2rem; color: var(--brand-dark); font-size: .82rem; }
+    .next-steps a { color: var(--ink); text-decoration: none; font-size: .88rem; }
+    .next-steps a:hover { border-color: #68c99f; background: #effcf6; }
+    .next-steps code { display: block; margin-top: .35rem; overflow-wrap: anywhere; color: var(--muted); font-size: .76rem; }
+    .snapshot-controls { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1.25rem; }
+    .snapshot-controls button { min-height: auto; padding: .55rem .75rem; font-size: .86rem; }
+    .snapshot-list { display: grid; gap: .65rem; margin-top: 1.25rem; }
+    .snapshot-item { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .85rem; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+    .snapshot-item p { margin: .2rem 0 0; color: var(--muted); font-size: .85rem; }
+    .snapshot-actions { display: flex; flex-wrap: wrap; gap: .45rem; }
+    .snapshot-actions button { min-height: auto; padding: .4rem .55rem; font-size: .8rem; }
+    .secondary-danger { color: #7a271a; border-color: #f5c2c0; background: #fff7f6; }
     .hierarchy-action { margin-top: 1rem; padding: .45rem .65rem; font-size: .85rem; }
     .hierarchy-card { padding: 1.2rem; border: 1px solid #b9ead5; border-radius: 14px; background: #effcf6; }
     .hierarchy-card h2, .hierarchy-card h3 { margin: 0; }
@@ -127,8 +142,9 @@
       .search-row { flex-direction: column; }
       .search-row button { width: 100%; }
       dl { grid-template-columns: 1fr; }
-      .hierarchy, .tool-grid { grid-template-columns: 1fr; }
+      .hierarchy, .tool-grid, .evidence-grid, .next-steps { grid-template-columns: 1fr; }
       .hierarchy-path, .chapter-grid, .child-grid { gap: .4rem; }
+      .snapshot-item { align-items: flex-start; flex-direction: column; }
     }
   </style>
 </head>
@@ -233,6 +249,16 @@
         </section>
       </div>
     </section>
+
+    <section class="section" id="investigacion" aria-labelledby="research-title">
+      <div class="wrap">
+        <p class="eyebrow">Investigación local</p>
+        <h2 id="research-title">Conserva fichas verificadas en este navegador.</h2>
+        <p class="section-intro">Guardar una ficha conserva su código, descripción y release identificada sólo en este dispositivo. No hay cuenta, sincronización ni envío al servicio. Exporta un respaldo JSON antes de borrar los datos del navegador o cambiar de equipo.</p>
+        <div class="snapshot-controls"><button id="export-snapshots" type="button" data-testid="export-snapshots">Exportar respaldo JSON</button></div>
+        <div id="snapshots" class="snapshot-list" aria-live="polite" data-testid="snapshot-list"></div>
+      </div>
+    </section>
   </main>
 
   <footer>
@@ -249,6 +275,11 @@
     const verifiedStatus = document.querySelector('#verified-status');
     const releaseLink = document.querySelector('#release-link');
     const browseChapters = document.querySelector('#browse-chapters');
+    const snapshots = document.querySelector('#snapshots');
+    const exportSnapshots = document.querySelector('#export-snapshots');
+    const SNAPSHOT_KEY = 'arancel-mx:research:v1';
+    let currentMeta = null;
+    let currentRecord = null;
     let filterTimer;
     let requestSequence = 0;
 
@@ -270,7 +301,7 @@
 
     function recordCard(record, sources = [], hierarchyAction = true) {
       const sourceList = sources.length
-        ? `<div class="provenance"><h3>Procedencia registrada</h3><ul>${sources.map((source) => `<li><a href="${escapeHtml(source.source_url)}" rel="noreferrer" target="_blank">${escapeHtml(source.title || source.source_document_id)}</a> · ${escapeHtml(source.authority)}</li>`).join('')}</ul></div>`
+        ? `<div class="provenance"><h3>Procedencia registrada</h3><ul>${sources.map((source) => `<li><a href="${escapeHtml(source.source_url)}" rel="noreferrer" target="_blank">${escapeHtml(source.title || source.source_document_id)}</a> · ${escapeHtml(source.authority)}<br><span class="source-hash">SHA256 ${escapeHtml(source.sha256)}</span></li>`).join('')}</ul></div>`
         : '';
       const action = hierarchyAction
         ? `<button class="hierarchy-action" type="button" data-hierarchy-code="${escapeHtml(record.code)}">Explorar jerarquía verificada</button>`
@@ -301,19 +332,107 @@
       return `<section class="hierarchy-card" data-testid="chapter-browser"><h2>Explora por capítulo HS2</h2><p>Selecciona un capítulo para recuperar sus descendientes desde la release verificada.</p><div class="chapter-grid">${chapters.map((chapter) => `<button class="chapter-link" type="button" data-hierarchy-code="${escapeHtml(chapter.code)}"><strong>${escapeHtml(chapter.code)}</strong> · ${escapeHtml(chapter.description)}</button>`).join('')}</div></section>`;
     }
 
+    function recordEvidence(ficha, notes) {
+      const record = ficha.record;
+      const validity = [record.effective_from, record.effective_to].filter(Boolean).join(' a ') || 'Sin rango fechado registrado';
+      const noteList = notes.length
+        ? `<details><summary>Notas nacionales registradas (${notes.length})</summary><ul>${notes.map((note) => `<li>${escapeHtml(note.note_number)} · ${escapeHtml(note.text)} <span class="source-hash">${escapeHtml(note.source_document_id)}</span></li>`).join('')}</ul></details>`
+        : '<p>No hay notas nacionales registradas para este capítulo en la release consultada.</p>';
+      return `<section class="notice" id="evidence"><h2>Vigencia y evidencia registrada</h2><div class="evidence-grid"><div><strong>Vigencia</strong>${escapeHtml(validity)}</div><div><strong>Base de vigencia</strong>${escapeHtml(record.validity_basis || 'No disponible')}</div><div><strong>Versión LIGIE</strong>${escapeHtml(record.ligie_version || 'No disponible')}</div><div><strong>Release del registro</strong>${escapeHtml(record.dataset_version)}</div></div>${noteList}</section>`;
+    }
+
+    function nextSteps(record) {
+      const releaseUrl = currentMeta
+        ? `https://github.com/jccontrerasg08-cpu/arancel-mx/releases/tag/${encodeURIComponent(currentMeta.dataset_tag)}`
+        : releaseLink.href;
+      const apiUrl = `${window.location.origin}/v1/ficha/${encodeURIComponent(record.code)}`;
+      const datasetFlag = currentMeta ? ` --dataset ${currentMeta.dataset_tag}` : '';
+      return `<section class="notice"><h2>Siguientes pasos con la misma evidencia</h2><p>Estos enlaces reutilizan la release consultada. No sustituyen la verificación oficial ni determinan una clasificación.</p><div class="next-steps"><a href="${escapeHtml(apiUrl)}"><strong>API JSON</strong>Abre la ficha exacta<code>${escapeHtml(apiUrl)}</code></a><a href="${escapeHtml(releaseUrl)}" rel="noreferrer" target="_blank"><strong>Release verificable</strong>Revisa manifest y checksums<code>${escapeHtml(currentMeta?.dataset_tag || record.dataset_version)}</code></a><a href="/docs"><strong>Contrato de API</strong>Consulta endpoints GET-only<code>/docs</code></a><a href="https://pypi.org/project/arancel-mx/" rel="noreferrer" target="_blank"><strong>Terminal y Python</strong>Consulta local verificable<code>arancel-mx ficha ${escapeHtml(record.code)}${escapeHtml(datasetFlag)}</code></a></div><div class="snapshot-controls"><button type="button" data-save-snapshot="${escapeHtml(record.code)}">Guardar ficha local</button></div></section>`;
+    }
+
+    function readSnapshots() {
+      try {
+        const stored = JSON.parse(window.localStorage.getItem(SNAPSHOT_KEY) || '[]');
+        if (!Array.isArray(stored)) return [];
+        return stored.filter((item) => item && isTariffCode(String(item.code || '')) && typeof item.description === 'string' && typeof item.dataset_version === 'string');
+      } catch {
+        return [];
+      }
+    }
+
+    function writeSnapshots(items) {
+      window.localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(items));
+    }
+
+    function renderSnapshots() {
+      const items = readSnapshots();
+      exportSnapshots.disabled = !items.length;
+      snapshots.innerHTML = items.length
+        ? items.map((item) => `<article class="snapshot-item"><div><strong class="code">${escapeHtml(item.code)}</strong><p>${escapeHtml(item.description)} · release ${escapeHtml(item.dataset_version)}</p></div><div class="snapshot-actions"><button type="button" data-open-snapshot="${escapeHtml(item.code)}">Abrir</button><button type="button" class="secondary-danger" data-delete-snapshot="${escapeHtml(item.code)}">Eliminar</button></div></article>`).join('')
+        : '<section class="notice"><h3>Sin fichas guardadas</h3><p>Abre una ficha verificada y elige “Guardar ficha local”.</p></section>';
+    }
+
+    function saveSnapshot() {
+      if (!currentRecord) return;
+      const items = readSnapshots();
+      const snapshot = {
+        code: currentRecord.code,
+        description: currentRecord.description,
+        level: currentRecord.level,
+        dataset_version: currentRecord.dataset_version,
+        saved_at: new Date().toISOString(),
+      };
+      const existingIndex = items.findIndex((item) => item.code === snapshot.code);
+      if (existingIndex >= 0) items[existingIndex] = snapshot;
+      else if (items.length >= 50) {
+        status.textContent = 'Tu lista local llegó a 50 fichas. Exporta o elimina una antes de guardar otra.';
+        return;
+      } else items.unshift(snapshot);
+      try {
+        writeSnapshots(items);
+        renderSnapshots();
+        status.textContent = 'Ficha guardada sólo en este navegador.';
+      } catch {
+        status.textContent = 'Este navegador no pudo guardar la ficha localmente.';
+      }
+    }
+
+    function exportLocalSnapshots() {
+      const items = readSnapshots();
+      if (!items.length) return;
+      const blob = new Blob([JSON.stringify({ schema_version: 1, exported_at: new Date().toISOString(), snapshots: items }, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'arancel-mx-fichas-locales.json';
+      link.click();
+      URL.revokeObjectURL(url);
+      status.textContent = 'Respaldo JSON descargado; permanece bajo tu control.';
+    }
+
     function renderError(message) {
       results.innerHTML = `<section class="notice error" role="alert"><h2>No fue posible completar la consulta</h2><p>${escapeHtml(message)}</p></section>`;
     }
 
     function syncQuery(query) {
       const url = new URL(window.location.href);
+      url.pathname = '/app';
       url.searchParams.set('q', query);
       window.history.replaceState(null, '', url);
+    }
+
+    function syncRecordRoute(code) {
+      window.history.replaceState(null, '', `/app/record/${encodeURIComponent(code)}`);
+    }
+
+    function syncChapterRoute(code) {
+      window.history.replaceState(null, '', `/app/chapter/${encodeURIComponent(code)}`);
     }
 
     async function loadMetadata() {
       try {
         const data = await request('/v1/meta');
+        currentMeta = data;
         const verified = Boolean(data.release_verified && data.structural_valid);
         const releaseUrl = `https://github.com/jccontrerasg08-cpu/arancel-mx/releases/tag/${encodeURIComponent(data.dataset_tag)}`;
         metadata.innerHTML = `<span class="chip">Dataset ${escapeHtml(data.dataset_tag)}</span><span class="chip ${verified ? 'good' : ''}">${verified ? 'Release verificada' : 'Estado por verificar'}</span><span class="chip">API ${escapeHtml(data.api_version)}</span><span class="chip">Paquete ${escapeHtml(data.package_version)}</span>`;
@@ -332,23 +451,50 @@
       status.textContent = '';
     }
 
-    async function exploreHierarchy(code) {
+    async function showRecord(code) {
+      const normalizedCode = exactCode(code);
       const sequence = ++requestSequence;
-      status.textContent = 'Recuperando jerarquía verificada…';
+      status.textContent = 'Recuperando ficha, evidencia y contexto verificados…';
       results.setAttribute('aria-busy', 'true');
       try {
-        const [ficha, sources] = await Promise.all([
-          request(`/v1/ficha/${encodeURIComponent(code)}`),
-          request(`/v1/codes/${encodeURIComponent(code)}/provenance`),
+        const [ficha, sources, notes] = await Promise.all([
+          request(`/v1/ficha/${encodeURIComponent(normalizedCode)}`),
+          request(`/v1/codes/${encodeURIComponent(normalizedCode)}/provenance`),
+          request(`/v1/chapters/${encodeURIComponent(normalizedCode.slice(0, 2))}/national-notes`),
         ]);
         if (sequence !== requestSequence) return;
-        results.innerHTML = `${recordCard(ficha.record, sources, false)}${hierarchyCard(ficha)}`;
-        status.textContent = 'Jerarquía verificada recuperada.';
-        syncQuery(code);
+        currentRecord = ficha.record;
+        results.innerHTML = `${recordCard(ficha.record, sources, false)}${hierarchyCard(ficha)}${recordEvidence(ficha, notes)}${nextSteps(ficha.record)}`;
+        status.textContent = 'Ficha durable verificada recuperada.';
+        syncRecordRoute(ficha.record.code);
       } catch (error) {
         if (sequence !== requestSequence) return;
-        renderError(error instanceof Error ? error.message : 'No fue posible recuperar la jerarquía.');
-        status.textContent = 'La jerarquía no se completó.';
+        renderError(error instanceof Error ? error.message : 'No fue posible recuperar la ficha durable.');
+        status.textContent = 'La ficha no se completó.';
+      } finally {
+        if (sequence === requestSequence) results.removeAttribute('aria-busy');
+      }
+    }
+
+    async function showChapter(code) {
+      const sequence = ++requestSequence;
+      status.textContent = 'Recuperando capítulo y contexto verificados…';
+      results.setAttribute('aria-busy', 'true');
+      try {
+        const [ficha, sources, notes] = await Promise.all([
+          request(`/v1/ficha/${encodeURIComponent(code)}`),
+          request(`/v1/codes/${encodeURIComponent(code)}/provenance`),
+          request(`/v1/chapters/${encodeURIComponent(code)}/national-notes`),
+        ]);
+        if (sequence !== requestSequence) return;
+        currentRecord = ficha.record;
+        results.innerHTML = `${recordCard(ficha.record, sources, false)}${hierarchyCard(ficha)}${recordEvidence(ficha, notes)}${nextSteps(ficha.record)}`;
+        status.textContent = 'Capítulo durable verificado recuperado.';
+        syncChapterRoute(ficha.record.code);
+      } catch (error) {
+        if (sequence !== requestSequence) return;
+        renderError(error instanceof Error ? error.message : 'No fue posible recuperar el capítulo.');
+        status.textContent = 'El capítulo no se completó.';
       } finally {
         if (sequence === requestSequence) results.removeAttribute('aria-busy');
       }
@@ -380,14 +526,7 @@
       results.setAttribute('aria-busy', 'true');
       try {
         if (isTariffCode(normalizedCode) && !live) {
-          const [record, sources] = await Promise.all([
-            request(`/v1/lookup/${encodeURIComponent(normalizedCode)}`),
-            request(`/v1/codes/${encodeURIComponent(normalizedCode)}/provenance`),
-          ]);
-          if (sequence !== requestSequence) return;
-          results.innerHTML = recordCard(record, sources);
-          status.textContent = 'Ficha exacta recuperada.';
-          syncQuery(query);
+          await showRecord(normalizedCode);
           return;
         }
         const matches = await request(`/v1/search?q=${encodeURIComponent(query)}&limit=10`);
@@ -448,19 +587,59 @@
     queryInput.addEventListener('input', scheduleFilter);
     browseChapters.addEventListener('click', showChapters);
     results.addEventListener('click', (event) => {
+      const saveButton = event.target.closest('[data-save-snapshot]');
+      if (saveButton) {
+        saveSnapshot();
+        return;
+      }
       const target = event.target.closest('[data-hierarchy-code]');
       if (!target) return;
       const code = target.dataset.hierarchyCode;
       queryInput.value = code;
-      exploreHierarchy(code);
+      if (code.length === 2) showChapter(code);
+      else showRecord(code);
     });
+    snapshots.addEventListener('click', (event) => {
+      const openButton = event.target.closest('[data-open-snapshot]');
+      if (openButton) {
+        queryInput.value = openButton.dataset.openSnapshot;
+        showRecord(openButton.dataset.openSnapshot);
+        return;
+      }
+      const deleteButton = event.target.closest('[data-delete-snapshot]');
+      if (!deleteButton) return;
+      writeSnapshots(readSnapshots().filter((item) => item.code !== deleteButton.dataset.deleteSnapshot));
+      renderSnapshots();
+      status.textContent = 'Ficha eliminada de este navegador.';
+    });
+    exportSnapshots.addEventListener('click', exportLocalSnapshots);
 
-    loadMetadata();
-    const sharedQuery = new URLSearchParams(window.location.search).get('q')?.trim();
-    if (sharedQuery) {
-      queryInput.value = sharedQuery;
-      search(sharedQuery);
+    async function initialize() {
+      renderSnapshots();
+      await loadMetadata();
+      const recordRoute = /^\/app\/record\/([0-9. -]+)\/?$/.exec(window.location.pathname);
+      if (recordRoute) {
+        const code = exactCode(recordRoute[1]);
+        if (isTariffCode(code)) {
+          queryInput.value = code;
+          showRecord(code);
+          return;
+        }
+      }
+      const chapterRoute = /^\/app\/chapter\/(\d{2})\/?$/.exec(window.location.pathname);
+      if (chapterRoute) {
+        queryInput.value = chapterRoute[1];
+        showChapter(chapterRoute[1]);
+        return;
+      }
+      const sharedQuery = new URLSearchParams(window.location.search).get('q')?.trim();
+      if (sharedQuery) {
+        queryInput.value = sharedQuery;
+        search(sharedQuery);
+      }
     }
+
+    initialize();
   </script>
 </body>
 </html>

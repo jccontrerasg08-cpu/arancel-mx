@@ -77,6 +77,22 @@ def test_chapters_return_current_hs2_records(valid_settings) -> None:
     assert all(row["level"] == "hs2" for row in payload)
 
 
+def test_sections_return_canonical_hs_ligie_ranges(valid_settings) -> None:
+    with _client(valid_settings) as client:
+        response = client.get("/v1/sections")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload[0] == {
+        "roman": "I",
+        "name": "Animales vivos y productos del reino animal",
+        "chapter_from": "01",
+        "chapter_to": "05",
+        "source": "hs_section_grouping",
+    }
+    assert payload[-1]["roman"] == "XXI"
+
+
 def test_national_notes_return_only_requested_two_digit_chapter(valid_settings) -> None:
     with _client(valid_settings) as client:
         response = client.get("/v1/chapters/85/national-notes")

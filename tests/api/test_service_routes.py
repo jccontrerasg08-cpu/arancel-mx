@@ -199,7 +199,30 @@ def test_marketing_documentation_route_preserves_fastapi_docs(valid_settings, fa
     assert "Swagger UI" in api_docs.text
 
 
+def test_new_marketing_deep_links_serve_the_public_shell(valid_settings, fake_dataset) -> None:
+    with _client(valid_settings, fake_dataset) as client:
+        responses = [
+            client.get(path)
+            for path in ("/records", "/chapters", "/changes", "/moa", "/trade-context")
+        ]
+
+    assert all(response.status_code == 200 for response in responses)
+    assert all('<div id="root"></div>' in response.text for response in responses)
+
+
 def test_vercel_entrypoint_resolves_the_public_application() -> None:
     from src.arancel_mx.api.app import app as vercel_app
 
     assert vercel_app.title == "Arancel MX API"
+
+
+def test_explorer_serves_durable_client_routes(valid_settings, fake_dataset) -> None:
+    with _client(valid_settings, fake_dataset) as client:
+        record = client.get("/app/record/85171301")
+        chapter = client.get("/app/chapter/85")
+
+    assert record.status_code == 200
+    assert chapter.status_code == 200
+    assert 'data-testid="snapshot-list"' in record.text
+    assert "Guardar ficha local" in record.text
+    assert "Vigencia y evidencia registrada" in record.text

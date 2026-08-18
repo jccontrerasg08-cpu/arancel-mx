@@ -1,0 +1,14 @@
+a[href="/"][aria-label], a[href="/"][title] {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.45rem;
+}
+
+a[href="/"][aria-label]::before, a[href="/"][title]::before {
+  background: url("/assets/arancel-mx-mark.svg") center / contain no-repeat;
+  content: "";
+  display: inline-block;
+  flex: 0 0 1.35rem;
+  height: 1.35rem;
+  width: 1.35rem;
+}

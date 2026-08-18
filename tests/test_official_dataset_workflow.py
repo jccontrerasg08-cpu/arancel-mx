@@ -38,14 +38,14 @@ def _job_block(workflow: str, job: str, next_job: str | None = None) -> str:
     return workflow[start : _job_start(workflow, next_job)]
 
 
-def test_autonomous_workflow_replaces_legacy_weekly_workflow():
+def test_autonomous_workflow_uses_the_approved_weekly_review_schedule():
     workflow = _workflow()
 
     assert not LEGACY_WORKFLOW.exists()
     assert "name: Official data pipeline" in workflow
     assert "workflow_dispatch:" in workflow
     assert "schedule:" in workflow
-    assert 'cron: "17 11 * * *"' in workflow
+    assert 'cron: "17 11 * * 1"' in workflow
     assert "'arancel-mx-official-data-production'" in workflow
     assert "cancel-in-progress: false" in workflow
     assert re.search(r"^permissions:\n\s+contents: read$", workflow, re.MULTILINE)
