@@ -40,10 +40,19 @@ class handler(BaseHTTPRequestHandler):
         resource = query.get("resource", [""])[0]
         try:
             with _connect(database_url) as connection:
-                if resource == "meta":
+                if resource in {"meta", "ready"}:
                     payload = active_release_metadata(connection)
                     if payload is None:
                         self._respond(HTTPStatus.SERVICE_UNAVAILABLE, {"status": "not_ready"})
+                        return
+                    if resource == "ready":
+                        self._respond(
+                            HTTPStatus.OK,
+                            {
+                                "status": "ready",
+                                "dataset_version": payload["dataset_version"],
+                            },
+                        )
                         return
                     self._respond(HTTPStatus.OK, payload)
                     return

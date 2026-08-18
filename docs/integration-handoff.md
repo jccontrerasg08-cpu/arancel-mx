@@ -1,22 +1,22 @@
 # Handoff de integración
 
-> **Baseline revisada:** `90840779e752ac7ef257923edda95f188d4d35ac`, después de PR #141 (`fix: build Vercel driver with Python 3.13`). Esta baseline también incorpora #140, que separa URLs oficiales documentadas de endpoints temporalmente no confiables como liveness gates. Antes de terminar cualquier rama, compara de nuevo contra `origin/main`.
+> **Baseline revisada:** `2572405e35a5f83c8058ec755ed672382f5f7694`, después de PR #144 (`fix: version Central Hub bridge asset`). Esta baseline incorpora también #140 (separación entre documentación y liveness externo), #142 (`/readyz` servido por la capa operacional), y #143–#144 (sincronización y versionado del bridge público). Antes de terminar cualquier rama, compara de nuevo contra `origin/main`.
 
-Esta guía evita que un cambio correcto de forma aislada revierta decisiones arquitectónicas posteriores. Cada PR debe preservar las fronteras entre publicación oficial, capa operacional, hub público, API reusable y paquete Python.
+Esta guía evita que un cambio correcto de forma aislada revierta decisiones arquitectónicas posteriores. Cada PR debe preservar las fronteras entre publicación oficial, capa operacional, hub público, API reusable, paquete Python y documentación.
 
 ## Fronteras que deben preservarse
 
 | Área | Contrato vigente | Archivos de alto riesgo |
 |---|---|---|
 | Hub público | `https://arancel-mx.vercel.app` sirve `website/`, búsqueda, metadata y rutas públicas bajo un solo dominio. | `website/`, `vercel.json`, `tests/test_public_site.py` |
-| Capa operacional | `/v1/meta` y `/v1/search` son read-only, respaldados por Neon y sincronizados desde releases verificadas. | `api/operational.py`, `api/sync_operational.py`, `src/arancel_mx/operational/` |
-| FastAPI reusable | El resto de `/v1/*`, `/docs` y `/readyz` se presenta en Vercel mediante proxy al runtime FastAPI. | `src/arancel_mx/api/`, `vercel.json`, `docs/external-consumption.md` |
-| Runtime operacional de Vercel | `psycopg[binary]` se bundlea de forma aislada en `api/_vendor` y sólo se incluye en las dos funciones operativas. | `vercel.json`, `api/operational.py`, `api/sync_operational.py`, `.gitignore` |
+| Capa operacional | `/v1/meta`, `/v1/search` y `/readyz` son read-only, respaldados por Neon y sincronizados desde releases verificadas. | `api/operational.py`, `api/sync_operational.py`, `src/arancel_mx/operational/` |
+| FastAPI reusable | El resto de `/v1/*` y `/docs` se presenta en Vercel mediante proxy al runtime FastAPI. | `src/arancel_mx/api/`, `vercel.json`, `docs/external-consumption.md` |
+| Runtime operacional de Vercel | `psycopg[binary]` se bundlea de forma aislada en `api/_vendor` y sólo se incluye en las funciones operativas. | `vercel.json`, `api/operational.py`, `api/sync_operational.py`, `.gitignore` |
 | Paquete y dependencias | La librería pública conserva dependencias base y el extra `operational`; Vercel no debe convertir su driver aislado en dependencia base. | `pyproject.toml`, `requirements/`, packaging tests |
 | Fuentes y liveness | Una URL puede seguir siendo fuente/documentación válida aunque su transporte externo sea inestable; la excepción debe ser explícita y testeada. | `scripts/check_documented_urls.py`, `tests/test_documented_urls.py`, docs de fuentes |
 | Releases y fuentes | La release verificable sigue siendo la fuente de verdad. | `src/arancel_mx/sources/`, `src/arancel_mx/release/`, tests de pipeline/fuentes |
 | CI | Los checks deben cubrir Python, runtime, browser, distribución y publicación. | `.github/workflows/`, tests de hardening |
-| Presentación | README raíz es front door compacto; `docs/README.md` es navegación profunda. | `README*.md`, `docs/`, assets de marca |
+| Presentación | README raíz es front door compacto; `docs/README.md` es navegación profunda; Vercel es la experiencia interactiva. | `README*.md`, `docs/`, assets de marca |
 
 ## Arquitectura del Central Hub
 
@@ -27,18 +27,18 @@ sync operacional idempotente
           ↓
         Neon
           ↓
-Vercel: /v1/meta + /v1/search
+Vercel: /v1/meta + /v1/search + /readyz
 
-Vercel: /v1/* restante + /docs + /readyz
+Vercel: /v1/* restante + /docs
           ↓ proxy
    FastAPI reusable
 ```
 
-Neon no sustituye el dataset canónico y Vercel no mueve el pipeline legal/de publicación a la capa web. La identidad reproducible permanece en la release, manifest, hashes y fuentes capturadas.
+Neon no sustituye el dataset canónico y Vercel no mueve el pipeline legal/de publicación a la capa web. La identidad reproducible permanece en la release, `manifest.json`, hashes y fuentes capturadas.
 
 ## Contrato operativo de Vercel
 
-La versión de dataset visible en el hub y la publicada por `/v1/meta` deben corresponder a la misma release promovida. Si esa identidad no está disponible o no puede validarse, el despliegue no debe presentar una versión alternativa como equivalente.
+La versión de dataset visible en el hub y la publicada por `/v1/meta` deben corresponder a la misma release promovida. `/readyz` consulta la misma metadata activa desde la capa operacional y sólo responde ready cuando esa identidad existe. Si la identidad no está disponible o no puede validarse, el despliegue no debe presentar una versión alternativa como equivalente.
 
 Configuración relevante:
 
@@ -52,6 +52,17 @@ Configuración relevante:
 - La librería Python mantiene su extra `operational` para instalaciones que sí necesiten conectividad PostgreSQL fuera del bundle de Vercel.
 
 No elimines variables creadas por la integración administrada de Neon sólo porque una de ellas no se lea directamente en el código. Antes de limpiar aliases, verifica su origen y realiza un despliegue satisfactorio con la configuración resultante.
+
+## Sincronización visual del hub
+
+El bridge público no es la fuente de verdad de la release. Consulta `/v1/meta`, conserva la `dataset_tag` activa y actualiza el label heredado después del render cuando sea necesario. `website/index.html` referencia `site-bridge.js` con un query de versión para invalidar caché cuando cambia ese comportamiento.
+
+Reglas:
+
+- no hardcodear una release como identidad operativa del hub;
+- conservar la sincronización con `/v1/meta` después de mutaciones/render tardío;
+- versionar la referencia del bridge cuando cambie su comportamiento y la política de caché lo requiera;
+- no editar bundles `website/assets/index-*.js` o `index-*.css` manualmente.
 
 ## Fuentes documentadas vs liveness de CI
 
@@ -80,21 +91,25 @@ Cuando una rama toca la superficie pública:
 
 - confirma raíz y rutas directas;
 - conserva `hub-search.js` / `hub-search.css` si no estás cambiando búsqueda;
-- verifica que `/v1/meta` y `/v1/search` sigan resolviendo a la capa operacional;
-- conserva el proxy para `/v1/:path*`, `/docs` y `/readyz` mientras la arquitectura siga vigente;
-- no agregues una segunda URL “canónica” en documentación si el dominio público puede servir el mismo contrato.
+- verifica que `/v1/meta`, `/v1/search` y `/readyz` sigan resolviendo a la capa operacional;
+- conserva el proxy para `/v1/:path*` y `/docs` mientras la arquitectura siga vigente;
+- conserva la carga versionada de `site-bridge.js` mientras ese asset requiera invalidación de caché;
+- no agregues una segunda URL “canónica” en documentación si `https://arancel-mx.vercel.app` puede servir el mismo contrato.
 
 ## Presentación y documentación
 
-La frontera mantenible de marca es:
+La frontera mantenible de marca y documentación es:
 
 - `docs/assets/arancel-mx-*.svg` para GitHub, documentación y presentaciones;
 - `website/assets/arancel-mx-mark.svg`, `arancel-mx-logo.svg` y `site-brand.css` para identidad del hub;
 - `README.md` / `README.en.md` como landing técnica breve;
 - `docs/README.md` como índice canónico de documentación profunda;
-- `docs/project-overview.md` para arquitectura conceptual y límites de producto.
+- `docs/project-overview.md` para arquitectura conceptual y límites de producto;
+- `docs/research/` para investigación y mapas especializados que no deben saturar la raíz del repositorio.
 
-No edites manualmente `website/assets/index-*.js`, `website/assets/index-*.css` ni el runtime generado dentro de `website/index.html` para cambios de branding. Esos cambios deben entrar mediante la fuente y regeneración reproducible correspondiente.
+El README debe dirigir primero al hub público para interacción, a GitHub Releases para bytes verificables y a `docs/README.md` para profundidad técnica. No debe duplicar manuales completos de CLI, API, fuentes o release engineering.
+
+No edites manualmente `website/assets/index-*.js`, `website/assets/index-*.css` ni runtime generado para cambios de branding. Los cambios generados deben entrar mediante la fuente y regeneración reproducible correspondiente.
 
 PR #134 eliminó el runtime/debug collector de Manus del sitio público. Regeneraciones futuras deben conservar esa limpieza y sus tests.
 

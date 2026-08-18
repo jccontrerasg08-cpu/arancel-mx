@@ -1,10 +1,18 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
+
+
+PUBLIC_HUB_URL = "https://arancel-mx.vercel.app/"
 
 
 def _read(path: str) -> str:
     return Path(path).read_text(encoding="utf-8")
+
+
+def _markdown_links(text: str) -> list[str]:
+    return re.findall(r"\[[^\]]+\]\(([^)]+)\)", text)
 
 
 def test_readmes_contain_pip_install_and_first_query() -> None:
@@ -14,7 +22,7 @@ def test_readmes_contain_pip_install_and_first_query() -> None:
         assert "pip install arancel-mx" in text
         assert "arancel-mx data download" in text
         assert "arancel-mx lookup 01012101" in text
-        assert "https://arancel-mx.vercel.app/" in text
+        assert PUBLIC_HUB_URL in _markdown_links(text)
 
 
 def test_readmes_distinguish_package_and_dataset_versions() -> None:
