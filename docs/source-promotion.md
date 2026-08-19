@@ -40,6 +40,8 @@ Una LIGIE más reciente puede contener fracciones vigentes sin descendientes NIC
 
 La ausencia de un NICO no es, por sí sola, una autorización para publicar datos fabricados ni una razón universal para invalidar una fuente oficial que todavía está rezagada. Los reportes de cobertura deben distinguir lag aguas arriba, pérdida de datos inesperada y casos especiales con evidencia.
 
+Cada release construida incluye `release_metadata.nico_coverage`. El reporte conserva la identidad (`URL` y `SHA-256`) de los dos workbooks estructurados, cuenta fracciones con y sin descendiente NICO y separa tres estados: descendiente publicado, lag aguas arriba confirmado y ausencia sin clasificar. La única excepción clasificada actualmente son las seis fracciones Totoaba adicionadas por el [DOF del 21 de julio de 2025](https://www.dof.gob.mx/nota_detalle.php?codigo=5763398&fecha=21/07/2025): `03028902`, `03029904`, `03038902`, `03039904`, `03048901` y `03048902`. Cualquier otra ausencia permanece explícitamente sin clasificar hasta que una fuente primaria permita asignarle una causa; no se generan NICO sintéticos ni se bloquea una fuente oficial sólo por esa ausencia.
+
 ## Rollback y recuperación
 
 Las releases publicadas son inmutables. Si una promoción resulta incorrecta o insuficiente, no se edita una release existente. La recuperación es una nueva ejecución validada con una corrección revisable.

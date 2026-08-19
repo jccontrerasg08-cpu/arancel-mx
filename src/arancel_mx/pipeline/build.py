@@ -89,6 +89,9 @@ def _validated_release_metadata(release: Mapping[str, object]) -> dict[str, obje
     source_identity = metadata["source_identity"]
     if not isinstance(source_identity, Sequence) or isinstance(source_identity, (str, bytes)):
         raise ValueError("release.release_metadata.source_identity must be a list")
+    nico_coverage = metadata.get("nico_coverage")
+    if nico_coverage is not None and not isinstance(nico_coverage, Mapping):
+        raise ValueError("release.release_metadata.nico_coverage must be an object")
     canonical_json(metadata)
     return metadata
 
@@ -905,6 +908,8 @@ def _export_arancel_release(
         if field not in release_metadata:
             raise ValueError(f"Release metadata missing {field}")
         manifest[field] = release_metadata[field]
+    if "nico_coverage" in release_metadata:
+        manifest["nico_coverage"] = release_metadata["nico_coverage"]
 
     manifest_path = output_dir / "manifest.json"
     manifest_path.write_text(

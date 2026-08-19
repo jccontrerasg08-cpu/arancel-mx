@@ -107,6 +107,41 @@ def _validate_schema_v2_manifest(manifest: dict[str, Any]) -> None:
     if not identities:
         raise ValueError("Release manifest source_identity must not be empty")
 
+    nico_coverage = manifest.get("nico_coverage")
+    if nico_coverage is not None:
+        if not isinstance(nico_coverage, dict):
+            raise ValueError("Release manifest nico_coverage must be an object")
+        counts = nico_coverage.get("counts")
+        expected_counts = {
+            "fraccion8",
+            "with_nico_descendant",
+            "missing_nico_descendant",
+            "known_upstream_lag",
+            "unclassified_missing",
+        }
+        if not isinstance(counts, dict) or set(counts) != expected_counts:
+            raise ValueError("Release manifest nico_coverage.counts is not canonical")
+        if any(
+            not isinstance(value, int) or isinstance(value, bool) or value < 0
+            for value in counts.values()
+        ):
+            raise ValueError("Release manifest nico_coverage.counts contains invalid values")
+        if counts["with_nico_descendant"] + counts["missing_nico_descendant"] != counts["fraccion8"]:
+            raise ValueError("Release manifest nico_coverage counts do not reconcile")
+        if counts["known_upstream_lag"] + counts["unclassified_missing"] != counts["missing_nico_descendant"]:
+            raise ValueError("Release manifest nico_coverage missing counts do not reconcile")
+        coverage_identities = nico_coverage.get("source_identity")
+        if not isinstance(coverage_identities, list) or {
+            item.get("dataset_key") for item in coverage_identities if isinstance(item, dict)
+        } != {"ligie", "nico"}:
+            raise ValueError("Release manifest nico_coverage source identities are not canonical")
+        known_lag = nico_coverage.get("known_upstream_lag")
+        if not isinstance(known_lag, dict) or not isinstance(known_lag.get("codes"), list):
+            raise ValueError("Release manifest nico_coverage known_upstream_lag is invalid")
+        unclassified = nico_coverage.get("unclassified_missing")
+        if not isinstance(unclassified, list):
+            raise ValueError("Release manifest nico_coverage unclassified_missing must be a list")
+
 
 def verify_release(release_dir: Path) -> dict[str, Any]:
     release_dir = Path(release_dir).resolve()
