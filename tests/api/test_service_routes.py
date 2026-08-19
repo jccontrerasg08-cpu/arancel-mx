@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import re
 
 from fastapi.testclient import TestClient
@@ -29,6 +30,17 @@ def test_root_serves_the_public_marketing_site(valid_settings, fake_dataset) -> 
         asset_response = client.get(asset.group(1))
     assert asset_response.status_code == 200
     assert "javascript" in asset_response.headers["content-type"]
+
+
+def test_public_bundle_url_uses_a_content_hash_for_immutable_caching(valid_settings, fake_dataset) -> None:
+    with _client(valid_settings, fake_dataset) as client:
+        page = client.get("/")
+        asset = re.search(r'(/assets/index-[^"]+\.js)', page.text)
+        assert asset is not None
+        bundle = client.get(asset.group(1))
+
+    content_hash = hashlib.sha256(bundle.content).hexdigest()[:12]
+    assert content_hash in asset.group(1)
 
 
 def test_v1_describes_public_api(valid_settings, fake_dataset) -> None:
