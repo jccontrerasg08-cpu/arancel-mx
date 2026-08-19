@@ -212,19 +212,17 @@ def test_public_brand_guide_is_discoverable_and_uses_current_schedule_language()
     assert "pipeline diario" not in docs_index.lower()
 
 
-def test_public_site_keeps_original_landing_and_stable_brand_boundary() -> None:
-    """Keep the generated landing intact while branding only the project-owned shell."""
+def test_vercel_static_output_serves_the_react_public_shell() -> None:
+    """Keep Vercel's published static output aligned with the React public shell."""
     index = _read("website/index.html")
 
     for fragment in (
-        "/assets/arancel-mx-mark.svg",
-        "/assets/arancel-mx-logo.svg",
-        "/assets/site-brand.css?v=",
-        "/assets/site-bridge.js?v=",
+        '<div id="root"></div>',
+        "/assets/index-",
+        'type="module"',
     ):
         assert fragment in index
 
-    assert 'class="arancel-brand-header"' in index
     assert "/assets/hub-search.css" not in index
     assert "/assets/hub-search.js" not in index
     assert "manus-analytics.com" not in index
