@@ -392,3 +392,23 @@ def test_verify_bundle_fetches_and_validates_all_six_assets(
         "official-sources.tar.gz",
     }
     assert {tag for tag, _ in downloader.calls} == {TAG_NEW}
+
+
+def test_manager_uses_opt_in_release_token_only_when_constructing_its_own_session(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    captured: list[str | None] = []
+
+    def build_session(*, github_token: str | None = None) -> object:
+        captured.append(github_token)
+        return object()
+
+    monkeypatch.setenv("ARANCEL_MX_GITHUB_TOKEN", "ci-token")
+    monkeypatch.setattr(manager_module, "build_session", build_session)
+    config = ConsumerConfig(tmp_path / "cache", None, False, 2.5)
+
+    DatasetManager(config)
+    injected = object()
+    DatasetManager(config, session=injected)  # type: ignore[arg-type]
+
+    assert captured == ["ci-token"]

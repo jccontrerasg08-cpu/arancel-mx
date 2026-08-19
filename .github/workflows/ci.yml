@@ -209,6 +209,7 @@ jobs:
         env:
           ARANCEL_MX_CACHE_DIR: /tmp/arancel-mx-playwright-cache
           ARANCEL_MX_DATASET: data-2026.08.15
+          ARANCEL_MX_GITHUB_TOKEN: ${{ github.token }}
         run: arancel-mx data download
 
       - name: Set up Node
