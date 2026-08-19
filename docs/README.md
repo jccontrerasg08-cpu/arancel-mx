@@ -2,13 +2,14 @@
 
 La portada del repositorio explica **qué es** `arancel-mx` y cómo empezar. Este índice es la entrada canónica al detalle técnico: elige la ruta según lo que necesitas hacer.
 
-**[Hub público](https://arancel-mx.vercel.app/)** · **[API / OpenAPI](https://arancel-mx.vercel.app/docs)** · **[Metadata del dataset](https://arancel-mx.vercel.app/v1/meta)** · **[Última release](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest)** · **[README](../README.md)**
+**[Hub público](https://arancel-mx.vercel.app/)** · **[Mesa de comercio exterior](https://arancel-mx.vercel.app/trade)** · **[API / OpenAPI](https://arancel-mx.vercel.app/docs)** · **[Metadata del dataset](https://arancel-mx.vercel.app/v1/meta)** · **[Última release](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest)** · **[README](../README.md)**
 
 ## Usar
 
 | Necesidad | Lee / abre | Resultado |
 |---|---|---|
 | Buscar una fracción, HS o NICO sin instalar nada | [Hub público](https://arancel-mx.vercel.app/) | Búsqueda web sobre la release verificada activa. |
+| Construir un escenario de costos, origen, RRNA o despacho | [Mesa de comercio exterior](https://arancel-mx.vercel.app/trade) | Orientación con entradas declaradas, resultados aritméticos y fuentes oficiales; no determina obligaciones ni transmite trámites. |
 | Instalar, descargar y validar una release | [Inicio rápido](consumer-quickstart.md) | Dataset local verificado y listo para consultar. |
 | Usar todos los comandos, formatos, caché y modo offline | [CLI de consumo](consumer-cli.md) | Referencia de `doctor`, `data`, `lookup`, `search`, `ficha`, `provenance` y más. |
 | Entender HS2 → HS4 → HS6 → fracción → NICO | [Guía NICO y LIGIE](nico-ligie-guide.md) | Jerarquía y navegación de códigos mexicanos. |
@@ -30,6 +31,8 @@ La portada del repositorio explica **qué es** `arancel-mx` y cómo empezar. Est
 | Entender captura, reconciliación y no-op | [Fuentes y reconciliación](sources.md) | Cadena de confianza y gates de publicación. |
 | Entender cómo se evalúan candidatos SNICE_DOCS | [Política de promoción](source-promotion.md) | Allowlist, procedencia, rollback y límites. |
 | Revisar el mapa especializado del MOA | [Mapa ANAM / MOA](research/anam-moa-source-map.md) | Índice de navegación y procedencia hacia fuentes oficiales ANAM. |
+| Ubicar la fuente oficial para una categoría de comercio exterior | [Mapa de cobertura de comercio exterior](research/external-trade-coverage-map.md) | Cobertura LIGIE/NICO y referencias oficiales para leyes, RGCE, tratados, RRNA, VUCEM, padrones y programas. |
+| Auditar variables, fórmulas y límites de la mesa | [Plan de fuentes de la mesa](research/trade-assistant-source-plan.md) | Fuentes primarias confirmadas y separación entre datos declarados, resultados orientativos y determinaciones de autoridad. |
 
 ## Mantener y contribuir
 
