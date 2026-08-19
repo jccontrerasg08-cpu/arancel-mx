@@ -1,0 +1,102 @@
+{
+  "schema_version": "1",
+  "purpose": "Navegación y procedencia de primer nivel para materias de comercio exterior relacionadas con una fracción; no es un registro de requisitos aplicables, un motor de cálculo ni una fuente jurídica sustitutiva.",
+  "sources": [
+    {
+      "id": "ligie",
+      "title": "LIGIE y tarifa vigente",
+      "official_url": "https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html",
+      "source_role": "Fuente operativa registrada para LIGIE; se reconcilia con evidencia legal.",
+      "model_status": "included_in_verified_dataset",
+      "boundary": "El dataset publica sólo los registros capturados, reconciliados y promovidos en una release verificable; una búsqueda no constituye clasificación de mercancía."
+    },
+    {
+      "id": "nico",
+      "title": "Números de Identificación Comercial (NICO)",
+      "official_url": "https://www.snice.gob.mx/cs/avi/snice/ligie.nico2022.html",
+      "source_role": "Fuente operativa registrada para NICO y sus modificaciones publicadas.",
+      "model_status": "included_in_verified_dataset",
+      "boundary": "Sólo se muestran NICO presentes en la release verificada y vinculados a su fracción vigente; no se infiere un NICO a partir de una descripción comercial."
+    },
+    {
+      "id": "national_notes",
+      "title": "Notas nacionales de la LIGIE",
+      "official_url": "https://www.snice.gob.mx/cs/avi/snice/ligie.notasnac22.html",
+      "source_role": "Fuente oficial capturada para las notas nacionales publicables.",
+      "model_status": "included_in_verified_dataset",
+      "boundary": "La publicación conserva las notas nacionales procesadas y su procedencia; no reemplaza las reglas generales o complementarias ni la interpretación jurídica."
+    },
+    {
+      "id": "tariff_indicators",
+      "title": "Estudios e indicadores arancelarios",
+      "official_url": "https://www.snice.gob.mx/cs/avi/snice/ligie.indicaranc22.html",
+      "source_role": "Punto oficial de consulta para indicadores relacionados con la LIGIE.",
+      "model_status": "official_reference",
+      "boundary": "Los indicadores se mantienen fuera del contrato tabular salvo que una fuente, esquema, fixture y validación específicos los incorporen a una release."
+    },
+    {
+      "id": "customs_law",
+      "title": "Ley Aduanera",
+      "official_url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LAdua.pdf",
+      "source_role": "Texto legislativo de consulta para el marco aduanero.",
+      "model_status": "official_reference",
+      "boundary": "Es una referencia normativa; arancel-mx no interpreta obligaciones, regímenes, infracciones ni requisitos de un caso individual."
+    },
+    {
+      "id": "foreign_trade_law",
+      "title": "Ley de Comercio Exterior",
+      "official_url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LCE.pdf",
+      "source_role": "Texto legislativo de consulta sobre aranceles, origen y medidas de comercio exterior.",
+      "model_status": "official_reference",
+      "boundary": "La existencia de una medida, permiso, cupo o cuota no se deduce de este enlace ni de una fracción sin la publicación aplicable."
+    },
+    {
+      "id": "rgce",
+      "title": "Reglas Generales de Comercio Exterior 2026",
+      "official_url": "https://www.sat.gob.mx/minisitio/NormatividadRMFyRGCE/documentos2026/rgce/rgce/ReglasGeneralesComercioExteriorpara2026.pdf",
+      "source_role": "Resolución anual oficial para reglas generales y anexos de comercio exterior.",
+      "model_status": "official_reference",
+      "boundary": "La regla y anexo aplicables deben verificarse en su versión oficial; esta referencia no habilita cálculo de contribuciones ni llenado de pedimentos."
+    },
+    {
+      "id": "treaties",
+      "title": "Tratados y acuerdos comerciales de México",
+      "official_url": "https://www.gob.mx/se/acciones-y-programas/comercio-exterior-paises-con-tratados-y-acuerdos-firmados-con-mexico",
+      "source_role": "Inventario oficial de la Secretaría de Economía y acceso a instrumentos por país o acuerdo.",
+      "model_status": "official_reference",
+      "boundary": "La preferencia depende de mercancía, origen, regla específica, prueba documental, vigencia y demás condiciones; no se asigna una tasa preferencial en el dataset."
+    },
+    {
+      "id": "non_tariff_measures",
+      "title": "Medidas no arancelarias",
+      "official_url": "https://www.snice.gob.mx/cs/avi/snice/home.html",
+      "source_role": "Portal oficial SNICE que concentra avisos y permisos, cupos, origen, cuotas compensatorias y NOMs.",
+      "model_status": "official_reference",
+      "boundary": "Las RRNA son materia de instrumentos y autoridades sectoriales; no se declara cumplimiento por código, descripción o consulta del dataset."
+    },
+    {
+      "id": "foreign_trade_procedures",
+      "title": "Trámites de comercio exterior y VUCEM",
+      "official_url": "https://www.ventanillaunica.gob.mx/vucem/index.html",
+      "source_role": "Portal transaccional oficial para trámites y consultas de comercio exterior.",
+      "model_status": "external_transactional_service",
+      "boundary": "Las operaciones, expedientes, pedimentos, permisos y pagos se realizan exclusivamente en el servicio oficial; arancel-mx no recibe ni procesa información transaccional."
+    },
+    {
+      "id": "importer_exporter_registry",
+      "title": "Padrón de Importadores y Exportadores",
+      "official_url": "https://www.sat.gob.mx/minisitio/PadronImportadoresExportadores/index.html",
+      "source_role": "Información oficial del SAT sobre los padrones y materiales relacionados.",
+      "model_status": "official_reference",
+      "boundary": "La inscripción, estatus y requisitos no se validan desde arancel-mx y deben gestionarse con el SAT o VUCEM según corresponda."
+    },
+    {
+      "id": "promotion_programs",
+      "title": "Programas de fomento al comercio exterior",
+      "official_url": "https://www.snice.gob.mx/cs/avi/snice/programasdefom.immex.html",
+      "source_role": "Punto oficial SNICE para IMMEX, con navegación a PROSEC y DRAWBACK.",
+      "model_status": "official_reference",
+      "boundary": "La elegibilidad y operación de programas de fomento requieren instrumentos y trámites propios; no se infieren del código arancelario."
+    }
+  ]
+}

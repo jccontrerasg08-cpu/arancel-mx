@@ -96,6 +96,7 @@ Profundiza en [roles de fuentes oficiales](docs/official-source-roles.md), [fuen
 | Integrar archivos, Python o HTTP | [Consumo externo](docs/external-consumption.md) |
 | Entender HS → fracción MX → NICO | [Guía NICO/LIGIE](docs/nico-ligie-guide.md) |
 | Entender procedencia y promoción de fuentes | [Roles oficiales](docs/official-source-roles.md) · [Fuentes](docs/sources.md) · [Promoción SNICE_DOCS](docs/source-promotion.md) |
+| Consultar el contexto oficial de comercio exterior sin mezclarlo con la tarifa | [Mapa de cobertura oficial de comercio exterior](docs/research/external-trade-coverage-map.md) |
 | Entender el proyecto y sus fronteras | [Visión del proyecto](docs/project-overview.md) |
 | Navegar toda la documentación | **[Centro de documentación](docs/README.md)** |
 

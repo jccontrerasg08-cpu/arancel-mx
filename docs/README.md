@@ -30,6 +30,7 @@ La portada del repositorio explica **qué es** `arancel-mx` y cómo empezar. Est
 | Entender captura, reconciliación y no-op | [Fuentes y reconciliación](sources.md) | Cadena de confianza y gates de publicación. |
 | Entender cómo se evalúan candidatos SNICE_DOCS | [Política de promoción](source-promotion.md) | Allowlist, procedencia, rollback y límites. |
 | Revisar el mapa especializado del MOA | [Mapa ANAM / MOA](research/anam-moa-source-map.md) | Índice de navegación y procedencia hacia fuentes oficiales ANAM. |
+| Ubicar la fuente oficial para una categoría de comercio exterior | [Mapa de cobertura de comercio exterior](research/external-trade-coverage-map.md) | Cobertura LIGIE/NICO y referencias oficiales para leyes, RGCE, tratados, RRNA, VUCEM, padrones y programas. |
 
 ## Mantener y contribuir
 
