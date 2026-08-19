@@ -209,7 +209,7 @@ def register_consumer_commands(
     _add_query_command(
         subparsers,
         "ficha",
-        help_text="Muestra la ficha jerárquica (capítulo → fracción/NICO) de un código",
+        help_text="Muestra la ficha jerárquica (capítulo a fracción/NICO) de un código",
     )
     _add_query_command(
         subparsers,

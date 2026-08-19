@@ -27,6 +27,7 @@ def test_parser_exposes_consumer_and_maintainer_commands() -> None:
         "release",
     ):
         assert command in help_text
+    help_text.encode("cp1252")
 
 
 def test_existing_maintainer_help_remains_available(capsys) -> None:
