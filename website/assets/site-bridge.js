@@ -93,4 +93,11 @@ function applyPublicSiteBridge() {
 
 applyPublicSiteBridge();
 new MutationObserver(applyPublicSiteBridge).observe(document.body, { childList: true, subtree: true });
-window.addEventListener('load', synchronizeDisplayedRelease, { once: true });
+window.addEventListener('load', () => {
+  let attempts = 0;
+  const timer = window.setInterval(() => {
+    synchronizeDisplayedRelease();
+    attempts += 1;
+    if (attempts >= 12) window.clearInterval(timer);
+  }, 250);
+}, { once: true });
