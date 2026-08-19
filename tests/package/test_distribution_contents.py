@@ -74,7 +74,7 @@ def test_sdist_contains_rebuild_inputs_and_public_package_docs(distributions: tu
     with tarfile.open(sdist, "r:gz") as archive:
         names = set(archive.getnames())
 
-    root = "arancel_mx-0.3.3"
+    root = "arancel_mx-0.3.4"
     required = {
         f"{root}/pyproject.toml",
         f"{root}/README.md",
@@ -103,7 +103,7 @@ def test_sdist_excludes_generated_data_private_workspaces_and_tests(distribution
     with tarfile.open(sdist, "r:gz") as archive:
         names = archive.getnames()
 
-    root = "arancel_mx-0.3.3/"
+    root = "arancel_mx-0.3.4/"
     forbidden_fragments = (
         f"{root}data/",
         f"{root}out/",
