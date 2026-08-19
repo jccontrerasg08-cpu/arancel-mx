@@ -337,6 +337,20 @@ def _public_search_score(text: str, record: dict[str, object]) -> tuple[int, str
     return (score, "description", _confidence("description", matched, len(tokens)))
 
 
+def _record_chapter(record: dict[str, object]) -> str:
+    hierarchy = record.get("hierarchy")
+    if not isinstance(hierarchy, dict):
+        raise ValueError("operational record hierarchy must be an object")
+    return str(hierarchy.get("hs2") or str(record.get("code") or "")[:2])
+
+
+def _search_record(item: dict[str, object]) -> dict[str, object]:
+    record = item.get("record")
+    if not isinstance(record, dict):
+        raise ValueError("operational search result must include a record object")
+    return record
+
+
 def search_public_active_release(
     connection: QueryConnection, text: str, *, limit: int
 ) -> list[dict[str, object]]:
@@ -348,7 +362,7 @@ def search_public_active_release(
         raise ValueError("limit must be between 1 and 50")
     # ponytail: the certified active release is a bounded public tariff table. Upgrade to
     # normalized Neon search columns when active records outgrow this function's request budget.
-    candidates = []
+    candidates: list[tuple[dict[str, object], int, str, float]] = []
     for row in connection.execute(_ACTIVE_RELEASE_RECORDS).fetchall():
         record = _public_record(*row)
         matched = _public_search_score(text, record)
@@ -361,11 +375,11 @@ def search_public_active_release(
     if code_candidate is None:
         chapter_score: dict[str, int] = {}
         for record, score, _kind, _confidence_value in candidates:
-            chapter = str(record["hierarchy"]["hs2"] or record["code"][:2])
+            chapter = _record_chapter(record)
             chapter_score[chapter] = max(chapter_score.get(chapter, score), score)
         candidates.sort(
             key=lambda item: (
-                -chapter_score[str(item[0]["hierarchy"]["hs2"] or item[0]["code"][:2])],
+                -chapter_score[_record_chapter(item[0])],
                 -item[1],
                 str(item[0]["code"]),
                 str(item[0]["description"]),
@@ -393,19 +407,20 @@ def suggest_active_release(
     if not 1 <= limit <= 20:
         raise ValueError("limit must be between 1 and 20")
     ranked = search_public_active_release(connection, text, limit=50)
-    preferred = [item for item in ranked if item["record"]["level"] == "fraccion8"]
+    preferred = [item for item in ranked if _search_record(item)["level"] == "fraccion8"]
     chosen = (preferred or ranked)[:limit]
-    return [
-        {
-            "search": item,
-            "ficha": ficha_active_release(connection, str(item["record"]["code"])),
-            "national_notes": national_notes_active_release(
-                connection, str(item["record"]["hierarchy"]["hs2"] or item["record"]["code"][:2])
-            ),
-            "disclaimer": "This is not a classification. Retrieve-only matches from the official dataset. WCO is not LIGIE/NICO authority.",
-        }
-        for item in chosen
-    ]
+    results: list[dict[str, object]] = []
+    for item in chosen:
+        record = _search_record(item)
+        results.append(
+            {
+                "search": item,
+                "ficha": ficha_active_release(connection, str(record["code"])),
+                "national_notes": national_notes_active_release(connection, _record_chapter(record)),
+                "disclaimer": "This is not a classification. Retrieve-only matches from the official dataset. WCO is not LIGIE/NICO authority.",
+            }
+        )
+    return results
 
 
 def sections_active_release() -> list[dict[str, object]]:
