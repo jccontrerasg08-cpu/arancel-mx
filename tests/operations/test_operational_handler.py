@@ -121,3 +121,18 @@ def test_operational_handler_serves_exact_lookup_from_the_active_release(monkeyp
     request.do_GET()
 
     assert response == [module.HTTPStatus.OK, record]
+
+
+def test_operational_handler_serves_process_health_without_database(monkeypatch):
+    module = _handler_module()
+    response: list[object] = []
+    request = module.handler.__new__(module.handler)
+    request.path = "/api/operational?resource=health"
+    request.headers = {}
+    request._respond = lambda status, payload: response.extend((status, payload))
+    monkeypatch.delenv("ARANCEL_MX_DATABASE_URL", raising=False)
+    monkeypatch.delenv("ARANCEL_MX_DATABASE_DATABASE_URL", raising=False)
+
+    request.do_GET()
+
+    assert response == [module.HTTPStatus.OK, {"status": "ok"}]

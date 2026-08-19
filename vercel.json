@@ -22,6 +22,10 @@
   ],
   "rewrites": [
     {
+      "source": "/healthz",
+      "destination": "/api/operational?resource=health"
+    },
+    {
       "source": "/v1/meta",
       "destination": "/api/operational?resource=meta"
     },
