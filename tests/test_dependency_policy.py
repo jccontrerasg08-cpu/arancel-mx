@@ -55,11 +55,11 @@ def test_every_direct_runtime_and_dev_dependency_has_exact_constraint():
 
 def test_official_python_toolchain_is_exactly_pinned():
     payload = tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))
-    assert payload["build-system"]["requires"] == ["setuptools==83.0.0"]
+    assert payload["build-system"]["requires"] == ["setuptools==84.0.0"]
 
     constrained = dict(_constraint_rows())
     assert constrained["pip"] == "26.2.1"
-    assert constrained["setuptools"] == "83.0.0"
+    assert constrained["setuptools"] == "84.0.0"
 
 
 def test_classifier_stack_is_not_pinned_into_the_official_build():

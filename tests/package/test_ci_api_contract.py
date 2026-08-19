@@ -41,7 +41,7 @@ def test_ci_smokes_the_fastapi_cloud_python_runtime() -> None:
     assert 'python-version-file: ".python-version"' in job
     assert (
         'python -m pip install -c requirements/production-build.txt -e "." '
-        "pytest==9.1.1 httpx2==2.9.0"
+        "pytest==9.1.1 httpx2==2.10.0"
     ) in job
     assert (
         "python -m pytest -q tests/api tests/package/test_api_install_smoke.py"
