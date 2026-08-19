@@ -121,7 +121,11 @@ INSERT INTO operational_release (
     source_checked_at,
     evidence_json
 ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb)
-ON CONFLICT (tag) DO NOTHING
+ON CONFLICT (tag) DO UPDATE
+SET evidence_json = EXCLUDED.evidence_json
+WHERE operational_release.dataset_version = EXCLUDED.dataset_version
+  AND operational_release.schema_version = EXCLUDED.schema_version
+  AND operational_release.manifest_sha256 = EXCLUDED.manifest_sha256
 """.strip()
 
 
