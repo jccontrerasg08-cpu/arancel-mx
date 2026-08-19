@@ -182,3 +182,111 @@ def test_certified_release_loader_preserves_the_public_record_payload(tmp_path, 
             },
         )
     ]
+
+
+def test_certified_evidence_snapshot_preserves_public_provenance_and_notes(tmp_path):
+    import duckdb
+
+    from arancel_mx.operational import _evidence_rows
+
+    database = tmp_path / "evidence.duckdb"
+    with duckdb.connect(str(database)) as connection:
+        connection.execute(
+            """
+            CREATE TABLE source_document (
+                source_document_id VARCHAR,
+                authority VARCHAR,
+                publication_venue VARCHAR,
+                title VARCHAR,
+                source_url VARCHAR,
+                sha256 VARCHAR,
+                published_at DATE,
+                effective_from DATE,
+                effective_to DATE
+            )
+            """
+        )
+        connection.execute(
+            """
+            CREATE TABLE canonical_record (
+                record_id VARCHAR,
+                code VARCHAR,
+                is_current BOOLEAN
+            )
+            """
+        )
+        connection.execute(
+            """
+            CREATE TABLE record_provenance (
+                record_id VARCHAR,
+                source_document_id VARCHAR,
+                role VARCHAR,
+                is_primary BOOLEAN
+            )
+            """
+        )
+        connection.execute(
+            """
+            CREATE TABLE arancel_mx_national_notes (
+                chapter VARCHAR,
+                note_number VARCHAR,
+                text VARCHAR,
+                source_document_id VARCHAR,
+                scope_type VARCHAR,
+                scope_value VARCHAR,
+                applicability_basis VARCHAR
+            )
+            """
+        )
+        connection.execute(
+            """
+            INSERT INTO source_document VALUES (
+                'dof-1', 'DOF', 'Diario Oficial', 'Decreto',
+                'https://dof.example/decreto', ?, DATE '2022-06-07', DATE '2022-06-08', NULL
+            )
+            """,
+            ["a" * 64],
+        )
+        connection.execute("INSERT INTO canonical_record VALUES ('record-1', '85171301', TRUE)")
+        connection.execute("INSERT INTO record_provenance VALUES ('record-1', 'dof-1', 'base', TRUE)")
+        connection.execute(
+            """
+            INSERT INTO arancel_mx_national_notes VALUES
+            ('85', '1', 'Texto oficial.', 'dof-1', 'chapter', '85', 'explicit')
+            """
+        )
+
+        evidence = _evidence_rows(connection)
+
+    assert evidence["source_documents"] == [
+        {
+            "source_document_id": "dof-1",
+            "authority": "DOF",
+            "publication_venue": "Diario Oficial",
+            "title": "Decreto",
+            "source_url": "https://dof.example/decreto",
+            "sha256": "a" * 64,
+            "published_at": "2022-06-07",
+            "effective_from": "2022-06-08",
+            "effective_to": None,
+        }
+    ]
+    assert evidence["record_provenance"] == [
+        {
+            "code": "85171301",
+            "source_document_id": "dof-1",
+            "role": "base",
+            "is_primary": True,
+        }
+    ]
+    assert evidence["national_notes"] == [
+        {
+            "chapter": "85",
+            "note_number": "1",
+            "text": "Texto oficial.",
+            "source_document_id": "dof-1",
+            "scope_type": "chapter",
+            "scope_value": "85",
+            "applicability_basis": "explicit",
+        }
+    ]
