@@ -207,3 +207,5 @@ def test_public_site_bridge_keeps_current_release_and_route_aliases() -> None:
     assert "['/moa-guide', '/moa']" in bridge
     assert "['/product', '/app']" in bridge
     assert "currentReleasePattern" in bridge
+    assert "window.setInterval" in bridge
+    assert "attempts >= 12" in bridge
