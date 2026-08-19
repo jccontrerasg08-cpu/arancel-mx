@@ -169,6 +169,8 @@ def test_public_site_interactions_link_results_to_verified_record_data() -> None
     assert "Inspect verified record" in interactions
     assert "/v1/lookup/" in interactions
     assert "/v1/codes/" in interactions
+    assert "displayValue" in interactions
+    assert "unit_name" in interactions
     assert "data-arancel-record-panel" in interactions
 
 

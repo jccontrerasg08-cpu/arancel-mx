@@ -39,6 +39,11 @@
     return response.json();
   }
 
+  function displayValue(value) {
+    if (value && typeof value === 'object' && typeof value.text === 'string') return value.text;
+    return value ?? 'Not recorded';
+  }
+
   function recordPanelTarget() {
     const input = document.getElementById('app-query');
     return input?.closest('section, main, div') || document.getElementById('root');
@@ -59,9 +64,9 @@
     );
     const fields = element('dl', 'arancel-record-panel__fields');
     [
-      ['IGI', record.igi ?? 'Not recorded'],
-      ['IGE', record.ige ?? 'Not recorded'],
-      ['Unit', record.unit ?? 'Not recorded'],
+      ['IGI', displayValue(record.igi)],
+      ['IGE', displayValue(record.ige)],
+      ['Unit', record.unit_name ?? record.unit ?? 'Not recorded'],
       ['Validity', record.effective_from || record.effective_to ? `${record.effective_from || '—'} to ${record.effective_to || '—'}` : 'No dated range recorded'],
     ].forEach(([label, value]) => {
       fields.append(element('dt', '', label), element('dd', '', String(value)));
