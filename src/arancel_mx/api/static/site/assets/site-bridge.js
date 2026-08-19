@@ -52,17 +52,6 @@ function updateDisplayedRelease() {
     }
   });
 
-  const currentReleasePattern = /data-\d{4}\.\d{2}\.\d{2}/g;
-  const root = document.getElementById('root');
-  if (!root) return;
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-    if (node.parentElement?.closest('script, style, a[href*="releases/tag"]')) continue;
-    if (currentReleasePattern.test(node.nodeValue)) {
-      node.nodeValue = node.nodeValue.replace(currentReleasePattern, activeDatasetTag);
-    }
-    currentReleasePattern.lastIndex = 0;
-  }
 }
 
 function synchronizeDisplayedRelease() {

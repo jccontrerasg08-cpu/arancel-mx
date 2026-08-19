@@ -74,6 +74,7 @@ def test_workflow_retries_the_candidate_from_each_matrix_runner() -> None:
     assert "path: certification-helper" in matrix_job
     assert "sparse-checkout: |" in matrix_job
     assert "scripts/certify_testpypi_candidate.py" in matrix_job
+    assert "shell: bash" in matrix_job
     assert 'python "$GITHUB_WORKSPACE/certification-helper/scripts/certify_testpypi_candidate.py"' in matrix_job
     assert "--attempts 40" in matrix_job
     assert "--delay-seconds 15" in matrix_job

@@ -208,9 +208,11 @@ def test_public_site_bridge_keeps_current_release_and_route_aliases() -> None:
     assert "fetch('/v1/meta'" in bridge
     assert "['/moa-guide', '/moa']" in bridge
     assert "['/product', '/app']" in bridge
-    assert "currentReleasePattern" in bridge
+    assert ".release-window code" in bridge
     assert r"data-\d{4}" in bridge
     assert "document.addEventListener('DOMContentLoaded'" in bridge
     assert "new MutationObserver(applyPublicSiteBridge)" not in bridge
     assert "window.setInterval" in bridge
     assert "attempts >= 12" in bridge
+    assert "currentReleasePattern" not in bridge
+    assert "node.nodeValue.replace(currentReleasePattern" not in bridge
