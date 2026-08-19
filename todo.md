@@ -37,7 +37,7 @@
 - [x] Redesign the preserved `/app` explorer using the homepage’s editorial visual language while keeping lookup, search, provenance, saved local research, API and documentation paths accessible in the same experience.
 - [x] Keep pricing plans and plan-comparison content out of the integrated explorer redesign.
 - [x] Add focused unit and browser coverage for decision-tree progression and the homepage-aligned explorer entry flows.
-- [ ] Publish the validated visual decision-tree and integrated `/app` explorer upgrade through protected review and verify its Vercel production deployment.
+- [x] Publish the validated visual decision-tree and integrated `/app` explorer upgrade through protected review and verify its Vercel production deployment.
 - [x] Filter the visible verified hierarchy branches as a user enters a fraction or NICO prefix, preserving ordered URLs and progressively disclosed codes.
 - [x] Replace the explorer hero’s release-identity panel with a verified example fraction anatomy card showing code segments, recorded rates, unit, validity, and release evidence.
 - [x] Add focused unit and browser coverage for branch filtering and the evidence-backed example-fraction hero card.
