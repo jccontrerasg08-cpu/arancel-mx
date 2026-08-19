@@ -152,6 +152,8 @@ def test_public_site_serves_the_react_shell_with_canonical_brand_assets() -> Non
     assert "/assets/site-brand.css" in index
     assert "/assets/site-bridge.js" in index
     assert "/assets/hub-interactions.js" in index
+    assert "const legacyRoute" in index
+    assert index.index("const legacyRoute") < index.index('type="module"')
 
     assert "manus-runtime" not in index
     assert "/__manus__/debug-collector.js" not in index
