@@ -27,6 +27,14 @@ function updateStatus(message) {
   if (status) status.textContent = message;
 }
 
+function renderTextMessage(container, message) {
+  if (!container) return;
+  const paragraph = document.createElement('p');
+  paragraph.className = 'trade-empty';
+  paragraph.textContent = message;
+  container.replaceChildren(paragraph);
+}
+
 function sourceLink(source, testId) {
   return `<a ${testId ? `data-testid="${testId}"` : ''} class="trade-source" href="${source.url}" target="_blank" rel="noreferrer">${source.title}</a>`;
 }
@@ -71,8 +79,9 @@ function calculateEstimate() {
     renderEstimate(estimate, customsValue);
     updateStatus('Escenario orientativo actualizado. Revisa la fuente y la evidencia antes de tomar una decisión.');
   } catch (error) {
-    byId('import-result').innerHTML = `<p class="trade-empty">${error.message}</p>`;
-    updateStatus(error.message);
+    const message = error instanceof Error ? error.message : 'No fue posible calcular el escenario orientativo.';
+    renderTextMessage(byId('import-result'), message);
+    updateStatus(message);
   }
 }
 
@@ -191,7 +200,8 @@ async function searchTariff() {
       output.append(match);
     });
   } catch (error) {
-    output.innerHTML = `<p class="trade-empty">${error.message}</p>`;
+    const message = error instanceof Error ? error.message : 'La búsqueda verificada no está disponible en este momento.';
+    renderTextMessage(output, message);
   }
 }
 

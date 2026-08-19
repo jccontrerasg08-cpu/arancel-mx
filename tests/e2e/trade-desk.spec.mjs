@@ -168,3 +168,19 @@ test('gives keyboard focus a visible custom indicator', async ({ page }) => {
   await expect(page.locator('#costs-tab')).toHaveCSS('outline-style', 'solid');
   await expect(page.locator('#costs-tab')).toHaveCSS('outline-width', '3px');
 });
+
+test('renders calculation exception text without interpreting HTML', async ({ page }) => {
+  await page.addInitScript(() => {
+    const nativeNumber = window.Number;
+    const poisonedNumber = (value) => {
+      if (value === '1000') throw new Error('<img data-testid="injected-error-markup" src="x">Error controlado');
+      return nativeNumber(value);
+    };
+    Object.setPrototypeOf(poisonedNumber, nativeNumber);
+    window.Number = poisonedNumber;
+  });
+  await page.goto('/trade');
+
+  await expect(page.getByTestId('injected-error-markup')).toHaveCount(0);
+  await expect(page.getByTestId('import-result')).toContainText('<img data-testid="injected-error-markup" src="x">Error controlado');
+});
