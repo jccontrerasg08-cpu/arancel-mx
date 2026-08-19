@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import subprocess
+import sys
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -9,10 +11,12 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_vercel_deploys_the_standalone_public_site() -> None:
     config = json.loads((ROOT / "vercel.json").read_text(encoding="utf-8"))
+    runtime_version = (ROOT / ".python-version").read_text(encoding="utf-8").strip()
 
     assert config["framework"] is None
     assert config["outputDirectory"] == "website"
     assert "installCommand" not in config
+    assert config["buildCommand"].startswith(f"python{runtime_version} -m pip install ")
     assert config["rewrites"] == [
         {
             "source": "/v1/meta",
@@ -42,22 +46,99 @@ def test_vercel_deploys_the_standalone_public_site() -> None:
             "source": "/readyz",
             "destination": "/api/operational?resource=ready",
         },
-        {"source": "/(.*)", "destination": "/"},
+        {"source": "/((?!assets/|api/).*)", "destination": "/"},
     ]
 
 
-def test_public_site_contains_its_logo_and_route_bridge() -> None:
+def test_vercel_functions_bundle_the_src_layout_with_bounded_runtime() -> None:
+    config = json.loads((ROOT / "vercel.json").read_text(encoding="utf-8"))
+
+    assert config["functions"] == {
+        "api/operational.py": {
+            "includeFiles": "{api/_vendor/**,src/arancel_mx/**}",
+            "maxDuration": 30,
+        },
+        "api/sync_operational.py": {
+            "includeFiles": "{api/_vendor/**,src/arancel_mx/**}",
+            "maxDuration": 60,
+        },
+    }
+
+
+def test_vercel_cache_policy_only_marks_hashed_bundles_immutable() -> None:
+    config = json.loads((ROOT / "vercel.json").read_text(encoding="utf-8"))
+
+    assert config["headers"] == [
+        {
+            "source": "/assets/index-(.*)",
+            "headers": [
+                {
+                    "key": "Cache-Control",
+                    "value": "public, max-age=31536000, immutable",
+                }
+            ],
+        },
+        {
+            "source": "/assets/((?!index-).*)",
+            "headers": [
+                {
+                    "key": "Cache-Control",
+                    "value": "public, max-age=0, must-revalidate",
+                }
+            ],
+        },
+    ]
+
+
+def test_vercel_runtime_bootstrap_adds_the_src_layout_first() -> None:
+    probe = subprocess.run(
+        [
+            sys.executable,
+            "-S",
+            "-c",
+            (
+                "from api._runtime import ensure_project_source; "
+                "ensure_project_source(); "
+                "from pathlib import Path; import sys; "
+                "assert Path(sys.path[0]).resolve() == (Path.cwd() / 'src').resolve()"
+            ),
+        ],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert probe.returncode == 0, probe.stderr
+
+
+def test_public_site_preserves_the_original_landing_with_canonical_branding() -> None:
     index = (ROOT / "website" / "index.html").read_text(encoding="utf-8")
     bridge = (ROOT / "website" / "assets" / "site-bridge.js").read_text(encoding="utf-8")
+    styles = (ROOT / "website" / "assets" / "site-brand.css").read_text(encoding="utf-8")
+    logo = (ROOT / "website" / "assets" / "arancel-mx-logo.svg").read_text(encoding="utf-8")
 
     assert (ROOT / "website" / "assets" / "arancel-mx-mark.svg").is_file()
-    assert "/assets/arancel-mx-mark.svg" in index
-    assert "/assets/site-bridge.js?v=" in index
-    assert "/assets/hub-search.css" in index
-    assert "/assets/hub-search.js" in index
-    assert "id=\"root\"" in index
+    assert (ROOT / "website" / "assets" / "arancel-mx-logo.svg").is_file()
+    assert "/assets/arancel-mx-mark.svg?v=3" in index
+    assert "/assets/arancel-mx-logo.svg?v=3" in index
+    assert "/assets/site-brand.css?v=3" in index
+    assert "/assets/site-bridge.js?v=5" in index
+    assert 'class="arancel-brand-header"' in index
+    assert 'id="root"' in index
+
+    # The original application owns the landing layout. Do not prepend a second
+    # search application in front of it; /v1/search remains available as an API.
+    assert "/assets/hub-search.css" not in index
+    assert "/assets/hub-search.js" not in index
+    assert "data-arancel-hub-search" not in index
+
+    # Keep the public shell project-owned and free from the former generator's
+    # runtime/analytics scripts.
     assert "manus-runtime" not in index
     assert "/__manus__/debug-collector.js" not in index
+    assert "manus-analytics.com" not in index
+
     assert "consumer-quickstart.md" in bridge
     assert "fetch('/v1/meta'" in bridge
     assert "synchronizeDisplayedRelease" in bridge
@@ -65,14 +146,14 @@ def test_public_site_contains_its_logo_and_route_bridge() -> None:
     assert "let activeDatasetTag" in bridge
     assert "querySelectorAll('.release-window code')" in bridge
 
-    search = (ROOT / "website" / "assets" / "hub-search.js").read_text(encoding="utf-8")
-    styles = (ROOT / "website" / "assets" / "hub-search.css").read_text(encoding="utf-8")
-    assert "fetch(\"/v1/meta\")" in search
-    assert "release_published_at" in search
-    assert "fetch(`/v1/search?q=${encodeURIComponent(query)}&limit=8`)" in search
-    assert "Datos verificados" in search
-    assert "Búsqueda arancelaria" in search
-    assert "hub-search" in styles
+    assert ".arancel-brand-header" in styles
+    assert "/assets/arancel-mx-logo.svg" in styles
+    assert "index-" not in styles
+
+    # The approved identity is dimensional rather than the previous flat
+    # approximation, so keep gradient/shadow primitives in the vector master.
+    assert "linearGradient" in logo
+    assert "filter" in logo
 
 
 def test_public_site_does_not_declare_a_vercel_fastapi_entrypoint() -> None:

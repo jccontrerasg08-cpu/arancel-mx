@@ -6,26 +6,50 @@
   --arancel-brand-logo: url("/assets/arancel-mx-logo.svg");
 }
 
-a[href="/"][aria-label],
-a[href="/"][title] {
+/* Keep the generated landing page visually untouched. Brand customization is
+   limited to this project-owned header instead of targeting generated classes
+   or injecting marks into links rendered by the application bundle. */
+.arancel-brand-header {
+  box-sizing: border-box;
+  display: flex;
   align-items: center;
+  width: min(1180px, calc(100% - 40px));
+  margin: 22px auto 0;
+  padding: 0 4px;
+}
+
+.arancel-brand-header__link {
   display: inline-flex;
-  gap: 0.45rem;
+  align-items: center;
+  max-width: min(460px, 82vw);
+  text-decoration: none;
 }
 
-a[href="/"][aria-label]::before,
-a[href="/"][title]::before {
-  background: var(--arancel-brand-mark) center / contain no-repeat;
-  content: "";
-  display: inline-block;
-  flex: 0 0 1.35rem;
-  height: 1.35rem;
-  width: 1.35rem;
+.arancel-brand-header__logo {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 112px;
+  object-fit: contain;
+  object-position: left center;
 }
 
-/* The horizontal asset is intentionally exposed as a stable brand token.
-   The generated application bundle owns layout, so this compatibility layer
-   does not inject a second wordmark or depend on minified class names. */
+/* Stable token for documentation/examples that need the horizontal identity. */
 .arancel-brand-logo {
   background: var(--arancel-brand-logo) center / contain no-repeat;
+}
+
+@media (max-width: 680px) {
+  .arancel-brand-header {
+    width: min(100% - 24px, 1180px);
+    margin-top: 14px;
+  }
+
+  .arancel-brand-header__link {
+    max-width: min(330px, 88vw);
+  }
+
+  .arancel-brand-header__logo {
+    max-height: 88px;
+  }
 }
