@@ -50,7 +50,7 @@ def _nico_record() -> TariffRecord:
     )
 
 
-def test_tariff_wire_model_preserves_nico_strings_and_official_text() -> None:
+def test_tariff_wire_model_hides_rates_for_nico_but_preserves_hierarchy() -> None:
     payload = TariffResponse.from_record(_nico_record()).model_dump(mode="json")
 
     assert payload["code"] == "0101210100"
@@ -63,14 +63,49 @@ def test_tariff_wire_model_preserves_nico_strings_and_official_text() -> None:
         "nico2": "00",
         "nico10": "0101210100",
     }
+    assert payload["igi"] is None
+    assert payload["ige"] is None
+    assert payload["effective_from"] == "2026-01-01"
+    assert payload["is_current"] is True
+
+
+def test_tariff_wire_model_keeps_rates_for_a_fraction() -> None:
+    record = _nico_record()
+    fraction = TariffRecord(
+        code="01012101",
+        level="fraccion8",
+        description=record.description,
+        unit_name=record.unit_name,
+        igi_text=record.igi_text,
+        igi_kind=record.igi_kind,
+        igi_value=record.igi_value,
+        ige_text=record.ige_text,
+        ige_kind=record.ige_kind,
+        ige_value=record.ige_value,
+        parent_code="010121",
+        dataset_version=record.dataset_version,
+        schema_version=record.schema_version,
+        effective_from=record.effective_from,
+        effective_to=record.effective_to,
+        is_current=record.is_current,
+        hs2=record.hs2,
+        hs4=record.hs4,
+        hs6=record.hs6,
+        fraccion8="01012101",
+        nico2=None,
+        nico10=None,
+        ligie_version=record.ligie_version,
+        validity_basis=record.validity_basis,
+    )
+
+    payload = TariffResponse.from_record(fraction).model_dump(mode="json")
+
     assert payload["igi"] == {"text": "Ex.", "kind": "exento", "value": None}
     assert payload["ige"] == {
         "text": "Prohibida",
         "kind": "prohibida",
         "value": None,
     }
-    assert payload["effective_from"] == "2026-01-01"
-    assert payload["is_current"] is True
 
 
 def test_ficha_wire_model_preserves_explicit_hierarchy() -> None:

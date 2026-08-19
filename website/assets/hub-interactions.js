@@ -63,9 +63,12 @@
       `Active verified release ${record.dataset_version} · ${record.level} · ${record.ligie_version}`,
     );
     const fields = element('dl', 'arancel-record-panel__fields');
+    const isTariffFraction = record.level === 'fraccion8' && /^\d{8}$/.test(record.code);
     [
-      ['IGI', displayValue(record.igi)],
-      ['IGE', displayValue(record.ige)],
+      ...(isTariffFraction ? [
+        ['IGI', displayValue(record.igi)],
+        ['IGE', displayValue(record.ige)],
+      ] : []),
       ['Unit', record.unit_name ?? record.unit ?? 'Not recorded'],
       ['Validity', record.effective_from || record.effective_to ? `${record.effective_from || '—'} to ${record.effective_to || '—'}` : 'No dated range recorded'],
     ].forEach(([label, value]) => {
