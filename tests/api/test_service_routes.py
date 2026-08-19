@@ -183,9 +183,8 @@ def test_explorer_serves_the_public_search_page(valid_settings, fake_dataset) ->
 
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/html")
-    assert 'data-testid="search-input"' in response.text
-    assert 'data-testid="search-submit"' in response.text
-    assert "No clasifica mercancías" in response.text
+    assert '<div id="root"></div>' in response.text
+    assert re.search(r'/assets/index-[^"]+\.js', response.text)
 
 
 def test_marketing_documentation_route_preserves_fastapi_docs(valid_settings, fake_dataset) -> None:
@@ -223,6 +222,5 @@ def test_explorer_serves_durable_client_routes(valid_settings, fake_dataset) -> 
 
     assert record.status_code == 200
     assert chapter.status_code == 200
-    assert 'data-testid="snapshot-list"' in record.text
-    assert "Guardar ficha local" in record.text
-    assert "Vigencia y evidencia registrada" in record.text
+    assert '<div id="root"></div>' in record.text
+    assert record.text == chapter.text

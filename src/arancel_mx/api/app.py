@@ -37,7 +37,6 @@ from arancel_mx.consumer.errors import (
 
 logger = logging.getLogger(__name__)
 DatasetLoader = Callable[[ApiSettings], Dataset]
-_EXPLORER_PAGE = Path(__file__).with_name("static") / "index.html"
 _MARKETING_DIR = Path(__file__).with_name("static") / "site"
 _MARKETING_PAGE = _MARKETING_DIR / "index.html"
 _MARKETING_PAGES = (
@@ -298,9 +297,9 @@ def create_app(
     @application.get("/app", include_in_schema=False)
     @application.get("/app/{client_path:path}", include_in_schema=False)
     def explorer(client_path: str = "") -> FileResponse:
-        """Serve the public explorer and its durable client-side routes."""
+        """Serve the React explorer and its durable client-side routes."""
 
-        return FileResponse(_EXPLORER_PAGE, media_type="text/html")
+        return marketing_page()
 
     @application.get(
         "/readyz",

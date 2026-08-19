@@ -26,10 +26,20 @@
 - [x] Add a fraction-change discovery surface that distinguishes release evidence, source status, and observed differences from any legal determination.
 - [x] Add a trade-context page that links official information and presents only independently sourced, dated economic context.
 - [x] Deliver the local research records, chapter discovery, fraction-change, and trade-context pages first; defer the official PDF-link directory until the underlying link-bearing source files are readable.
-- [ ] Publish the approved public-site expansion through a protected pull request and verify its Vercel preview before merge.
+- [x] Publish the approved public-site expansion through a protected pull request and verify its Vercel preview before merge.
 - [x] Map the official ANAM Manual de Operación Aduanera navigation, first-party source pages, and update notices into a maintainable source index rather than copying an unbounded external site.
 - [x] Add a non-advisory public guidance surface for MOA structure, normative source roles, operational-stage references, and official next-step links, with explicit boundaries against legal or customs determinations.
 - [x] Add route, link, and browser regression coverage for the ANAM official-source guidance surface.
 - [x] Add original transparent SVG-style section icons to the verified chapter catalogue without copying third-party visual assets.
 - [x] Add accessible expandable navigation from section to chapter, heading, and verified family data using the existing source-backed hierarchy.
 - [x] Add unit and browser coverage for the chapter hierarchy interactions, including keyboard-accessible disclosure controls.
+- [x] Transform the chapter catalogue into a progressive visual decision tree that reveals verified codes in hierarchy order as branches are opened.
+- [x] Redesign the preserved `/app` explorer using the homepage’s editorial visual language while keeping lookup, search, provenance, saved local research, API and documentation paths accessible in the same experience.
+- [x] Keep pricing plans and plan-comparison content out of the integrated explorer redesign.
+- [x] Add focused unit and browser coverage for decision-tree progression and the homepage-aligned explorer entry flows.
+- [ ] Publish the validated visual decision-tree and integrated `/app` explorer upgrade through protected review and verify its Vercel production deployment.
+- [x] Filter the visible verified hierarchy branches as a user enters a fraction or NICO prefix, preserving ordered URLs and progressively disclosed codes.
+- [x] Replace the explorer hero’s release-identity panel with a verified example fraction anatomy card showing code segments, recorded rates, unit, validity, and release evidence.
+- [x] Add focused unit and browser coverage for branch filtering and the evidence-backed example-fraction hero card.
+- [x] Audit the complete current branch for unintended files, stale generated assets, route regressions, and test-contract gaps before protected publication.
+- [x] Synchronize Vercel’s deployed `website/` static output with the validated React public bundle and verify preview deep links before merge.
