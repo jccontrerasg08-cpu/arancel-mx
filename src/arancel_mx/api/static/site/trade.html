@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="es-MX">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Mesa orientativa de comercio exterior con referencias oficiales para costos, origen, RRNA, clasificación y despacho." />
+    <title>arancel-mx — Mesa de comercio exterior</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/trade-desk.css" />
+    <script type="module" src="/assets/trade-desk.js"></script>
+  </head>
+  <body>
+    <div class="trade-shell">
+      <div class="trade-topline">
+        <div class="trade-topline__inner">
+          <span>Fuentes oficiales visibles · sin credenciales ni transmisión de expedientes</span>
+          <span>Datos LIGIE/NICO + orientación documentada</span>
+        </div>
+      </div>
+      <nav class="trade-nav" aria-label="Navegación de arancel-mx">
+        <a class="trade-brand" href="/" aria-label="Volver a arancel-mx">
+          <span class="trade-brand__seal" aria-hidden="true">a</span>
+          <span>arancel-mx<small>Mesa de comercio exterior</small></span>
+        </a>
+        <div class="trade-nav__actions">
+          <a class="trade-nav__link" href="/app">Explorador LIGIE/NICO</a>
+          <a class="trade-nav__link" href="/trade-context">Contexto oficial</a>
+        </div>
+      </nav>
+
+      <header class="trade-hero">
+        <div class="trade-hero__inner">
+          <span class="trade-kicker">Orientación con evidencia</span>
+          <h1>Mesa de comercio exterior</h1>
+          <p>Construye un escenario documentado para una operación de importación. Consulta tarifas verificadas, desglosa contribuciones, revisa evidencia de origen y organiza los pendientes de RRNA y despacho.</p>
+          <div class="trade-hero__chips" aria-label="Módulos disponibles">
+            <span>LIGIE + NICO</span><span>IGI · DTA · IVA · IEPS</span><span>T-MEC</span><span>RRNA</span><span>Pedimento</span>
+          </div>
+        </div>
+      </header>
+
+      <main class="trade-main">
+        <div class="trade-notice" role="note">
+          <strong>Antes de usar un resultado:</strong>
+          <span>Esta mesa organiza información y cálculos aritméticos sobre datos declarados. No determina clasificación, origen, contribuciones, permisos ni cumplimiento; confirma cada supuesto con la fuente oficial y evidencia de la operación.</span>
+        </div>
+
+        <div class="trade-tabs" role="tablist" aria-label="Módulos de comercio exterior">
+          <button class="trade-tab" type="button" role="tab" aria-selected="true" aria-controls="costs-panel" id="costs-tab">Simulador</button>
+          <button class="trade-tab" type="button" role="tab" aria-selected="false" aria-controls="tmec-panel" id="tmec-tab">Origen T-MEC</button>
+          <button class="trade-tab" type="button" role="tab" aria-selected="false" aria-controls="rrna-panel" id="rrna-tab">RRNA y despacho</button>
+          <button class="trade-tab" type="button" role="tab" aria-selected="false" aria-controls="classification-panel" id="classification-tab">Clasificación asistida</button>
+        </div>
+
+        <section class="trade-panel" id="costs-panel" role="tabpanel" aria-labelledby="costs-tab">
+          <div class="trade-panel__intro">
+            <div>
+              <h2>Escenario de contribuciones de importación</h2>
+              <p>Captura valores de trabajo y tasas documentadas. La tasa IGI puede cargarse como hipótesis desde la búsqueda LIGIE/NICO; DTA, IVA e IEPS permanecen editables porque dependen del supuesto normativo y del producto.</p>
+            </div>
+            <a class="trade-source" id="costs-source" target="_blank" rel="noreferrer" href="https://www.sat.gob.mx/minisitio/NormatividadRMFyRGCE/documentos2026/rgce/rgce/ReglasGeneralesComercioExteriorpara2026.pdf">RGCE 2026 — SAT</a>
+          </div>
+          <div class="trade-grid">
+            <section class="trade-card" aria-label="Entradas del escenario de contribuciones">
+              <h3>Datos de trabajo</h3>
+              <p class="trade-card__sub">Los importes se tratan como pesos mexicanos para este escenario. Conserva factura, flete, seguro, tipo de cambio y fundamento de cada entrada en tu expediente.</p>
+              <div class="trade-form">
+                <div class="trade-field trade-field--full">
+                  <label for="classification-query">Buscar LIGIE/NICO para cargar una hipótesis</label>
+                  <div class="trade-split"><input id="classification-query" type="search" placeholder="Ej. teléfonos inteligentes o 85171301" /><button class="trade-search-button" id="search-tariff" type="button">Buscar</button></div>
+                  <small>La búsqueda recupera registros publicados; no clasifica mercancías.</small>
+                </div>
+                <div class="trade-field">
+                  <label for="tariff-code">Fracción propuesta</label>
+                  <input id="tariff-code" inputmode="numeric" placeholder="8 o 10 dígitos" />
+                </div>
+                <div class="trade-field">
+                  <label for="incoterm">Incoterm declarado</label>
+                  <select id="incoterm"><option value="EXW">EXW</option><option value="FCA">FCA</option><option value="FOB">FOB</option><option value="CFR">CFR</option><option value="CIF" selected>CIF</option><option value="CPT">CPT</option><option value="CIP">CIP</option><option value="DAP">DAP</option><option value="DPU">DPU</option><option value="DDP">DDP</option><option value="OTHER">Otro</option></select>
+                </div>
+                <div class="trade-field">
+                  <label for="product-value">Precio de mercancía (MXN)</label>
+                  <input data-testid="product-value" id="product-value" inputmode="decimal" type="number" min="0" step="0.01" value="1000" />
+                </div>
+                <div class="trade-field">
+                  <label for="freight-value">Flete declarado (MXN)</label>
+                  <input data-testid="freight-value" id="freight-value" inputmode="decimal" type="number" min="0" step="0.01" value="0" />
+                </div>
+                <div class="trade-field">
+                  <label for="insurance-value">Seguro declarado (MXN)</label>
+                  <input data-testid="insurance-value" id="insurance-value" inputmode="decimal" type="number" min="0" step="0.01" value="0" />
+                </div>
+                <div class="trade-field">
+                  <label for="incrementables-value">Otros incrementables (MXN)</label>
+                  <input data-testid="incrementables-value" id="incrementables-value" inputmode="decimal" type="number" min="0" step="0.01" value="0" />
+                </div>
+                <div class="trade-field trade-field--full">
+                  <label for="customs-value">Valor en aduana directo (MXN)</label>
+                  <input data-testid="customs-value" id="customs-value" inputmode="decimal" type="number" min="0" step="0.01" placeholder="Opcional: prevalece sobre los componentes" />
+                  <small>Si declaras una base directa, el escenario no vuelve a inferirla desde el Incoterm ni sus componentes.</small>
+                </div>
+                <div class="trade-field">
+                  <label for="igi-rate">Tasa IGI (%)</label>
+                  <input data-testid="igi-rate" id="igi-rate" inputmode="decimal" type="number" min="0" step="0.0001" value="0" />
+                </div>
+                <div class="trade-field">
+                  <label for="dta-rate">Tasa DTA (%)</label>
+                  <input data-testid="dta-rate" id="dta-rate" inputmode="decimal" type="number" min="0" step="0.0001" value="0" />
+                </div>
+                <div class="trade-field">
+                  <label for="iva-rate">Tasa IVA (%)</label>
+                  <input data-testid="iva-rate" id="iva-rate" inputmode="decimal" type="number" min="0" step="0.0001" value="16" />
+                </div>
+                <div class="trade-field">
+                  <label for="ieps-rate">Tasa IEPS (%)</label>
+                  <input id="ieps-rate" inputmode="decimal" type="number" min="0" step="0.0001" value="0" />
+                </div>
+                <div class="trade-field trade-field--full">
+                  <button class="trade-button" data-testid="calculate-import" id="calculate-import" type="button">Calcular escenario orientativo</button>
+                </div>
+              </div>
+            </section>
+            <aside class="trade-card trade-result" data-testid="import-result" id="import-result" aria-live="polite"></aside>
+          </div>
+        </section>
+
+        <section class="trade-panel" id="tmec-panel" role="tabpanel" aria-labelledby="tmec-tab" hidden>
+          <div class="trade-panel__intro">
+            <div><h2>Origen y preferencia T-MEC</h2><p>Organiza una revisión documental de origen. El estado mostrado nunca confirma una preferencia: señala la evidencia que falta o que debe revisarse con la regla específica.</p></div>
+          </div>
+          <div class="trade-grid">
+            <section class="trade-card">
+              <h3>Datos de origen</h3><p class="trade-card__sub">Registra valores y evidencia sólo como hipótesis de trabajo. La regla específica por fracción y la certificación se verifican en el texto oficial.</p>
+              <div class="trade-form">
+                <div class="trade-field"><label for="tmec-code">Fracción propuesta</label><input id="tmec-code" placeholder="Ej. 85171301" /></div>
+                <div class="trade-field"><label for="tmec-origin">País declarado de origen</label><select id="tmec-origin"><option value="">Selecciona</option><option value="MX">México</option><option value="US">Estados Unidos</option><option value="CA">Canadá</option><option value="other">Otro</option></select></div>
+                <div class="trade-field"><label for="tmec-vcr">VCR declarado (%)</label><input id="tmec-vcr" type="number" min="0" step="0.01" value="0" /></div>
+                <div class="trade-field"><label for="tmec-vcr-required">VCR requerido (%)</label><input id="tmec-vcr-required" type="number" min="0" step="0.01" value="0" /></div>
+                <label class="trade-check"><input id="tmec-suppliers" type="checkbox" /> Tengo declaraciones de proveedor trazables</label>
+                <label class="trade-check"><input id="tmec-bom" type="checkbox" /> Tengo lista de materiales y costos respaldados</label>
+              </div>
+            </section>
+            <aside class="trade-card"><h3>Estado de la revisión</h3><div class="trade-status" data-testid="tmec-result" id="tmec-result" aria-live="polite"></div></aside>
+          </div>
+        </section>
+
+        <section class="trade-panel" id="rrna-panel" role="tabpanel" aria-labelledby="rrna-tab" hidden>
+          <div class="trade-panel__intro">
+            <div><h2>RRNA y checklist de despacho</h2><p>Consulta los puntos de partida oficiales para avisos, permisos, cupos, NOM, cuotas compensatorias y campos de pedimento. No se presenta ni transmite información a la autoridad.</p></div>
+            <a class="trade-source" data-testid="rrna-source" id="rrna-source" target="_blank" rel="noreferrer" href="https://www.snice.gob.mx/cs/avi/snice/drrnas.avisosypermisos.html">Avisos y permisos — SNICE</a>
+          </div>
+          <div class="trade-grid">
+            <section class="trade-card">
+              <h3>Expediente de despacho</h3><p class="trade-card__sub">Marca lo que ya tienes. El checklist muestra faltantes documentales, no requisitos jurídicos definitivos.</p>
+              <div class="trade-form">
+                <div class="trade-field"><label for="pedimento-code">Fracción propuesta</label><input id="pedimento-code" placeholder="Ej. 85171301" /></div>
+                <div class="trade-field"><label for="pedimento-regime">Régimen propuesto</label><select id="pedimento-regime"><option value="">Selecciona</option><option value="definitive_import">Importación definitiva</option><option value="temporary_import">Importación temporal</option><option value="export">Exportación</option></select></div>
+                <div class="trade-field"><label for="pedimento-origin">País de origen</label><input id="pedimento-origin" placeholder="Ej. CN" /></div>
+                <div class="trade-field"><label for="pedimento-value">Valor en aduana (MXN)</label><input id="pedimento-value" type="number" min="0" step="0.01" /></div>
+                <label class="trade-check"><input id="pedimento-invoice" type="checkbox" /> Factura o documento equivalente disponible</label>
+                <label class="trade-check"><input id="pedimento-transport" type="checkbox" /> Evidencia de transporte y seguro disponible</label>
+                <label class="trade-check"><input id="pedimento-origin-evidence" type="checkbox" /> Evidencia de origen disponible si se invoca preferencia</label>
+              </div>
+            </section>
+            <aside class="trade-card"><h3>Checklist informativa</h3><div data-testid="pedimento-checklist" id="pedimento-checklist" aria-live="polite"></div></aside>
+          </div>
+        </section>
+
+        <section class="trade-panel" id="classification-panel" role="tabpanel" aria-labelledby="classification-tab" hidden>
+          <div class="trade-panel__intro"><div><h2>Clasificación asistida con expediente</h2><p>Usa la búsqueda para recuperar candidatos de la release LIGIE/NICO verificada. Añade evidencia del producto y escala la consulta cuando haya ambigüedad.</p></div></div>
+          <div class="trade-grid">
+            <section class="trade-card"><h3>Qué debe sostener una hipótesis</h3><div class="trade-questions"><div class="trade-check">Descripción técnica, composición, uso y presentación comercial.</div><div class="trade-check">Ficha del fabricante, manual, fotografía, plano o certificado de análisis cuando sea relevante.</div><div class="trade-check">Fracción/NICO propuesta, notas nacionales, vigencia y fuente consultada.</div><div class="trade-check">Consulta formal ante la autoridad cuando la evidencia no descarte alternativas plausibles.</div></div><button class="trade-button trade-button--secondary" id="save-draft" type="button" style="margin-top:18px">Guardar expediente local</button></section>
+            <aside class="trade-card"><h3>Resultados verificados</h3><p class="trade-card__sub">Usa el buscador de la pestaña Simulador. Al seleccionar un candidato se carga como hipótesis, nunca como determinación.</p><div class="trade-classification-results" id="classification-results"><p class="trade-empty">Aún no hay una búsqueda. Describe la mercancía con suficiente detalle para recuperar candidatos y revisar la jerarquía.</p></div></aside>
+          </div>
+        </section>
+
+        <section class="trade-panel" id="sources-panel" aria-label="Fuentes y próximos pasos">
+          <div class="trade-panel__intro"><div><h2>Fuentes y próximos pasos</h2><p>La mesa separa las referencias normativas de las salidas aritméticas. Abre la fuente primaria y conserva la fecha de consulta para cada operación.</p></div></div>
+          <div class="trade-resource-grid">
+            <article class="trade-resource"><span class="trade-resource__number">01 · Tarifa</span><h3>LIGIE y NICO</h3><p>Consulta de fracción, jerarquía, tasas publicadas, vigencia y procedencia verificable.</p><a href="/app">Abrir explorador →</a></article>
+            <article class="trade-resource"><span class="trade-resource__number">02 · Regla</span><h3>Origen y T-MEC</h3><p>Textos consolidados, reglas de origen y procedimientos oficiales de la Secretaría de Economía.</p><a href="https://www.gob.mx/t-mec/acciones-y-programas/textos-finales-del-tratado-entre-mexico-estados-unidos-y-canada-t-mec-202730" target="_blank" rel="noreferrer">Abrir fuente →</a></article>
+            <article class="trade-resource"><span class="trade-resource__number">03 · Regulación</span><h3>RRNA y trámites</h3><p>Avisos, permisos, cupos, origen, cuotas y NOM mediante el micrositio oficial SNICE.</p><a href="https://www.snice.gob.mx/cs/avi/snice/home.html" target="_blank" rel="noreferrer">Abrir SNICE →</a></article>
+          </div>
+        </section>
+        <p id="trade-status" role="status" aria-live="polite" class="trade-empty" style="margin-top:22px">Mesa lista. Los datos permanecen en este navegador salvo que abras una fuente oficial.</p>
+      </main>
+      <footer class="trade-footer"><div class="trade-footer__inner"><span>arancel-mx · orientación con fuentes oficiales y releases verificables.</span><a href="/docs">Ver documentación de fuentes y límites</a></div></footer>
+    </div>
+  </body>
+</html>

@@ -37,6 +37,7 @@ def test_wheel_contains_public_runtime_contract(distributions: tuple[Path, Path]
         "arancel_mx/consumer/cli.py",
         "arancel_mx/api/static/index.html",
         "arancel_mx/api/static/site/index.html",
+        "arancel_mx/api/static/site/trade.html",
         "arancel_mx/sources/source_registry.json",
         "arancel_mx/py.typed",
     }
@@ -90,6 +91,7 @@ def test_sdist_contains_rebuild_inputs_and_public_package_docs(distributions: tu
         f"{root}/src/arancel_mx/__init__.py",
         f"{root}/src/arancel_mx/api/static/index.html",
         f"{root}/src/arancel_mx/api/static/site/index.html",
+        f"{root}/src/arancel_mx/api/static/site/trade.html",
         f"{root}/src/arancel_mx/py.typed",
         f"{root}/src/arancel_mx/sources/source_registry.json",
     }

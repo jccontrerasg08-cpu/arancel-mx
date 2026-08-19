@@ -39,6 +39,7 @@ logger = logging.getLogger(__name__)
 DatasetLoader = Callable[[ApiSettings], Dataset]
 _MARKETING_DIR = Path(__file__).with_name("static") / "site"
 _MARKETING_PAGE = _MARKETING_DIR / "index.html"
+_TRADE_PAGE = _MARKETING_DIR / "trade.html"
 _MARKETING_PAGES = (
     "/",
     "/features",
@@ -295,6 +296,12 @@ def create_app(
 
     for public_path in _MARKETING_PAGES:
         application.add_api_route(public_path, marketing_page, include_in_schema=False)
+
+    @application.get("/trade", include_in_schema=False)
+    def trade_desk() -> FileResponse:
+        """Serve the source-cited trade orientation desk."""
+
+        return FileResponse(_TRADE_PAGE, media_type="text/html")
 
     @application.get("/app", include_in_schema=False)
     @application.get("/app/{client_path:path}", include_in_schema=False)

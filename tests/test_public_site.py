@@ -70,6 +70,7 @@ def test_vercel_deploys_the_standalone_public_site() -> None:
             "source": "/readyz",
             "destination": "/api/operational?resource=ready",
         },
+        {"source": "/trade", "destination": "/trade.html"},
         {"source": "/((?!assets/|api/).*)", "destination": "/"},
     ]
 
