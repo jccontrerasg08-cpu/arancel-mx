@@ -161,6 +161,8 @@ def test_public_site_serves_the_react_shell_with_canonical_brand_assets() -> Non
     assert (ROOT / "website" / "assets" / "arancel-mx-logo.svg").is_file()
     assert '<div id="root"></div>' in index
     assert "/assets/index-" in index
+    assert "/assets/index-ad6fbc25b68e.js" in index
+    assert (ROOT / "website" / "assets" / "index-ad6fbc25b68e.js").is_file()
     assert 'type="module"' in index
 
     assert "/assets/hub-search.css" not in index
@@ -207,5 +209,8 @@ def test_public_site_bridge_keeps_current_release_and_route_aliases() -> None:
     assert "['/moa-guide', '/moa']" in bridge
     assert "['/product', '/app']" in bridge
     assert "currentReleasePattern" in bridge
+    assert r"data-\d{4}" in bridge
+    assert "document.addEventListener('DOMContentLoaded'" in bridge
+    assert "new MutationObserver(applyPublicSiteBridge)" not in bridge
     assert "window.setInterval" in bridge
     assert "attempts >= 12" in bridge
