@@ -148,6 +148,42 @@ def test_lookup_active_release_adapts_the_existing_public_tariff_shape():
     assert connection.values == ("85171301",)
 
 
+def test_lookup_active_release_hides_rates_for_a_nico():
+    from arancel_mx.operational.query import lookup_active_release
+
+    payload = {
+        "code": "8517130100",
+        "level": "nico10",
+        "description": "Teléfonos inteligentes.",
+        "unit_name": "Pza",
+        "igi_text": "Ex.",
+        "igi_kind": "exento",
+        "igi_value": "0.000000",
+        "ige_text": "Ex.",
+        "ige_kind": "exento",
+        "ige_value": "0.000000",
+        "schema_version": "2",
+        "is_current": True,
+        "hs2": "85",
+        "hs4": "8517",
+        "hs6": "851713",
+        "fraccion8": "85171301",
+        "nico2": "00",
+        "nico10": "8517130100",
+        "ligie_version": "LIGIE-2022",
+        "validity_basis": "observed_snapshot",
+        "dataset_version": "2026.08.18",
+    }
+    connection = Connection(Cursor(many=[(payload, "2026.08.18")]))
+
+    record = lookup_active_release(connection, "8517.13.01.00")
+
+    assert record is not None
+    assert record["hierarchy"]["fraccion8"] == "85171301"
+    assert record["igi"] is None
+    assert record["ige"] is None
+
+
 def test_national_notes_active_release_reads_only_active_snapshot_evidence():
     from arancel_mx.operational.query import national_notes_active_release
 
