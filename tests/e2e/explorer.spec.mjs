@@ -91,6 +91,54 @@ test('exposes rates only on fraction cards', async ({ page }) => {
   await expect(nicoCard).not.toContainText('IGE');
 });
 
+test('renders every non-fraction direct record without rate fields or a page error', async ({ page }) => {
+  await page.route('**/v1/ficha/0101210100', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        record: {
+          code: '0101210100',
+          level: 'nico10',
+          description: 'Reproductores de raza pura.',
+          unit_name: 'Cbza',
+          igi: null,
+          ige: null,
+          parent_code: '01012101',
+          dataset_version: '2026.08.15',
+          schema_version: '2',
+          effective_from: null,
+          effective_to: null,
+          is_current: true,
+          hierarchy: {
+            hs2: '01', hs4: '0101', hs6: '010121', fraccion8: '01012101', nico2: '00', nico10: '0101210100',
+          },
+          ligie_version: 'LIGIE-2022',
+          validity_basis: 'observed_snapshot',
+        },
+        formatted_code: '0101.21.01 00',
+        section: { roman: 'I', name: 'Animales vivos y productos del reino animal' },
+        hierarchy: [],
+        children: [],
+      }),
+    });
+  });
+
+  for (const { code, formatted } of [
+    { code: '01', formatted: '01' },
+    { code: '0101', formatted: '01.01' },
+    { code: '010121', formatted: '01.01.21' },
+    { code: '0101210100', formatted: '01.01.21.01.00' },
+  ]) {
+    await page.goto(`/app/record/${code}`);
+    await expect(page.getByText(/an unexpected error occurred/i)).toHaveCount(0);
+    const card = page.getByTestId('result-card');
+    await expect(card).toContainText(formatted);
+    await expect(card).not.toContainText('IGI');
+    await expect(card).not.toContainText('IGE');
+  }
+});
+
+
 test('narrows the visible decision-tree path from an entered fraction prefix', async ({ page }) => {
   await page.goto('/app/record/85171301');
   await expect(page.getByTestId('hierarchy-card')).toBeVisible();
