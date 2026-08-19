@@ -43,3 +43,6 @@
 - [x] Add focused unit and browser coverage for branch filtering and the evidence-backed example-fraction hero card.
 - [x] Audit the complete current branch for unintended files, stale generated assets, route regressions, and test-contract gaps before protected publication.
 - [x] Synchronize Vercel’s deployed `website/` static output with the validated React public bundle and verify preview deep links before merge.
+- [x] Map the official ANAM 2022 normative resources and ANAM glossary into a maintainable source index with direct primary links and observed retrieval dates.
+- [x] Add a non-advisory wiki and glossary experience that distinguishes definitions and source context from customs, legal, or classification determinations.
+- [x] Add focused route, source-link, search/navigation, and browser coverage for the official ANAM wiki and glossary surfaces.
