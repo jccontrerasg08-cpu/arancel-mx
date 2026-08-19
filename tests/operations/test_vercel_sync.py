@@ -72,3 +72,70 @@ def test_download_latest_publication_bundle_rejects_a_release_with_missing_asset
         assert "assets" in str(error)
     else:
         raise AssertionError("a partial release must never be promoted")
+
+
+def test_sync_rehydrates_only_evidence_when_latest_tag_is_already_active(tmp_path, monkeypatch):
+    from datetime import datetime, timezone
+
+    from arancel_mx.operational import OperationalRelease
+    from arancel_mx.operational.sync import synchronize_latest_release
+
+    release = OperationalRelease(
+        tag="data-2026.08.17",
+        dataset_version="2026.08.17",
+        schema_version="2",
+        manifest_sha256="a" * 64,
+        generated_at=datetime(2026, 8, 17, 10, 0, tzinfo=timezone.utc),
+        published_at=datetime(2026, 8, 17, 11, 0, tzinfo=timezone.utc),
+        source_checked_at=datetime(2026, 8, 19, 19, 0, tzinfo=timezone.utc),
+        evidence={"source_documents": [{"source_document_id": "dof-1"}], "record_provenance": [], "national_notes": []},
+    )
+    observed: dict[str, object] = {}
+
+    monkeypatch.setattr(
+        "arancel_mx.operational.sync._latest_release",
+        lambda **kwargs: ("data-2026.08.17", {"arancel_mx.duckdb": "https://example/duckdb", "manifest.json": "https://example/manifest", "SHA256SUMS": "https://example/sums"}, release.published_at),
+    )
+    monkeypatch.setattr("arancel_mx.operational.sync._active_release_state", lambda connection: ("data-2026.08.17", {}))
+    monkeypatch.setattr(
+        "arancel_mx.operational.sync._download_assets",
+        lambda destination, downloads, names, **kwargs: observed.setdefault("asset_names", names) and tmp_path,
+    )
+    monkeypatch.setattr("arancel_mx.operational.sync._certified_evidence_release", lambda *args, **kwargs: release)
+    monkeypatch.setattr(
+        "arancel_mx.operational.sync.promote_release",
+        lambda connection, promoted, records: observed.update({"release": promoted, "records": list(records)}),
+    )
+
+    result = synchronize_latest_release(object(), checked_at=release.source_checked_at)
+
+    assert result == {"release_tag": "data-2026.08.17", "record_count": 0, "changed": True}
+    assert observed["asset_names"] == ("arancel_mx.duckdb", "manifest.json", "SHA256SUMS")
+    assert observed["release"] == release
+    assert observed["records"] == []
+
+
+def test_sync_skips_download_when_active_release_already_has_evidence(monkeypatch):
+    from datetime import datetime, timezone
+
+    from arancel_mx.operational.sync import synchronize_latest_release
+
+    checked_at = datetime(2026, 8, 19, 19, 0, tzinfo=timezone.utc)
+    monkeypatch.setattr(
+        "arancel_mx.operational.sync._latest_release",
+        lambda **kwargs: ("data-2026.08.17", {}, checked_at),
+    )
+    monkeypatch.setattr(
+        "arancel_mx.operational.sync._active_release_state",
+        lambda connection: ("data-2026.08.17", {"source_documents": [{"source_document_id": "dof-1"}]}),
+    )
+    monkeypatch.setattr(
+        "arancel_mx.operational.sync._download_assets",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("should not download")),
+    )
+
+    assert synchronize_latest_release(object(), checked_at=checked_at) == {
+        "release_tag": "data-2026.08.17",
+        "record_count": 0,
+        "changed": False,
+    }
