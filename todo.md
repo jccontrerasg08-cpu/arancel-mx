@@ -42,4 +42,4 @@
 - [x] Replace the explorer hero’s release-identity panel with a verified example fraction anatomy card showing code segments, recorded rates, unit, validity, and release evidence.
 - [x] Add focused unit and browser coverage for branch filtering and the evidence-backed example-fraction hero card.
 - [x] Audit the complete current branch for unintended files, stale generated assets, route regressions, and test-contract gaps before protected publication.
-- [ ] Synchronize Vercel’s deployed `website/` static output with the validated React public bundle and verify preview deep links before merge.
+- [x] Synchronize Vercel’s deployed `website/` static output with the validated React public bundle and verify preview deep links before merge.
