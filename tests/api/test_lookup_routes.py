@@ -162,7 +162,7 @@ def _client(valid_settings) -> TestClient:
     )
 
 
-def test_lookup_preserves_nico_strings_and_official_tariff_text(valid_settings) -> None:
+def test_lookup_preserves_nico_strings_without_exposing_rates(valid_settings) -> None:
     with _client(valid_settings) as client:
         response = client.get("/v1/lookup/0101210100")
 
@@ -172,8 +172,8 @@ def test_lookup_preserves_nico_strings_and_official_tariff_text(valid_settings) 
     assert payload["parent_code"] == "01012101"
     assert payload["hierarchy"]["nico2"] == "00"
     assert payload["hierarchy"]["fraccion8"] == "01012101"
-    assert payload["igi"] == {"text": "Ex.", "kind": "exento", "value": None}
-    assert payload["ige"]["text"] == "Prohibida"
+    assert payload["igi"] is None
+    assert payload["ige"] is None
 
 
 def test_ficha_uses_existing_consumer_hierarchy(valid_settings) -> None:

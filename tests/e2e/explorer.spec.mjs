@@ -77,6 +77,20 @@ test('looks up a complete tariff fraction with evidence and a decision tree', as
   await expect(page.getByRole('link', { name: /API JSON/i })).toHaveAttribute('href', /\/v1\/ficha\/85171301$/);
 });
 
+test('exposes rates only on fraction cards', async ({ page }) => {
+  await page.goto('/app/record/01012101');
+  const fractionCard = page.getByTestId('result-card');
+  await expect(fractionCard).toContainText('01.01.21.01');
+  await expect(fractionCard).toContainText('IGI');
+  await expect(fractionCard).toContainText('IGE');
+
+  await page.goto('/app/record/0101210100');
+  const nicoCard = page.getByTestId('result-card');
+  await expect(nicoCard).toContainText('01.01.21.01.00');
+  await expect(nicoCard).not.toContainText('IGI');
+  await expect(nicoCard).not.toContainText('IGE');
+});
+
 test('narrows the visible decision-tree path from an entered fraction prefix', async ({ page }) => {
   await page.goto('/app/record/85171301');
   await expect(page.getByTestId('hierarchy-card')).toBeVisible();

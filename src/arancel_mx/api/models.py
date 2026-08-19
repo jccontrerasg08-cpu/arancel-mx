@@ -133,8 +133,8 @@ class TariffResponse(FrozenModel):
     level: str
     description: str
     unit_name: str | None
-    igi: RateResponse
-    ige: RateResponse
+    igi: RateResponse | None
+    ige: RateResponse | None
     parent_code: str | None
     dataset_version: str
     schema_version: str
@@ -147,20 +147,29 @@ class TariffResponse(FrozenModel):
 
     @classmethod
     def from_record(cls, record: TariffRecord) -> TariffResponse:
+        is_tariff_fraction = record.level == "fraccion8" and record.code.isdigit() and len(record.code) == 8
         return cls(
             code=record.code,
             level=record.level,
             description=record.description,
             unit_name=record.unit_name,
-            igi=RateResponse(
-                text=record.igi_text,
-                kind=record.igi_kind,
-                value=record.igi_value,
+            igi=(
+                RateResponse(
+                    text=record.igi_text,
+                    kind=record.igi_kind,
+                    value=record.igi_value,
+                )
+                if is_tariff_fraction
+                else None
             ),
-            ige=RateResponse(
-                text=record.ige_text,
-                kind=record.ige_kind,
-                value=record.ige_value,
+            ige=(
+                RateResponse(
+                    text=record.ige_text,
+                    kind=record.ige_kind,
+                    value=record.ige_value,
+                )
+                if is_tariff_fraction
+                else None
             ),
             parent_code=record.parent_code,
             dataset_version=record.dataset_version,
