@@ -6,7 +6,7 @@ from scripts.certify_package_install import smoke_commands
 
 
 def test_clean_install_smoke_imports_fastapi_entrypoint_without_startup(tmp_path: Path) -> None:
-    commands = smoke_commands(tmp_path / "arancel_mx-0.3.3.whl", tmp_path / "venv")
+    commands = smoke_commands(tmp_path / "arancel_mx-0.3.4.whl", tmp_path / "venv")
     python_snippets = [
         command[2]
         for command in commands
