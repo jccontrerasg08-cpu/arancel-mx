@@ -36,7 +36,7 @@ ALLOWED_MODEL_STATUS = {
 def test_external_trade_catalog_covers_the_comparable_public_domains() -> None:
     catalog = json.loads(CATALOG_PATH.read_text(encoding="utf-8"))
 
-    assert catalog["schema_version"] == "1"
+    assert catalog["schema_version"] == "2"
     assert catalog["purpose"].startswith("Navegación")
     assert {item["id"] for item in catalog["sources"]} == EXPECTED_IDS
 
@@ -49,6 +49,8 @@ def test_catalog_records_only_official_sources_and_declares_boundary() -> None:
         assert item["model_status"] in ALLOWED_MODEL_STATUS
         assert item["source_role"]
         assert item["boundary"]
+        assert item["last_verified_at"] == "2026-08-19"
+        assert item["publication_or_version"]
         assert "sdv.com.mx" not in item["official_url"]
         parsed = urlparse(item["official_url"])
         assert parsed.scheme == "https"

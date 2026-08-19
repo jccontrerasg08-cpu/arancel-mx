@@ -52,16 +52,15 @@ function renderEstimate(estimate, customsValue) {
 function calculateEstimate() {
   try {
     const directValue = value('customs-value').trim();
-    const componentValue = calculateCustomsValue({
-      incoterm: value('incoterm'),
-      productValueMxn: numberValue('product-value'),
-      freightMxn: numberValue('freight-value'),
-      insuranceMxn: numberValue('insurance-value'),
-      incrementablesMxn: numberValue('incrementables-value'),
-    });
     const customsValue = directValue
       ? { method: 'direct_value', customsValueMxn: Number(directValue) }
-      : componentValue;
+      : calculateCustomsValue({
+          incoterm: value('incoterm'),
+          productValueMxn: numberValue('product-value'),
+          freightMxn: numberValue('freight-value'),
+          insuranceMxn: numberValue('insurance-value'),
+          incrementablesMxn: numberValue('incrementables-value'),
+        });
     const estimate = calculateImportEstimate({
       customsValueMxn: customsValue.customsValueMxn,
       igiRatePercent: numberValue('igi-rate'),
@@ -88,9 +87,18 @@ function renderTmecResult() {
   });
   const container = byId('tmec-result');
   if (!container) return;
+  const statusLabel = {
+    evidence_required: 'Evidencia requerida',
+    threshold_not_met: 'Umbral declarado no alcanzado',
+    evidence_review_required: 'Revisión documental requerida',
+  }[result.status] || 'Revisión documental requerida';
+  const vcrTrace = result.status === 'evidence_required'
+    ? ''
+    : `<p class="trade-result__caption">VCR declarado: ${result.regionalValueContent}% · umbral declarado: ${result.requiredRegionalValueContent}%</p>`;
   container.innerHTML = `
-    <strong>${result.status === 'evidence_review_required' ? 'Revisión documental requerida' : 'Evidencia requerida'}</strong>
+    <strong>${statusLabel}</strong>
     ${result.nextStep}
+    ${vcrTrace}
     <div style="margin-top:10px">${sourceLink(result.source, 'tmec-source')}</div>
     <p class="trade-disclaimer">${result.disclaimer}</p>
   `;
@@ -105,10 +113,18 @@ function renderPedimentoChecklist() {
     hasInvoice: checked('pedimento-invoice'),
     hasTransportEvidence: checked('pedimento-transport'),
     hasOriginEvidence: checked('pedimento-origin-evidence'),
+    hasRrnaReview: checked('pedimento-rrna-review'),
   });
   const container = byId('pedimento-checklist');
   if (!container) return;
+  const state = checklist.status === 'incomplete'
+    ? 'Pendientes de revisión documental'
+    : 'Revisión documental final requerida';
+  const missing = checklist.missing.length
+    ? `<p class="trade-result__caption">${state}: ${checklist.missing.join(' · ')}</p>`
+    : `<p class="trade-result__caption">${state}: confirma la fuente y la evidencia antes de cualquier operación.</p>`;
   container.innerHTML = `
+    ${missing}
     <ul class="trade-checklist">${checklist.checklist
       .map((item) => `<li class="${item.complete ? 'is-complete' : ''}">${item.label}</li>`)
       .join('')}</ul>
@@ -128,19 +144,25 @@ async function searchTariff() {
     const response = await fetch(`/v1/search?q=${encodeURIComponent(query)}&limit=5`);
     if (!response.ok) throw new Error('La búsqueda verificada no está disponible en este momento.');
     const results = await response.json();
-    if (!results.length) {
+    if (!Array.isArray(results)) {
+      throw new Error('La respuesta de la búsqueda verificada no tiene el formato esperado.');
+    }
+    const records = results
+      .map((entry) => entry?.record)
+      .filter((record) => record && typeof record.code === 'string' && typeof record.description === 'string');
+    if (!records.length) {
       output.innerHTML = '<p class="trade-empty">No se encontraron coincidencias. Amplía la descripción técnica y conserva la evidencia del producto.</p>';
       return;
     }
-    output.innerHTML = results
-      .map(({ record }) => `
-        <article class="trade-match">
-          <button type="button" data-code="${record.code}" data-igi="${record.igi?.value ?? ''}">${record.code} · ${record.description}</button>
-          <p>IGI publicado: ${record.igi?.text ?? 'sin tasa numérica'} · release ${record.dataset_version}</p>
-        </article>
-      `)
-      .join('');
-    output.querySelectorAll('button[data-code]').forEach((button) => {
+    output.replaceChildren();
+    records.forEach((record) => {
+      const match = document.createElement('article');
+      match.className = 'trade-match';
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.dataset.code = record.code;
+      if (Number.isFinite(Number(record.igi?.value))) button.dataset.igi = String(record.igi.value);
+      button.textContent = `${record.code} · ${record.description}`;
       button.addEventListener('click', () => {
         byId('tariff-code').value = button.dataset.code;
         byId('tmec-code').value = button.dataset.code;
@@ -148,6 +170,25 @@ async function searchTariff() {
         if (button.dataset.igi) byId('igi-rate').value = button.dataset.igi;
         updateStatus(`Se cargó ${button.dataset.code} como hipótesis de trabajo. Verifica clasificación, vigencia y evidencia antes de usarla.`);
       });
+      const detail = document.createElement('p');
+      const igiText = typeof record.igi?.text === 'string' ? record.igi.text : 'sin tasa numérica';
+      const igeText = typeof record.ige?.text === 'string'
+        ? record.ige.text
+        : typeof record.ige === 'string' ? record.ige : 'sin tasa numérica';
+      const datasetVersion = typeof record.dataset_version === 'string' ? record.dataset_version : 'sin versión declarada';
+      detail.textContent = `IGI publicado: ${igiText} · IGE publicado: ${igeText} · release ${datasetVersion}`;
+      const validity = document.createElement('p');
+      const effectiveFrom = typeof record.effective_from === 'string' ? record.effective_from : 'sin fecha publicada';
+      const currentStatus = record.is_current === true ? 'vigente' : record.is_current === false ? 'no vigente' : 'vigencia sin confirmar';
+      const ligieVersion = typeof record.ligie_version === 'string' ? ` · LIGIE ${record.ligie_version}` : '';
+      const validityBasis = typeof record.validity_basis === 'string' ? ` · ${record.validity_basis}` : '';
+      validity.textContent = `Vigencia de release: ${effectiveFrom} · ${currentStatus}${ligieVersion}${validityBasis}`;
+      const provenance = document.createElement('a');
+      provenance.className = 'trade-source';
+      provenance.href = `/v1/codes/${encodeURIComponent(record.code)}/provenance`;
+      provenance.textContent = 'Ver procedencia registrada';
+      match.append(button, detail, validity, provenance);
+      output.append(match);
     });
   } catch (error) {
     output.innerHTML = `<p class="trade-empty">${error.message}</p>`;
@@ -163,8 +204,23 @@ function activateTab(tab) {
 }
 
 function bindTabs() {
-  document.querySelectorAll('[role="tab"]').forEach((tab) => {
+  const tabs = [...document.querySelectorAll('[role="tab"]')];
+  tabs.forEach((tab, index) => {
     tab.addEventListener('click', () => activateTab(tab));
+    tab.addEventListener('keydown', (event) => {
+      const lastIndex = tabs.length - 1;
+      const targetIndex = {
+        ArrowRight: index === lastIndex ? 0 : index + 1,
+        ArrowLeft: index === 0 ? lastIndex : index - 1,
+        Home: 0,
+        End: lastIndex,
+      }[event.key];
+      if (targetIndex === undefined) return;
+      event.preventDefault();
+      const target = tabs[targetIndex];
+      target.focus();
+      activateTab(target);
+    });
   });
 }
 
@@ -209,7 +265,7 @@ function initialize() {
   ['tmec-code', 'tmec-origin', 'tmec-vcr', 'tmec-vcr-required', 'tmec-suppliers', 'tmec-bom'].forEach((id) => {
     byId(id).addEventListener('change', renderTmecResult);
   });
-  ['pedimento-code', 'pedimento-regime', 'pedimento-origin', 'pedimento-value', 'pedimento-invoice', 'pedimento-transport', 'pedimento-origin-evidence'].forEach((id) => {
+  ['pedimento-code', 'pedimento-regime', 'pedimento-origin', 'pedimento-value', 'pedimento-invoice', 'pedimento-transport', 'pedimento-origin-evidence', 'pedimento-rrna-review'].forEach((id) => {
     byId(id).addEventListener('change', renderPedimentoChecklist);
   });
   byId('save-draft').addEventListener('click', persistDraft);

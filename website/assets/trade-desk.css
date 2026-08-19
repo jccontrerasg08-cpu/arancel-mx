@@ -24,6 +24,17 @@ body {
 button, input, select { font: inherit; }
 button { cursor: pointer; }
 a { color: inherit; }
+.trade-tab:focus-visible,
+.trade-button:focus-visible,
+.trade-search-button:focus-visible,
+.trade-source:focus-visible,
+.trade-match button:focus-visible,
+.trade-nav__link:focus-visible,
+.trade-brand:focus-visible,
+.trade-resource a:focus-visible {
+  outline: 3px solid var(--trade-gold);
+  outline-offset: 3px;
+}
 
 .trade-shell { min-height: 100vh; }
 .trade-topline {

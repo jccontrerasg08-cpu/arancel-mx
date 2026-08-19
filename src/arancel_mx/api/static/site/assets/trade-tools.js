@@ -129,6 +129,8 @@ export function evaluateTmecOrientation(input) {
     return Object.freeze({
       status: 'evidence_required',
       preferentialRateConfirmed: false,
+      regionalValueContent,
+      requiredRegionalValueContent,
       nextStep: 'Indica la fracción propuesta y el país de origen antes de revisar la evidencia.',
       disclaimer: ORIENTATION_DISCLAIMER,
       source: TRADE_SOURCES.tmec,
@@ -139,6 +141,8 @@ export function evaluateTmecOrientation(input) {
     return Object.freeze({
       status: 'evidence_required',
       preferentialRateConfirmed: false,
+      regionalValueContent,
+      requiredRegionalValueContent,
       nextStep:
         'Integra declaraciones de proveedor y la lista de materiales antes de evaluar una preferencia T-MEC.',
       disclaimer: ORIENTATION_DISCLAIMER,
@@ -150,6 +154,8 @@ export function evaluateTmecOrientation(input) {
     return Object.freeze({
       status: 'threshold_not_met',
       preferentialRateConfirmed: false,
+      regionalValueContent,
+      requiredRegionalValueContent,
       nextStep:
         'El VCR declarado no alcanza el umbral indicado. Revisa la regla específica, el método y la evidencia de costos.',
       disclaimer: ORIENTATION_DISCLAIMER,
@@ -160,6 +166,8 @@ export function evaluateTmecOrientation(input) {
   return Object.freeze({
     status: 'evidence_review_required',
     preferentialRateConfirmed: false,
+    regionalValueContent,
+    requiredRegionalValueContent,
     nextStep:
       'La evidencia declarada permite una revisión documental inicial; confirma la regla específica de origen y la certificación con la fuente oficial.',
     disclaimer: ORIENTATION_DISCLAIMER,
@@ -178,6 +186,7 @@ export function buildPedimentoChecklist(input) {
   if (input.hasInvoice !== true) missing.push('Factura o documento equivalente');
   if (input.hasTransportEvidence !== true) missing.push('Evidencia de transporte');
   if (input.hasOriginEvidence !== true) missing.push('Evidencia de origen');
+  if (input.hasRrnaReview !== true) missing.push('Revisión documental de RRNA y programas aplicables');
 
   return Object.freeze({
     status: missing.length === 0 ? 'review_required' : 'incomplete',
@@ -187,7 +196,7 @@ export function buildPedimentoChecklist(input) {
       Object.freeze({ label: 'Valor y documentos comerciales', complete: input.hasInvoice === true }),
       Object.freeze({ label: 'Transporte y seguro', complete: input.hasTransportEvidence === true }),
       Object.freeze({ label: 'Origen y preferencia, si se invoca', complete: input.hasOriginEvidence === true }),
-      Object.freeze({ label: 'RRNA y programas aplicables', complete: false }),
+      Object.freeze({ label: 'RRNA y programas aplicables', complete: input.hasRrnaReview === true }),
     ]),
     disclaimer:
       'Checklist informativa: no genera ni transmite un pedimento, no valida el despacho y no sustituye la revisión del agente, agencia o autoridad aduanal.',

@@ -78,7 +78,11 @@ test('builds a non-transactional pedimento checklist from missing operation data
   });
 
   assert.equal(checklist.status, 'incomplete');
-  assert.deepEqual(checklist.missing, ['Factura o documento equivalente', 'Evidencia de origen']);
+  assert.deepEqual(checklist.missing, [
+    'Factura o documento equivalente',
+    'Evidencia de origen',
+    'Revisión documental de RRNA y programas aplicables',
+  ]);
   assert.match(checklist.disclaimer, /no genera ni transmite/i);
 });
 
@@ -92,4 +96,37 @@ test('keeps an official source record for every orientation module', () => {
     assert.ok(source.title);
     assert.ok(source.updated);
   }
+});
+
+test('keeps declared VCR inputs traceable when the T-MEC threshold is not met', () => {
+  const result = evaluateTmecOrientation({
+    tariffCode: '85171301',
+    originCountry: 'MX',
+    regionalValueContent: 45,
+    requiredRegionalValueContent: 75,
+    supplierDeclarations: true,
+    billOfMaterials: true,
+  });
+
+  assert.equal(result.status, 'threshold_not_met');
+  assert.equal(result.regionalValueContent, 45);
+  assert.equal(result.requiredRegionalValueContent, 75);
+  assert.equal(result.preferentialRateConfirmed, false);
+});
+
+test('keeps RRNA review as an explicit declared checklist requirement', () => {
+  const checklist = buildPedimentoChecklist({
+    tariffCode: '85171301',
+    regime: 'definitive_import',
+    originCountry: 'CN',
+    customsValueMxn: 1000,
+    hasInvoice: true,
+    hasTransportEvidence: true,
+    hasOriginEvidence: true,
+    hasRrnaReview: false,
+  });
+
+  assert.equal(checklist.status, 'incomplete');
+  assert.ok(checklist.missing.includes('Revisión documental de RRNA y programas aplicables'));
+  assert.equal(checklist.checklist.at(-1).complete, false);
 });
