@@ -76,14 +76,14 @@ sincronización operacional idempotente
           ↓
         Neon
           ↓
-Vercel: /v1/meta + /v1/search + /readyz
+Vercel: metadatos, búsqueda, ficha y evidencia activa
 
-Vercel: /v1/* restante + /docs
+Vercel: OpenAPI, docs y rutas no promovidas
           ↓ proxy
    runtime FastAPI reusable
 ```
 
-`/v1/meta`, `/v1/search` y `/readyz` se resuelven mediante una proyección operacional read-only sincronizada desde releases verificadas. Las demás rutas `/v1/*` y `/docs` se presentan bajo el mismo dominio y se proxifican al runtime FastAPI. **Neon y Vercel son superficies de servicio, no sustituyen la release verificable como fuente de verdad.**
+`/v1/meta`, `/v1/search`, `/v1/suggest`, `/v1/ficha/{code}`, la jerarquía, `provenance`, notas nacionales y `/readyz` se resuelven mediante una proyección operacional read-only sincronizada desde releases verificadas. OpenAPI, `/docs` y las rutas `/v1/*` no promovidas se presentan bajo el mismo dominio y se proxifican al runtime FastAPI. **Neon y Vercel son superficies de servicio, no sustituyen la release verificable como fuente de verdad.**
 
 Para consumidores, esto permite usar un solo origen público:
 

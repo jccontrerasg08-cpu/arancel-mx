@@ -157,14 +157,14 @@ sincronización operacional
           ↓
         Neon
           ↓
-Vercel: /v1/meta + /v1/search + /readyz
+Vercel: metadatos, búsqueda, ficha y evidencia activa
 
-Vercel: /v1/* restante + /docs
+Vercel: OpenAPI, docs y rutas no promovidas
           ↓ proxy
    runtime FastAPI reusable
 ```
 
-`/v1/meta`, `/v1/search` y `/readyz` se resuelven en la capa operacional read-only de Vercel respaldada por Neon. Las demás rutas `/v1/*` y `/docs` se presentan bajo el mismo dominio mediante proxy al runtime FastAPI. **Vercel y Neon son superficies de servicio; la GitHub Release verificada sigue siendo la fuente canónica.**
+`/v1/meta`, `/v1/search`, `/v1/suggest`, `/v1/ficha/{code}`, `/v1/sections`, `/v1/chapters`, las relaciones padre/hijos, `provenance`, notas nacionales y `/readyz` se resuelven en la capa operacional read-only de Vercel respaldada por Neon. OpenAPI, `/docs` y las rutas `/v1/*` aún no promovidas se presentan bajo el mismo dominio mediante proxy al runtime FastAPI. **Vercel y Neon son superficies de servicio; la GitHub Release verificada sigue siendo la fuente canónica.**
 
 ## Autoingesta
 

@@ -31,6 +31,14 @@ def test_vercel_deploys_the_standalone_public_site() -> None:
             "destination": "/api/operational?resource=search",
         },
         {
+            "source": "/v1/suggest",
+            "destination": "/api/operational?resource=suggest",
+        },
+        {
+            "source": "/v1/ficha/:code",
+            "destination": "/api/operational?resource=ficha&code=:code",
+        },
+        {
             "source": "/v1/lookup/:code",
             "destination": "/api/operational?resource=lookup&code=:code",
         },
@@ -49,6 +57,14 @@ def test_vercel_deploys_the_standalone_public_site() -> None:
         {
             "source": "/v1/codes/:code/children",
             "destination": "/api/operational?resource=children&code=:code",
+        },
+        {
+            "source": "/v1/codes/:code/provenance",
+            "destination": "/api/operational?resource=provenance&code=:code",
+        },
+        {
+            "source": "/v1/chapters/:chapter/national-notes",
+            "destination": "/api/operational?resource=national-notes&chapter=:chapter",
         },
         {
             "source": "/v1/:path*",

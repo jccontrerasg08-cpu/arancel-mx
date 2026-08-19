@@ -183,8 +183,8 @@ def test_public_docs_keep_readyz_on_the_operational_surface() -> None:
 
     for path in ("docs/project-overview.md", "docs/external-consumption.md"):
         text = _read(path)
-        assert "Vercel: /v1/meta + /v1/search + /readyz" in text
-        assert "Vercel: /v1/* restante + /docs" in text
+        assert "Vercel: metadatos, búsqueda, ficha y evidencia activa" in text
+        assert "Vercel: OpenAPI, docs y rutas no promovidas" in text
 
 
 def test_public_brand_guide_is_discoverable_and_uses_current_schedule_language() -> None:
@@ -250,7 +250,7 @@ def test_integration_handoff_tracks_current_vercel_and_liveness_boundaries() -> 
     assert "/v1/meta" in handoff
     assert "/readyz" in handoff
     assert re.search(r"Baseline revisada:\*\* `?[0-9a-f]{7,40}`?", handoff)
-    assert "Vercel: /v1/meta + /v1/search + /readyz" in handoff
+    assert "Vercel: metadatos, búsqueda, ficha y evidencia activa" in handoff
     assert "ARANCEL_MX_DATABASE_DATABASE_URL" in handoff
     assert "api/_vendor" in handoff
     assert "api/_runtime.py" in handoff
