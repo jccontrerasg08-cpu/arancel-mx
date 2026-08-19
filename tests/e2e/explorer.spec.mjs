@@ -45,6 +45,17 @@ test('serves the source-cited trade-context and ANAM MOA routes', async ({ page 
   await expect(page.getByRole('link', { name: /abrir manual de ANAM/i })).toHaveAttribute('href', 'https://www.anam.gob.mx/manual-de-operacion-aduanera-moa/');
 });
 
+test('serves ANAM source-indexed wiki and searchable glossary routes', async ({ page }) => {
+  await page.goto('/wiki');
+  await expect(page.getByRole('heading', { name: /normatividad, con su origen visible/i })).toBeVisible();
+  await expect(page.getByRole('link', { name: /abrir normatividad ANAM/i })).toHaveAttribute('href', 'https://www.anam.gob.mx/normatividad_2022/');
+  await page.goto('/glossary');
+  await expect(page.getByRole('heading', { name: /definiciones, con atribución visible/i })).toBeVisible();
+  await page.getByRole('textbox', { name: /buscar en el glosario ANAM/i }).fill('Aduana');
+  await expect(page.getByTestId('anam-glossary-results')).toContainText('Aduana');
+  await expect(page.getByRole('link', { name: /abrir glosario ANAM/i })).toHaveAttribute('href', 'https://www.anam.gob.mx/glosario-anam/');
+});
+
 test('serves the homepage-aligned verified explorer', async ({ page }) => {
   await page.goto('/app');
   await expect(page.getByRole('heading', { name: /explore a tariff reference/i })).toBeVisible();
