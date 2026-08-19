@@ -27,6 +27,26 @@ def test_vercel_deploys_the_standalone_public_site() -> None:
             "destination": "/api/operational?resource=search",
         },
         {
+            "source": "/v1/lookup/:code",
+            "destination": "/api/operational?resource=lookup&code=:code",
+        },
+        {
+            "source": "/v1/sections",
+            "destination": "/api/operational?resource=sections",
+        },
+        {
+            "source": "/v1/chapters",
+            "destination": "/api/operational?resource=chapters",
+        },
+        {
+            "source": "/v1/codes/:code/parent",
+            "destination": "/api/operational?resource=parent&code=:code",
+        },
+        {
+            "source": "/v1/codes/:code/children",
+            "destination": "/api/operational?resource=children&code=:code",
+        },
+        {
             "source": "/v1/:path*",
             "destination": "https://arancel-mx.fastapicloud.dev/v1/:path*",
         },

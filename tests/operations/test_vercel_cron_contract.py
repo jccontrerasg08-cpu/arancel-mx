@@ -37,3 +37,16 @@ def test_vercel_bundles_the_operational_driver_only_for_operational_functions() 
     assert not (ROOT / "requirements.txt").exists()
     assert 'Path(__file__).with_name("_vendor")' in read_handler
     assert 'Path(__file__).with_name("_vendor")' in sync_handler
+
+
+def test_vercel_routes_lookup_and_hierarchy_to_the_active_release_function() -> None:
+    config = json.loads((ROOT / "vercel.json").read_text(encoding="utf-8"))
+    rewrites = {item["source"]: item["destination"] for item in config["rewrites"]}
+
+    assert rewrites["/v1/search"] == "/api/operational?resource=search"
+    assert rewrites["/v1/lookup/:code"] == "/api/operational?resource=lookup&code=:code"
+    assert rewrites["/v1/sections"] == "/api/operational?resource=sections"
+    assert rewrites["/v1/chapters"] == "/api/operational?resource=chapters"
+    assert rewrites["/v1/codes/:code/parent"] == "/api/operational?resource=parent&code=:code"
+    assert rewrites["/v1/codes/:code/children"] == "/api/operational?resource=children&code=:code"
+    assert rewrites["/v1/:path*"] == "https://arancel-mx.fastapicloud.dev/v1/:path*"

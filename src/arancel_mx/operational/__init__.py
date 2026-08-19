@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime
 from decimal import Decimal
 import hashlib
@@ -52,6 +52,7 @@ class OperationalRelease:
     generated_at: datetime
     published_at: datetime
     source_checked_at: datetime
+    evidence: dict[str, list[dict[str, object]]] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -75,8 +76,12 @@ CREATE TABLE IF NOT EXISTS operational_release (
     generated_at TIMESTAMPTZ NOT NULL,
     published_at TIMESTAMPTZ NOT NULL,
     source_checked_at TIMESTAMPTZ NOT NULL,
+    evidence_json JSONB NOT NULL DEFAULT '{}'::jsonb,
     promoted_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE operational_release
+    ADD COLUMN IF NOT EXISTS evidence_json JSONB NOT NULL DEFAULT '{}'::jsonb;
 
 CREATE TABLE IF NOT EXISTS operational_record (
     release_tag TEXT NOT NULL REFERENCES operational_release(tag),
@@ -113,8 +118,9 @@ INSERT INTO operational_release (
     manifest_sha256,
     generated_at,
     published_at,
-    source_checked_at
-) VALUES (%s, %s, %s, %s, %s, %s, %s)
+    source_checked_at,
+    evidence_json
+) VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb)
 ON CONFLICT (tag) DO NOTHING
 """.strip()
 
@@ -146,6 +152,15 @@ def _require_timezone(value: datetime, field: str) -> None:
         raise PromotionError(f"{field} must be timezone-aware")
 
 
+def _validate_evidence(evidence: object) -> None:
+    if not isinstance(evidence, dict):
+        raise PromotionError("release evidence must be an object")
+    for key in ("source_documents", "record_provenance", "national_notes"):
+        value = evidence.get(key, [])
+        if not isinstance(value, list) or any(not isinstance(item, dict) for item in value):
+            raise PromotionError(f"release evidence {key} must be a list of objects")
+
+
 def _validate_release(release: OperationalRelease) -> None:
     if not _RELEASE_TAG.fullmatch(release.tag):
         raise PromotionError("tag must use the immutable data-YYYY.MM.DD format")
@@ -161,6 +176,7 @@ def _validate_release(release: OperationalRelease) -> None:
         ("source_checked_at", release.source_checked_at),
     ):
         _require_timezone(value, field)
+    _validate_evidence(release.evidence)
 
 
 def _validate_record(record: OperationalRecord) -> None:
@@ -209,6 +225,46 @@ def _source_document_ids(value: object) -> tuple[str, ...]:
     return tuple(parsed)
 
 
+def _evidence_rows(connection: duckdb.DuckDBPyConnection) -> dict[str, list[dict[str, object]]]:
+    """Extract only public evidence views present in a certified release."""
+
+    tables = {
+        str(row[0])
+        for row in connection.execute(
+            "SELECT table_name FROM information_schema.tables WHERE table_schema = 'main'"
+        ).fetchall()
+    }
+    if not {"source_document", "record_provenance", "canonical_record", "arancel_mx_national_notes"}.issubset(tables):
+        return {"source_documents": [], "record_provenance": [], "national_notes": []}
+
+    def objects(statement: str) -> list[dict[str, object]]:
+        result = connection.execute(statement)
+        columns = [item[0] for item in result.description]
+        return [
+            {column: _json_value(value) for column, value in zip(columns, row, strict=True)}
+            for row in result.fetchall()
+        ]
+
+    return {
+        "source_documents": objects(
+            "SELECT source_document_id, authority, publication_venue, title, source_url, "
+            "sha256, published_at, effective_from, effective_to FROM source_document "
+            "ORDER BY source_document_id"
+        ),
+        "record_provenance": objects(
+            "SELECT c.code, p.source_document_id, p.role, p.is_primary "
+            "FROM canonical_record AS c JOIN record_provenance AS p "
+            "ON p.record_id = c.record_id WHERE c.is_current = TRUE "
+            "ORDER BY c.code, p.is_primary DESC, p.source_document_id, p.role"
+        ),
+        "national_notes": objects(
+            "SELECT chapter, note_number, text, source_document_id, scope_type, scope_value, "
+            "applicability_basis FROM arancel_mx_national_notes "
+            "ORDER BY chapter, note_number, scope_type, scope_value NULLS LAST, source_document_id"
+        ),
+    }
+
+
 def load_certified_release(
     release_dir: Path,
     *,
@@ -226,6 +282,12 @@ def load_certified_release(
     if not isinstance(schema_version, str) or not schema_version:
         raise PromotionError("certified manifest is missing schema_version")
     manifest_path = release_dir / "manifest.json"
+    database = release_dir / "arancel_mx.duckdb"
+    with duckdb.connect(str(database), read_only=True) as connection:
+        result = connection.execute("SELECT * FROM arancel_mx")
+        columns = [item[0] for item in result.description]
+        rows = result.fetchall()
+        evidence = _evidence_rows(connection)
     release = OperationalRelease(
         tag=f"data-{dataset_version}",
         dataset_version=dataset_version,
@@ -234,14 +296,9 @@ def load_certified_release(
         generated_at=_parse_datetime(manifest.get("generated_at"), "generated_at"),
         published_at=published_at,
         source_checked_at=source_checked_at,
+        evidence=evidence,
     )
     _validate_release(release)
-
-    database = release_dir / "arancel_mx.duckdb"
-    with duckdb.connect(str(database), read_only=True) as connection:
-        result = connection.execute("SELECT * FROM arancel_mx")
-        columns = [item[0] for item in result.description]
-        rows = result.fetchall()
     records: list[OperationalRecord] = []
     for row in rows:
         payload = {
@@ -299,6 +356,7 @@ def promote_release(
                 release.generated_at,
                 release.published_at,
                 release.source_checked_at,
+                json.dumps(release.evidence, sort_keys=True, separators=(",", ":")),
             ),
         )
         for record in records:

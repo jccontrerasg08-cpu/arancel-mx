@@ -96,3 +96,28 @@ def test_operational_handler_accepts_vercel_neon_database_url(monkeypatch):
     request.do_GET()
 
     assert response == [module.HTTPStatus.OK, metadata]
+
+
+def test_operational_handler_serves_exact_lookup_from_the_active_release(monkeypatch):
+    module = _handler_module()
+    response: list[object] = []
+    request = module.handler.__new__(module.handler)
+    request.path = "/api/operational?resource=lookup&code=85171301"
+    request.headers = {}
+    request._respond = lambda status, payload: response.extend((status, payload))
+    monkeypatch.setenv("ARANCEL_MX_DATABASE_URL", "postgresql://central")
+
+    class Connection:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_value, traceback):
+            return False
+
+    record = {"code": "85171301", "dataset_version": "2026.08.18"}
+    monkeypatch.setattr(module, "_connect", lambda url: Connection())
+    monkeypatch.setattr(module, "lookup_active_release", lambda connection, code: record)
+
+    request.do_GET()
+
+    assert response == [module.HTTPStatus.OK, record]

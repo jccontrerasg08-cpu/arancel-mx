@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from pathlib import Path
+import os
 import shutil
 from typing import Literal
 import uuid
@@ -47,7 +48,11 @@ class DatasetManager:
     ) -> None:
         self.config = config
         self.cache = DatasetCache(config.cache_dir)
-        self._session = session if session is not None else build_session()
+        self._session = (
+            session
+            if session is not None
+            else build_session(github_token=os.environ.get("ARANCEL_MX_GITHUB_TOKEN"))
+        )
         # Offline mode must not even construct the network-facing release client.
         self._release_client = (
             None

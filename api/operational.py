@@ -15,7 +15,19 @@ from api._runtime import ensure_project_source
 
 ensure_project_source()
 
-from arancel_mx.operational.query import active_release_metadata, search_active_release
+from arancel_mx.operational.query import (
+    active_release_metadata,
+    chapters_active_release,
+    children_active_release,
+    ficha_active_release,
+    lookup_active_release,
+    national_notes_active_release,
+    parent_active_release,
+    provenance_active_release,
+    search_public_active_release,
+    sections_active_release,
+    suggest_active_release,
+)
 from arancel_mx.operational.runtime_config import operational_database_url
 
 
@@ -63,8 +75,57 @@ class handler(BaseHTTPRequestHandler):
                     return
                 if resource == "search":
                     text = query.get("q", [""])[0]
-                    limit = int(query.get("limit", ["8"])[0])
-                    self._respond(HTTPStatus.OK, search_active_release(connection, text, limit=limit))
+                    limit = int(query.get("limit", ["20"])[0])
+                    self._respond(HTTPStatus.OK, search_public_active_release(connection, text, limit=limit))
+                    return
+                if resource == "suggest":
+                    text = query.get("q", [""])[0]
+                    limit = int(query.get("limit", ["5"])[0])
+                    self._respond(HTTPStatus.OK, suggest_active_release(connection, text, limit=limit))
+                    return
+                if resource == "ficha":
+                    ficha = ficha_active_release(connection, query.get("code", [""])[0])
+                    if ficha is None:
+                        self._respond(HTTPStatus.NOT_FOUND, {"status": "not_found"})
+                    else:
+                        self._respond(HTTPStatus.OK, ficha)
+                    return
+                if resource == "sections":
+                    self._respond(HTTPStatus.OK, sections_active_release())
+                    return
+                if resource == "lookup":
+                    record = lookup_active_release(connection, query.get("code", [""])[0])
+                    if record is None:
+                        self._respond(HTTPStatus.NOT_FOUND, {"status": "not_found"})
+                    else:
+                        self._respond(HTTPStatus.OK, record)
+                    return
+                if resource == "chapters":
+                    self._respond(HTTPStatus.OK, chapters_active_release(connection))
+                    return
+                if resource == "parent":
+                    self._respond(
+                        HTTPStatus.OK,
+                        parent_active_release(connection, query.get("code", [""])[0]),
+                    )
+                    return
+                if resource == "children":
+                    self._respond(
+                        HTTPStatus.OK,
+                        children_active_release(connection, query.get("code", [""])[0]),
+                    )
+                    return
+                if resource == "national-notes":
+                    self._respond(
+                        HTTPStatus.OK,
+                        national_notes_active_release(connection, query.get("chapter", [""])[0]),
+                    )
+                    return
+                if resource == "provenance":
+                    self._respond(
+                        HTTPStatus.OK,
+                        provenance_active_release(connection, query.get("code", [""])[0]),
+                    )
                     return
         except (OSError, RuntimeError, ValueError):
             logger.error("operational read-only query failed")

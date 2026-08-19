@@ -40,6 +40,7 @@ La portada del repositorio explica **qué es** `arancel-mx` y cómo empezar. Est
 | Publicar el paquete Python | [Release del paquete](package-release.md) | Flujo TestPyPI/PyPI y gates de publicación. |
 | Configurar GitHub y checks | [Configuración de GitHub](operations/github-settings.md) | Protección de `main`, permisos y required checks. |
 | Integrar cambios paralelos sin revertir arquitectura | [Handoff de integración](integration-handoff.md) | Baseline actual y fronteras de alto riesgo. |
+| Centralizar la capa pública en Vercel | [Centralización Vercel](vercel-centralization.md) | Cutover por etapas, identidad de release y retiro seguro de FastAPI. |
 | Enviar cambios | [CONTRIBUTING.md](../CONTRIBUTING.md) | Flujo y criterios de contribución. |
 | Reportar un problema de seguridad | [SECURITY.md](../SECURITY.md) | Canal de reporte privado. |
 
