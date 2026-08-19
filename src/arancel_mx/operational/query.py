@@ -136,21 +136,30 @@ def _public_record(payload: object, dataset_version: object) -> dict[str, object
     width = _PARENT_WIDTH.get(len(code))
     if not code or width is None and len(code) != 2:
         raise ValueError("operational record has an invalid tariff code")
+    is_tariff_fraction = record.get("level") == "fraccion8" and len(code) == 8
     return {
         "code": code,
         "level": str(record.get("level") or ""),
         "description": str(record.get("description") or ""),
         "unit_name": record.get("unit_name"),
-        "igi": {
-            "text": record.get("igi_text"),
-            "kind": record.get("igi_kind"),
-            "value": _public_number(record.get("igi_value")),
-        },
-        "ige": {
-            "text": record.get("ige_text"),
-            "kind": record.get("ige_kind"),
-            "value": _public_number(record.get("ige_value")),
-        },
+        "igi": (
+            {
+                "text": record.get("igi_text"),
+                "kind": record.get("igi_kind"),
+                "value": _public_number(record.get("igi_value")),
+            }
+            if is_tariff_fraction
+            else None
+        ),
+        "ige": (
+            {
+                "text": record.get("ige_text"),
+                "kind": record.get("ige_kind"),
+                "value": _public_number(record.get("ige_value")),
+            }
+            if is_tariff_fraction
+            else None
+        ),
         "parent_code": None if width is None else code[:width],
         "dataset_version": str(dataset_version),
         "schema_version": str(record.get("schema_version") or ""),
