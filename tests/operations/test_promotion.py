@@ -290,3 +290,44 @@ def test_certified_evidence_snapshot_preserves_public_provenance_and_notes(tmp_p
             "applicability_basis": "explicit",
         }
     ]
+
+
+def test_existing_release_rehydrates_evidence_only_when_manifest_identity_matches():
+    from arancel_mx.operational import OperationalRecord, OperationalRelease, promote_release
+
+    connection = RecordingConnection()
+    release = OperationalRelease(
+        tag="data-2026.08.17",
+        dataset_version="2026.08.17",
+        schema_version="2",
+        manifest_sha256="d" * 64,
+        generated_at=datetime(2026, 8, 17, 11, 0, tzinfo=timezone.utc),
+        published_at=datetime(2026, 8, 17, 12, 0, tzinfo=timezone.utc),
+        source_checked_at=datetime(2026, 8, 19, 18, 0, tzinfo=timezone.utc),
+        evidence={
+            "source_documents": [{"source_document_id": "dof-1"}],
+            "record_provenance": [{"code": "28030002", "source_document_id": "dof-1"}],
+            "national_notes": [],
+        },
+    )
+    record = OperationalRecord(
+        code="28030002",
+        level="fraccion8",
+        description="Negro de humo de hornos.",
+        record_hash="e" * 64,
+        source_document_ids=("dof-1",),
+        payload={"code": "28030002", "description": "Negro de humo de hornos."},
+    )
+
+    promote_release(connection, release, [record])
+
+    statement, values = next(
+        (statement, values)
+        for statement, values in connection.statements
+        if "INSERT INTO operational_release" in statement
+    )
+    assert "ON CONFLICT (tag) DO UPDATE" in statement
+    assert "SET evidence_json = EXCLUDED.evidence_json" in statement
+    assert "operational_release.manifest_sha256 = EXCLUDED.manifest_sha256" in statement
+    assert values is not None
+    assert '"source_document_id":"dof-1"' in str(values[-1])
