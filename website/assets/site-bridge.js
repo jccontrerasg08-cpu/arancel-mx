@@ -1,6 +1,19 @@
 const consumerQuickstart = 'https://github.com/jccontrerasg08-cpu/arancel-mx/blob/main/docs/consumer-quickstart.md';
 const hostedExplorer = 'https://arancel-mx.vercel.app/app';
 
+function repairNavigationDestinations() {
+  const routes = new Map([
+    ['/moa-guide', '/moa'],
+    ['/product', '/app'],
+  ]);
+  document.querySelectorAll('a[href]').forEach((link) => {
+    const destination = routes.get(link.getAttribute('href'));
+    if (destination) link.setAttribute('href', destination);
+  });
+  const destination = routes.get(window.location.pathname);
+  if (destination) window.location.replace(`${destination}${window.location.search}${window.location.hash}`);
+}
+
 function redirectFormerExplorerLinks() {
   document.querySelectorAll(`a[href="${hostedExplorer}"]`).forEach((link) => {
     link.href = consumerQuickstart;
@@ -38,6 +51,18 @@ function updateDisplayedRelease() {
       label.textContent = `release / ${activeDatasetTag}`;
     }
   });
+
+  const currentReleasePattern = /(?:data-)?2026\.08\.(?:15|16)/g;
+  const root = document.getElementById('root');
+  if (!root) return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    if (node.parentElement?.closest('script, style, a[href*="releases/tag"]')) continue;
+    if (currentReleasePattern.test(node.nodeValue)) {
+      node.nodeValue = node.nodeValue.replace(currentReleasePattern, activeDatasetTag);
+    }
+    currentReleasePattern.lastIndex = 0;
+  }
 }
 
 function synchronizeDisplayedRelease() {
@@ -60,6 +85,7 @@ function synchronizeDisplayedRelease() {
 }
 
 function applyPublicSiteBridge() {
+  repairNavigationDestinations();
   redirectFormerExplorerLinks();
   updateStandaloneCopy();
   synchronizeDisplayedRelease();

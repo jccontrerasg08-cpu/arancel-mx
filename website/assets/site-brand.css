@@ -53,3 +53,34 @@
     max-height: 88px;
   }
 }
+
+.arancel-record-link,
+.arancel-record-panel__links a {
+  color: var(--arancel-brand-green);
+  font: 600 0.78rem/1.35 "DM Mono", ui-monospace, monospace;
+  text-underline-offset: 3px;
+}
+
+.arancel-record-panel {
+  width: min(1180px, calc(100% - 40px));
+  margin: 20px auto;
+  padding: 20px;
+  color: var(--arancel-brand-navy);
+  background: #f8f5ea;
+  border: 1px solid rgba(16, 42, 67, 0.16);
+  border-radius: 12px;
+  font-family: "DM Sans", system-ui, sans-serif;
+}
+
+.arancel-record-panel__title { margin: 0; font-size: 1.25rem; }
+.arancel-record-panel__meta,
+.arancel-record-panel__status { margin: 8px 0 0; font: 0.76rem/1.5 "DM Mono", ui-monospace, monospace; }
+.arancel-record-panel__fields { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 16px 0; }
+.arancel-record-panel__fields dt { color: #567; font: 0.7rem "DM Mono", ui-monospace, monospace; text-transform: uppercase; }
+.arancel-record-panel__fields dd { margin: 4px 0 0; font-weight: 700; }
+.arancel-record-panel__links { display: flex; flex-wrap: wrap; gap: 14px; }
+
+@media (max-width: 680px) {
+  .arancel-record-panel { width: min(100% - 24px, 1180px); }
+  .arancel-record-panel__fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

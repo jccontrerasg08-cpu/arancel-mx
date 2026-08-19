@@ -19,6 +19,10 @@ def test_vercel_deploys_the_standalone_public_site() -> None:
     assert config["buildCommand"].startswith(f"python{runtime_version} -m pip install ")
     assert config["rewrites"] == [
         {
+            "source": "/healthz",
+            "destination": "/api/operational?resource=health",
+        },
+        {
             "source": "/v1/meta",
             "destination": "/api/operational?resource=meta",
         },
@@ -145,8 +149,9 @@ def test_public_site_serves_the_react_shell_with_canonical_brand_assets() -> Non
     assert "/assets/hub-search.css" not in index
     assert "/assets/hub-search.js" not in index
     assert "data-arancel-hub-search" not in index
-    assert "/assets/site-brand.css" not in index
-    assert "/assets/site-bridge.js" not in index
+    assert "/assets/site-brand.css" in index
+    assert "/assets/site-bridge.js" in index
+    assert "/assets/hub-interactions.js" in index
 
     assert "manus-runtime" not in index
     assert "/__manus__/debug-collector.js" not in index
@@ -158,8 +163,26 @@ def test_public_site_serves_the_react_shell_with_canonical_brand_assets() -> Non
     assert "filter" in logo
 
 
+def test_public_site_interactions_link_results_to_verified_record_data() -> None:
+    interactions = (ROOT / "website" / "assets" / "hub-interactions.js").read_text(encoding="utf-8")
+
+    assert "Inspect verified record" in interactions
+    assert "/v1/lookup/" in interactions
+    assert "/v1/codes/" in interactions
+    assert "data-arancel-record-panel" in interactions
+
+
 def test_public_site_does_not_declare_a_vercel_fastapi_entrypoint() -> None:
     project = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
 
     assert "[tool.vercel]" not in project
     assert "[tool.fastapi]" in project
+
+
+def test_public_site_bridge_keeps_current_release_and_route_aliases() -> None:
+    bridge = (ROOT / "website" / "assets" / "site-bridge.js").read_text(encoding="utf-8")
+
+    assert "fetch('/v1/meta'" in bridge
+    assert "['/moa-guide', '/moa']" in bridge
+    assert "['/product', '/app']" in bridge
+    assert "currentReleasePattern" in bridge

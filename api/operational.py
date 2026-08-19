@@ -49,12 +49,16 @@ class handler(BaseHTTPRequestHandler):
     """Expose only metadata and bounded retrieval from the active release view."""
 
     def do_GET(self) -> None:  # noqa: N802 - Vercel uses BaseHTTPRequestHandler
+        query = parse_qs(urlparse(self.path).query)
+        resource = query.get("resource", [""])[0]
+        if resource == "health":
+            self._respond(HTTPStatus.OK, {"status": "ok"})
+            return
+
         database_url = operational_database_url()
         if not database_url:
             self._respond(HTTPStatus.SERVICE_UNAVAILABLE, {"status": "not_configured"})
             return
-        query = parse_qs(urlparse(self.path).query)
-        resource = query.get("resource", [""])[0]
         try:
             with _connect(database_url) as connection:
                 if resource in {"meta", "ready"}:
