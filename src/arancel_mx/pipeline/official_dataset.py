@@ -21,6 +21,7 @@ from arancel_mx.parsers.workbooks import (
 )
 from arancel_mx.pipeline.build import export_arancel_release, materialize_arancel
 from arancel_mx.pipeline.hierarchy import assemble_classifications
+from arancel_mx.pipeline.nico_coverage import nico_coverage_report
 from arancel_mx.pipeline.official_sources import (
     OfficialInputSnapshot,
     capture_official_inputs,
@@ -191,6 +192,10 @@ def _release_metadata(
         **config.provenance().to_dict(),
         "level_counts": _level_counts(classifications),
         "reconciliation": asdict(snapshot.reconciliation),
+        "nico_coverage": nico_coverage_report(
+            classifications,
+            [identity.to_dict() for identity in snapshot.identities],
+        ),
         "source_identity": [
             identity.to_dict()
             for identity in sorted(

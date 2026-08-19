@@ -288,6 +288,18 @@ def test_offline_build_produces_verified_release(tmp_path):
         ("dof_tariff_decree", "tariff_decree"),
         ("national_notes", "national_notes"),
     }
+    coverage = manifest["nico_coverage"]
+    assert coverage["counts"] == {
+        "fraccion8": 1,
+        "with_nico_descendant": 1,
+        "missing_nico_descendant": 0,
+        "known_upstream_lag": 0,
+        "unclassified_missing": 0,
+    }
+    assert {item["dataset_key"] for item in coverage["source_identity"]} == {
+        "ligie",
+        "nico",
+    }
     for source in manifest["source_documents"]:
         assert source["source_url"].startswith("https://")
         assert len(source["sha256"]) == 64
