@@ -21,6 +21,9 @@ test('keeps source-cited T-MEC, RRNA and pedimento guidance accessible', async (
   await page.getByRole('tab', { name: /origen t-mec/i }).click();
   await page.locator('#tmec-code').fill('85171301');
   await page.locator('#tmec-origin').selectOption('MX');
+  await page.locator('#tmec-reference-url').fill('https://www.gob.mx/t-mec/rule');
+  await page.locator('#tmec-reference-consulted-at').fill('2026-08-20');
+  await page.locator('#tmec-reference-note').fill('Regla declarada para la revisión.');
   await expect(page.getByTestId('tmec-result')).toContainText(/declaraciones de proveedor/i);
   await expect(page.getByTestId('tmec-source')).toHaveAttribute('href', /gob\.mx\/t-mec/);
 
@@ -245,6 +248,11 @@ test('restores local declared rates and review references without a network subm
   await page.locator('#tmec-reference-url').fill('https://www.gob.mx/t-mec/rule');
   await page.locator('#tmec-reference-consulted-at').fill('2026-08-20');
   await page.locator('#tmec-reference-note').fill('Regla declarada');
+  await page.locator('#tmec-rule-reference').fill('Capítulo 4, regla declarada');
+  await page.locator('#tmec-vcr-method').fill('Valor de transacción');
+  await page.locator('#tmec-certification-reference').fill('CERT-001');
+  await page.locator('#tmec-supplier-reference').fill('SUP-001');
+  await page.locator('#tmec-bom-reference').fill('BOM-001');
   await page.getByRole('tab', { name: /rrna y despacho/i }).click();
   await page.locator('#rrna-reference-url').fill('https://www.snice.gob.mx/reference');
   await page.locator('#rrna-reference-consulted-at').fill('2026-08-20');
@@ -256,6 +264,11 @@ test('restores local declared rates and review references without a network subm
   await expect(page.getByTestId('dta-rate')).toHaveValue('0.8');
   await page.getByRole('tab', { name: /origen t-mec/i }).click();
   await expect(page.locator('#tmec-reference-url')).toHaveValue('https://www.gob.mx/t-mec/rule');
+  await expect(page.locator('#tmec-rule-reference')).toHaveValue('Capítulo 4, regla declarada');
+  await expect(page.locator('#tmec-vcr-method')).toHaveValue('Valor de transacción');
+  await expect(page.locator('#tmec-certification-reference')).toHaveValue('CERT-001');
+  await expect(page.locator('#tmec-supplier-reference')).toHaveValue('SUP-001');
+  await expect(page.locator('#tmec-bom-reference')).toHaveValue('BOM-001');
   await page.getByRole('tab', { name: /rrna y despacho/i }).click();
   await expect(page.locator('#rrna-reference-note')).toHaveValue('Aviso declarado');
 });
@@ -297,4 +310,59 @@ test('clears selected release provenance when the tariff hypothesis is manually 
 
   const draft = await page.evaluate(() => JSON.parse(localStorage.getItem('arancel-mx-trade-draft')));
   expect(draft.traceability.dataset).toEqual({ version: null, record_code: '85299099' });
+});
+
+
+test('captures structured declared T-MEC evidence alongside the official reference without confirming preference', async ({ page }) => {
+  await page.goto('/trade');
+  await page.getByRole('tab', { name: /origen t-mec/i }).click();
+
+  await page.locator('#tmec-code').fill('85171301');
+  await page.locator('#tmec-origin').selectOption('MX');
+  await page.locator('#tmec-suppliers').check();
+  await page.locator('#tmec-bom').check();
+  await page.locator('#tmec-reference-url').fill('https://www.gob.mx/t-mec/rule');
+  await page.locator('#tmec-reference-consulted-at').fill('2026-08-20');
+  await page.locator('#tmec-reference-note').fill('Regla declarada');
+  await page.locator('#tmec-rule-reference').fill('Capítulo 4, regla específica revisada');
+  await page.locator('#tmec-vcr-method').fill('Método de valor de transacción declarado');
+  await page.locator('#tmec-certification-reference').fill('CERT-2026-001');
+  await page.locator('#tmec-supplier-reference').fill('SUP-DECL-2026-004');
+  await page.locator('#tmec-bom-reference').fill('BOM-2026-009');
+  await page.locator('#tmec-bom-reference').press('Tab');
+
+  await expect(page.getByTestId('tmec-result')).toContainText(/revisión documental requerida/i);
+  await expect(page.getByTestId('tmec-result')).toContainText('CERT-2026-001');
+  await expect(page.getByTestId('tmec-result')).toContainText(/no determina.*origen/i);
+  await expect(page.getByTestId('tmec-origin-rules-source')).toHaveAttribute('href', /04_ESP_Reglas_de_Origen/);
+  await expect(page.getByTestId('tmec-origin-procedures-source')).toHaveAttribute('href', /05ESPProcedimientosdeorigen/);
+});
+
+
+test('keeps the local draft action and search feedback available across the trade workflow', async ({ page }) => {
+  await page.goto('/trade');
+
+  await expect(page.getByRole('button', { name: /guardar expediente local/i })).toBeVisible();
+  await expect(page.getByTestId('trade-draft-status')).toHaveText(/sin cambios guardados/i);
+
+  await page.getByTestId('product-value').fill('2500');
+  await expect(page.getByTestId('trade-draft-status')).toHaveText(/cambios sin guardar/i);
+  await page.getByRole('button', { name: /guardar expediente local/i }).click();
+  await expect(page.getByTestId('trade-draft-status')).toHaveText(/expediente guardado localmente/i);
+
+  let releaseSearch;
+  await page.route('**/v1/search**', async (route) => {
+    await new Promise((resolve) => { releaseSearch = resolve; });
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify([]),
+    });
+  });
+  await page.locator('#classification-query').fill('sin coincidencias');
+  await page.locator('#search-tariff').click();
+  await expect(page.locator('#classification-results')).toHaveAttribute('aria-busy', 'true');
+  await expect(page.locator('#search-tariff')).toHaveText(/buscando/i);
+  releaseSearch();
+  await expect(page.locator('#classification-results')).toHaveAttribute('aria-busy', 'false');
+  await expect(page.locator('#classification-results')).toContainText(/no se encontraron coincidencias/i);
 });

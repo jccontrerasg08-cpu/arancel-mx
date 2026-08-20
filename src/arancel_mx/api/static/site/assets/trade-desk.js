@@ -19,6 +19,8 @@ const LOCAL_FORM_FIELD_IDS = Object.freeze([
   'incrementables-value', 'customs-value', 'igi-rate', 'dta-rate', 'iva-rate', 'ieps-rate',
   'tmec-code', 'tmec-origin', 'tmec-vcr', 'tmec-vcr-required', 'tmec-suppliers', 'tmec-bom',
   'tmec-reference-url', 'tmec-reference-consulted-at', 'tmec-reference-note',
+  'tmec-rule-reference', 'tmec-vcr-method', 'tmec-certification-reference',
+  'tmec-supplier-reference', 'tmec-bom-reference',
   'pedimento-code', 'pedimento-regime', 'pedimento-origin', 'pedimento-value',
   'pedimento-invoice', 'pedimento-transport', 'pedimento-origin-evidence', 'pedimento-rrna-review',
   'rrna-reference-url', 'rrna-reference-consulted-at', 'rrna-reference-note',
@@ -28,6 +30,7 @@ const byId = (id) => document.getElementById(id);
 const value = (id) => byId(id)?.value ?? '';
 const checked = (id) => byId(id)?.checked === true;
 let selectedRecord = Object.freeze({ code: null, datasetVersion: null });
+let isDraftDirty = false;
 
 function numberValue(id) {
   const raw = value(id).trim();
@@ -37,6 +40,24 @@ function numberValue(id) {
 function updateStatus(message) {
   const status = byId('trade-status');
   if (status) status.textContent = message;
+}
+
+function updateDraftStatus(message) {
+  const status = byId('trade-draft-status');
+  if (status) status.textContent = message;
+}
+
+function markDraftDirty() {
+  if (isDraftDirty) return;
+  isDraftDirty = true;
+  updateDraftStatus('Cambios sin guardar en este navegador.');
+}
+
+function setSearchFeedback(message, busy = false) {
+  const output = byId('classification-results');
+  if (!output) return;
+  output.setAttribute('aria-busy', String(busy));
+  renderTextMessage(output, message);
 }
 
 function renderTextMessage(container, message) {
@@ -49,6 +70,18 @@ function renderTextMessage(container, message) {
 
 function sourceLink(source, testId) {
   return `<a ${testId ? `data-testid="${testId}"` : ''} class="trade-source" href="${source.url}" target="_blank" rel="noreferrer">${source.title}</a>`;
+}
+
+function appendSourceLink(container, source, testId) {
+  if (!source || typeof source.url !== 'string' || typeof source.title !== 'string') return;
+  const link = document.createElement('a');
+  link.className = 'trade-source';
+  link.href = source.url;
+  link.target = '_blank';
+  link.rel = 'noreferrer';
+  if (testId) link.dataset.testid = testId;
+  link.textContent = source.title;
+  container.append(link);
 }
 
 function renderEstimate(estimate, customsValue) {
@@ -113,6 +146,11 @@ function renderTmecResult() {
     tmecReferenceUrl: value('tmec-reference-url'),
     tmecReferenceConsultedAt: value('tmec-reference-consulted-at'),
     tmecReferenceNote: value('tmec-reference-note'),
+    ruleReference: value('tmec-rule-reference'),
+    vcrMethod: value('tmec-vcr-method'),
+    certificationReference: value('tmec-certification-reference'),
+    supplierDeclarationReference: value('tmec-supplier-reference'),
+    billOfMaterialsReference: value('tmec-bom-reference'),
   });
   const container = byId('tmec-result');
   if (!container) return;
@@ -121,16 +159,34 @@ function renderTmecResult() {
     threshold_not_met: 'Umbral declarado no alcanzado',
     evidence_review_required: 'Revisión documental requerida',
   }[result.status] || 'Revisión documental requerida';
-  const vcrTrace = result.status === 'evidence_required'
-    ? ''
-    : `<p class="trade-result__caption">VCR declarado: ${result.regionalValueContent}% · umbral declarado: ${result.requiredRegionalValueContent}%</p>`;
-  container.innerHTML = `
-    <strong>${statusLabel}</strong>
-    ${result.nextStep}
-    ${vcrTrace}
-    <div style="margin-top:10px">${sourceLink(result.source, 'tmec-source')}</div>
-    <p class="trade-disclaimer">${result.disclaimer}</p>
-  `;
+  const heading = document.createElement('strong');
+  heading.textContent = statusLabel;
+  const nextStep = document.createElement('p');
+  nextStep.textContent = result.nextStep;
+  container.replaceChildren(heading, nextStep);
+  if (result.status !== 'evidence_required') {
+    const vcrTrace = document.createElement('p');
+    vcrTrace.className = 'trade-result__caption';
+    vcrTrace.textContent = `VCR declarado: ${result.regionalValueContent}% · umbral declarado: ${result.requiredRegionalValueContent}%`;
+    container.append(vcrTrace);
+  }
+  const declaredEvidence = Object.values(result.evidence || {}).filter(Boolean);
+  if (declaredEvidence.length) {
+    const evidenceTrace = document.createElement('p');
+    evidenceTrace.className = 'trade-result__caption';
+    evidenceTrace.textContent = `Evidencia declarada: ${declaredEvidence.join(' · ')}`;
+    container.append(evidenceTrace);
+  }
+  const sourceContainer = document.createElement('div');
+  sourceContainer.style.marginTop = '10px';
+  const sources = Array.isArray(result.source) ? result.source : [result.source];
+  const testIds = ['tmec-source', 'tmec-origin-rules-source', 'tmec-origin-procedures-source'];
+  sources.forEach((source, index) => appendSourceLink(sourceContainer, source, testIds[index]));
+  container.append(sourceContainer);
+  const disclaimer = document.createElement('p');
+  disclaimer.className = 'trade-disclaimer';
+  disclaimer.textContent = result.disclaimer;
+  container.append(disclaimer);
 }
 
 function renderPedimentoChecklist() {
@@ -167,11 +223,15 @@ function renderPedimentoChecklist() {
 async function searchTariff() {
   const query = value('classification-query').trim();
   const output = byId('classification-results');
+  const searchButton = byId('search-tariff');
   if (!query) {
-    output.innerHTML = '<p class="trade-empty">Describe el producto o ingresa una fracción propuesta para buscar en la release verificada.</p>';
+    setSearchFeedback('Describe el producto o ingresa una fracción propuesta para buscar en la release verificada.');
     return;
   }
-  output.innerHTML = '<p class="trade-empty">Consultando la release verificada…</p>';
+  if (!output || !searchButton) return;
+  searchButton.disabled = true;
+  searchButton.textContent = 'Buscando…';
+  setSearchFeedback(`Consultando la release verificada para “${query}”…`, true);
   try {
     const response = await fetch(`/v1/search?q=${encodeURIComponent(query)}&limit=5`);
     if (!response.ok) throw new Error('La búsqueda verificada no está disponible en este momento.');
@@ -183,7 +243,7 @@ async function searchTariff() {
       .map((entry) => entry?.record)
       .filter((record) => record && typeof record.code === 'string' && typeof record.description === 'string');
     if (!records.length) {
-      output.innerHTML = '<p class="trade-empty">No se encontraron coincidencias. Amplía la descripción técnica y conserva la evidencia del producto.</p>';
+      setSearchFeedback('No se encontraron coincidencias. Amplía la descripción técnica y conserva la evidencia del producto.');
       return;
     }
     output.replaceChildren();
@@ -204,6 +264,7 @@ async function searchTariff() {
           datasetVersion: typeof record.dataset_version === 'string' ? record.dataset_version : null,
         });
         if (button.dataset.igi) byId('igi-rate').value = button.dataset.igi;
+        markDraftDirty();
         updateStatus(`Se cargó ${button.dataset.code} como hipótesis de trabajo. Verifica clasificación, vigencia y evidencia antes de usarla.`);
       });
       const detail = document.createElement('p');
@@ -228,7 +289,11 @@ async function searchTariff() {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'La búsqueda verificada no está disponible en este momento.';
-    renderTextMessage(output, message);
+    setSearchFeedback(message);
+  } finally {
+    output.setAttribute('aria-busy', 'false');
+    searchButton.disabled = false;
+    searchButton.textContent = 'Buscar';
   }
 }
 
@@ -299,6 +364,11 @@ function buildLocalTraceability() {
         url: value('tmec-reference-url'),
         consulted_at: value('tmec-reference-consulted-at'),
         note: value('tmec-reference-note'),
+        rule_reference: value('tmec-rule-reference'),
+        vcr_method: value('tmec-vcr-method'),
+        certification_reference: value('tmec-certification-reference'),
+        supplier_reference: value('tmec-supplier-reference'),
+        bill_of_materials_reference: value('tmec-bom-reference'),
       }),
       rrna: Object.freeze({
         url: value('rrna-reference-url'),
@@ -346,11 +416,12 @@ function persistDraft() {
     // Incomplete inputs remain a legitimate local working draft; only the calculation snapshot is unavailable.
   }
   localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
-  updateStatus(
-    draft.traceability
-      ? 'Expediente orientativo y trazabilidad local guardados únicamente en este navegador.'
-      : 'Expediente local incompleto guardado únicamente en este navegador; completa los valores para generar un snapshot orientativo.',
-  );
+  isDraftDirty = false;
+  const message = draft.traceability
+    ? 'Expediente guardado localmente con trazabilidad orientativa.'
+    : 'Expediente local incompleto guardado; completa los valores para generar un snapshot orientativo.';
+  updateDraftStatus(message);
+  updateStatus(message);
 }
 
 function restoreDraft() {
@@ -372,6 +443,7 @@ function restoreDraft() {
         datasetVersion: typeof dataset.version === 'string' ? dataset.version : null,
       });
     }
+    updateDraftStatus('Expediente local restaurado en este navegador.');
   } catch {
     localStorage.removeItem(DRAFT_STORAGE_KEY);
   }
@@ -390,7 +462,7 @@ function initialize() {
       searchTariff();
     }
   });
-  ['tmec-code', 'tmec-origin', 'tmec-vcr', 'tmec-vcr-required', 'tmec-suppliers', 'tmec-bom', 'tmec-reference-url', 'tmec-reference-consulted-at', 'tmec-reference-note'].forEach((id) => {
+  ['tmec-code', 'tmec-origin', 'tmec-vcr', 'tmec-vcr-required', 'tmec-suppliers', 'tmec-bom', 'tmec-reference-url', 'tmec-reference-consulted-at', 'tmec-reference-note', 'tmec-rule-reference', 'tmec-vcr-method', 'tmec-certification-reference', 'tmec-supplier-reference', 'tmec-bom-reference'].forEach((id) => {
     const field = byId(id);
     field.addEventListener('change', renderTmecResult);
     if (field.type !== 'checkbox' && field.tagName !== 'SELECT') field.addEventListener('input', renderTmecResult);
@@ -399,6 +471,12 @@ function initialize() {
     const field = byId(id);
     field.addEventListener('change', renderPedimentoChecklist);
     if (field.type !== 'checkbox' && field.tagName !== 'SELECT') field.addEventListener('input', renderPedimentoChecklist);
+  });
+  LOCAL_FORM_FIELD_IDS.forEach((id) => {
+    const field = byId(id);
+    if (!field) return;
+    const eventName = field.type === 'checkbox' || field.tagName === 'SELECT' ? 'change' : 'input';
+    field.addEventListener(eventName, markDraftDirty);
   });
   byId('tariff-code').addEventListener('input', () => {
     if (selectedRecord.code !== value('tariff-code').trim()) {

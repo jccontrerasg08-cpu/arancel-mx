@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 import hashlib
 import re
 
@@ -157,8 +158,9 @@ def test_overlong_request_id_is_replaced(valid_settings, fake_dataset) -> None:
     assert len(response.headers["x-request-id"]) == 32
 
 
-def test_public_cors_allows_get_without_credentials(valid_settings, fake_dataset) -> None:
-    with _client(valid_settings, fake_dataset) as client:
+def test_configured_cors_allows_get_without_credentials(valid_settings, fake_dataset) -> None:
+    settings = replace(valid_settings, cors_origins=("https://example.com",))
+    with _client(settings, fake_dataset) as client:
         preflight = client.options(
             "/v1/meta",
             headers={
@@ -171,8 +173,8 @@ def test_public_cors_allows_get_without_credentials(valid_settings, fake_dataset
             headers={"Origin": "https://example.com"},
         )
 
-    assert preflight.status_code == 200
-    assert preflight.headers["access-control-allow-origin"] == "*"
+    assert preflight.status_code == 204
+    assert preflight.headers["access-control-allow-origin"] == "https://example.com"
     assert preflight.headers.get("access-control-allow-credentials") is None
     allowed_methods = {
         method.strip()
@@ -183,7 +185,7 @@ def test_public_cors_allows_get_without_credentials(valid_settings, fake_dataset
     assert preflight.headers["x-request-id"]
 
     assert response.status_code == 200
-    assert response.headers["access-control-allow-origin"] == "*"
+    assert response.headers["access-control-allow-origin"] == "https://example.com"
     assert response.headers.get("access-control-allow-credentials") is None
     assert "x-request-id" in response.headers["access-control-expose-headers"].lower()
     assert response.headers["x-request-id"]

@@ -26,6 +26,21 @@ export const TRADE_SOURCES = Object.freeze({
     url: 'https://www.gob.mx/t-mec/acciones-y-programas/textos-finales-del-tratado-entre-mexico-estados-unidos-y-canada-t-mec-202730',
     updated: SOURCE_DATE,
   }),
+  tmecOriginRules: Object.freeze({
+    title: 'T-MEC, Capítulo 4 — Reglas de Origen',
+    url: 'https://www.gob.mx/cms/uploads/attachment/file/560549/04_ESP_Reglas_de_Origen_CLEAN_Junio_2020.pdf',
+    updated: SOURCE_DATE,
+  }),
+  tmecOriginProcedures: Object.freeze({
+    title: 'T-MEC, Capítulo 5 — Procedimientos de Origen',
+    url: 'https://www.gob.mx/cms/uploads/attachment/file/465786/05ESPProcedimientosdeorigen.pdf',
+    updated: SOURCE_DATE,
+  }),
+});
+
+const OFFICIAL_REFERENCE_HOSTS = Object.freeze({
+  tmec: Object.freeze(['gob.mx', 'www.gob.mx']),
+  rrna: Object.freeze(['snice.gob.mx', 'www.snice.gob.mx']),
 });
 
 const ORIENTATION_DISCLAIMER =
@@ -54,8 +69,18 @@ function hasDeclaredOfficialReference(input, prefix) {
   const url = String(input[`${prefix}ReferenceUrl`] || '').trim();
   const consultedAt = String(input[`${prefix}ReferenceConsultedAt`] || '').trim();
   const note = String(input[`${prefix}ReferenceNote`] || '').trim();
+  const allowedHosts = OFFICIAL_REFERENCE_HOSTS[prefix] || [];
   try {
-    return new URL(url).protocol === 'https:' && /^\d{4}-\d{2}-\d{2}$/.test(consultedAt) && Boolean(note);
+    const reference = new URL(url);
+    return (
+      reference.protocol === 'https:' &&
+      !reference.port &&
+      !reference.username &&
+      !reference.password &&
+      allowedHosts.includes(reference.hostname) &&
+      /^\d{4}-\d{2}-\d{2}$/.test(consultedAt) &&
+      Boolean(note)
+    );
   } catch {
     return false;
   }
@@ -124,9 +149,33 @@ export function calculateImportEstimate(input) {
   });
 }
 
+function declaredEvidence(value) {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function tmecEvidence(input) {
+  return Object.freeze({
+    ruleReference: declaredEvidence(input.ruleReference),
+    vcrMethod: declaredEvidence(input.vcrMethod),
+    certificationReference: declaredEvidence(input.certificationReference),
+    supplierDeclarationReference: declaredEvidence(input.supplierDeclarationReference),
+    billOfMaterialsReference: declaredEvidence(input.billOfMaterialsReference),
+  });
+}
+
+function missingTmecEvidence(input, evidence) {
+  const missing = [];
+  if (input.supplierDeclarations !== true) missing.push('Declaraciones de proveedor');
+  if (input.billOfMaterials !== true) missing.push('Lista de materiales');
+  if (!evidence.ruleReference) missing.push('Regla específica de origen');
+  if (!evidence.vcrMethod) missing.push('Método VCR declarado');
+  if (!evidence.certificationReference) missing.push('Certificación de origen');
+  if (!evidence.supplierDeclarationReference) missing.push('Referencia de declaraciones de proveedor');
+  if (!evidence.billOfMaterialsReference) missing.push('Referencia de lista de materiales');
+  return Object.freeze(missing);
+}
+
 export function evaluateTmecOrientation(input) {
-  const hasSupplierDeclarations = input.supplierDeclarations === true;
-  const hasBillOfMaterials = input.billOfMaterials === true;
   const regionalValueContent = numberOrZero(
     input.regionalValueContent,
     'El contenido regional declarado',
@@ -135,29 +184,28 @@ export function evaluateTmecOrientation(input) {
     input.requiredRegionalValueContent,
     'El contenido regional requerido',
   );
+  const evidence = tmecEvidence(input);
+  const missingEvidence = missingTmecEvidence(input, evidence);
+  const source = Object.freeze([
+    TRADE_SOURCES.tmec,
+    TRADE_SOURCES.tmecOriginRules,
+    TRADE_SOURCES.tmecOriginProcedures,
+  ]);
+  const shared = Object.freeze({
+    preferentialRateConfirmed: false,
+    regionalValueContent,
+    requiredRegionalValueContent,
+    evidence,
+    missingEvidence,
+    disclaimer: ORIENTATION_DISCLAIMER,
+    source,
+  });
 
   if (!input.tariffCode || !input.originCountry) {
     return Object.freeze({
+      ...shared,
       status: 'evidence_required',
-      preferentialRateConfirmed: false,
-      regionalValueContent,
-      requiredRegionalValueContent,
       nextStep: 'Indica la fracción propuesta y el país de origen antes de revisar la evidencia.',
-      disclaimer: ORIENTATION_DISCLAIMER,
-      source: TRADE_SOURCES.tmec,
-    });
-  }
-
-  if (!hasSupplierDeclarations || !hasBillOfMaterials) {
-    return Object.freeze({
-      status: 'evidence_required',
-      preferentialRateConfirmed: false,
-      regionalValueContent,
-      requiredRegionalValueContent,
-      nextStep:
-        'Integra declaraciones de proveedor y la lista de materiales antes de evaluar una preferencia T-MEC.',
-      disclaimer: ORIENTATION_DISCLAIMER,
-      source: TRADE_SOURCES.tmec,
     });
   }
 
@@ -176,26 +224,27 @@ export function evaluateTmecOrientation(input) {
 
   if (regionalValueContent < requiredRegionalValueContent) {
     return Object.freeze({
+      ...shared,
       status: 'threshold_not_met',
-      preferentialRateConfirmed: false,
-      regionalValueContent,
-      requiredRegionalValueContent,
       nextStep:
         'El VCR declarado no alcanza el umbral indicado. Revisa la regla específica, el método y la evidencia de costos.',
-      disclaimer: ORIENTATION_DISCLAIMER,
-      source: TRADE_SOURCES.tmec,
+    });
+  }
+
+  if (missingEvidence.length) {
+    return Object.freeze({
+      ...shared,
+      status: 'evidence_required',
+      nextStep:
+        'Integra declaraciones de proveedor, la lista de materiales y referencias declaradas de regla, método VCR y certificación antes de una revisión documental T-MEC.',
     });
   }
 
   return Object.freeze({
+    ...shared,
     status: 'evidence_review_required',
-    preferentialRateConfirmed: false,
-    regionalValueContent,
-    requiredRegionalValueContent,
     nextStep:
       'La evidencia declarada permite una revisión documental inicial; confirma la regla específica de origen y la certificación con la fuente oficial.',
-    disclaimer: ORIENTATION_DISCLAIMER,
-    source: TRADE_SOURCES.tmec,
   });
 }
 

@@ -7,6 +7,7 @@ from dataclasses import dataclass
 import os
 from pathlib import Path
 import re
+from urllib.parse import urlsplit
 
 from arancel_mx.consumer.config import _parse_offline
 
@@ -25,6 +26,34 @@ class ApiSettings:
     timeout: float
     offline: bool
     github_token: str | None = None
+    cors_origins: tuple[str, ...] = ()
+
+
+def _parse_cors_origins(value: str) -> tuple[str, ...]:
+    """Parse a comma-separated list of explicit HTTPS origins."""
+
+    origins: list[str] = []
+    for candidate in value.split(","):
+        origin = candidate.strip()
+        if not origin:
+            continue
+        parsed = urlsplit(origin)
+        if (
+            parsed.scheme != "https"
+            or not parsed.netloc
+            or parsed.path not in ("", "/")
+            or parsed.query
+            or parsed.fragment
+            or parsed.username
+            or parsed.password
+        ):
+            raise ValueError(
+                "ARANCEL_MX_API_CORS_ORIGINS must contain explicit HTTPS origins"
+            )
+        normalized = f"https://{parsed.netloc}"
+        if normalized not in origins:
+            origins.append(normalized)
+    return tuple(origins)
 
 
 def load_settings(environ: Mapping[str, str] | None = None) -> ApiSettings:
@@ -56,10 +85,14 @@ def load_settings(environ: Mapping[str, str] | None = None) -> ApiSettings:
         raise ValueError("ARANCEL_MX_API_OFFLINE must be a boolean value") from exc
 
     github_token = source.get("ARANCEL_MX_GITHUB_TOKEN", "").strip() or None
+    cors_origins = _parse_cors_origins(
+        source.get("ARANCEL_MX_API_CORS_ORIGINS", "")
+    )
     return ApiSettings(
         dataset_tag=dataset_tag,
         cache_dir=cache_dir,
         timeout=timeout,
         offline=offline,
         github_token=github_token,
+        cors_origins=cors_origins,
     )

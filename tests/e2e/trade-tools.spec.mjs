@@ -59,6 +59,9 @@ test('marks a T-MEC review as incomplete when traceable origin evidence is missi
     requiredRegionalValueContent: 75,
     supplierDeclarations: false,
     billOfMaterials: false,
+    tmecReferenceUrl: 'https://www.gob.mx/t-mec/acciones-y-programas/textos-finales-del-tratado-entre-mexico-estados-unidos-y-canada-t-mec-202730',
+    tmecReferenceConsultedAt: '2026-08-20',
+    tmecReferenceNote: 'Regla de origen declarada para revisión documental.',
   });
 
   assert.equal(result.status, 'evidence_required');
@@ -92,7 +95,15 @@ test('builds a non-transactional pedimento checklist from missing operation data
 test('keeps an official source record for every orientation module', () => {
   assert.deepEqual(
     Object.keys(TRADE_SOURCES).sort(),
-    ['classification', 'costs', 'pedimento', 'rrna', 'tmec'],
+    [
+      'classification',
+      'costs',
+      'pedimento',
+      'rrna',
+      'tmec',
+      'tmecOriginProcedures',
+      'tmecOriginRules',
+    ],
   );
   for (const source of Object.values(TRADE_SOURCES)) {
     assert.match(source.url, /^https:\/\//);
@@ -151,6 +162,44 @@ test('keeps a T-MEC review evidence-required without a declared specific officia
   assert.equal(result.status, 'evidence_required');
   assert.match(result.nextStep, /referencia oficial específica/i);
   assert.equal(result.preferentialRateConfirmed, false);
+});
+
+
+test('rejects an external HTTPS URL presented as a T-MEC official reference', () => {
+  const result = evaluateTmecOrientation({
+    tariffCode: '85171301',
+    originCountry: 'MX',
+    regionalValueContent: 75,
+    requiredRegionalValueContent: 75,
+    supplierDeclarations: true,
+    billOfMaterials: true,
+    tmecReferenceUrl: 'https://example.com/tmec-rule',
+    tmecReferenceConsultedAt: '2026-08-20',
+    tmecReferenceNote: 'No debe aceptarse como fuente oficial.',
+  });
+
+  assert.equal(result.status, 'evidence_required');
+  assert.match(result.nextStep, /referencia oficial específica/i);
+});
+
+
+test('rejects an external HTTPS URL presented as an RRNA official reference', () => {
+  const checklist = buildPedimentoChecklist({
+    tariffCode: '85171301',
+    regime: 'definitive_import',
+    originCountry: 'CN',
+    customsValueMxn: 1000,
+    hasInvoice: true,
+    hasTransportEvidence: true,
+    hasOriginEvidence: true,
+    hasRrnaReview: true,
+    rrnaReferenceUrl: 'https://example.com/rrna',
+    rrnaReferenceConsultedAt: '2026-08-20',
+    rrnaReferenceNote: 'No debe aceptarse como fuente oficial.',
+  });
+
+  assert.equal(checklist.status, 'incomplete');
+  assert.ok(checklist.missing.includes('Referencia oficial específica de RRNA revisada'));
 });
 
 

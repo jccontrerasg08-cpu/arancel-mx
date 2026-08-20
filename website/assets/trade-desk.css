@@ -67,6 +67,9 @@ a { color: inherit; }
 .trade-hero__chips span { padding: 7px 11px; border-radius: 7px; background: rgba(2, 39, 47, .34); color: #edfffc; font: .72rem/1.2 "DM Mono", ui-monospace, monospace; }
 
 .trade-main { padding: 34px 0 74px; }
+.trade-workspace { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin: -14px 0 18px; padding: 13px 15px; border: 1px solid #c8d9d4; border-radius: 13px; background: linear-gradient(110deg, #f1f8f5, #fbfdfc); }
+.trade-workspace__eyebrow { display: block; color: var(--trade-teal-dark); font: 800 .68rem/1.2 "DM Mono", ui-monospace, monospace; letter-spacing: .07em; text-transform: uppercase; }
+.trade-workspace p { margin: 4px 0 0; color: var(--trade-muted); font-size: .78rem; line-height: 1.35; }
 .trade-notice { display: flex; gap: 12px; margin: -14px 0 28px; padding: 14px 16px; border: 1px solid #e6c788; border-radius: 13px; color: #6d4b10; background: #fff7df; font-size: .88rem; line-height: 1.5; }
 .trade-notice strong { color: #553804; }
 .trade-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 24px; padding: 6px; border: 1px solid var(--trade-line); border-radius: 13px; background: rgba(255,255,255,.7); }
@@ -93,9 +96,12 @@ a { color: inherit; }
 .trade-field input:focus, .trade-field select:focus { border-color: var(--trade-teal); box-shadow: 0 0 0 3px rgba(11,111,112,.13); }
 .trade-split { display: flex; gap: 8px; }
 .trade-split input { min-width: 0; }
-.trade-search-button { flex: 0 0 auto; padding: 0 10px; border: 1px solid #9bbab4; border-radius: 8px; color: var(--trade-teal-dark); background: #eff8f5; font-size: .75rem; font-weight: 800; }
-.trade-button { display: inline-flex; align-items: center; justify-content: center; min-height: 43px; padding: 0 16px; border: 1px solid var(--trade-teal); border-radius: 9px; color: white; background: var(--trade-teal); font-weight: 800; }
+.trade-search-button { flex: 0 0 auto; padding: 0 10px; border: 1px solid #9bbab4; border-radius: 8px; color: var(--trade-teal-dark); background: #eff8f5; font-size: .75rem; font-weight: 800; transition: transform 140ms cubic-bezier(.23, 1, .32, 1), background-color 140ms cubic-bezier(.23, 1, .32, 1), border-color 140ms cubic-bezier(.23, 1, .32, 1); }
+.trade-search-button:hover { border-color: var(--trade-teal); background: #e1f2ed; }
+.trade-button { display: inline-flex; align-items: center; justify-content: center; min-height: 43px; padding: 0 16px; border: 1px solid var(--trade-teal); border-radius: 9px; color: white; background: var(--trade-teal); font-weight: 800; transition: transform 140ms cubic-bezier(.23, 1, .32, 1), background-color 140ms cubic-bezier(.23, 1, .32, 1), color 140ms cubic-bezier(.23, 1, .32, 1), border-color 140ms cubic-bezier(.23, 1, .32, 1); }
 .trade-button:hover { background: var(--trade-teal-dark); }
+.trade-button:active:not(:disabled), .trade-search-button:active:not(:disabled) { transform: scale(.98); }
+.trade-button:disabled, .trade-search-button:disabled { cursor: wait; opacity: .72; }
 .trade-button--secondary { color: var(--trade-teal-dark); background: #eaf5f2; border-color: #b6d7cf; }
 .trade-button--secondary:hover { color: white; background: var(--trade-teal); }
 .trade-result { min-height: 235px; }
@@ -139,6 +145,7 @@ a { color: inherit; }
   .trade-nav__actions { flex-direction: column; align-items: end; gap: 4px; }
   .trade-grid, .trade-resource-grid { grid-template-columns: 1fr; }
   .trade-panel__intro { align-items: flex-start; flex-direction: column; }
+  .trade-workspace { align-items: flex-start; flex-direction: column; }
 }
 
 @media (max-width: 520px) {
@@ -151,6 +158,12 @@ a { color: inherit; }
   .trade-card { padding: 17px; }
   .trade-hero__inner { padding: 48px 0; }
   .trade-footer__inner { flex-direction: column; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .trade-button, .trade-search-button { transition: background-color 1ms linear, color 1ms linear, border-color 1ms linear; }
+  .trade-button:active:not(:disabled), .trade-search-button:active:not(:disabled) { transform: none; }
 }
 
 .trade-hero--visual {
