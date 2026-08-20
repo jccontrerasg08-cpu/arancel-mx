@@ -248,6 +248,11 @@ test('restores local declared rates and review references without a network subm
   await page.locator('#tmec-reference-url').fill('https://www.gob.mx/t-mec/rule');
   await page.locator('#tmec-reference-consulted-at').fill('2026-08-20');
   await page.locator('#tmec-reference-note').fill('Regla declarada');
+  await page.locator('#tmec-rule-reference').fill('Capítulo 4, regla declarada');
+  await page.locator('#tmec-vcr-method').fill('Valor de transacción');
+  await page.locator('#tmec-certification-reference').fill('CERT-001');
+  await page.locator('#tmec-supplier-reference').fill('SUP-001');
+  await page.locator('#tmec-bom-reference').fill('BOM-001');
   await page.getByRole('tab', { name: /rrna y despacho/i }).click();
   await page.locator('#rrna-reference-url').fill('https://www.snice.gob.mx/reference');
   await page.locator('#rrna-reference-consulted-at').fill('2026-08-20');
@@ -259,6 +264,11 @@ test('restores local declared rates and review references without a network subm
   await expect(page.getByTestId('dta-rate')).toHaveValue('0.8');
   await page.getByRole('tab', { name: /origen t-mec/i }).click();
   await expect(page.locator('#tmec-reference-url')).toHaveValue('https://www.gob.mx/t-mec/rule');
+  await expect(page.locator('#tmec-rule-reference')).toHaveValue('Capítulo 4, regla declarada');
+  await expect(page.locator('#tmec-vcr-method')).toHaveValue('Valor de transacción');
+  await expect(page.locator('#tmec-certification-reference')).toHaveValue('CERT-001');
+  await expect(page.locator('#tmec-supplier-reference')).toHaveValue('SUP-001');
+  await expect(page.locator('#tmec-bom-reference')).toHaveValue('BOM-001');
   await page.getByRole('tab', { name: /rrna y despacho/i }).click();
   await expect(page.locator('#rrna-reference-note')).toHaveValue('Aviso declarado');
 });
