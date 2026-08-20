@@ -10,8 +10,7 @@ from uuid import uuid4
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -186,14 +185,33 @@ def create_app(
     application.state.ready = False
     application.state.startup_error = None
 
-    application.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=False,
-        allow_methods=["GET", "OPTIONS"],
-        allow_headers=["X-Request-ID"],
-        expose_headers=["X-Request-ID"],
-    )
+    @application.middleware("http")
+    async def cors_middleware(request: Request, call_next):
+        origin = request.headers.get("origin")
+        configured_origins = getattr(application.state.settings, "cors_origins", ())
+        origin_allowed = origin is not None and origin in configured_origins
+        requested_method = request.headers.get("access-control-request-method")
+
+        if request.method == "OPTIONS" and requested_method:
+            if origin_allowed and requested_method == "GET":
+                return Response(
+                    status_code=204,
+                    headers={
+                        "Access-Control-Allow-Origin": origin,
+                        "Access-Control-Allow-Methods": "GET, OPTIONS",
+                        "Access-Control-Allow-Headers": "X-Request-ID",
+                        "Access-Control-Expose-Headers": "X-Request-ID",
+                        "Vary": "Origin",
+                    },
+                )
+            return await call_next(request)
+
+        response = await call_next(request)
+        if origin_allowed:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Expose-Headers"] = "X-Request-ID"
+            response.headers["Vary"] = "Origin"
+        return response
 
     @application.middleware("http")
     async def request_id_middleware(request: Request, call_next):

@@ -298,3 +298,29 @@ test('clears selected release provenance when the tariff hypothesis is manually 
   const draft = await page.evaluate(() => JSON.parse(localStorage.getItem('arancel-mx-trade-draft')));
   expect(draft.traceability.dataset).toEqual({ version: null, record_code: '85299099' });
 });
+
+
+test('captures structured declared T-MEC evidence alongside the official reference without confirming preference', async ({ page }) => {
+  await page.goto('/trade');
+  await page.getByRole('tab', { name: /origen t-mec/i }).click();
+
+  await page.locator('#tmec-code').fill('85171301');
+  await page.locator('#tmec-origin').selectOption('MX');
+  await page.locator('#tmec-suppliers').check();
+  await page.locator('#tmec-bom').check();
+  await page.locator('#tmec-reference-url').fill('https://www.gob.mx/t-mec/rule');
+  await page.locator('#tmec-reference-consulted-at').fill('2026-08-20');
+  await page.locator('#tmec-reference-note').fill('Regla declarada');
+  await page.locator('#tmec-rule-reference').fill('Capítulo 4, regla específica revisada');
+  await page.locator('#tmec-vcr-method').fill('Método de valor de transacción declarado');
+  await page.locator('#tmec-certification-reference').fill('CERT-2026-001');
+  await page.locator('#tmec-supplier-reference').fill('SUP-DECL-2026-004');
+  await page.locator('#tmec-bom-reference').fill('BOM-2026-009');
+  await page.locator('#tmec-bom-reference').press('Tab');
+
+  await expect(page.getByTestId('tmec-result')).toContainText(/revisión documental requerida/i);
+  await expect(page.getByTestId('tmec-result')).toContainText('CERT-2026-001');
+  await expect(page.getByTestId('tmec-result')).toContainText(/no determina.*origen/i);
+  await expect(page.getByTestId('tmec-origin-rules-source')).toHaveAttribute('href', /04_ESP_Reglas_de_Origen/);
+  await expect(page.getByTestId('tmec-origin-procedures-source')).toHaveAttribute('href', /05ESPProcedimientosdeorigen/);
+});
