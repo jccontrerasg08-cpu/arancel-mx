@@ -38,6 +38,12 @@ def test_wheel_contains_public_runtime_contract(distributions: tuple[Path, Path]
         "arancel_mx/api/static/index.html",
         "arancel_mx/api/static/site/index.html",
         "arancel_mx/api/static/site/trade.html",
+        "arancel_mx/api/static/site/assets/visuals/trade-route-atlas.jpg",
+        "arancel_mx/api/static/site/assets/visuals/evidence-ledger.jpg",
+        "arancel_mx/api/static/site/assets/flags/mx.svg",
+        "arancel_mx/api/static/site/assets/flags/us.svg",
+        "arancel_mx/api/static/site/assets/flags/ca.svg",
+        "arancel_mx/api/static/site/assets/flags/NOTICE",
         "arancel_mx/sources/source_registry.json",
         "arancel_mx/py.typed",
     }
