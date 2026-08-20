@@ -53,6 +53,7 @@ La portada del repositorio explica **qué es** `arancel-mx` y cómo empezar. Est
 |---|---|---|
 | Entender por qué existe, qué posee y qué queda fuera | [Visión del proyecto](project-overview.md) | Arquitectura conceptual y fronteras de producto. |
 | Usar logos, paleta, copy o storytelling | [Marca y presentación](brand.md) | Assets canónicos y reglas de comunicación. |
+| Aplicar imágenes, banderas o referencias institucionales | [Atlas visual](visual-atlas.md) | Taxonomía por capítulo, fuentes, atribución y límites de marca. |
 | Ver cambios relevantes | [CHANGELOG.md](../CHANGELOG.md) | Historial de versiones y entregas. |
 | Revisar reglas de comunidad | [CODE_OF_CONDUCT.md](../CODE_OF_CONDUCT.md) · [TERMS.md](../TERMS.md) | Colaboración y términos del proyecto. |
 

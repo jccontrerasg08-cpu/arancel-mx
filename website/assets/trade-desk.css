@@ -152,3 +152,64 @@ a { color: inherit; }
   .trade-hero__inner { padding: 48px 0; }
   .trade-footer__inner { flex-direction: column; }
 }
+
+.trade-hero--visual {
+  position: relative;
+  isolation: isolate;
+  background:
+    linear-gradient(90deg, rgba(4, 22, 34, .94) 0%, rgba(4, 28, 42, .76) 46%, rgba(4, 28, 42, .18) 100%),
+    url('/assets/visuals/trade-route-atlas.jpg') center / cover no-repeat,
+    #083f4e;
+}
+.trade-hero--visual::after {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  content: "";
+  background: linear-gradient(180deg, rgba(2, 16, 25, .10), rgba(2, 16, 25, .56));
+}
+.trade-visual-atlas {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(310px, .92fr);
+  gap: 0;
+  overflow: hidden;
+  margin: 0 0 28px;
+  border: 1px solid #c8d9d4;
+  border-radius: 18px;
+  background: linear-gradient(125deg, #edf6f2, #fbfdfb 64%);
+  box-shadow: var(--trade-shadow);
+}
+.trade-visual-atlas__copy { padding: 30px; }
+.trade-kicker--dark { color: var(--trade-teal-dark); border-color: #9ebdb7; background: rgba(255,255,255,.55); }
+.trade-visual-atlas h2 { max-width: 510px; margin: 17px 0 8px; color: var(--trade-ink); font-family: "Instrument Serif", Georgia, serif; font-size: clamp(2rem, 4vw, 3.1rem); font-weight: 400; letter-spacing: -.045em; line-height: .98; }
+.trade-visual-atlas p { max-width: 570px; margin: 0; color: #415a5c; font-size: .9rem; line-height: 1.62; }
+.trade-partner-flags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+.trade-flag { display: inline-flex; align-items: center; gap: 7px; padding: 6px 9px 6px 6px; border: 1px solid #c9dcd6; border-radius: 99px; color: #234c4e; background: rgba(255,255,255,.82); font-size: .76rem; font-weight: 750; }
+.trade-flag img { display: block; width: 26px; height: auto; border-radius: 2px; box-shadow: 0 1px 3px rgba(6, 35, 39, .2); }
+.trade-visual-atlas__caption { margin-top: 15px !important; color: #667a78 !important; font-size: .73rem !important; }
+.trade-visual-atlas__figure { position: relative; min-height: 300px; margin: 0; background: #092837; }
+.trade-visual-atlas__figure::after { position: absolute; inset: 0; content: ""; background: linear-gradient(90deg, rgba(8, 43, 50, .23), transparent 52%); pointer-events: none; }
+.trade-visual-atlas__figure img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center right; }
+.trade-visual-atlas__figure figcaption { position: absolute; z-index: 1; right: 13px; bottom: 11px; left: 13px; color: rgba(247, 252, 251, .89); font-size: .68rem; line-height: 1.35; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+.trade-authorities { margin-top: 18px; padding: 18px; border: 1px solid #cfddda; border-radius: 13px; background: #f7faf9; }
+.trade-authorities__heading { display: flex; align-items: center; gap: 15px; padding-bottom: 15px; border-bottom: 1px solid #d9e5e1; color: #536b6b; font-size: .75rem; line-height: 1.45; }
+.trade-authorities__heading img { display: block; width: 138px; max-height: 36px; object-fit: contain; object-position: left center; }
+.trade-authorities__grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; padding-top: 15px; }
+.trade-authorities__grid a { display: grid; gap: 3px; min-height: 76px; padding: 12px; border: 1px solid #d6e2de; border-radius: 10px; color: inherit; background: white; text-decoration: none; }
+.trade-authorities__grid a:hover { border-color: #84aaa2; box-shadow: 0 4px 14px rgba(12, 70, 73, .08); }
+.trade-authorities__grid strong { color: var(--trade-teal-dark); font: 800 .78rem "DM Mono", ui-monospace, monospace; letter-spacing: .02em; }
+.trade-authorities__grid span { color: var(--trade-muted); font-size: .7rem; line-height: 1.35; }
+.trade-authorities__grid a:focus-visible { outline: 3px solid var(--trade-gold); outline-offset: 3px; }
+
+@media (max-width: 780px) {
+  .trade-hero--visual { background-position: 64% center; }
+  .trade-visual-atlas { grid-template-columns: 1fr; }
+  .trade-visual-atlas__figure { min-height: 240px; }
+  .trade-authorities__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 520px) {
+  .trade-visual-atlas__copy { padding: 22px; }
+  .trade-authorities__heading { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .trade-authorities__grid { grid-template-columns: 1fr; }
+}

@@ -30,7 +30,7 @@
         </div>
       </nav>
 
-      <header class="trade-hero">
+      <header class="trade-hero trade-hero--visual">
         <div class="trade-hero__inner">
           <span class="trade-kicker">Orientación con evidencia</span>
           <h1>Mesa de comercio exterior</h1>
@@ -46,6 +46,24 @@
           <strong>Antes de usar un resultado:</strong>
           <span>Esta mesa organiza información y cálculos aritméticos sobre datos declarados. No determina clasificación, origen, contribuciones, permisos ni cumplimiento; confirma cada supuesto con la fuente oficial y evidencia de la operación.</span>
         </div>
+
+        <section class="trade-visual-atlas" data-testid="trade-visual-atlas" aria-labelledby="trade-visual-atlas-title">
+          <div class="trade-visual-atlas__copy">
+            <span class="trade-kicker trade-kicker--dark">Atlas de operación</span>
+            <h2 id="trade-visual-atlas-title">Del expediente a la fuente primaria</h2>
+            <p>La mesa organiza una ruta visual para situar la tarifa, el origen, las regulaciones y el despacho dentro de un mismo expediente de trabajo. Cada salida requiere contrastarse con la autoridad competente y la evidencia de la operación.</p>
+            <div class="trade-partner-flags" data-testid="trade-partner-flags" aria-label="Países participantes en la revisión T-MEC">
+              <span class="trade-flag"><img src="/assets/flags/mx.svg" width="40" height="30" alt="Bandera de México" loading="lazy" decoding="async" />México</span>
+              <span class="trade-flag"><img src="/assets/flags/us.svg" width="40" height="30" alt="Bandera de Estados Unidos" loading="lazy" decoding="async" />Estados Unidos</span>
+              <span class="trade-flag"><img src="/assets/flags/ca.svg" width="40" height="30" alt="Bandera de Canadá" loading="lazy" decoding="async" />Canadá</span>
+            </div>
+            <p class="trade-visual-atlas__caption">Las banderas son un apoyo contextual para la revisión de origen; no acreditan origen, preferencia ni cumplimiento.</p>
+          </div>
+          <figure class="trade-visual-atlas__figure">
+            <img src="/assets/visuals/evidence-ledger.jpg" alt="Ilustración editorial de un expediente documental de comercio exterior con un globo y una lupa" width="2560" height="1440" loading="lazy" decoding="async" />
+            <figcaption>Ilustración original: trazabilidad documental, vigencia y ruta de consulta.</figcaption>
+          </figure>
+        </section>
 
         <div class="trade-tabs" role="tablist" aria-label="Módulos de comercio exterior">
           <button class="trade-tab" type="button" role="tab" aria-selected="true" aria-controls="costs-panel" id="costs-tab">Simulador</button>
@@ -184,6 +202,15 @@
             <article class="trade-resource"><span class="trade-resource__number">02 · Regla</span><h3>Origen y T-MEC</h3><p>Textos consolidados, reglas de origen y procedimientos oficiales de la Secretaría de Economía.</p><a href="https://www.gob.mx/t-mec/acciones-y-programas/textos-finales-del-tratado-entre-mexico-estados-unidos-y-canada-t-mec-202730" target="_blank" rel="noreferrer">Abrir fuente →</a></article>
             <article class="trade-resource"><span class="trade-resource__number">03 · Regulación</span><h3>RRNA y trámites</h3><p>Avisos, permisos, cupos, origen, cuotas y NOM mediante el micrositio oficial SNICE.</p><a href="https://www.snice.gob.mx/cs/avi/snice/drrnas.avisosypermisos.html" target="_blank" rel="noreferrer">Abrir Avisos y Permisos →</a></article>
           </div>
+          <aside class="trade-authorities" aria-label="Autoridades y portales oficiales de consulta">
+            <div class="trade-authorities__heading"><img src="https://framework-gb.cdn.gob.mx/landing/img/logoheader.svg" alt="Logotipo del Gobierno de México" width="138" height="36" loading="lazy" decoding="async" /><span>Consulta las fuentes en su portal oficial; sus nombres e identidades no implican aval de arancel-mx.</span></div>
+            <div class="trade-authorities__grid">
+              <a href="https://www.sat.gob.mx/home" target="_blank" rel="noreferrer"><strong>SAT</strong><span>Normatividad y RGCE</span></a>
+              <a href="https://www.gob.mx/anam" target="_blank" rel="noreferrer"><strong>ANAM</strong><span>Operación aduanera</span></a>
+              <a href="https://www.snice.gob.mx/" target="_blank" rel="noreferrer"><strong>SNICE</strong><span>RRNA y comercio exterior</span></a>
+              <a href="https://www.ventanillaunica.gob.mx/vucem/index.html" target="_blank" rel="noreferrer"><strong>VUCEM</strong><span>Ventanilla digital</span></a>
+            </div>
+          </aside>
         </section>
         <p id="trade-status" role="status" aria-live="polite" class="trade-empty" style="margin-top:22px">Mesa lista. Los datos permanecen en este navegador salvo que abras una fuente oficial.</p>
       </main>

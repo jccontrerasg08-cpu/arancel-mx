@@ -226,3 +226,33 @@ def test_vercel_centralization_docs_match_the_promoted_retrieval_routes() -> Non
     assert "| `ficha`, suggest, provenance, and national notes | Vercel operational function | Active Neon release |" in centralization
     assert "| `/openapi.json`, `/docs`, repository telemetry | Temporary FastAPI compatibility route | Discovery/telemetry migration not yet complete |" in centralization
     assert "Temporary FastAPI compatibility route | Awaiting the first evidence-bearing Neon promotion" not in centralization
+
+
+def test_trade_desk_publishes_a_visual_source_atlas_with_accessible_flags() -> None:
+    trade = (ROOT / "website" / "trade.html").read_text(encoding="utf-8")
+    style = (ROOT / "website" / "assets" / "trade-desk.css").read_text(encoding="utf-8")
+
+    assert 'data-testid="trade-visual-atlas"' in trade
+    assert 'data-testid="trade-partner-flags"' in trade
+    assert 'src="/assets/flags/mx.svg"' in trade
+    assert 'src="/assets/flags/us.svg"' in trade
+    assert 'src="/assets/flags/ca.svg"' in trade
+    assert 'alt="Bandera de México"' in trade
+    assert 'alt="Bandera de Estados Unidos"' in trade
+    assert 'alt="Bandera de Canadá"' in trade
+    assert 'visuals/trade-route-atlas.jpg' in style
+    assert 'visuals/evidence-ledger.jpg' in trade
+
+    for relative_path in (
+        "assets/visuals/trade-route-atlas.jpg",
+        "assets/visuals/evidence-ledger.jpg",
+        "assets/flags/mx.svg",
+        "assets/flags/us.svg",
+        "assets/flags/ca.svg",
+        "assets/flags/NOTICE",
+    ):
+        website_asset = ROOT / "website" / relative_path
+        static_asset = ROOT / "src" / "arancel_mx" / "api" / "static" / "site" / relative_path
+        assert website_asset.is_file()
+        assert static_asset.is_file()
+        assert website_asset.read_bytes() == static_asset.read_bytes()

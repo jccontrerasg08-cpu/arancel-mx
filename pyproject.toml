@@ -84,7 +84,7 @@ where = ["src"]
 include = ["arancel_mx*"]
 
 [tool.setuptools.package-data]
-arancel_mx = ["api/static/index.html", "api/static/site/index.html", "api/static/site/trade.html", "api/static/site/assets/*", "sources/source_registry.json", "py.typed"]
+arancel_mx = ["api/static/index.html", "api/static/site/index.html", "api/static/site/trade.html", "api/static/site/assets/*", "api/static/site/assets/visuals/*.jpg", "api/static/site/assets/flags/*", "sources/source_registry.json", "py.typed"]
 
 [tool.pytest.ini_options]
 pythonpath = [".", "src"]
