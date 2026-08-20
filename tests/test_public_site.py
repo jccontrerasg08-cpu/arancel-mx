@@ -256,3 +256,10 @@ def test_trade_desk_publishes_a_visual_source_atlas_with_accessible_flags() -> N
         assert website_asset.is_file()
         assert static_asset.is_file()
         assert website_asset.read_bytes() == static_asset.read_bytes()
+
+
+def test_visual_atlas_docs_do_not_claim_unimplemented_flag_attributes() -> None:
+    atlas = (ROOT / "docs" / "visual-atlas.md").read_text(encoding="utf-8")
+
+    assert "`srcset`" not in atlas
+    assert "`alt` específico por país, `src` explícito y dimensiones reservadas" in atlas

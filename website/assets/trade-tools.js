@@ -50,6 +50,17 @@ function roundCurrency(value) {
   return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
+function hasDeclaredOfficialReference(input, prefix) {
+  const url = String(input[`${prefix}ReferenceUrl`] || '').trim();
+  const consultedAt = String(input[`${prefix}ReferenceConsultedAt`] || '').trim();
+  const note = String(input[`${prefix}ReferenceNote`] || '').trim();
+  try {
+    return new URL(url).protocol === 'https:' && /^\d{4}-\d{2}-\d{2}$/.test(consultedAt) && Boolean(note);
+  } catch {
+    return false;
+  }
+}
+
 function percentOf(base, rate) {
   return roundCurrency((base * rate) / 100);
 }
@@ -150,6 +161,19 @@ export function evaluateTmecOrientation(input) {
     });
   }
 
+  if (!hasDeclaredOfficialReference(input, 'tmec')) {
+    return Object.freeze({
+      status: 'evidence_required',
+      preferentialRateConfirmed: false,
+      regionalValueContent,
+      requiredRegionalValueContent,
+      nextStep:
+        'Registra la referencia oficial específica, fecha de consulta y regla revisada antes de evaluar una preferencia T-MEC.',
+      disclaimer: ORIENTATION_DISCLAIMER,
+      source: TRADE_SOURCES.tmec,
+    });
+  }
+
   if (regionalValueContent < requiredRegionalValueContent) {
     return Object.freeze({
       status: 'threshold_not_met',
@@ -187,6 +211,9 @@ export function buildPedimentoChecklist(input) {
   if (input.hasTransportEvidence !== true) missing.push('Evidencia de transporte');
   if (input.hasOriginEvidence !== true) missing.push('Evidencia de origen');
   if (input.hasRrnaReview !== true) missing.push('Revisión documental de RRNA y programas aplicables');
+  if (!hasDeclaredOfficialReference(input, 'rrna')) {
+    missing.push('Referencia oficial específica de RRNA revisada');
+  }
 
   return Object.freeze({
     status: missing.length === 0 ? 'review_required' : 'incomplete',

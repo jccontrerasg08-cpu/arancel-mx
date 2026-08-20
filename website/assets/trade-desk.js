@@ -13,9 +13,21 @@ const money = new Intl.NumberFormat('es-MX', {
   maximumFractionDigits: 2,
 });
 
+const DRAFT_STORAGE_KEY = 'arancel-mx-trade-draft';
+const LOCAL_FORM_FIELD_IDS = Object.freeze([
+  'tariff-code', 'incoterm', 'product-value', 'freight-value', 'insurance-value',
+  'incrementables-value', 'customs-value', 'igi-rate', 'dta-rate', 'iva-rate', 'ieps-rate',
+  'tmec-code', 'tmec-origin', 'tmec-vcr', 'tmec-vcr-required', 'tmec-suppliers', 'tmec-bom',
+  'tmec-reference-url', 'tmec-reference-consulted-at', 'tmec-reference-note',
+  'pedimento-code', 'pedimento-regime', 'pedimento-origin', 'pedimento-value',
+  'pedimento-invoice', 'pedimento-transport', 'pedimento-origin-evidence', 'pedimento-rrna-review',
+  'rrna-reference-url', 'rrna-reference-consulted-at', 'rrna-reference-note',
+]);
+
 const byId = (id) => document.getElementById(id);
 const value = (id) => byId(id)?.value ?? '';
 const checked = (id) => byId(id)?.checked === true;
+let selectedRecord = Object.freeze({ code: null, datasetVersion: null });
 
 function numberValue(id) {
   const raw = value(id).trim();
@@ -57,25 +69,30 @@ function renderEstimate(estimate, customsValue) {
   `;
 }
 
+function buildScenario() {
+  const directValue = value('customs-value').trim();
+  const customsValue = directValue
+    ? { method: 'direct_value', customsValueMxn: Number(directValue) }
+    : calculateCustomsValue({
+        incoterm: value('incoterm'),
+        productValueMxn: numberValue('product-value'),
+        freightMxn: numberValue('freight-value'),
+        insuranceMxn: numberValue('insurance-value'),
+        incrementablesMxn: numberValue('incrementables-value'),
+      });
+  const estimate = calculateImportEstimate({
+    customsValueMxn: customsValue.customsValueMxn,
+    igiRatePercent: numberValue('igi-rate'),
+    dtaRatePercent: numberValue('dta-rate'),
+    iepsRatePercent: numberValue('ieps-rate'),
+    ivaRatePercent: numberValue('iva-rate'),
+  });
+  return Object.freeze({ customsValue, estimate });
+}
+
 function calculateEstimate() {
   try {
-    const directValue = value('customs-value').trim();
-    const customsValue = directValue
-      ? { method: 'direct_value', customsValueMxn: Number(directValue) }
-      : calculateCustomsValue({
-          incoterm: value('incoterm'),
-          productValueMxn: numberValue('product-value'),
-          freightMxn: numberValue('freight-value'),
-          insuranceMxn: numberValue('insurance-value'),
-          incrementablesMxn: numberValue('incrementables-value'),
-        });
-    const estimate = calculateImportEstimate({
-      customsValueMxn: customsValue.customsValueMxn,
-      igiRatePercent: numberValue('igi-rate'),
-      dtaRatePercent: numberValue('dta-rate'),
-      iepsRatePercent: numberValue('ieps-rate'),
-      ivaRatePercent: numberValue('iva-rate'),
-    });
+    const { customsValue, estimate } = buildScenario();
     renderEstimate(estimate, customsValue);
     updateStatus('Escenario orientativo actualizado. Revisa la fuente y la evidencia antes de tomar una decisión.');
   } catch (error) {
@@ -93,6 +110,9 @@ function renderTmecResult() {
     requiredRegionalValueContent: numberValue('tmec-vcr-required'),
     supplierDeclarations: checked('tmec-suppliers'),
     billOfMaterials: checked('tmec-bom'),
+    tmecReferenceUrl: value('tmec-reference-url'),
+    tmecReferenceConsultedAt: value('tmec-reference-consulted-at'),
+    tmecReferenceNote: value('tmec-reference-note'),
   });
   const container = byId('tmec-result');
   if (!container) return;
@@ -123,6 +143,9 @@ function renderPedimentoChecklist() {
     hasTransportEvidence: checked('pedimento-transport'),
     hasOriginEvidence: checked('pedimento-origin-evidence'),
     hasRrnaReview: checked('pedimento-rrna-review'),
+    rrnaReferenceUrl: value('rrna-reference-url'),
+    rrnaReferenceConsultedAt: value('rrna-reference-consulted-at'),
+    rrnaReferenceNote: value('rrna-reference-note'),
   });
   const container = byId('pedimento-checklist');
   if (!container) return;
@@ -176,6 +199,10 @@ async function searchTariff() {
         byId('tariff-code').value = button.dataset.code;
         byId('tmec-code').value = button.dataset.code;
         byId('pedimento-code').value = button.dataset.code;
+        selectedRecord = Object.freeze({
+          code: button.dataset.code,
+          datasetVersion: typeof record.dataset_version === 'string' ? record.dataset_version : null,
+        });
         if (button.dataset.igi) byId('igi-rate').value = button.dataset.igi;
         updateStatus(`Se cargó ${button.dataset.code} como hipótesis de trabajo. Verifica clasificación, vigencia y evidencia antes de usarla.`);
       });
@@ -234,6 +261,75 @@ function bindTabs() {
   });
 }
 
+function buildLocalTraceability() {
+  const { customsValue, estimate } = buildScenario();
+  const currentTariffCode = value('tariff-code').trim() || null;
+  const selectedDataset = selectedRecord.code === currentTariffCode ? selectedRecord : { code: null, datasetVersion: null };
+  return Object.freeze({
+    schema_version: 1,
+    saved_at: new Date().toISOString(),
+    scenario_status: estimate.status,
+    dataset: Object.freeze({
+      version: selectedDataset.datasetVersion,
+      record_code: currentTariffCode,
+    }),
+    rates_percent: Object.freeze({
+      igi: numberValue('igi-rate'),
+      dta: numberValue('dta-rate'),
+      iva: numberValue('iva-rate'),
+      ieps: numberValue('ieps-rate'),
+    }),
+    customs_value_method: customsValue.method,
+    inputs: Object.freeze({
+      incoterm: value('incoterm'),
+      direct_customs_value_mxn: value('customs-value'),
+      product_value_mxn: value('product-value'),
+      freight_mxn: value('freight-value'),
+      insurance_mxn: value('insurance-value'),
+      incrementables_mxn: value('incrementables-value'),
+    }),
+    calculation: Object.freeze({
+      items: estimate.items,
+      total_contributions: estimate.totalContributions,
+      landed_cost: estimate.landedCost,
+    }),
+    sources: Object.freeze([TRADE_SOURCES.costs, TRADE_SOURCES.classification]),
+    review_references: Object.freeze({
+      tmec: Object.freeze({
+        url: value('tmec-reference-url'),
+        consulted_at: value('tmec-reference-consulted-at'),
+        note: value('tmec-reference-note'),
+      }),
+      rrna: Object.freeze({
+        url: value('rrna-reference-url'),
+        consulted_at: value('rrna-reference-consulted-at'),
+        note: value('rrna-reference-note'),
+      }),
+    }),
+    assumptions: Object.freeze([
+      'Los valores y tasas fueron declarados por la persona usuaria.',
+      'El snapshot es local y orientativo; no determina contribuciones, origen, clasificación ni cumplimiento.',
+    ]),
+  });
+}
+
+function captureLocalFormState() {
+  return Object.freeze(Object.fromEntries(LOCAL_FORM_FIELD_IDS.map((id) => {
+    const field = byId(id);
+    return [id, field?.type === 'checkbox' ? field.checked : field?.value ?? ''];
+  })));
+}
+
+function restoreLocalFormState(form) {
+  if (!form || typeof form !== 'object') return;
+  LOCAL_FORM_FIELD_IDS.forEach((id) => {
+    const field = byId(id);
+    if (!field || !(id in form)) return;
+    if (field.type === 'checkbox') field.checked = form[id] === true;
+    else field.value = typeof form[id] === 'string' ? form[id] : '';
+  });
+}
+
 function persistDraft() {
   const draft = {
     saved_at: new Date().toISOString(),
@@ -241,21 +337,43 @@ function persistDraft() {
     customs_value_mxn: value('customs-value'),
     product_value_mxn: value('product-value'),
     origin_country: value('tmec-origin'),
+    form: captureLocalFormState(),
+    traceability: null,
   };
-  localStorage.setItem('arancel-mx-trade-draft', JSON.stringify(draft));
-  updateStatus('Expediente de trabajo guardado únicamente en este navegador.');
+  try {
+    draft.traceability = buildLocalTraceability();
+  } catch {
+    // Incomplete inputs remain a legitimate local working draft; only the calculation snapshot is unavailable.
+  }
+  localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+  updateStatus(
+    draft.traceability
+      ? 'Expediente orientativo y trazabilidad local guardados únicamente en este navegador.'
+      : 'Expediente local incompleto guardado únicamente en este navegador; completa los valores para generar un snapshot orientativo.',
+  );
 }
 
 function restoreDraft() {
   try {
-    const draft = JSON.parse(localStorage.getItem('arancel-mx-trade-draft') || 'null');
-    if (!draft) return;
-    if (draft.tariff_code) byId('tariff-code').value = draft.tariff_code;
-    if (draft.customs_value_mxn) byId('customs-value').value = draft.customs_value_mxn;
-    if (draft.product_value_mxn) byId('product-value').value = draft.product_value_mxn;
-    if (draft.origin_country) byId('tmec-origin').value = draft.origin_country;
+    const draft = JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY) || 'null');
+    if (!draft || typeof draft !== 'object') return;
+    if (draft.form) {
+      restoreLocalFormState(draft.form);
+    } else {
+      if (draft.tariff_code) byId('tariff-code').value = draft.tariff_code;
+      if (draft.customs_value_mxn) byId('customs-value').value = draft.customs_value_mxn;
+      if (draft.product_value_mxn) byId('product-value').value = draft.product_value_mxn;
+      if (draft.origin_country) byId('tmec-origin').value = draft.origin_country;
+    }
+    const dataset = draft.traceability?.dataset;
+    if (dataset && typeof dataset === 'object') {
+      selectedRecord = Object.freeze({
+        code: typeof dataset.record_code === 'string' ? dataset.record_code : null,
+        datasetVersion: typeof dataset.version === 'string' ? dataset.version : null,
+      });
+    }
   } catch {
-    localStorage.removeItem('arancel-mx-trade-draft');
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
   }
 }
 
@@ -272,11 +390,20 @@ function initialize() {
       searchTariff();
     }
   });
-  ['tmec-code', 'tmec-origin', 'tmec-vcr', 'tmec-vcr-required', 'tmec-suppliers', 'tmec-bom'].forEach((id) => {
-    byId(id).addEventListener('change', renderTmecResult);
+  ['tmec-code', 'tmec-origin', 'tmec-vcr', 'tmec-vcr-required', 'tmec-suppliers', 'tmec-bom', 'tmec-reference-url', 'tmec-reference-consulted-at', 'tmec-reference-note'].forEach((id) => {
+    const field = byId(id);
+    field.addEventListener('change', renderTmecResult);
+    if (field.type !== 'checkbox' && field.tagName !== 'SELECT') field.addEventListener('input', renderTmecResult);
   });
-  ['pedimento-code', 'pedimento-regime', 'pedimento-origin', 'pedimento-value', 'pedimento-invoice', 'pedimento-transport', 'pedimento-origin-evidence', 'pedimento-rrna-review'].forEach((id) => {
-    byId(id).addEventListener('change', renderPedimentoChecklist);
+  ['pedimento-code', 'pedimento-regime', 'pedimento-origin', 'pedimento-value', 'pedimento-invoice', 'pedimento-transport', 'pedimento-origin-evidence', 'pedimento-rrna-review', 'rrna-reference-url', 'rrna-reference-consulted-at', 'rrna-reference-note'].forEach((id) => {
+    const field = byId(id);
+    field.addEventListener('change', renderPedimentoChecklist);
+    if (field.type !== 'checkbox' && field.tagName !== 'SELECT') field.addEventListener('input', renderPedimentoChecklist);
+  });
+  byId('tariff-code').addEventListener('input', () => {
+    if (selectedRecord.code !== value('tariff-code').trim()) {
+      selectedRecord = Object.freeze({ code: null, datasetVersion: null });
+    }
   });
   byId('save-draft').addEventListener('click', persistDraft);
   byId('rrna-source').href = TRADE_SOURCES.rrna.url;

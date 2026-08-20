@@ -75,6 +75,9 @@ test('builds a non-transactional pedimento checklist from missing operation data
     hasInvoice: false,
     hasTransportEvidence: true,
     hasOriginEvidence: false,
+    rrnaReferenceUrl: 'https://www.snice.gob.mx/cs/avi/snice/drrnas.avisosypermisos.html',
+    rrnaReferenceConsultedAt: '2026-08-20',
+    rrnaReferenceNote: 'Revisión declarada de avisos y permisos.',
   });
 
   assert.equal(checklist.status, 'incomplete');
@@ -106,6 +109,9 @@ test('keeps declared VCR inputs traceable when the T-MEC threshold is not met', 
     requiredRegionalValueContent: 75,
     supplierDeclarations: true,
     billOfMaterials: true,
+    tmecReferenceUrl: 'https://www.gob.mx/t-mec/acciones-y-programas/textos-finales-del-tratado-entre-mexico-estados-unidos-y-canada-t-mec-202730',
+    tmecReferenceConsultedAt: '2026-08-20',
+    tmecReferenceNote: 'Regla de origen declarada para revisión documental.',
   });
 
   assert.equal(result.status, 'threshold_not_met');
@@ -129,4 +135,37 @@ test('keeps RRNA review as an explicit declared checklist requirement', () => {
   assert.equal(checklist.status, 'incomplete');
   assert.ok(checklist.missing.includes('Revisión documental de RRNA y programas aplicables'));
   assert.equal(checklist.checklist.at(-1).complete, false);
+});
+
+
+test('keeps a T-MEC review evidence-required without a declared specific official reference', () => {
+  const result = evaluateTmecOrientation({
+    tariffCode: '85171301',
+    originCountry: 'MX',
+    regionalValueContent: 75,
+    requiredRegionalValueContent: 75,
+    supplierDeclarations: true,
+    billOfMaterials: true,
+  });
+
+  assert.equal(result.status, 'evidence_required');
+  assert.match(result.nextStep, /referencia oficial específica/i);
+  assert.equal(result.preferentialRateConfirmed, false);
+});
+
+
+test('keeps the RRNA checklist incomplete without a declared specific official reference', () => {
+  const checklist = buildPedimentoChecklist({
+    tariffCode: '85171301',
+    regime: 'definitive_import',
+    originCountry: 'CN',
+    customsValueMxn: 1000,
+    hasInvoice: true,
+    hasTransportEvidence: true,
+    hasOriginEvidence: true,
+    hasRrnaReview: true,
+  });
+
+  assert.equal(checklist.status, 'incomplete');
+  assert.ok(checklist.missing.includes('Referencia oficial específica de RRNA revisada'));
 });

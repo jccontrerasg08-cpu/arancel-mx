@@ -63,3 +63,13 @@ def test_canary_actions_are_pinned_to_full_commit_shas() -> None:
     assert all_refs
     assert len(pinned_refs) == len(all_refs)
     assert all(re.fullmatch(r"[0-9a-f]{40}", ref) for ref in pinned_refs)
+
+
+def test_canary_checks_the_deployed_public_contract_read_only() -> None:
+    workflow = _workflow()
+
+    assert "Check deployed public contract" in workflow
+    assert "python scripts/check_public_service.py --timeout 20" in workflow
+    assert workflow.index("arancel-mx data verify --bundle") < workflow.index(
+        "python scripts/check_public_service.py --timeout 20"
+    )

@@ -158,6 +158,9 @@
                 <div class="trade-field"><label for="tmec-vcr-required">VCR requerido (%)</label><input id="tmec-vcr-required" type="number" min="0" step="0.01" value="0" /></div>
                 <label class="trade-check"><input id="tmec-suppliers" type="checkbox" /> Tengo declaraciones de proveedor trazables</label>
                 <label class="trade-check"><input id="tmec-bom" type="checkbox" /> Tengo lista de materiales y costos respaldados</label>
+                <div class="trade-field trade-field--full"><label for="tmec-reference-url">Referencia oficial específica revisada</label><input id="tmec-reference-url" type="url" inputmode="url" placeholder="https://…" /><small>Registra la URL que consultaste; la mesa no interpreta ni valida la regla.</small></div>
+                <div class="trade-field"><label for="tmec-reference-consulted-at">Fecha de consulta declarada</label><input id="tmec-reference-consulted-at" type="date" /></div>
+                <div class="trade-field"><label for="tmec-reference-note">Regla o nota revisada</label><input id="tmec-reference-note" placeholder="Ej. Regla específica declarada" /></div>
               </div>
             </section>
             <aside class="trade-card"><h3>Estado de la revisión</h3><div class="trade-status" data-testid="tmec-result" id="tmec-result" aria-live="polite"></div></aside>
@@ -181,6 +184,9 @@
                 <label class="trade-check"><input id="pedimento-transport" type="checkbox" /> Evidencia de transporte y seguro disponible</label>
                 <label class="trade-check"><input id="pedimento-origin-evidence" type="checkbox" /> Evidencia de origen disponible si se invoca preferencia</label>
                 <label class="trade-check"><input id="pedimento-rrna-review" type="checkbox" /> Revisé RRNA y programas aplicables en fuentes oficiales</label>
+                <div class="trade-field trade-field--full"><label for="rrna-reference-url">Referencia oficial específica de RRNA</label><input id="rrna-reference-url" type="url" inputmode="url" placeholder="https://…" /><small>Registra la fuente revisada; el checklist no decide aplicabilidad.</small></div>
+                <div class="trade-field"><label for="rrna-reference-consulted-at">Fecha de consulta declarada</label><input id="rrna-reference-consulted-at" type="date" /></div>
+                <div class="trade-field"><label for="rrna-reference-note">Nota o medida revisada</label><input id="rrna-reference-note" placeholder="Ej. Aviso, permiso o medida revisada" /></div>
               </div>
             </section>
             <aside class="trade-card"><h3>Checklist informativa</h3><div data-testid="pedimento-checklist" id="pedimento-checklist" aria-live="polite"></div></aside>

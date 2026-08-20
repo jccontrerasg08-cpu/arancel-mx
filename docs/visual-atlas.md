@@ -28,7 +28,7 @@ Este atlas vincula cada superficie de lectura con un recurso visual cuyo propós
 
 ## Implementación y accesibilidad
 
-Las imágenes locales se publican de manera idéntica desde `website/assets/visuals/` y desde los activos estáticos del runtime. Cada imagen incluye dimensiones, texto alternativo y carga diferida cuando no es crítica. Las banderas usan `<img>` con `alt` específico por país, dimensiones reservadas y `srcset`; el patrón de URL está documentado por FlagCDN.[1]
+Las imágenes locales se publican de manera idéntica desde `website/assets/visuals/` y desde los activos estáticos del runtime. Cada imagen incluye dimensiones, texto alternativo y carga diferida cuando no es crítica. Las banderas usan `<img>` con `alt` específico por país, `src` explícito y dimensiones reservadas; el patrón de URL está documentado por FlagCDN.[1]
 
 El directorio de autoridades conserva enlaces explícitos y la marca institucional se trata como referencia de fuente. Para evitar dependencia innecesaria, el sitio no incorpora bibliotecas completas de banderas. Si en el futuro se requiere operación offline o un conjunto mayor de países, `lipis/flag-icons` es una alternativa mantenida bajo licencia MIT que permite incluir únicamente los países necesarios.[3]
 
