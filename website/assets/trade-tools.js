@@ -38,6 +38,11 @@ export const TRADE_SOURCES = Object.freeze({
   }),
 });
 
+const OFFICIAL_REFERENCE_HOSTS = Object.freeze({
+  tmec: Object.freeze(['gob.mx', 'www.gob.mx']),
+  rrna: Object.freeze(['snice.gob.mx', 'www.snice.gob.mx']),
+});
+
 const ORIENTATION_DISCLAIMER =
   'Resultado orientativo: no determina contribuciones, origen, clasificación, cumplimiento ni genera o transmite un pedimento.';
 
@@ -64,8 +69,18 @@ function hasDeclaredOfficialReference(input, prefix) {
   const url = String(input[`${prefix}ReferenceUrl`] || '').trim();
   const consultedAt = String(input[`${prefix}ReferenceConsultedAt`] || '').trim();
   const note = String(input[`${prefix}ReferenceNote`] || '').trim();
+  const allowedHosts = OFFICIAL_REFERENCE_HOSTS[prefix] || [];
   try {
-    return new URL(url).protocol === 'https:' && /^\d{4}-\d{2}-\d{2}$/.test(consultedAt) && Boolean(note);
+    const reference = new URL(url);
+    return (
+      reference.protocol === 'https:' &&
+      !reference.port &&
+      !reference.username &&
+      !reference.password &&
+      allowedHosts.includes(reference.hostname) &&
+      /^\d{4}-\d{2}-\d{2}$/.test(consultedAt) &&
+      Boolean(note)
+    );
   } catch {
     return false;
   }

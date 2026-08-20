@@ -165,6 +165,44 @@ test('keeps a T-MEC review evidence-required without a declared specific officia
 });
 
 
+test('rejects an external HTTPS URL presented as a T-MEC official reference', () => {
+  const result = evaluateTmecOrientation({
+    tariffCode: '85171301',
+    originCountry: 'MX',
+    regionalValueContent: 75,
+    requiredRegionalValueContent: 75,
+    supplierDeclarations: true,
+    billOfMaterials: true,
+    tmecReferenceUrl: 'https://example.com/tmec-rule',
+    tmecReferenceConsultedAt: '2026-08-20',
+    tmecReferenceNote: 'No debe aceptarse como fuente oficial.',
+  });
+
+  assert.equal(result.status, 'evidence_required');
+  assert.match(result.nextStep, /referencia oficial específica/i);
+});
+
+
+test('rejects an external HTTPS URL presented as an RRNA official reference', () => {
+  const checklist = buildPedimentoChecklist({
+    tariffCode: '85171301',
+    regime: 'definitive_import',
+    originCountry: 'CN',
+    customsValueMxn: 1000,
+    hasInvoice: true,
+    hasTransportEvidence: true,
+    hasOriginEvidence: true,
+    hasRrnaReview: true,
+    rrnaReferenceUrl: 'https://example.com/rrna',
+    rrnaReferenceConsultedAt: '2026-08-20',
+    rrnaReferenceNote: 'No debe aceptarse como fuente oficial.',
+  });
+
+  assert.equal(checklist.status, 'incomplete');
+  assert.ok(checklist.missing.includes('Referencia oficial específica de RRNA revisada'));
+});
+
+
 test('keeps the RRNA checklist incomplete without a declared specific official reference', () => {
   const checklist = buildPedimentoChecklist({
     tariffCode: '85171301',
