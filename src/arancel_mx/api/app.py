@@ -189,15 +189,17 @@ def create_app(
     async def cors_middleware(request: Request, call_next):
         origin = request.headers.get("origin")
         configured_origins = getattr(application.state.settings, "cors_origins", ())
-        origin_allowed = origin is not None and origin in configured_origins
+        allowed_origin = (
+            origin if origin is not None and origin in configured_origins else None
+        )
         requested_method = request.headers.get("access-control-request-method")
 
         if request.method == "OPTIONS" and requested_method:
-            if origin_allowed and requested_method == "GET":
+            if allowed_origin is not None and requested_method == "GET":
                 return Response(
                     status_code=204,
                     headers={
-                        "Access-Control-Allow-Origin": origin,
+                        "Access-Control-Allow-Origin": allowed_origin,
                         "Access-Control-Allow-Methods": "GET, OPTIONS",
                         "Access-Control-Allow-Headers": "X-Request-ID",
                         "Access-Control-Expose-Headers": "X-Request-ID",
@@ -207,8 +209,8 @@ def create_app(
             return await call_next(request)
 
         response = await call_next(request)
-        if origin_allowed:
-            response.headers["Access-Control-Allow-Origin"] = origin
+        if allowed_origin is not None:
+            response.headers["Access-Control-Allow-Origin"] = allowed_origin
             response.headers["Access-Control-Expose-Headers"] = "X-Request-ID"
             response.headers["Vary"] = "Origin"
         return response
