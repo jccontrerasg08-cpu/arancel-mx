@@ -42,6 +42,13 @@
       </header>
 
       <main class="trade-main">
+        <section class="trade-workspace" aria-label="Estado del expediente local">
+          <div>
+            <span class="trade-workspace__eyebrow">Expediente de trabajo</span>
+            <p data-testid="trade-draft-status" id="trade-draft-status" role="status" aria-live="polite">Sin cambios guardados en este navegador.</p>
+          </div>
+          <button class="trade-button trade-button--secondary" id="save-draft" type="button">Guardar expediente local</button>
+        </section>
         <div class="trade-notice" role="note">
           <strong>Antes de usar un resultado:</strong>
           <span>Esta mesa organiza información y cálculos aritméticos sobre datos declarados. No determina clasificación, origen, contribuciones, permisos ni cumplimiento; confirma cada supuesto con la fuente oficial y evidencia de la operación.</span>
@@ -201,8 +208,8 @@
         <section class="trade-panel" id="classification-panel" role="tabpanel" aria-labelledby="classification-tab" hidden>
           <div class="trade-panel__intro"><div><h2>Clasificación asistida con expediente</h2><p>Usa la búsqueda para recuperar candidatos de la release LIGIE/NICO verificada. Añade evidencia del producto y escala la consulta cuando haya ambigüedad.</p></div></div>
           <div class="trade-grid">
-            <section class="trade-card"><h3>Qué debe sostener una hipótesis</h3><div class="trade-questions"><div class="trade-check">Descripción técnica, composición, uso y presentación comercial.</div><div class="trade-check">Ficha del fabricante, manual, fotografía, plano o certificado de análisis cuando sea relevante.</div><div class="trade-check">Fracción/NICO propuesta, notas nacionales, vigencia y fuente consultada.</div><div class="trade-check">Consulta formal ante la autoridad cuando la evidencia no descarte alternativas plausibles.</div></div><button class="trade-button trade-button--secondary" id="save-draft" type="button" style="margin-top:18px">Guardar expediente local</button></section>
-            <aside class="trade-card"><h3>Resultados verificados</h3><p class="trade-card__sub">Usa el buscador de la pestaña Simulador. Al seleccionar un candidato se carga como hipótesis, nunca como determinación.</p><div class="trade-classification-results" id="classification-results"><p class="trade-empty">Aún no hay una búsqueda. Describe la mercancía con suficiente detalle para recuperar candidatos y revisar la jerarquía.</p></div></aside>
+            <section class="trade-card"><h3>Qué debe sostener una hipótesis</h3><div class="trade-questions"><div class="trade-check">Descripción técnica, composición, uso y presentación comercial.</div><div class="trade-check">Ficha del fabricante, manual, fotografía, plano o certificado de análisis cuando sea relevante.</div><div class="trade-check">Fracción/NICO propuesta, notas nacionales, vigencia y fuente consultada.</div><div class="trade-check">Consulta formal ante la autoridad cuando la evidencia no descarte alternativas plausibles.</div></div></section>
+            <aside class="trade-card"><h3>Resultados verificados</h3><p class="trade-card__sub">Usa el buscador de la pestaña Simulador. Al seleccionar un candidato se carga como hipótesis, nunca como determinación.</p><div class="trade-classification-results" id="classification-results" role="status" aria-live="polite" aria-atomic="true" aria-busy="false"><p class="trade-empty">Aún no hay una búsqueda. Describe la mercancía con suficiente detalle para recuperar candidatos y revisar la jerarquía.</p></div></aside>
           </div>
         </section>
 

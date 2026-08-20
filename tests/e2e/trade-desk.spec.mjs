@@ -327,3 +327,32 @@ test('captures structured declared T-MEC evidence alongside the official referen
   await expect(page.getByTestId('tmec-origin-rules-source')).toHaveAttribute('href', /04_ESP_Reglas_de_Origen/);
   await expect(page.getByTestId('tmec-origin-procedures-source')).toHaveAttribute('href', /05ESPProcedimientosdeorigen/);
 });
+
+
+test('keeps the local draft action and search feedback available across the trade workflow', async ({ page }) => {
+  await page.goto('/trade');
+
+  await expect(page.getByRole('button', { name: /guardar expediente local/i })).toBeVisible();
+  await expect(page.getByTestId('trade-draft-status')).toHaveText(/sin cambios guardados/i);
+
+  await page.getByTestId('product-value').fill('2500');
+  await expect(page.getByTestId('trade-draft-status')).toHaveText(/cambios sin guardar/i);
+  await page.getByRole('button', { name: /guardar expediente local/i }).click();
+  await expect(page.getByTestId('trade-draft-status')).toHaveText(/expediente guardado localmente/i);
+
+  let releaseSearch;
+  await page.route('**/v1/search**', async (route) => {
+    await new Promise((resolve) => { releaseSearch = resolve; });
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify([]),
+    });
+  });
+  await page.locator('#classification-query').fill('sin coincidencias');
+  await page.locator('#search-tariff').click();
+  await expect(page.locator('#classification-results')).toHaveAttribute('aria-busy', 'true');
+  await expect(page.locator('#search-tariff')).toHaveText(/buscando/i);
+  releaseSearch();
+  await expect(page.locator('#classification-results')).toHaveAttribute('aria-busy', 'false');
+  await expect(page.locator('#classification-results')).toContainText(/no se encontraron coincidencias/i);
+});

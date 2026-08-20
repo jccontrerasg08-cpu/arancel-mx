@@ -30,6 +30,7 @@ const byId = (id) => document.getElementById(id);
 const value = (id) => byId(id)?.value ?? '';
 const checked = (id) => byId(id)?.checked === true;
 let selectedRecord = Object.freeze({ code: null, datasetVersion: null });
+let isDraftDirty = false;
 
 function numberValue(id) {
   const raw = value(id).trim();
@@ -39,6 +40,24 @@ function numberValue(id) {
 function updateStatus(message) {
   const status = byId('trade-status');
   if (status) status.textContent = message;
+}
+
+function updateDraftStatus(message) {
+  const status = byId('trade-draft-status');
+  if (status) status.textContent = message;
+}
+
+function markDraftDirty() {
+  if (isDraftDirty) return;
+  isDraftDirty = true;
+  updateDraftStatus('Cambios sin guardar en este navegador.');
+}
+
+function setSearchFeedback(message, busy = false) {
+  const output = byId('classification-results');
+  if (!output) return;
+  output.setAttribute('aria-busy', String(busy));
+  renderTextMessage(output, message);
 }
 
 function renderTextMessage(container, message) {
@@ -204,11 +223,15 @@ function renderPedimentoChecklist() {
 async function searchTariff() {
   const query = value('classification-query').trim();
   const output = byId('classification-results');
+  const searchButton = byId('search-tariff');
   if (!query) {
-    output.innerHTML = '<p class="trade-empty">Describe el producto o ingresa una fracción propuesta para buscar en la release verificada.</p>';
+    setSearchFeedback('Describe el producto o ingresa una fracción propuesta para buscar en la release verificada.');
     return;
   }
-  output.innerHTML = '<p class="trade-empty">Consultando la release verificada…</p>';
+  if (!output || !searchButton) return;
+  searchButton.disabled = true;
+  searchButton.textContent = 'Buscando…';
+  setSearchFeedback(`Consultando la release verificada para “${query}”…`, true);
   try {
     const response = await fetch(`/v1/search?q=${encodeURIComponent(query)}&limit=5`);
     if (!response.ok) throw new Error('La búsqueda verificada no está disponible en este momento.');
@@ -220,7 +243,7 @@ async function searchTariff() {
       .map((entry) => entry?.record)
       .filter((record) => record && typeof record.code === 'string' && typeof record.description === 'string');
     if (!records.length) {
-      output.innerHTML = '<p class="trade-empty">No se encontraron coincidencias. Amplía la descripción técnica y conserva la evidencia del producto.</p>';
+      setSearchFeedback('No se encontraron coincidencias. Amplía la descripción técnica y conserva la evidencia del producto.');
       return;
     }
     output.replaceChildren();
@@ -241,6 +264,7 @@ async function searchTariff() {
           datasetVersion: typeof record.dataset_version === 'string' ? record.dataset_version : null,
         });
         if (button.dataset.igi) byId('igi-rate').value = button.dataset.igi;
+        markDraftDirty();
         updateStatus(`Se cargó ${button.dataset.code} como hipótesis de trabajo. Verifica clasificación, vigencia y evidencia antes de usarla.`);
       });
       const detail = document.createElement('p');
@@ -265,7 +289,11 @@ async function searchTariff() {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'La búsqueda verificada no está disponible en este momento.';
-    renderTextMessage(output, message);
+    setSearchFeedback(message);
+  } finally {
+    output.setAttribute('aria-busy', 'false');
+    searchButton.disabled = false;
+    searchButton.textContent = 'Buscar';
   }
 }
 
@@ -388,11 +416,12 @@ function persistDraft() {
     // Incomplete inputs remain a legitimate local working draft; only the calculation snapshot is unavailable.
   }
   localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
-  updateStatus(
-    draft.traceability
-      ? 'Expediente orientativo y trazabilidad local guardados únicamente en este navegador.'
-      : 'Expediente local incompleto guardado únicamente en este navegador; completa los valores para generar un snapshot orientativo.',
-  );
+  isDraftDirty = false;
+  const message = draft.traceability
+    ? 'Expediente guardado localmente con trazabilidad orientativa.'
+    : 'Expediente local incompleto guardado; completa los valores para generar un snapshot orientativo.';
+  updateDraftStatus(message);
+  updateStatus(message);
 }
 
 function restoreDraft() {
@@ -414,6 +443,7 @@ function restoreDraft() {
         datasetVersion: typeof dataset.version === 'string' ? dataset.version : null,
       });
     }
+    updateDraftStatus('Expediente local restaurado en este navegador.');
   } catch {
     localStorage.removeItem(DRAFT_STORAGE_KEY);
   }
@@ -441,6 +471,12 @@ function initialize() {
     const field = byId(id);
     field.addEventListener('change', renderPedimentoChecklist);
     if (field.type !== 'checkbox' && field.tagName !== 'SELECT') field.addEventListener('input', renderPedimentoChecklist);
+  });
+  LOCAL_FORM_FIELD_IDS.forEach((id) => {
+    const field = byId(id);
+    if (!field) return;
+    const eventName = field.type === 'checkbox' || field.tagName === 'SELECT' ? 'change' : 'input';
+    field.addEventListener(eventName, markDraftDirty);
   });
   byId('tariff-code').addEventListener('input', () => {
     if (selectedRecord.code !== value('tariff-code').trim()) {
