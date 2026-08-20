@@ -59,6 +59,9 @@ test('marks a T-MEC review as incomplete when traceable origin evidence is missi
     requiredRegionalValueContent: 75,
     supplierDeclarations: false,
     billOfMaterials: false,
+    tmecReferenceUrl: 'https://www.gob.mx/t-mec/acciones-y-programas/textos-finales-del-tratado-entre-mexico-estados-unidos-y-canada-t-mec-202730',
+    tmecReferenceConsultedAt: '2026-08-20',
+    tmecReferenceNote: 'Regla de origen declarada para revisión documental.',
   });
 
   assert.equal(result.status, 'evidence_required');
@@ -92,7 +95,15 @@ test('builds a non-transactional pedimento checklist from missing operation data
 test('keeps an official source record for every orientation module', () => {
   assert.deepEqual(
     Object.keys(TRADE_SOURCES).sort(),
-    ['classification', 'costs', 'pedimento', 'rrna', 'tmec'],
+    [
+      'classification',
+      'costs',
+      'pedimento',
+      'rrna',
+      'tmec',
+      'tmecOriginProcedures',
+      'tmecOriginRules',
+    ],
   );
   for (const source of Object.values(TRADE_SOURCES)) {
     assert.match(source.url, /^https:\/\//);

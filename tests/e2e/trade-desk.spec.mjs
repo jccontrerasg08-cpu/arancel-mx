@@ -21,6 +21,9 @@ test('keeps source-cited T-MEC, RRNA and pedimento guidance accessible', async (
   await page.getByRole('tab', { name: /origen t-mec/i }).click();
   await page.locator('#tmec-code').fill('85171301');
   await page.locator('#tmec-origin').selectOption('MX');
+  await page.locator('#tmec-reference-url').fill('https://www.gob.mx/t-mec/rule');
+  await page.locator('#tmec-reference-consulted-at').fill('2026-08-20');
+  await page.locator('#tmec-reference-note').fill('Regla declarada para la revisión.');
   await expect(page.getByTestId('tmec-result')).toContainText(/declaraciones de proveedor/i);
   await expect(page.getByTestId('tmec-source')).toHaveAttribute('href', /gob\.mx\/t-mec/);
 
