@@ -47,3 +47,6 @@ jobs:
 
       - name: Cite WCO HS 2022 chapter PDF URL without downloading
         run: arancel-mx wco cite 01
+
+      - name: Check deployed public contract
+        run: python scripts/check_public_service.py --timeout 20
