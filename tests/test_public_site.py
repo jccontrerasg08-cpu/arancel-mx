@@ -216,3 +216,13 @@ def test_public_site_bridge_keeps_current_release_and_route_aliases() -> None:
     assert "attempts >= 12" in bridge
     assert "currentReleasePattern" not in bridge
     assert "node.nodeValue.replace(currentReleasePattern" not in bridge
+
+
+def test_vercel_centralization_docs_match_the_promoted_retrieval_routes() -> None:
+    """Keep documented ownership aligned with the Vercel rewrite contract."""
+
+    centralization = (ROOT / "docs" / "vercel-centralization.md").read_text(encoding="utf-8")
+
+    assert "| `ficha`, suggest, provenance, and national notes | Vercel operational function | Active Neon release |" in centralization
+    assert "| `/openapi.json`, `/docs`, repository telemetry | Temporary FastAPI compatibility route | Discovery/telemetry migration not yet complete |" in centralization
+    assert "Temporary FastAPI compatibility route | Awaiting the first evidence-bearing Neon promotion" not in centralization
