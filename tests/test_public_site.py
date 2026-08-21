@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import re
 import subprocess
 import sys
 
@@ -160,9 +161,9 @@ def test_public_site_serves_the_react_shell_with_canonical_brand_assets() -> Non
     assert (ROOT / "website" / "assets" / "arancel-mx-mark.svg").is_file()
     assert (ROOT / "website" / "assets" / "arancel-mx-logo.svg").is_file()
     assert '<div id="root"></div>' in index
-    assert "/assets/index-" in index
-    assert "/assets/index-ad6fbc25b68e.js" in index
-    assert (ROOT / "website" / "assets" / "index-ad6fbc25b68e.js").is_file()
+    match = re.search(r'/assets/(index-[a-f0-9]{12}\.js)', index)
+    assert match is not None
+    assert (ROOT / "website" / "assets" / match.group(1)).is_file()
     assert 'type="module"' in index
 
     assert "/assets/hub-search.css" not in index
