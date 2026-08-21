@@ -3,9 +3,18 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "build:frontend": "vite build && node scripts/sync-frontend-static.mjs",
+    "dev:frontend": "vite"
+  },
+  "dependencies": {
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "react-router-dom": "^7.18.2"
   },
   "devDependencies": {
-    "@playwright/test": "1.62.1"
+    "@playwright/test": "1.62.1",
+    "@vitejs/plugin-react": "5.1.1",
+    "vite": "^7.3.6"
   }
 }
