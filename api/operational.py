@@ -54,6 +54,22 @@ class handler(BaseHTTPRequestHandler):
         if resource == "health":
             self._respond(HTTPStatus.OK, {"status": "ok"})
             return
+        if resource not in {
+            "meta",
+            "ready",
+            "search",
+            "suggest",
+            "ficha",
+            "sections",
+            "lookup",
+            "chapters",
+            "parent",
+            "children",
+            "national-notes",
+            "provenance",
+        }:
+            self._respond(HTTPStatus.NOT_FOUND, {"status": "not_found"})
+            return
 
         database_url = operational_database_url()
         if not database_url:

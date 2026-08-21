@@ -275,8 +275,11 @@ def main() -> int:
 
     session = build_session()
     remaining = probe_documented_urls(session, probe_urls, timeout=args.timeout)
-    if remaining:
+    for pause in _RETRY_PAUSE:
+        if not remaining:
+            break
         print("\nRetrying previously unreachable URLs:")
+        time.sleep(pause)
         remaining = probe_documented_urls(session, remaining, timeout=args.timeout)
     if remaining:
         print("\nUnreachable documented URLs:")
