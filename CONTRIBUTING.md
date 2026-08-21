@@ -20,12 +20,13 @@ python -m pytest -q
 
 ## Flujo recomendado
 
-1. Explica el problema y limita el alcance.
-2. Agrega una prueba que falle antes del cambio y pase después.
-3. Para una fuente, documenta autoridad, URL canónica, función documental y prioridad.
-4. Para un fixture, registra el origen y evita incluir información privada.
-5. Ejecuta `python -m pytest -q`, `python -m build` y `git diff --check`.
-6. Actualiza la documentación cuando cambien interfaces, esquema o proceso de publicación.
+1. Lee y aplica la [Política de desarrollo verificable](docs/governance/DEVELOPMENT_POLICY.md), incluida su clasificación de evidencia y su puerta de cambio.
+2. Explica el problema y limita el alcance.
+3. Agrega una prueba que falle antes del cambio y pase después.
+4. Para una fuente, documenta autoridad, URL canónica, función documental y prioridad.
+5. Para un fixture, registra el origen y evita incluir información privada.
+6. Ejecuta `python -m pytest -q`, `python -m build` y `git diff --check`.
+7. Actualiza la documentación cuando cambien interfaces, esquema o proceso de publicación, y registra evidencia fechada para cambios de seguridad, datos o despliegue.
 
 ## Revisión en GitHub
 
