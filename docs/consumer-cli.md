@@ -9,7 +9,7 @@
 Python 3.11 or newer is required.
 
 ```bash
-pip install arancel-mx==0.2.0
+pip install arancel-mx
 arancel-mx --version
 arancel-mx doctor
 arancel-mx data download
