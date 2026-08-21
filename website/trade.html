@@ -46,8 +46,12 @@
           <div>
             <span class="trade-workspace__eyebrow">Expediente de trabajo</span>
             <p data-testid="trade-draft-status" id="trade-draft-status" role="status" aria-live="polite">Sin cambios guardados en este navegador.</p>
+            <p class="trade-workspace__privacy">El expediente se guarda sólo en este navegador y perfil; no se transmite al servicio.</p>
           </div>
-          <button class="trade-button trade-button--secondary" id="save-draft" type="button">Guardar expediente local</button>
+          <div class="trade-workspace__actions">
+            <button class="trade-button trade-button--secondary" id="save-draft" type="button">Guardar expediente local</button>
+            <button class="trade-button trade-button--secondary" id="clear-draft" type="button">Borrar expediente local</button>
+          </div>
         </section>
         <div class="trade-notice" role="note">
           <strong>Antes de usar un resultado:</strong>

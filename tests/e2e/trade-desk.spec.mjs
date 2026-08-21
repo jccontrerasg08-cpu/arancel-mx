@@ -366,3 +366,34 @@ test('keeps the local draft action and search feedback available across the trad
   await expect(page.locator('#classification-results')).toHaveAttribute('aria-busy', 'false');
   await expect(page.locator('#classification-results')).toContainText(/no se encontraron coincidencias/i);
 });
+
+
+test('lets a person clear the local trade draft from this browser', async ({ page }) => {
+  await page.goto('/trade');
+  await page.getByTestId('dta-rate').fill('0.8');
+  await page.getByRole('button', { name: /guardar expediente local/i }).click();
+  await expect(page.getByTestId('trade-draft-status')).toContainText(/guardado localmente/i);
+
+  await page.getByRole('button', { name: /borrar expediente local/i }).click();
+
+  await expect(page.getByTestId('trade-draft-status')).toContainText(/expediente local eliminado/i);
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('arancel-mx-trade-draft'))).toBeNull();
+});
+
+test('keeps the trade form available and explains when local storage cannot save', async ({ page }) => {
+  await page.addInitScript(() => {
+    const nativeSetItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = function setItem(key, value) {
+      if (key === 'arancel-mx-trade-draft') {
+        throw new DOMException('Storage quota exhausted', 'QuotaExceededError');
+      }
+      return nativeSetItem.call(this, key, value);
+    };
+  });
+  await page.goto('/trade');
+  await page.getByTestId('dta-rate').fill('0.8');
+  await page.getByRole('button', { name: /guardar expediente local/i }).click();
+
+  await expect(page.getByTestId('trade-draft-status')).toContainText(/no se pudo guardar.*almacenamiento/i);
+  await expect(page.getByTestId('dta-rate')).toHaveValue('0.8');
+});

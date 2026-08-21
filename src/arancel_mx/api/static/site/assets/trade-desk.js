@@ -415,11 +415,33 @@ function persistDraft() {
   } catch {
     // Incomplete inputs remain a legitimate local working draft; only the calculation snapshot is unavailable.
   }
-  localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+  try {
+    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+  } catch {
+    const message = 'No se pudo guardar el expediente local por un problema de almacenamiento. Conserva el formulario abierto o libera espacio en este navegador.';
+    updateDraftStatus(message);
+    updateStatus(message);
+    return;
+  }
   isDraftDirty = false;
   const message = draft.traceability
     ? 'Expediente guardado localmente con trazabilidad orientativa.'
     : 'Expediente local incompleto guardado; completa los valores para generar un snapshot orientativo.';
+  updateDraftStatus(message);
+  updateStatus(message);
+}
+
+function clearDraft() {
+  try {
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+  } catch {
+    const message = 'No se pudo borrar el expediente local por un problema de almacenamiento.';
+    updateDraftStatus(message);
+    updateStatus(message);
+    return;
+  }
+  isDraftDirty = false;
+  const message = 'Expediente local eliminado de este navegador. Los valores visibles permanecen abiertos hasta que cierres o recargues la mesa.';
   updateDraftStatus(message);
   updateStatus(message);
 }
@@ -483,7 +505,8 @@ function initialize() {
       selectedRecord = Object.freeze({ code: null, datasetVersion: null });
     }
   });
-  byId('save-draft').addEventListener('click', persistDraft);
+  byId('save-draft')?.addEventListener('click', persistDraft);
+  byId('clear-draft')?.addEventListener('click', clearDraft);
   byId('rrna-source').href = TRADE_SOURCES.rrna.url;
   byId('rrna-source').textContent = TRADE_SOURCES.rrna.title;
   byId('costs-source').href = TRADE_SOURCES.costs.url;

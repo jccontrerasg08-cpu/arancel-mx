@@ -110,7 +110,8 @@ def test_vercel_functions_bundle_the_src_layout_with_bounded_runtime() -> None:
 def test_vercel_cache_policy_only_marks_hashed_bundles_immutable() -> None:
     config = json.loads((ROOT / "vercel.json").read_text(encoding="utf-8"))
 
-    assert config["headers"] == [
+    cache_rules = [rule for rule in config["headers"] if rule["source"] != "/(.*)"]
+    assert cache_rules == [
         {
             "source": "/assets/index-(.*)",
             "headers": [
@@ -264,3 +265,14 @@ def test_visual_atlas_docs_do_not_claim_unimplemented_flag_attributes() -> None:
 
     assert "`srcset`" not in atlas
     assert "`alt` específico por país, `src` explícito y dimensiones reservadas" in atlas
+
+
+def test_vercel_applies_safe_defensive_headers_to_public_documents() -> None:
+    config = json.loads((ROOT / "vercel.json").read_text(encoding="utf-8"))
+    document_headers = next(rule["headers"] for rule in config["headers"] if rule["source"] == "/(.*)")
+    values = {header["key"]: header["value"] for header in document_headers}
+
+    assert values["X-Content-Type-Options"] == "nosniff"
+    assert values["Referrer-Policy"] == "strict-origin-when-cross-origin"
+    assert values["Permissions-Policy"] == "geolocation=(), microphone=(), camera=()"
+    assert values["X-Frame-Options"] == "DENY"
