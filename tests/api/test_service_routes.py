@@ -87,7 +87,7 @@ def test_meta_keeps_api_package_and_dataset_versions_separate(
     assert response.status_code == 200
     assert response.json() == {
         "api_version": "1",
-        "package_version": "0.3.5",
+        "package_version": "0.3.6",
         "dataset_tag": "data-2026.08.15",
         "dataset_version": "2026.08.15",
         "schema_version": "2",

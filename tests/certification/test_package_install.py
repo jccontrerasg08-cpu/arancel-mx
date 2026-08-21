@@ -29,13 +29,13 @@ def test_dataset_requires_expected_version() -> None:
     # so certification could pass without ever querying the dataset.
     with pytest.raises(SystemExit):
         certifier._parse_args(
-            ["dist/arancel_mx-0.3.5-py3-none-any.whl", "--dataset", "local.duckdb"]
+            ["dist/arancel_mx-0.3.6-py3-none-any.whl", "--dataset", "local.duckdb"]
         )
 
 
 def test_smoke_commands_cover_installed_package_surfaces(tmp_path: Path) -> None:
     commands = smoke_commands(
-        Path("dist/arancel_mx-0.3.5-py3-none-any.whl"),
+        Path("dist/arancel_mx-0.3.6-py3-none-any.whl"),
         tmp_path / "venv",
     )
     rendered = [" ".join(command) for command in commands]
@@ -57,7 +57,7 @@ def test_clean_wheel_install_runs_probe_with_local_dataset(tmp_path: Path) -> No
         text=True,
         capture_output=True,
     )
-    wheel = next(dist.glob("arancel_mx-0.3.5-*.whl"))
+    wheel = next(dist.glob("arancel_mx-0.3.6-*.whl"))
     dataset = create_consumer_duckdb(
         tmp_path / "fixture ñ" / "arancel_mx.duckdb",
         dataset_version="2026.08.11",
@@ -70,7 +70,7 @@ def test_clean_wheel_install_runs_probe_with_local_dataset(tmp_path: Path) -> No
             str(CERTIFIER),
             str(wheel),
             "--expected-version",
-            "0.3.5",
+            "0.3.6",
             "--dataset",
             str(dataset),
         ],
