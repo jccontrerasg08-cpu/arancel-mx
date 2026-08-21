@@ -1,8 +1,11 @@
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, readdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
-const bundlePath = resolve(root, 'website/assets/index-ad6fbc25b68e.js');
+const assetsPath = resolve(root, 'website/assets');
+const bundleName = (await readdir(assetsPath)).find((name) => /^index-[A-Za-z0-9_-]+\.js$/.test(name));
+if (!bundleName) throw new Error('No generated JavaScript bundle is available for glossary recovery');
+const bundlePath = resolve(assetsPath, bundleName);
 const outputPath = resolve(root, 'frontend/src/glossary-data.js');
 const bundle = await readFile(bundlePath, 'utf8');
 const matcher = /\{category:"((?:\\.|[^"\\])*)",term:"((?:\\.|[^"\\])*)",definition:"((?:\\.|[^"\\])*)"\}/g;

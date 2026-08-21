@@ -34,6 +34,16 @@ test('updates editorial metadata when the route changes', async ({ page }) => {
   await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /modelo de confianza/i);
 });
 
+test('recovers from an unknown route with a clear Explorer destination', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(() => {
+    window.history.pushState({}, '', '/ruta-inexistente');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  });
+  await expect(page.getByRole('heading', { name: /page not found/i })).toBeVisible();
+  await expect(page.getByRole('link', { name: /open explorer/i })).toHaveAttribute('href', '/app');
+});
+
 test('serves the local research records page without an account boundary', async ({ page }) => {
   await page.goto('/records');
   await expect(page.getByRole('heading', { name: /save evidence you can return to/i })).toBeVisible();

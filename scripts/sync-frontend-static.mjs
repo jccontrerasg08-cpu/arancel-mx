@@ -32,7 +32,7 @@ for (const destination of destinations) {
   const destinationAssets = path.join(destination, 'assets');
   await mkdir(destinationAssets, { recursive: true });
   for (const existing of await readdir(destinationAssets)) {
-    if (/^index-[A-Za-z0-9_-]+\.js$/.test(existing) && existing !== stableBundleName) {
+    if (/^index-[A-Za-z0-9_-]+\.(?:js|css)$/.test(existing) && existing !== stableBundleName) {
       await unlink(path.join(destinationAssets, existing));
     }
   }

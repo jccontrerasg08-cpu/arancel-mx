@@ -34,6 +34,10 @@ function SiteFooter() {
   return <footer className="site-footer"><div><strong>arancel.mx</strong><p>Verified Mexican tariff data with visible release evidence.</p></div><nav aria-label="Footer navigation">{NAVIGATION.slice(0, 8).map(([label, href]) => <Link key={href} to={href}>{label}</Link>)}</nav><div><a href={OFFICIAL_LINKS.github} target="_blank" rel="noreferrer">GitHub</a><a href={OFFICIAL_LINKS.pypi} target="_blank" rel="noreferrer">PyPI 0.3.5</a><p>© 2026 arancel-mx · Apache-2.0</p></div></footer>;
 }
 
+function NotFoundPage() {
+  return <section className="empty-state"><h1>Page not found</h1><p>The requested public route is not available in this release.</p><Link className="button primary" to="/app">Open explorer</Link></section>;
+}
+
 function RoutedPage({ Component }) {
   const location = useLocation();
   useEffect(() => {
@@ -46,5 +50,5 @@ function RoutedPage({ Component }) {
 }
 
 export function App() {
-  return <BrowserRouter><SiteHeader/><Routes>{Object.entries(PAGE_COMPONENTS).map(([path, Component]) => <Route key={path} path={path} element={<RoutedPage Component={Component} />} />)}<Route path="/product" element={<RoutedPage Component={PAGE_COMPONENTS['/app']} />}/><Route path="/app/chapter/:code" element={<RoutedPage Component={PAGE_COMPONENTS['/app/record/:code']} />}/></Routes><SiteFooter/></BrowserRouter>;
+  return <BrowserRouter><SiteHeader/><Routes>{Object.entries(PAGE_COMPONENTS).map(([path, Component]) => <Route key={path} path={path} element={<RoutedPage Component={Component} />} />)}<Route path="/product" element={<RoutedPage Component={PAGE_COMPONENTS['/app']} />}/><Route path="/app/chapter/:code" element={<RoutedPage Component={PAGE_COMPONENTS['/app/record/:code']} />}/><Route path="*" element={<RoutedPage Component={NotFoundPage} />}/></Routes><SiteFooter/></BrowserRouter>;
 }
