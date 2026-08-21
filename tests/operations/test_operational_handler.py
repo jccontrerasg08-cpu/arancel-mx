@@ -123,6 +123,36 @@ def test_operational_handler_serves_exact_lookup_from_the_active_release(monkeyp
     assert response == [module.HTTPStatus.OK, record]
 
 
+def test_operational_handler_rejects_unknown_resource_without_database_connection(monkeypatch):
+    module = _handler_module()
+    response: list[object] = []
+    request = module.handler.__new__(module.handler)
+    request.path = "/api/operational"
+    request.headers = {}
+    request._respond = lambda status, payload: response.extend((status, payload))
+    monkeypatch.setenv("ARANCEL_MX_DATABASE_URL", "postgresql://central")
+
+    connections: list[str] = []
+
+    class Connection:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_value, traceback):
+            return False
+
+    def connect(url: str):
+        connections.append(url)
+        return Connection()
+
+    monkeypatch.setattr(module, "_connect", connect)
+
+    request.do_GET()
+
+    assert response == [module.HTTPStatus.NOT_FOUND, {"status": "not_found"}]
+    assert connections == []
+
+
 def test_operational_handler_serves_process_health_without_database(monkeypatch):
     module = _handler_module()
     response: list[object] = []
