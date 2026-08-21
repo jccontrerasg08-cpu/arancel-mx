@@ -31,7 +31,7 @@ function SiteHeader() {
 }
 
 function SiteFooter() {
-  return <footer className="site-footer"><div><strong>arancel.mx</strong><p>Verified Mexican tariff data with visible release evidence.</p></div><nav aria-label="Footer navigation">{NAVIGATION.slice(0, 8).map(([label, href]) => <Link key={href} to={href}>{label}</Link>)}</nav><div><a href={OFFICIAL_LINKS.github} target="_blank" rel="noreferrer">GitHub</a><a href={OFFICIAL_LINKS.pypi} target="_blank" rel="noreferrer">PyPI 0.3.5</a><p>© 2026 arancel-mx · Apache-2.0</p></div></footer>;
+  return <footer className="site-footer"><div><strong>arancel.mx</strong><p>Verified Mexican tariff data with visible release evidence.</p></div><nav aria-label="Footer navigation">{NAVIGATION.slice(0, 8).map(([label, href]) => <Link key={href} to={href}>{label}</Link>)}</nav><div><a href={OFFICIAL_LINKS.github} target="_blank" rel="noreferrer">GitHub</a><a href={OFFICIAL_LINKS.pypi} target="_blank" rel="noreferrer">PyPI · latest</a><p>© 2026 arancel-mx · Apache-2.0</p></div></footer>;
 }
 
 function NotFoundPage() {

@@ -9,7 +9,7 @@
 Python 3.11 or newer is required.
 
 ```bash
-pip install arancel-mx==0.2.0
+pip install arancel-mx
 arancel-mx --version
 arancel-mx doctor
 arancel-mx data download
@@ -28,7 +28,7 @@ arancel-mx data verify
 
 The package version and dataset version are independent identifiers.
 
-- **package version**: the Python distribution and CLI implementation, reported by `arancel-mx --version`. PyPI currently publishes `0.2.0`. The checkout declares `0.3.6`; the prior `0.3.3`, `0.3.4`, and `0.3.5` candidates remain TestPyPI-only and are not eligible for PyPI promotion.
+- **package version**: the Python distribution and CLI implementation, reported by `arancel-mx --version`. PyPI currently publishes `0.3.6`. The checkout declares `0.3.7`; the prior `0.3.3`, `0.3.4`, and `0.3.5` candidates remain TestPyPI-only and are not eligible for PyPI promotion.
 - **dataset version**: an immutable public tariff-data release named `data-YYYY.MM.DD`. `/releases/latest` currently resolves to `data-2026.08.17`.
 
 Updating the Python package does not silently replace a pinned dataset version. Publishing a new dataset release does not require changing the package version.
