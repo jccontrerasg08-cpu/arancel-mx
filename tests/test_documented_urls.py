@@ -16,6 +16,7 @@ from scripts.check_documented_urls import (
     describe_request_failure,
     documented_public_urls,
     liveness_probe_urls,
+    main,
     extract_bare_http_urls,
     fetch_html_body,
     is_parseable_url,
@@ -170,6 +171,30 @@ def test_probe_retries_only_urls_that_failed_the_first_pass(
     output = capsys.readouterr().out
     assert "FAIL" in output
     assert "OK [200]" in output
+
+
+def test_url_check_waits_for_transient_failures_before_declaring_them_unreachable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    url = "https://github.com/jccontrerasg08-cpu/arancel-mx/actions"
+    attempts: list[tuple[str, ...]] = []
+    sleeps: list[float] = []
+    outcomes = [[url], [url], []]
+
+    monkeypatch.setattr("scripts.check_documented_urls.liveness_probe_urls", lambda: (url,))
+    monkeypatch.setattr("scripts.check_documented_urls.build_session", object)
+    monkeypatch.setattr("scripts.check_documented_urls.time.sleep", sleeps.append)
+
+    def probe(_session: object, urls: tuple[str, ...] | list[str], *, timeout: float) -> list[str]:
+        attempts.append(tuple(urls))
+        return outcomes.pop(0)
+
+    monkeypatch.setattr("scripts.check_documented_urls.probe_documented_urls", probe)
+    monkeypatch.setattr("sys.argv", ["check_documented_urls.py"])
+
+    assert main() == 0
+    assert attempts == [(url,), (url,), (url,)]
+    assert sleeps == [1.5, 3.0]
 
 
 @pytest.mark.skipif(
