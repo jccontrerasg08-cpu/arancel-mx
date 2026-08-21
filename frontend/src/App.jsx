@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { BrowserRouter, Link, Route, Routes, useLocation } from 'react-router-dom';
 
-import { NAVIGATION, OFFICIAL_LINKS } from './content.js';
+import { EDITORIAL_PAGES, NAVIGATION, OFFICIAL_LINKS } from './content.js';
 import { PAGE_COMPONENTS } from './pages.jsx';
 
 function ThemeToggle() {
@@ -15,9 +15,19 @@ function ThemeToggle() {
 
 function SiteHeader() {
   const [open, setOpen] = useState(false);
+  const toggleRef = useRef(null);
   const location = useLocation();
   useEffect(() => setOpen(false), [location.pathname]);
-  return <header className="site-header"><div className="site-header__inner"><Link className="brand" to="/">arancel<span>.mx</span></Link><button className="nav-toggle" type="button" aria-expanded={open} aria-controls="site-navigation" onClick={() => setOpen((current) => !current)}>Open navigation menu</button><nav id="site-navigation" className={open ? 'site-nav is-open' : 'site-nav'} aria-label="Primary navigation">{NAVIGATION.map(([label, href]) => <Link key={href} className={location.pathname === href ? 'is-active' : ''} to={href}>{label}</Link>)}</nav><div className="site-header__actions"><ThemeToggle/><a className="github-link" href={OFFICIAL_LINKS.github} target="_blank" rel="noreferrer">GitHub <span aria-label="open issues">0</span></a></div></div></header>;
+  useEffect(() => {
+    const closeWithEscape = (event) => {
+      if (event.key !== 'Escape') return;
+      setOpen(false);
+      toggleRef.current?.focus();
+    };
+    window.addEventListener('keydown', closeWithEscape);
+    return () => window.removeEventListener('keydown', closeWithEscape);
+  }, []);
+  return <><a className="skip-link" href="#main-content">Skip to content</a><header className="site-header"><div className="site-header__inner"><Link className="brand" to="/">arancel<span>.mx</span></Link><button ref={toggleRef} className="nav-toggle" type="button" aria-expanded={open} aria-controls="site-navigation" onClick={() => setOpen((current) => !current)}>{open ? 'Close navigation menu' : 'Open navigation menu'}</button><nav id="site-navigation" className={open ? 'site-nav is-open' : 'site-nav'} aria-label="Primary navigation">{NAVIGATION.map(([label, href]) => <Link key={href} className={location.pathname === href ? 'is-active' : ''} to={href}>{label}</Link>)}</nav><div className="site-header__actions"><ThemeToggle/><a className="github-link" href={OFFICIAL_LINKS.github} target="_blank" rel="noreferrer">GitHub <span aria-label="open issues">0</span></a></div></div></header></>;
 }
 
 function SiteFooter() {
@@ -25,6 +35,13 @@ function SiteFooter() {
 }
 
 function RoutedPage({ Component }) {
+  const location = useLocation();
+  useEffect(() => {
+    const page = EDITORIAL_PAGES[location.pathname];
+    document.title = `arancel-mx — ${page?.title || 'Verified Mexican tariff data'}`;
+    const description = document.querySelector('meta[name="description"]');
+    if (description) description.setAttribute('content', page?.description || 'Datos arancelarios mexicanos verificables.');
+  }, [location.pathname]);
   return <main id="main-content" tabIndex="-1"><Component /></main>;
 }
 

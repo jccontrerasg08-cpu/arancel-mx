@@ -6,7 +6,32 @@ test('serves the public marketing root and preserves the explorer handoff', asyn
   await page.goto('/');
   await expect(page.getByRole('heading', { name: /tariff intelligence/i })).toBeVisible();
   await expect(page.getByText(/Apache-2\.0/i).first()).toBeVisible();
-  await expect(page.getByRole('link', { name: /open explorer/i })).toHaveAttribute('href', 'https://arancel-mx.vercel.app/app');
+  await expect(page.getByRole('link', { name: /open explorer/i })).toHaveAttribute('href', '/app');
+});
+
+test('keeps the global navigation state and skip link accessible', async ({ page }) => {
+  await page.goto('/');
+  const skipLink = page.getByRole('link', { name: /skip to content/i });
+  await page.keyboard.press('Tab');
+  await expect(skipLink).toBeFocused();
+  await expect(skipLink).toHaveAttribute('href', '#main-content');
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.reload();
+  const toggle = page.getByRole('button', { name: /open navigation menu/i });
+  await toggle.click();
+  await expect(page.getByRole('button', { name: /close navigation menu/i })).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('button', { name: /open navigation menu/i })).toBeFocused();
+});
+
+test('updates editorial metadata when the route changes', async ({ page }) => {
+  await page.goto('/documentation');
+  await expect(page).toHaveTitle(/start with the contract, then write the integration/i);
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /guías técnicas/i);
+  await page.goto('/trust');
+  await expect(page).toHaveTitle(/when evidence is incomplete, the release stops/i);
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /modelo de confianza/i);
 });
 
 test('serves the local research records page without an account boundary', async ({ page }) => {
@@ -22,6 +47,14 @@ test('serves verified chapter and fraction-change discovery routes', async ({ pa
   await page.goto('/changes');
   await expect(page.getByRole('heading', { name: /find what a verified fraction shows now/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /inspect release/i })).toBeVisible();
+});
+
+test('identifies the chapter fallback when verified indexes are unavailable', async ({ page }) => {
+  await page.route('**/v1/sections', (route) => route.fulfill({ status: 503, contentType: 'application/json', body: '{}' }));
+  await page.route('**/v1/chapters', (route) => route.fulfill({ status: 503, contentType: 'application/json', body: '{}' }));
+  await page.goto('/chapters');
+  await expect(page.getByRole('status')).toContainText(/index unavailable.*packaged navigation/i);
+  await expect(page.getByRole('button', { name: /^sección I /i })).toBeVisible();
 });
 
 test('opens a verified chapter section and family hierarchy from the keyboard', async ({ page }) => {
@@ -75,6 +108,19 @@ test('looks up a complete tariff fraction with evidence and a decision tree', as
   await expect(page.getByTestId('tree-filter-status')).toContainText('85.17.13.01');
   await expect(page.getByRole('status')).toHaveText(/verified record ready/i);
   await expect(page.getByRole('link', { name: /API JSON/i })).toHaveAttribute('href', /\/v1\/ficha\/85171301$/);
+});
+
+test('retries a direct record request without leaving the record route', async ({ page }) => {
+  let attempts = 0;
+  await page.route('**/v1/ficha/99999999', async (route) => {
+    attempts += 1;
+    await route.fulfill({ status: 503, contentType: 'application/json', body: '{}' });
+  });
+  await page.goto('/app/record/99999999');
+  await expect(page.getByRole('heading', { name: /temporarily unavailable/i })).toBeVisible();
+  await page.getByRole('button', { name: /retry/i }).click();
+  await expect.poll(() => attempts).toBeGreaterThan(1);
+  await expect(page).toHaveURL(/\/app\/record\/99999999$/);
 });
 
 test('exposes rates only on fraction cards', async ({ page }) => {
@@ -144,6 +190,7 @@ test('narrows the visible decision-tree path from an entered fraction prefix', a
   await expect(page.getByTestId('hierarchy-card')).toBeVisible();
   await page.getByTestId('search-input').fill('8517');
   await expect(page.getByTestId('tree-filter-status')).toContainText('85.17');
+  await expect(page.getByRole('button', { name: /apply filter/i })).toHaveCount(0);
   await expect(page.getByTestId('hierarchy-card')).toContainText(/capítulo HS2/i);
 });
 
@@ -155,6 +202,8 @@ test('searches verified descriptions from input and quick action', async ({ page
   await expect(page.getByRole('status')).toContainText(/verified results found/i);
   await page.goto('/app');
   await page.getByRole('button', { name: /try teléfonos/i }).click();
+  await expect(page).toHaveURL(/\/app\?q=tel%C3%A9fonos$/);
+  await expect(page.getByTestId('search-input')).toHaveValue('teléfonos');
   await expect(page.getByTestId('result-card').first()).toContainText(/teléfonos/i);
 });
 
@@ -205,6 +254,6 @@ test('keeps integrated research controls keyboard-reachable and announced', asyn
   await expect(page.getByRole('status')).toHaveAttribute('aria-live', 'polite');
   await expect(page.getByTestId('snapshot-list')).toHaveAttribute('aria-live', 'polite');
   await page.getByTestId('search-input').focus();
-  await page.keyboard.press('Tab');
-  await expect(page.getByTestId('search-submit')).toBeFocused();
+  await expect(page.getByTestId('search-input')).toBeFocused();
+  await expect(page.getByRole('button', { name: /apply filter/i })).toHaveCount(0);
 });

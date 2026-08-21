@@ -29,8 +29,6 @@ function PageHero({ page, children }) {
   return <section className="page-hero"><p className="eyebrow">{page.eyebrow}</p><h1>{page.title}</h1><p>{page.description}</p>{children}<p className="disclaimer">{page.disclaimer}</p></section>;
 }
 
-const PUBLIC_ORIGIN = 'https://arancel-mx.vercel.app';
-
 function External({ href, children }) {
   return <a href={href} target="_blank" rel="noreferrer">{children} <span aria-hidden="true">↗</span></a>;
 }
@@ -44,7 +42,7 @@ export function HomePage() {
   };
   return <>
     <PageHero page={EDITORIAL_PAGES['/']}>
-      <div className="hero-actions"><a className="button primary" href={`${PUBLIC_ORIGIN}/app`}>Open explorer</a><Link className="button" to="/documentation">Read documentation</Link></div>
+      <div className="hero-actions"><Link className="button primary" to="/app">Open explorer</Link><Link className="button" to="/documentation">Read documentation</Link></div>
       <p className="trust-line">Immutable releases · Manifest + checksums · Independent verification</p>
     </PageHero>
     <section className="metric-grid" aria-label="Release metrics"><article><strong>8,183</strong><span>Mexican fractions</span></article><article><strong>11,507</strong><span>NICO codes</span></article><article><strong>Daily</strong><span>release checks</span></article><article><strong>Apache-2.0</strong><span>open-source core</span></article></section>
@@ -60,6 +58,7 @@ export function ExplorerPage() {
   const [query, setQuery] = useState(initial);
   const [state, setState] = useState({ kind: initial ? 'loading' : 'idle', results: [] });
 
+  useEffect(() => setQuery(initial), [initial]);
   useEffect(() => {
     if (!initial) return;
     const controller = new AbortController();
@@ -102,6 +101,7 @@ export function ExplorerPage() {
 export function RecordPage() {
   const { code } = useParams();
   const [state, setState] = useState({ kind: 'loading' });
+  const [retry, setRetry] = useState(0);
   const [saved, setSaved] = useState(false);
   const [snapshots, setSnapshots] = useState(() => { try { return JSON.parse(localStorage.getItem('arancel-mx-fichas-locales') || '[]'); } catch { return []; } });
   const [treeFilter, setTreeFilter] = useState('');
@@ -114,9 +114,9 @@ export function RecordPage() {
         setState(record ? { kind: 'ready', ficha: asExampleFicha(record), provenance: [], fallback: true } : { kind: 'error' });
       });
     return () => controller.abort();
-  }, [code]);
+  }, [code, retry]);
   if (state.kind === 'loading') return <p className="status" role="status">Retrieving verified hierarchy and recorded evidence…</p>;
-  if (state.kind === 'error') return <section className="empty-state"><h1>The verified release is temporarily unavailable.</h1><Link to="/app">Return to Explorer</Link></section>;
+  if (state.kind === 'error') return <section className="empty-state"><h1>The verified release is temporarily unavailable.</h1><button className="button primary" type="button" onClick={() => setRetry((current) => current + 1)}>Retry</button><Link to="/app">Return to Explorer</Link></section>;
   const { ficha, provenance } = state;
   const record = ficha.record || ficha;
   const save = () => {
@@ -141,7 +141,7 @@ export function RecordPage() {
   const formattedCode = ficha.formatted_code || formatCode(record.code);
   const hierarchy = ficha.hierarchy || record.hierarchy || [];
   const visibleHierarchy = hierarchy.filter((entry) => !treeFilter || String(entry.code || '').startsWith(treeFilter.replace(/\D/g, '')) || String(record.code || '').startsWith(treeFilter.replace(/\D/g, '')));
-  return <section data-testid="result-card" className="record-page"><p role="status" aria-live="polite">Verified record ready.</p><p className="eyebrow">VERIFIED RECORD</p><h1>{formattedCode}</h1><p>{record.description}</p><h2>Release context, not advice.</h2>{state.fallback && <p className="example-note">Recorded presentation example while the verified release is temporarily unavailable.</p>}<div className="metric-grid record-metrics">{hasRates && <><article><strong>{displayRate(record.igi)}</strong><span>IGI</span></article><article><strong>{displayRate(record.ige)}</strong><span>IGE</span></article></>}<article><strong>{record.unit_name || '—'}</strong><span>Unit</span></article><article><strong>{record.dataset_version || '—'}</strong><span>Release</span></article></div><button className="button primary" onClick={save}>{saved ? 'Saved locally' : 'Save locally'}</button><button data-testid="export-snapshots" className="button" type="button" onClick={exportSnapshots} disabled={!snapshots.length}>Export snapshots</button><a className="button" href={`/v1/ficha/${record.code}`} target="_blank" rel="noreferrer">API JSON</a><ul data-testid="snapshot-list" aria-live="polite" className="snapshot-list">{snapshots.map((snapshot) => <li key={snapshot.code}>{formatCode(snapshot.code)} · {snapshot.dataset_version}</li>)}</ul><section data-testid="hierarchy-card"><h2>Progressive decision tree</h2><label htmlFor="tree-query">Filter this hierarchy</label><div className="inline-form"><input data-testid="search-input" id="tree-query" value={treeFilter} onChange={(event) => setTreeFilter(event.target.value)} placeholder="e.g. 8517"/><button data-testid="search-submit" className="button" type="button" onClick={() => setTreeFilter((current) => current)}>Apply filter</button></div><p data-testid="tree-filter-status">{formatCode(treeFilter || record.code)}</p><ol className="hierarchy">{visibleHierarchy.map((entry) => { const entryCode = String(entry.code || entry); const label = entryCode.length === 2 ? 'Capítulo HS2' : entryCode.length === 4 ? 'Partida · familia HS4' : entryCode.length === 6 ? 'Subpartida HS6' : 'Fracción o NICO'; return <li key={entryCode}><strong>{label} · {formatCode(entryCode)}</strong> {entry.description || ''}</li>; })}</ol></section><section><h2>Recorded provenance</h2>{provenance.length ? <ul>{provenance.map((entry, index) => <li key={entry.source_url || index}><External href={entry.source_url || '#'}>{entry.source_name || 'Official source'}</External></li>)}</ul> : <p>No provenance entries are currently available.</p>}</section></section>;
+  return <section data-testid="result-card" className="record-page"><p role="status" aria-live="polite">Verified record ready.</p><p className="eyebrow">VERIFIED RECORD</p><h1>{formattedCode}</h1><p>{record.description}</p><h2>Release context, not advice.</h2>{state.fallback && <p className="example-note">Recorded presentation example while the verified release is temporarily unavailable.</p>}<div className="metric-grid record-metrics">{hasRates && <><article><strong>{displayRate(record.igi)}</strong><span>IGI</span></article><article><strong>{displayRate(record.ige)}</strong><span>IGE</span></article></>}<article><strong>{record.unit_name || '—'}</strong><span>Unit</span></article><article><strong>{record.dataset_version || '—'}</strong><span>Release</span></article></div><button className="button primary" onClick={save}>{saved ? 'Saved locally' : 'Save locally'}</button><button data-testid="export-snapshots" className="button" type="button" onClick={exportSnapshots} disabled={!snapshots.length}>Export snapshots</button><a className="button" href={`/v1/ficha/${record.code}`} target="_blank" rel="noreferrer">API JSON</a><ul data-testid="snapshot-list" aria-live="polite" className="snapshot-list">{snapshots.map((snapshot) => <li key={snapshot.code}>{formatCode(snapshot.code)} · {snapshot.dataset_version}</li>)}</ul><section data-testid="hierarchy-card"><h2>Progressive decision tree</h2><label htmlFor="tree-query">Filter this hierarchy</label><div className="inline-form"><input data-testid="search-input" id="tree-query" value={treeFilter} onChange={(event) => setTreeFilter(event.target.value)} placeholder="e.g. 8517"/></div><p data-testid="tree-filter-status">{formatCode(treeFilter || record.code)}</p><ol className="hierarchy">{visibleHierarchy.map((entry) => { const entryCode = String(entry.code || entry); const label = entryCode.length === 2 ? 'Capítulo HS2' : entryCode.length === 4 ? 'Partida · familia HS4' : entryCode.length === 6 ? 'Subpartida HS6' : 'Fracción o NICO'; return <li key={entryCode}><strong>{label} · {formatCode(entryCode)}</strong> {entry.description || ''}</li>; })}</ol></section><section><h2>Recorded provenance</h2>{provenance.length ? <ul>{provenance.map((entry, index) => <li key={entry.source_url || index}><External href={entry.source_url || '#'}>{entry.source_name || 'Official source'}</External></li>)}</ul> : <p>No provenance entries are currently available.</p>}</section></section>;
 }
 
 export function ChaptersPage() {
@@ -151,20 +151,28 @@ export function ChaptersPage() {
   const [openSections, setOpenSections] = useState(new Set());
   const [openChapters, setOpenChapters] = useState(new Set());
   const [query, setQuery] = useState('');
+  const [indexState, setIndexState] = useState('loading');
   useEffect(() => {
+    let active = true;
+    setIndexState('loading');
     Promise.all([api('/v1/sections'), api('/v1/chapters')])
       .then(([nextSections, nextChapters]) => {
+        if (!active) return;
         // The fallback includes the public family navigation; preserve its DOM
         // while it is populated instead of replacing focused controls with the
         // flatter API chapter list during an interaction.
         if (!sections.length && nextSections.length) setSections(nextSections);
         if (!chapters.length && nextChapters.length) setChapters(nextChapters);
+        setIndexState('ready');
       })
-      .catch(() => {});
+      .catch(() => {
+        if (active) setIndexState('fallback');
+      });
+    return () => { active = false; };
   }, [chapters.length, sections.length]);
   const filtered = useMemo(() => chapters.filter((chapter) => `${chapter.code} ${chapter.description}`.toLowerCase().includes(query.toLowerCase())), [chapters, query]);
   const toggle = (setter, key) => setter((current) => { const next = new Set(current); next.has(key) ? next.delete(key) : next.add(key); return next; });
-  return <><PageHero page={EDITORIAL_PAGES['/chapters']}><Link className="button" to="/changes">Ver evidencia de fracciones</Link></PageHero><section className="workspace"><label htmlFor="chapter-query">Buscar capítulo, código o descripción</label><input id="chapter-query" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar capítulo, código o descripción"/><div className="accordion">{sections.map((section) => { const isOpen = openSections.has(section.roman); const rows = filtered.filter((chapter) => Number(chapter.code) >= section.chapter_from && Number(chapter.code) <= section.chapter_to); return <article key={section.roman}><button aria-expanded={isOpen} onClick={() => toggle(setOpenSections, section.roman)}><span>{section.roman} · {section.name}</span><span>{section.chapter_from}–{section.chapter_to} · {rows.length} visibles</span></button>{isOpen && <div className="accordion-panel">{rows.length ? rows.map((chapter) => { const isChapterOpen = openChapters.has(chapter.code); const families = chapter.families || [{ code: `${chapter.code}.01`, description: 'Consultar familia HS4 en la release verificada' }]; return <article key={chapter.code}><button aria-expanded={isChapterOpen} onClick={() => toggle(setOpenChapters, chapter.code)}>Capítulo {chapter.code} · {chapter.description}</button>{isChapterOpen && <div className="accordion-panel">{families.map((family) => <button key={family.code} className="family-action" onClick={() => navigate(`/app?q=${encodeURIComponent(family.code)}`)}>Partida · familia HS4 {family.code} · {family.description}</button>)}</div>}</article>; }) : <p>No verified chapters match this filter.</p>}</div>}</article>; })}</div></section></>;
+  return <><PageHero page={EDITORIAL_PAGES['/chapters']}><Link className="button" to="/changes">Ver evidencia de fracciones</Link></PageHero><section className="workspace"><label htmlFor="chapter-query">Buscar capítulo, código o descripción</label><input id="chapter-query" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar capítulo, código o descripción"/><p className="status" role="status">{indexState === 'loading' ? 'Loading verified chapter index…' : indexState === 'fallback' ? 'Verified chapter index unavailable. Showing packaged navigation.' : 'Verified chapter index loaded.'}</p><div className="accordion">{sections.map((section) => { const isOpen = openSections.has(section.roman); const rows = filtered.filter((chapter) => Number(chapter.code) >= section.chapter_from && Number(chapter.code) <= section.chapter_to); return <article key={section.roman}><button aria-expanded={isOpen} onClick={() => toggle(setOpenSections, section.roman)}><span>{section.roman} · {section.name}</span><span>{section.chapter_from}–{section.chapter_to} · {rows.length} visibles</span></button>{isOpen && <div className="accordion-panel">{rows.length ? rows.map((chapter) => { const isChapterOpen = openChapters.has(chapter.code); const families = chapter.families || [{ code: `${chapter.code}.01`, description: 'Consultar familia HS4 en la release verificada' }]; return <article key={chapter.code}><button aria-expanded={isChapterOpen} onClick={() => toggle(setOpenChapters, chapter.code)}>Capítulo {chapter.code} · {chapter.description}</button>{isChapterOpen && <div className="accordion-panel">{families.map((family) => <button key={family.code} className="family-action" onClick={() => navigate(`/app?q=${encodeURIComponent(family.code)}`)}>Partida · familia HS4 {family.code} · {family.description}</button>)}</div>}</article>; }) : <p>No verified chapters match this filter.</p>}</div>}</article>; })}</div></section></>;
 }
 
 export function ChangesPage() {
