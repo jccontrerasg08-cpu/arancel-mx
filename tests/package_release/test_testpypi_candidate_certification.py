@@ -21,7 +21,7 @@ def test_candidate_install_retries_until_this_runner_can_resolve_the_version() -
             raise subprocess.CalledProcessError(1, command)
 
     certifier.install_candidate_with_retry(
-        expected_version="0.3.6",
+        expected_version="0.3.7",
         attempts=3,
         delay_seconds=2.0,
         run=run,
@@ -30,7 +30,7 @@ def test_candidate_install_retries_until_this_runner_can_resolve_the_version() -
 
     assert waits == [2.0]
     assert len(calls) == 2
-    assert calls[0][-1] == "arancel-mx==0.3.6"
+    assert calls[0][-1] == "arancel-mx==0.3.7"
     assert "--no-deps" in calls[0]
     assert "--no-cache-dir" in calls[0]
     assert "https://test.pypi.org/simple/" in calls[0]
@@ -46,7 +46,7 @@ def test_candidate_install_raises_after_bounded_attempts() -> None:
 
     try:
         certifier.install_candidate_with_retry(
-            expected_version="0.3.6",
+            expected_version="0.3.7",
             attempts=2,
             delay_seconds=1.0,
             run=always_fail,
