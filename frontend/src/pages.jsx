@@ -6,12 +6,10 @@ import {
   EDITORIAL_PAGES,
   FALLBACK_CHAPTERS,
   FALLBACK_SECTIONS,
-  GLOSSARY_ENTRIES,
   MOA_GROUPS,
   OFFICIAL_LINKS,
   WIKI_REFERENCES,
 } from './content.js';
-import { filterGlossary } from './glossary.js';
 import { asExampleFicha, exampleRecordFor, formatCode, searchExampleRecords } from './verified-examples.js';
 import { displayRate, selectPrimarySearchResults } from './tariff.js';
 
@@ -199,13 +197,6 @@ export function MoaPage() { return <><PageHero page={EDITORIAL_PAGES['/moa']}><d
 export function WikiPage() { return <><PageHero page={EDITORIAL_PAGES['/wiki']}><div className="hero-actions"><External href={OFFICIAL_LINKS.anamNormativity}>Abrir normatividad ANAM</External><External href={OFFICIAL_LINKS.anamGlossary}>Abrir glosario ANAM</External></div></PageHero><section className="card-grid">{WIKI_REFERENCES.map(([category, title, description, href]) => <article key={title}><span>{category}</span><h2>{title}</h2><p>{description}</p><External href={href}>Abrir fuente</External></article>)}</section><aside className="example-note"><h2>Cómo usar esta wiki</h2><p>Lee la fuente primaria completa y verifica su vigencia antes de usarla como contexto.</p><Link to="/glossary">Explorar glosario</Link></aside></>;
 }
 
-export function GlossaryPage() {
-  const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState('Todas');
-  const entries = useMemo(() => filterGlossary(GLOSSARY_ENTRIES, query, filter), [filter, query]);
-  return <><PageHero page={EDITORIAL_PAGES['/glossary']}><External href={OFFICIAL_LINKS.anamGlossary}>Abrir glosario ANAM</External></PageHero><section className="workspace"><label htmlFor="glossary-query">Buscar en el glosario ANAM</label><input id="glossary-query" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar término o definición"/><div className="filter-group" aria-label="Tipo de entrada">{['Todas', 'Siglas', 'Términos'].map((item) => <button className="button" aria-pressed={filter === item} onClick={() => setFilter(item)} key={item}>{item}</button>)}</div><p role="status" aria-live="polite">{entries.length} de {GLOSSARY_ENTRIES.length} entradas oficiales</p>{entries.length ? <section className="card-grid" data-testid="anam-glossary-results">{entries.map(({ category, term, definition }) => <article key={term}><span>{category}</span><h2>{term}</h2><p>{definition}</p><External href={OFFICIAL_LINKS.anamGlossary}>Fuente oficial</External></article>)}</section> : <aside className="empty-state"><h2>No glossary entries match “{query}”.</h2><button className="button" onClick={() => setQuery('')}>Clear search</button></aside>}</section></>;
-}
-
 export function TradeContextPage() { return <><PageHero page={EDITORIAL_PAGES['/trade-context']}><External href={OFFICIAL_LINKS.inegi}>Abrir explicación completa de INEGI</External></PageHero><section className="flow-diagram" aria-label="Trade context"><article><strong>Importaciones</strong><span>Compra al exterior</span></article><span aria-hidden="true">+</span><article><strong>Exportaciones</strong><span>Venta al exterior</span></article><span aria-hidden="true">→</span><article><strong>Balanza</strong><span>Diferencia</span></article></section><section className="card-grid"><article><h2>Importaciones</h2><p>Mercancías adquiridas desde el exterior.</p></article><article><h2>Exportaciones</h2><p>Mercancías vendidas hacia otros mercados.</p></article><article><h2>Balanza comercial</h2><p>Relación entre importaciones y exportaciones.</p></article><article><h2>Entidades y socios</h2><p>Contexto por territorio y contraparte comercial.</p></article></section><aside className="example-note"><p>INEGI · BCMM 2013–2023 · ETEF 2024</p><p>Estados Unidos en 2023: 42.7% de importaciones y 79.4% de exportaciones.</p><External href={OFFICIAL_LINKS.inegi}>Consultar tablas, gráficas y mapa originales</External></aside></>;
 }
 
@@ -238,7 +229,6 @@ export const PAGE_COMPONENTS = {
   '/moa': MoaPage,
   '/moa-guide': MoaPage,
   '/wiki': WikiPage,
-  '/glossary': GlossaryPage,
   '/trade-context': TradeContextPage,
   '/documentation': DocumentationPage,
   '/trust': TrustPage,

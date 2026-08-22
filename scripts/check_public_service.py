@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import dataclass
-from typing import Any, Protocol
+from time import monotonic
+from typing import Any, Callable, Protocol
 
 import requests
 
@@ -32,6 +33,26 @@ class PublicContractResult:
     base_url: str
     dataset_version: str
     checked_paths: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class LatencySample:
+    path: str
+    seconds: float
+    status_code: int
+
+
+@dataclass(frozen=True)
+class LatencyProbeResult:
+    base_url: str
+    samples: tuple[LatencySample, ...]
+
+
+_LATENCY_PATHS = (
+    "/v1/meta",
+    "/v1/search?q=reproductores&limit=1",
+    "/v1/suggest?q=reproductores&limit=1",
+)
 
 
 def _endpoint(base_url: str, path: str) -> str:
@@ -134,20 +155,6 @@ def check_public_contract(
     if not isinstance(suggestion, list) or not suggestion:
         raise ValueError("suggest endpoint must return a retrieve-only match")
 
-    openapi = _require_record(
-        _json_response(session, base_url, "/openapi.json", timeout=timeout),
-        "/openapi.json",
-    )
-    if not isinstance(openapi.get("openapi"), str) or not isinstance(openapi.get("paths"), dict):
-        raise ValueError("/openapi.json must expose an OpenAPI document")
-
-    docs_response = session.get(_endpoint(base_url, "/docs"), timeout=timeout)
-    docs_response.raise_for_status()
-    if "text/html" not in docs_response.headers.get("Content-Type", "").casefold():
-        raise ValueError("/docs must return text/html")
-    if "swagger" not in docs_response.text.casefold():
-        raise ValueError("/docs must contain Swagger UI markup")
-
     return PublicContractResult(
         base_url=base_url.rstrip("/"),
         dataset_version=dataset_version,
@@ -158,16 +165,43 @@ def check_public_contract(
             "/v1/codes/01012101/provenance",
             "/v1/chapters/01/national-notes",
             "/v1/suggest?q=reproductores&limit=1",
-            "/openapi.json",
-            "/docs",
         ),
     )
+
+
+def measure_public_latency(
+    session: Session,
+    *,
+    base_url: str = DEFAULT_BASE_URL,
+    timeout: float = 20.0,
+    samples: int = 3,
+    clock: Callable[[], float] = monotonic,
+) -> LatencyProbeResult:
+    """Measure promoted GET routes without changing service data or configuration."""
+
+    if samples < 1:
+        raise ValueError("samples must be at least 1")
+    observations: list[LatencySample] = []
+    for _ in range(samples):
+        for path in _LATENCY_PATHS:
+            started_at = clock()
+            response = session.get(_endpoint(base_url, path), timeout=timeout)
+            response.raise_for_status()
+            observations.append(
+                LatencySample(
+                    path=path,
+                    seconds=clock() - started_at,
+                    status_code=response.status_code,
+                )
+            )
+    return LatencyProbeResult(base_url=base_url.rstrip("/"), samples=tuple(observations))
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base-url", default=DEFAULT_BASE_URL)
     parser.add_argument("--timeout", type=float, default=20.0)
+    parser.add_argument("--latency-samples", type=int, default=0)
     args = parser.parse_args()
 
     session = requests.Session()
@@ -176,6 +210,16 @@ def main() -> int:
     print(f"OK public contract: {result.base_url} release={result.dataset_version}")
     for path in result.checked_paths:
         print(f"  - {path}")
+    if args.latency_samples:
+        latency = measure_public_latency(
+            session,
+            base_url=args.base_url,
+            timeout=args.timeout,
+            samples=args.latency_samples,
+        )
+        print(f"Latency samples: {len(latency.samples)}")
+        for sample in latency.samples:
+            print(f"  - {sample.path} status={sample.status_code} seconds={sample.seconds:.3f}")
     return 0
 
 

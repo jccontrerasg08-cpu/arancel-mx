@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { BrowserRouter, Link, Route, Routes, useLocation } from 'react-router-dom';
 
 import { EDITORIAL_PAGES, NAVIGATION, OFFICIAL_LINKS } from './content.js';
 import { PAGE_COMPONENTS } from './pages.jsx';
+
+const GlossaryPage = lazy(() => import('./glossary-page.jsx'));
 
 function ThemeToggle() {
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
@@ -38,6 +40,10 @@ function NotFoundPage() {
   return <section className="empty-state"><h1>Page not found</h1><p>The requested public route is not available in this release.</p><Link className="button primary" to="/app">Open explorer</Link></section>;
 }
 
+function DeferredGlossaryPage() {
+  return <Suspense fallback={<p className="status" role="status">Loading glossary…</p>}><GlossaryPage /></Suspense>;
+}
+
 function RoutedPage({ Component }) {
   const location = useLocation();
   useEffect(() => {
@@ -50,5 +56,5 @@ function RoutedPage({ Component }) {
 }
 
 export function App() {
-  return <BrowserRouter><SiteHeader/><Routes>{Object.entries(PAGE_COMPONENTS).map(([path, Component]) => <Route key={path} path={path} element={<RoutedPage Component={Component} />} />)}<Route path="/product" element={<RoutedPage Component={PAGE_COMPONENTS['/app']} />}/><Route path="/app/chapter/:code" element={<RoutedPage Component={PAGE_COMPONENTS['/app/record/:code']} />}/><Route path="*" element={<RoutedPage Component={NotFoundPage} />}/></Routes><SiteFooter/></BrowserRouter>;
+  return <BrowserRouter><SiteHeader/><Routes>{Object.entries(PAGE_COMPONENTS).map(([path, Component]) => <Route key={path} path={path} element={<RoutedPage Component={Component} />} />)}<Route path="/glossary" element={<RoutedPage Component={DeferredGlossaryPage} />}/><Route path="/product" element={<RoutedPage Component={PAGE_COMPONENTS['/app']} />}/><Route path="/app/chapter/:code" element={<RoutedPage Component={PAGE_COMPONENTS['/app/record/:code']} />}/><Route path="*" element={<RoutedPage Component={NotFoundPage} />}/></Routes><SiteFooter/></BrowserRouter>;
 }

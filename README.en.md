@@ -17,7 +17,7 @@
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![DuckDB](https://img.shields.io/badge/DuckDB-embedded-FFF000?logo=duckdb&logoColor=000)](https://duckdb.org/)
 
-**[Open hub](https://arancel-mx.vercel.app/)** · **[API / OpenAPI](https://arancel-mx.vercel.app/docs)** · **[Latest data](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest)** · **[Documentation](docs/README.md)**
+**[Open hub](https://arancel-mx.vercel.app/)** · **[API documentation](https://arancel-mx.vercel.app/documentation)** · **[Latest data](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest)** · **[Documentation](docs/README.md)**
 
 </div>
 
@@ -36,7 +36,7 @@ The interactive experience lives at **[arancel-mx.vercel.app](https://arancel-mx
 | Consume a GET-only/read-only interface | **HTTP / API** | `GET /v1/meta`, `/v1/search`, `/v1/lookup/...` |
 | Verify how a result was produced | **Audit and reproduction** | `manifest.json`, `SHA256SUMS`, `provenance`, `data verify` |
 
-The **public HTTP API** is **GET-only**, **read-only**, and requires **no API key**. The interactive contract lives at `/docs`; `/readyz` reports readiness and `/v1/meta` identifies the served dataset.
+The **public HTTP API** is **GET-only**, **read-only**, and requires **no API key**. The local route-and-limit hub lives at `/documentation`; `/readyz` reports readiness and `/v1/meta` identifies the served dataset.
 
 The Python package and the dataset have separate version cycles. A package version does not pin the data: dataset releases use immutable `data-YYYY.MM.DD` tags.
 
@@ -84,7 +84,7 @@ immutable GitHub Release
   <img src="docs/assets/pipeline.svg" alt="Pipeline from official sources to a verifiable release" width="900" />
 </p>
 
-The Vercel hub is a **consumption surface**. `/v1/meta` and `/v1/search` use the read-only operational layer synchronized from verified releases; the rest of the public API is presented under the same domain through the FastAPI runtime. The **verified release remains the source of truth**.
+The Vercel hub is a **consumption surface**. Promoted `/v1` routes use the read-only operational layer synchronized from verified releases; non-promoted routes resolve locally without an external proxy. The **verified release remains the source of truth**.
 
 Go deeper with [official source roles](docs/official-source-roles.md), [sources and reconciliation](docs/sources.md), the [data model](docs/data-model.md), and the [release process](docs/release-process.md).
 
@@ -105,4 +105,4 @@ Go deeper with [official source roles](docs/official-source-roles.md), [sources 
 
 The code is distributed under [Apache-2.0](LICENSE). To contribute, see [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md), and [TERMS.md](TERMS.md).
 
-**[Hub](https://arancel-mx.vercel.app/)** · **[API](https://arancel-mx.vercel.app/docs)** · **[Releases](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest)** · **[Docs](docs/README.md)** · **[Español](README.md)**
+**[Hub](https://arancel-mx.vercel.app/)** · **[API documentation](https://arancel-mx.vercel.app/documentation)** · **[Releases](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest)** · **[Docs](docs/README.md)** · **[Español](README.md)**

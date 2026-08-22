@@ -2,7 +2,7 @@
 
 Esta guía define la identidad visual y narrativa pública de `arancel-mx`. El objetivo no es decorar el proyecto: es hacer visible, con el menor ruido posible, qué problema resuelve, qué superficies ofrece y por qué sus datos son verificables.
 
-**[Hub público](https://arancel-mx.vercel.app/)** · **[API / OpenAPI](https://arancel-mx.vercel.app/docs)** · **[Visión del proyecto](project-overview.md)** · **[Centro de documentación](README.md)**
+**[Hub público](https://arancel-mx.vercel.app/)** · **[Centro de documentación](https://arancel-mx.vercel.app/documentation)** · **[Visión del proyecto](project-overview.md)** · **[Documentación del repositorio](README.md)**
 
 ## Idea de marca
 
@@ -160,12 +160,12 @@ Evitar:
 
 ## Sitio web y relación con Vercel
 
-El dominio público principal es [`https://arancel-mx.vercel.app/`](https://arancel-mx.vercel.app/). La documentación debe tratarlo como el **front door interactivo** y enlazar también su contrato OpenAPI en [`/docs`](https://arancel-mx.vercel.app/docs).
+El dominio público principal es [`https://arancel-mx.vercel.app/`](https://arancel-mx.vercel.app/). La documentación debe tratarlo como el **front door interactivo** y enlazar el hub local de rutas y límites en [`/documentation`](https://arancel-mx.vercel.app/documentation).
 
 La arquitectura vigente combina:
 
-- `/v1/meta`, `/v1/search` y `/readyz` en la capa operacional read-only de Vercel/Neon;
-- las demás rutas `/v1/*` y `/docs` bajo el mismo dominio mediante proxy al runtime FastAPI reusable;
+- rutas `/v1` promovidas y `/readyz` en la capa operacional read-only de Vercel/Neon;
+- `/documentation` como hub local y rutas no promovidas resueltas sin proxy externo;
 - la GitHub Release verificable como fuente canónica del dataset.
 
 Desde #139, Vercel bundlea `psycopg[binary]>=3.3.4` de forma aislada en `api/_vendor` mediante `buildCommand` y sólo lo incluye en las funciones operativas. `requirements.txt` fue eliminado para que ese driver no se convierta en dependencia base del paquete. Esta decisión no es copy promocional, pero las guías técnicas deben permanecer sincronizadas con ella.

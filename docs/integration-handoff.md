@@ -10,7 +10,7 @@ Esta guía evita que un cambio correcto de forma aislada revierta decisiones arq
 |---|---|---|
 | Hub público | `https://arancel-mx.vercel.app` sirve `website/` y presenta las rutas públicas bajo un solo dominio. La landing generada conserva su layout; el shell mantenible sólo agrega marca y sincronización acotada. | `website/`, `vercel.json`, `tests/test_public_site.py` |
 | Capa operacional | Metadatos, búsqueda, ficha, jerarquía, procedencia, notas nacionales y `/readyz` son read-only, respaldados por Neon y sincronizados desde releases verificadas. | `api/operational.py`, `api/sync_operational.py`, `api/_runtime.py`, `src/arancel_mx/operational/` |
-| FastAPI reusable | OpenAPI, `/docs` y las rutas `/v1/*` no promovidas se presentan en Vercel mediante proxy al runtime FastAPI. | `src/arancel_mx/api/`, `vercel.json`, `docs/external-consumption.md` |
+| Documentación y rutas locales | `/documentation` presenta rutas y límites públicos; `/v1/*` no promovidas no usan un proxy externo. | `vercel.json`, `docs/external-consumption.md`, `docs/project-overview.md` |
 | Runtime operacional de Vercel | El driver PostgreSQL se bundlea en `api/_vendor`; el paquete del proyecto se incluye desde `src/arancel_mx/**` y `api/_runtime.py` hace explícito el bootstrap del src-layout. | `vercel.json`, `api/_runtime.py`, handlers operativos, `.gitignore` |
 | Caché del sitio | Sólo los bundles generados con nombre `index-*` son inmutables. Assets mantenibles con nombre estable deben revalidarse. | `vercel.json`, `website/index.html`, `website/assets/` |
 | Paquete y dependencias | La librería pública conserva dependencias base y el extra `operational`; Vercel no debe convertir su driver aislado en dependencia base. | `pyproject.toml`, `requirements/`, packaging tests |
@@ -30,9 +30,7 @@ sync operacional idempotente
           ↓
 Vercel: metadatos, búsqueda, ficha y evidencia activa
 
-Vercel: OpenAPI, docs y rutas no promovidas
-          ↓ proxy
-   FastAPI reusable
+Vercel: documentación local y rutas no promovidas sin proxy externo
 
 Vercel: /
           ↓
@@ -65,12 +63,12 @@ No elimines variables creadas por la integración administrada de Neon sólo por
 El orden de rewrites es parte del contrato:
 
 1. Metadatos, búsqueda, sugerencias, ficha, jerarquía, procedencia, notas nacionales y `/readyz` llegan a la función operacional.
-2. `/openapi.json`, `/docs` y las rutas `/v1/*` no promovidas se reescriben al runtime FastAPI.
-3. El fallback SPA sólo aplica a rutas que no empiezan con `assets/` ni `api/`: `/((?!assets/|api/).*)`.
+2. `/docs` se redirige al hub local `/documentation`; rutas `/v1/*` no promovidas y `/openapi.json` no usan destinos externos.
+3. El fallback SPA excluye `assets/`, `api/`, `v1/`, `docs/` y `/openapi.json` para que una ruta inexistente no responda como interfaz exitosa.
 
 La exclusión del fallback evita que un asset inexistente o una Function mal referenciada termine respondiendo `website/index.html` con HTTP aparentemente exitoso. No amplíes el catch-all por comodidad.
 
-Las rutas operacionales comparten dominio con FastAPI, pero siguen siendo adaptadores de serving distintos. Cualquier cambio de shape, validación, ranking, CORS o errores debe comprobarse contra el contrato público para evitar semantic drift entre Neon/Vercel y FastAPI/OpenAPI.
+Las rutas operacionales comparten un único dominio público y una frontera read-only. Cualquier cambio de shape, validación, ranking, CORS o errores debe comprobarse contra el contrato público para evitar semantic drift entre Neon y Vercel.
 
 ## Caché y assets
 

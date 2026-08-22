@@ -1,7 +1,3 @@
-import { GLOSSARY_ENTRIES } from './glossary-data.js';
-
-export { GLOSSARY_ENTRIES };
-
 export const NAVIGATION = [
   ['Explorer', '/app'],
   ['Chapters', '/chapters'],
@@ -128,4 +124,5 @@ export const DOCUMENTATION_LINKS = [
   ['Data model', 'docs/data-model.md'],
   ['CLI reference', 'docs/consumer-cli.md'],
   ['Production certification', 'docs/production-certification.md'],
+  ['Public service observability', 'docs/operations/public-service-observability.md'],
 ];

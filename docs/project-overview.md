@@ -2,7 +2,7 @@
 
 `arancel-mx` es la capa pública y reusable de datos arancelarios mexicanos del proyecto: observa fuentes oficiales, conserva evidencia, normaliza LIGIE/NICO y publica artefactos verificables que otras herramientas pueden consumir sin rehacer el pipeline.
 
-**[Hub público](https://arancel-mx.vercel.app/)** · **[API / OpenAPI](https://arancel-mx.vercel.app/docs)** · **[Última release](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest)** · **[Centro de documentación](README.md)**
+**[Hub público](https://arancel-mx.vercel.app/)** · **[Documentación API](https://arancel-mx.vercel.app/documentation)** · **[Última release](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest)** · **[Centro de documentación](README.md)**
 
 ## El problema que resuelve
 
@@ -76,14 +76,10 @@ sincronización operacional idempotente
           ↓
         Neon
           ↓
-Vercel: metadatos, búsqueda, ficha y evidencia activa
-
-Vercel: OpenAPI, docs y rutas no promovidas
-          ↓ proxy
-   runtime FastAPI reusable
+Vercel: metadatos, búsqueda, ficha, evidencia activa y documentación local
 ```
 
-`/v1/meta`, `/v1/search`, `/v1/suggest`, `/v1/ficha/{code}`, la jerarquía, `provenance`, notas nacionales y `/readyz` se resuelven mediante una proyección operacional read-only sincronizada desde releases verificadas. OpenAPI, `/docs` y las rutas `/v1/*` no promovidas se presentan bajo el mismo dominio y se proxifican al runtime FastAPI. **Neon y Vercel son superficies de servicio, no sustituyen la release verificable como fuente de verdad.**
+`/v1/meta`, `/v1/search`, `/v1/suggest`, `/v1/ficha/{code}`, la jerarquía, `provenance`, notas nacionales y `/readyz` se resuelven mediante una proyección operacional read-only sincronizada desde releases verificadas. `/documentation` presenta el hub local de rutas y límites; las rutas `/v1/*` no promovidas se resuelven localmente sin proxy externo. **Neon y Vercel son superficies de servicio, no sustituyen la release verificable como fuente de verdad.**
 
 Para consumidores, esto permite usar un solo origen público:
 

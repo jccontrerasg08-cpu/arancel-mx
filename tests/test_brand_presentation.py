@@ -143,7 +143,7 @@ def test_repository_front_door_markdown_links_resolve_locally() -> None:
 
 
 def test_consumer_docs_use_vercel_as_the_public_http_front_door() -> None:
-    """Keep consumer guidance aligned with the deployed Vercel/FastAPI hybrid surface."""
+    """Keep consumer guidance aligned with the deployed local read-only surface."""
     quickstart = _read("docs/consumer-quickstart.md")
     external = _read("docs/external-consumption.md")
 
@@ -152,15 +152,14 @@ def test_consumer_docs_use_vercel_as_the_public_http_front_door() -> None:
     for document in (quickstart, external):
         assert "/v1/meta" in document
         assert "/readyz" in document
-        assert "/docs" in document
+        assert "/documentation" in document
 
     api_url_match = re.search(r'export ARANCEL_MX_API_URL="([^"]+)"', external)
     assert api_url_match is not None
     assert api_url_match.group(1) == PUBLIC_HUB_URL.rstrip("/")
     assert "Vercel" in external
     assert "Neon" in external
-    assert "proxy" in external.lower()
-    assert "el sitio no actúa como proxy" not in external.lower()
+    assert "el sitio no actúa como proxy" in external.lower()
 
 
 def test_public_docs_keep_readyz_on_the_operational_surface() -> None:
@@ -181,10 +180,13 @@ def test_public_docs_keep_readyz_on_the_operational_surface() -> None:
         assert "operacional" in text.lower(), path
         assert not any(fragment in text for fragment in stale_fragments), path
 
-    for path in ("docs/project-overview.md", "docs/external-consumption.md"):
-        text = _read(path)
-        assert "Vercel: metadatos, búsqueda, ficha y evidencia activa" in text
-        assert "Vercel: OpenAPI, docs y rutas no promovidas" in text
+    overview = _read("docs/project-overview.md")
+    assert "Vercel: metadatos, búsqueda, ficha, evidencia activa y documentación local" in overview
+    assert "runtime FastAPI" not in overview
+
+    external = _read("docs/external-consumption.md")
+    assert "/documentation" in external
+    assert "el sitio no actúa como proxy" in external.lower()
 
 
 def test_public_brand_guide_is_discoverable_and_uses_current_schedule_language() -> None:
