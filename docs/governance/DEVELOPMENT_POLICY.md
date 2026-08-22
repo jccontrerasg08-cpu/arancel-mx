@@ -1,8 +1,11 @@
 # Política de desarrollo verificable — Central Hub
 
-**Versión de política:** 1.0  
-**Estado:** vigente al integrarse en `main`  
-**Fuente canónica:** este archivo en `jccontrerasg08-cpu/arancel-mx`  
+**Versión de política:** 1.0
+
+**Estado:** vigente al integrarse en `main`
+
+**Fuente canónica:** este archivo en `jccontrerasg08-cpu/arancel-mx`
+
 **Ámbito:** Central Hub (`arancel-mx`), backend RFA (`jccontrerasg08-cpu/auto-credito-2`) y frontend RFA (`PaginaWebRFA/PaginaWebRFA`).
 
 ## Propósito y alcance

@@ -1,7 +1,9 @@
 # Verificación — política de desarrollo verificable del Central Hub
 
-**Fecha:** 2026-08-21  
-**Estado:** confirmado dentro del alcance de repositorio  
+**Fecha:** 2026-08-21
+
+**Estado:** confirmado dentro del alcance de repositorio
+
 **Ámbito:** política compartida, índice documental, flujo de contribución y prueba de presencia en `arancel-mx`.
 
 ## Resultado observado
