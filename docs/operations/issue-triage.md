@@ -22,4 +22,4 @@ No cierres reportes ambiguos, conflictos de alcance o posibles vulnerabilidades 
 
 ## Señales de estado
 
-La etiqueta `needs-triage` sólo significa que falta clasificación o información material. Debe retirarse al completar la checklist. No activa automatizaciones, cierres ni publicaciones de datos.
+La etiqueta `needs-triage` sólo significa que falta clasificación o información material. Debe retirarse **solo cuando** la clasificación esté completa y se haya obtenido la información material solicitada; dejar un comentario pidiendo reproducción o alcance no basta para retirarla. No activa automatizaciones, cierres ni publicaciones de datos.

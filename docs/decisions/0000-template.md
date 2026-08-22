@@ -20,7 +20,19 @@ Registra las opciones consideradas y por qué no se eligieron. Incluye reutiliza
 
 ## Compatibilidad
 
-Indica el impacto sobre API, esquema, release, datos, automatización o usuario. Para una ruptura, documenta reemplazo, versión objetivo, periodo de advertencia o la excepción justificada.
+Indica el impacto sobre API, esquema, release, datos, automatización o usuario. Para una ruptura, documenta reemplazo, versión objetivo y periodo de advertencia.
+
+### Excepción de compatibilidad
+
+Completa esta subsección sólo cuando no sea posible cumplir la transición ordinaria. Enlaza el registro de gobernanza equivalente si ya existe; no basta con indicar que la excepción es justificada.
+
+- **Regla afectada:**
+- **Riesgo:**
+- **Responsable:**
+- **Controles compensatorios:**
+- **Vencimiento:**
+- **Plan de retiro:**
+- **Evidencia de revisión:**
 
 ## Consecuencias y seguimiento
 

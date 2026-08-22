@@ -29,6 +29,17 @@ def test_decision_template_and_triage_guide_keep_the_process_scoped() -> None:
     for heading in ("Contexto", "Decisión", "Alternativas", "Compatibilidad"):
         assert f"## {heading}" in decision
     assert "**Responsable:**" in decision
+    for field in (
+        "Regla afectada",
+        "Riesgo",
+        "Controles compensatorios",
+        "Vencimiento",
+        "Plan de retiro",
+        "Evidencia de revisión",
+    ):
+        assert field in decision
     for step in ("Duplicado", "Reproducción", "Alcance", "Etiqueta", "Siguiente acción"):
         assert step in triage
     assert "No cierres" in triage
+    assert "información material" in triage
+    assert "solo cuando" in triage
