@@ -11,7 +11,7 @@ import {
   OFFICIAL_LINKS,
   WIKI_REFERENCES,
 } from './content.js';
-import { asExampleFicha, exampleRecordFor, formatCode, searchExampleRecords } from './verified-examples.js';
+import { asExampleFicha, exampleRecordFor, formatCode, searchExampleRecords, VERIFIED_EXAMPLES } from './verified-examples.js';
 import { displayRate, selectPrimarySearchResults } from './tariff.js';
 
 const REPOSITORY = 'https://github.com/jccontrerasg08-cpu/arancel-mx';
@@ -24,8 +24,8 @@ function api(path, signal) {
   });
 }
 
-function PageHero({ page, children }) {
-  return <section className="page-hero"><p className="eyebrow">{page.eyebrow}</p><h1>{page.title}</h1><p>{page.description}</p>{children}<p className="disclaimer">{page.disclaimer}</p></section>;
+function PageHero({ page, children, className = '' }) {
+  return <section className={`page-hero ${className}`}><p className="eyebrow">{page.eyebrow}</p><h1>{page.title}</h1><p>{page.description}</p>{children}<p className="disclaimer">{page.disclaimer}</p></section>;
 }
 
 function External({ href, children }) {
@@ -33,19 +33,26 @@ function External({ href, children }) {
 }
 
 export function HomePage() {
-  const [query, setQuery] = useState('8517.13.01');
+  const [query, setQuery] = useState('');
+  const [activeExample, setActiveExample] = useState(0);
   const navigate = useNavigate();
+  const example = VERIFIED_EXAMPLES[activeExample];
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+    const timer = window.setInterval(() => setActiveExample((current) => (current + 1) % VERIFIED_EXAMPLES.length), 4400);
+    return () => window.clearInterval(timer);
+  }, []);
   const submit = (event) => {
     event.preventDefault();
     navigate(`/app${query.trim() ? `?q=${encodeURIComponent(query.trim())}` : ''}`);
   };
   return <>
-    <PageHero page={EDITORIAL_PAGES['/']}>
-      <div className="hero-actions"><Link className="button primary" to="/app">Open explorer</Link><Link className="button" to="/documentation">Read documentation</Link></div>
+    <PageHero className="page-hero--explorer" page={EDITORIAL_PAGES['/']}>
+      <form className="hero-search" onSubmit={submit}><label htmlFor="home-query">Search a code or description</label><div className="inline-form"><input id="home-query" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="e.g. 8517.13.01 or teléfonos"/><button className="button primary" type="submit">Open explorer</button></div></form>
+      <section data-testid="example-rotator" className="example-rotator" aria-label="Verified exploration examples"><div className="example-rotator__meta"><span>Try a verified path</span><div className="example-rotator__controls">{VERIFIED_EXAMPLES.map((entry, index) => <button key={entry.code} type="button" className={index === activeExample ? 'is-active' : ''} aria-label={`Show ${formatCode(entry.code)}`} aria-pressed={index === activeExample} onClick={() => setActiveExample(index)}>{entry.level === 'hs2' ? 'HS' : entry.level === 'nico10' ? 'NICO' : 'Fraction'}</button>)}</div></div><div className="example-rotator__card" key={example.code}><div><strong>{formatCode(example.code)}</strong><span>{example.level === 'hs2' ? 'Chapter' : example.level === 'nico10' ? 'NICO' : 'Fraction'} · release {example.dataset_version}</span></div><p>{example.description}</p><button className="button" type="button" onClick={() => navigate(`/app?q=${encodeURIComponent(formatCode(example.code))}`)}>Inspect this path</button></div></section>
       <p className="trust-line">Immutable releases · Manifest + checksums · Independent verification</p>
     </PageHero>
     <section className="metric-grid" aria-label="Release metrics"><article><strong>8,183</strong><span>Mexican fractions</span></article><article><strong>11,507</strong><span>NICO codes</span></article><article><strong>Daily</strong><span>release checks</span></article><article><strong>Apache-2.0</strong><span>open-source core</span></article></section>
-    <section className="feature-panel"><div><p className="eyebrow">EXPLORER PREVIEW</p><h2>Search the data. Keep the hierarchy.</h2><p>Handoff to the verified explorer with the query preserved.</p><form onSubmit={submit}><label htmlFor="home-query">Code or description</label><div className="inline-form"><input id="home-query" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="e.g. 8517.13.01 or teléfonos"/><button className="button primary" type="submit">Search in explorer</button></div></form></div><div className="record-preview"><span>VERIFIED EXAMPLE STRUCTURE</span><strong>85 · 8517 · 851713 · 85171301 · 00</strong><p>Hierarchy remains connected to the active release.</p></div></section>
     <section className="card-grid"><article><h2>Data releases</h2><p>Read manifests, checksums and source archives.</p><External href={OFFICIAL_LINKS.releases}>Open releases</External></article><article><h2>Developer surfaces</h2><p>Use the API, CLI and Python package against a documented contract.</p><Link to="/documentation">Open documentation</Link></article><article><h2>Independent trust</h2><p>Inspect source roles and fail-closed publication controls.</p><Link to="/trust">Read trust model</Link></article></section>
   </>;
 }
@@ -56,6 +63,7 @@ export function ExplorerPage() {
   const initial = new URLSearchParams(location.search).get('q') || '';
   const [query, setQuery] = useState(initial);
   const [state, setState] = useState({ kind: initial ? 'loading' : 'idle', results: [] });
+  const [suggestions, setSuggestions] = useState([]);
 
   useEffect(() => setQuery(initial), [initial]);
   useEffect(() => {
@@ -73,6 +81,23 @@ export function ExplorerPage() {
       });
     return () => controller.abort();
   }, [initial]);
+  useEffect(() => {
+    const candidate = query.trim();
+    if (initial || !candidate) {
+      setSuggestions([]);
+      return undefined;
+    }
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      api(`/v1/search?q=${encodeURIComponent(candidate)}&limit=5`, controller.signal)
+        .then((results) => setSuggestions(selectPrimarySearchResults(results, candidate).slice(0, 5)))
+        .catch(() => setSuggestions(searchExampleRecords(candidate).slice(0, 5)));
+    }, 180);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [query, initial]);
 
   const submit = (event) => {
     event.preventDefault();
@@ -83,13 +108,14 @@ export function ExplorerPage() {
   };
 
   return <>
-    <PageHero page={{
+    <PageHero className="page-hero--explorer" page={{
       eyebrow: 'VERIFIED RELEASE EXPLORER',
       title: 'Explore a tariff reference without losing its path.',
       description: 'Inspect hierarchy, release context and recorded evidence without treating a search result as a legal determination.',
       disclaimer: 'Public data and documented evidence. This site does not classify merchandise or provide legal advice.',
     }} />
-    <section className="workspace"><form onSubmit={submit} className="search-form"><label htmlFor="app-query">Code or description</label><div className="inline-form"><input data-testid="search-input" id="app-query" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="e.g. 8517.13.01 or teléfonos"/><button data-testid="search-submit" className="button primary" type="submit" disabled={state.kind === 'loading'}>{state.kind === 'loading' ? 'Loading…' : 'Inspect release'}</button></div><div role="status" aria-live="polite" className="status">{state.kind === 'idle' && 'Enter a tariff code or a description.'}{state.kind === 'loading' && 'Searching the verified release…'}{state.kind === 'results' && 'Verified results found in the recorded release presentation.'}{state.kind === 'empty' && 'No verified records match this search.'}{state.kind === 'error' && 'The verified release is temporarily unavailable.'}</div></form>
+    <section className="workspace"><form onSubmit={submit} className="search-form"><label htmlFor="app-query">Code or description</label><div className="inline-form"><input data-testid="search-input" id="app-query" type="search" autoComplete="off" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="e.g. 8517.13.01 or teléfonos"/><button data-testid="search-submit" className="button primary" type="submit" disabled={state.kind === 'loading'}>{state.kind === 'loading' ? 'Loading…' : 'Inspect release'}</button></div><div role="status" aria-live="polite" className="status">{state.kind === 'idle' && 'Enter a tariff code or a description.'}{state.kind === 'loading' && 'Searching the verified release…'}{state.kind === 'results' && 'Verified results found in the recorded release presentation.'}{state.kind === 'empty' && 'No verified records match this search.'}{state.kind === 'error' && 'The verified release is temporarily unavailable.'}</div></form>
+      {!initial && query.trim() && <section data-testid="live-suggestions" className="live-suggestions" aria-label="Possible verified paths"><p>Possible verified paths</p>{suggestions.length ? <div>{suggestions.map((item) => { const record = item.record || item; return <button key={record.code} type="button" onClick={() => navigate(`/app/record/${record.code}`)}><strong>{formatCode(record.code)}</strong><span>{record.description}</span></button>; })}</div> : <small>No verified path matches the current text.</small>}</section>}
       {state.kind === 'results' && <><p className="status">{state.fallback ? 'Recorded presentation example while the active release is unavailable.' : 'Active verified release result.'}</p><section className="result-list" aria-label="Verified search results"><h2>{state.results.length} verified results</h2>{state.results.map((item) => { const record = item.record || item; return <article data-testid="result-card" key={record.code}><div><span>{item.match_kind || 'verified match'}</span><h3>{record.code}</h3><p>{record.description}</p><small>{record.dataset_version || 'active release'} · {record.level}</small></div><Link className="button" to={`/app/record/${record.code}`}>Inspect verified record</Link></article>; })}</section><section data-testid="hierarchy-card" className="example-note"><h2>Progressive decision tree</h2><p>{state.results[0] && (state.results[0].record || state.results[0]).code}</p><p data-testid="tree-filter-status">{formatCode(initial)}</p></section></>}
       {state.kind === 'idle' && <><h2>Enter a complete code or a description.</h2><aside data-testid="example-fraction" className="example-note"><strong>Example fraction · 85.17.13.01</strong><p>IGI and IGE appear only when a verified fraction record is retrieved.</p><div className="hero-actions"><button className="button" type="button" onClick={() => navigate('/app?q=teléfonos')}>Try teléfonos</button><Link to="/chapters">Browse visual tree</Link></div></aside></>}
       {state.kind === 'empty' && <aside className="example-note"><strong>Example structure, not a result.</strong><p>Use the Explorer to inspect only records retrieved from the active verified release.</p><Link to="/chapters">Browse visual tree</Link></aside>}
@@ -172,8 +198,14 @@ export function ChaptersPage() {
     return () => { active = false; };
   }, [chapters.length, sections.length]);
   const filtered = useMemo(() => chapters.filter((chapter) => `${chapter.code} ${chapter.description}`.toLowerCase().includes(query.toLowerCase())), [chapters, query]);
+  useEffect(() => {
+    if (!query.trim()) return;
+    const matchingSections = new Set(sections.filter((section) => filtered.some((chapter) => Number(chapter.code) >= section.chapter_from && Number(chapter.code) <= section.chapter_to)).map((section) => section.roman));
+    setOpenSections(matchingSections);
+    setOpenChapters(new Set(filtered.slice(0, 8).map((chapter) => chapter.code)));
+  }, [filtered, query, sections]);
   const toggle = (setter, key) => setter((current) => { const next = new Set(current); next.has(key) ? next.delete(key) : next.add(key); return next; });
-  return <><PageHero page={EDITORIAL_PAGES['/chapters']}><Link className="button" to="/changes">Ver evidencia de fracciones</Link></PageHero><section className="workspace"><label htmlFor="chapter-query">Buscar capítulo, código o descripción</label><input id="chapter-query" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar capítulo, código o descripción"/><p className="status" role="status">{indexState === 'loading' ? 'Loading verified chapter index…' : indexState === 'fallback' ? 'Verified chapter index unavailable. Showing packaged navigation.' : 'Verified chapter index loaded.'}</p><div className="accordion">{sections.map((section) => { const isOpen = openSections.has(section.roman); const rows = filtered.filter((chapter) => Number(chapter.code) >= section.chapter_from && Number(chapter.code) <= section.chapter_to); return <article key={section.roman}><button aria-expanded={isOpen} onClick={() => toggle(setOpenSections, section.roman)}><span>{section.roman} · {section.name}</span><span>{section.chapter_from}–{section.chapter_to} · {rows.length} visibles</span></button>{isOpen && <div className="accordion-panel">{rows.length ? rows.map((chapter) => { const isChapterOpen = openChapters.has(chapter.code); const families = chapter.families || [{ code: `${chapter.code}.01`, description: 'Consultar familia HS4 en la release verificada' }]; return <article key={chapter.code}><button aria-expanded={isChapterOpen} onClick={() => toggle(setOpenChapters, chapter.code)}>Capítulo {chapter.code} · {chapter.description}</button>{isChapterOpen && <div className="accordion-panel">{families.map((family) => <button key={family.code} className="family-action" onClick={() => navigate(`/app?q=${encodeURIComponent(family.code)}`)}>Partida · familia HS4 {family.code} · {family.description}</button>)}</div>}</article>; }) : <p>No verified chapters match this filter.</p>}</div>}</article>; })}</div></section></>;
+  return <><PageHero page={EDITORIAL_PAGES['/chapters']}><Link className="button" to="/changes">Ver evidencia de fracciones</Link></PageHero><section className="workspace"><label htmlFor="chapter-query">Buscar capítulo, código o descripción</label><input id="chapter-query" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar capítulo, código o descripción"/><p className="status" role="status">{query.trim() ? `${filtered.length} matching chapters expanded while you type.` : indexState === 'loading' ? 'Loading verified chapter index…' : indexState === 'fallback' ? 'Verified chapter index unavailable. Showing packaged navigation.' : 'Verified chapter index loaded.'}</p><div className="accordion">{sections.map((section) => { const isOpen = openSections.has(section.roman); const rows = filtered.filter((chapter) => Number(chapter.code) >= section.chapter_from && Number(chapter.code) <= section.chapter_to); return <article key={section.roman}><button aria-expanded={isOpen} onClick={() => toggle(setOpenSections, section.roman)}><span>{section.roman} · {section.name}</span><span>{section.chapter_from}–{section.chapter_to} · {rows.length} visibles</span></button>{isOpen && <div className="accordion-panel">{rows.length ? rows.map((chapter) => { const isChapterOpen = openChapters.has(chapter.code); const families = chapter.families || [{ code: `${chapter.code}.01`, description: 'Consultar familia HS4 en la release verificada' }]; return <article key={chapter.code}><button aria-expanded={isChapterOpen} onClick={() => toggle(setOpenChapters, chapter.code)}>Capítulo {chapter.code} · {chapter.description}</button>{isChapterOpen && <div className="accordion-panel">{families.map((family) => <button key={family.code} className="family-action" onClick={() => navigate(`/app?q=${encodeURIComponent(family.code)}`)}>Partida · familia HS4 {family.code} · {family.description}</button>)}</div>}</article>; }) : <p>No verified chapters match this filter.</p>}</div>}</article>; })}</div></section></>;
 }
 
 export function ChangesPage() {

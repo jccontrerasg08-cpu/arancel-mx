@@ -8,12 +8,13 @@ const formatCode = (code) => {
   return clean;
 };
 
-const EXAMPLES = [
+export const VERIFIED_EXAMPLES = [
   { code: '85', description: 'Máquinas, aparatos y material eléctrico; sus partes', level: 'hs2', dataset_version: '2026.08.15', igi: null, ige: null, unit_name: null, hierarchy: ['85'] },
   { code: '85171301', description: 'Teléfonos inteligentes', level: 'fraccion8', dataset_version: '2026.08.15', igi: 'Consult release', ige: 'Consult release', unit_name: 'Pza', hierarchy: ['85', '8517', '851713', '85171301'] },
   { code: '01012101', description: 'Caballos reproductores de raza pura', level: 'fraccion8', dataset_version: '2026.08.15', igi: 'Consult release', ige: 'Consult release', unit_name: 'Cbza', hierarchy: ['01', '0101', '010121', '01012101'] },
   { code: '0101210100', description: 'Caballos reproductores de raza pura', level: 'nico10', dataset_version: '2026.08.15', igi: null, ige: null, unit_name: 'Cbza', hierarchy: ['01', '0101', '010121', '01012101', '0101210100'] },
 ];
+const EXAMPLES = VERIFIED_EXAMPLES;
 
 export const exampleRecordFor = (input) => {
   const clean = String(input || '').replace(/\D/g, '');

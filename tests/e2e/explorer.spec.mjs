@@ -6,14 +6,17 @@ test('serves the public marketing root and preserves the explorer handoff', asyn
   await page.goto('/');
   await expect(page.getByRole('heading', { name: /tariff intelligence/i })).toBeVisible();
   await expect(page.getByText(/Apache-2\.0/i).first()).toBeVisible();
-  await expect(page.getByRole('link', { name: /open explorer/i })).toHaveAttribute('href', '/app');
+  await expect(page.getByRole('button', { name: /open explorer/i })).toBeVisible();
 });
 
 test('keeps the global navigation state and skip link accessible', async ({ page }) => {
   await page.goto('/');
   const skipLink = page.getByRole('link', { name: /skip to content/i });
+  await expect(skipLink).toHaveCSS('width', '1px');
+  await expect(skipLink).toHaveCSS('height', '1px');
   await page.keyboard.press('Tab');
   await expect(skipLink).toBeFocused();
+  await expect(skipLink).toBeVisible();
   await expect(skipLink).toHaveAttribute('href', '#main-content');
 
   await page.setViewportSize({ width: 390, height: 844 });
@@ -25,15 +28,24 @@ test('keeps the global navigation state and skip link accessible', async ({ page
   await expect(page.getByRole('button', { name: /open navigation menu/i })).toBeFocused();
 });
 
-test('keeps secondary destinations available without giving them primary-header weight', async ({ page }) => {
+test('keeps all established public destinations visible in desktop navigation', async ({ page }) => {
   await page.goto('/');
   const navigation = page.getByLabel('Primary navigation');
   await expect(navigation.getByRole('link', { name: /^explorer$/i })).toBeVisible();
-  await expect(navigation.getByRole('link', { name: /trade desk/i })).toHaveAttribute('href', '/trade');
-  await navigation.getByText(/^more$/i).click();
+  await expect(navigation.getByRole('link', { name: /^trade context$/i })).toHaveAttribute('href', '/trade-context');
   await expect(navigation.getByRole('link', { name: /^my records$/i })).toBeVisible();
   await navigation.getByRole('link', { name: /^my records$/i }).click();
   await expect(page).toHaveURL(/\/records$/);
+});
+
+test('rotates verified examples and lets the visitor choose a concrete path', async ({ page }) => {
+  await page.goto('/');
+  const examples = page.getByTestId('example-rotator');
+  await expect(examples).toContainText(/85/);
+  await examples.getByRole('button', { name: /show 01\.01\.21\.01\.00/i }).click();
+  await expect(examples).toContainText(/01\.01\.21\.01\.00/);
+  await examples.getByRole('button', { name: /inspect this path/i }).click();
+  await expect(page).toHaveURL(/\/app\?q=01.01.21.01.00/);
 });
 
 test('updates editorial metadata when the route changes', async ({ page }) => {
@@ -113,6 +125,13 @@ test('opens a verified chapter section and family hierarchy from the keyboard', 
   await expect(page.getByRole('button', { name: /partida · familia HS4.*01\.01/i })).toBeVisible();
 });
 
+test('opens matching chapter paths while a person filters the visual tree', async ({ page }) => {
+  await page.goto('/chapters');
+  await page.getByRole('searchbox', { name: /buscar capítulo/i }).fill('01');
+  await expect(page.getByRole('status')).toContainText(/matching chapters expanded/i);
+  await expect(page.getByRole('button', { name: /capítulo 01/i })).toBeVisible();
+});
+
 test('serves the source-cited trade-context and ANAM MOA routes', async ({ page }) => {
   await page.goto('/trade-context');
   await expect(page.getByRole('heading', { name: /comercio exterior: datos para entender el contexto/i })).toBeVisible();
@@ -139,6 +158,16 @@ test('serves the homepage-aligned verified explorer', async ({ page }) => {
   await expect(page.getByTestId('search-input')).toBeVisible();
   await expect(page.getByTestId('example-fraction')).toContainText(/IGI/i);
   await expect(page.getByRole('link', { name: /browse visual tree/i })).toHaveAttribute('href', '/chapters');
+});
+
+test('shows possible verified paths while a person types without requiring a submit', async ({ page }) => {
+  await page.goto('/app');
+  await page.getByTestId('search-input').fill('teléfonos');
+  const suggestions = page.getByTestId('live-suggestions');
+  await expect(suggestions).toContainText(/possible verified paths/i);
+  await expect(suggestions.getByRole('button', { name: /85\.17\.13\.01/i })).toBeVisible();
+  await suggestions.getByRole('button', { name: /85\.17\.13\.01/i }).click();
+  await expect(page).toHaveURL(/\/app\/record\/85171301$/);
 });
 
 test('looks up a complete tariff fraction with evidence and a decision tree', async ({ page }) => {
