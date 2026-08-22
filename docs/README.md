@@ -45,6 +45,7 @@ La portada del repositorio explica **qué es** `arancel-mx` y cómo empezar. Est
 | Integrar cambios paralelos sin revertir arquitectura | [Handoff de integración](integration-handoff.md) | Baseline actual y fronteras de alto riesgo. |
 | Centralizar la capa pública en Vercel | [Centralización Vercel](vercel-centralization.md) | Cutover por etapas, identidad de release y retiro seguro de FastAPI. |
 | Mantener o compilar la interfaz pública | [Fuente mantenible del frontend](frontend-source.md) | Rutas React, contenido declarativo, build Vite y sincronización segura con FastAPI/Vercel. |
+| Aplicar las reglas comunes del ecosistema | [Política de desarrollo verificable](governance/DEVELOPMENT_POLICY.md) | Evidencia, contratos, seguridad, excepciones y recuperación para Central Hub y RFA. |
 | Enviar cambios | [CONTRIBUTING.md](../CONTRIBUTING.md) | Flujo y criterios de contribución. |
 | Reportar un problema de seguridad | [SECURITY.md](../SECURITY.md) | Canal de reporte privado. |
 
