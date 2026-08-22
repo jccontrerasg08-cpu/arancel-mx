@@ -436,5 +436,23 @@ test('preloads a verified tariff hypothesis from a record context without writin
   await expect(page.locator('#tariff-code')).toHaveValue('85171301');
   await expect(page.getByTestId('igi-rate')).toHaveValue('0');
   await expect(page.getByTestId('trade-context')).toContainText('data-2026.08.22');
+  await expect(page.getByTestId('rrna-matrix')).toContainText('Fracción propuesta: 85171301');
   await expect.poll(() => page.evaluate(() => localStorage.getItem('arancel-mx-trade-draft'))).toBeNull();
+});
+
+test('reveals verified tariff matches from the primary search', async ({ page }) => {
+  await page.route('**/v1/search?**', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify([{ record: { code: '85171301', description: 'Teléfono inteligente', igi: { value: 0, text: '0%' } } }]),
+    });
+  });
+  await page.goto('/trade');
+  await page.locator('#trade-secondary-tools').evaluate((element) => { element.open = false; });
+  await page.locator('#classification-query').fill('teléfono');
+  await page.locator('#search-tariff').click();
+
+  await expect(page.locator('#trade-secondary-tools')).toHaveJSProperty('open', true);
+  await expect(page.locator('#classification-tab')).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('#classification-results')).toContainText('Teléfono inteligente');
 });

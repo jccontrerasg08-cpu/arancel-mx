@@ -62,6 +62,8 @@ function applyTariffRecord(record, { dirty = false } = {}) {
     const rateText = typeof record?.igi?.text === 'string' ? record.igi.text : Number.isFinite(rate) ? `${rate}%` : 'sin tasa numérica';
     context.textContent = `Hipótesis cargada: ${code} · IGI publicado ${rateText}${selectedRecord.datasetVersion ? ` · release ${selectedRecord.datasetVersion}` : ''}. Verifica vigencia, clasificación y evidencia.`;
   }
+  renderTmecResult();
+  renderPedimentoChecklist();
   if (dirty) markDraftDirty();
   return true;
 }
@@ -280,6 +282,13 @@ function renderPedimentoChecklist() {
   `;
 }
 
+function revealClassificationResults() {
+  const tools = byId('trade-secondary-tools');
+  if (tools) tools.open = true;
+  const tab = byId('classification-tab');
+  if (tab) activateTab(tab);
+}
+
 async function searchTariff() {
   const query = value('classification-query').trim();
   const output = byId('classification-results');
@@ -289,6 +298,7 @@ async function searchTariff() {
     return;
   }
   if (!output || !searchButton) return;
+  revealClassificationResults();
   searchButton.disabled = true;
   searchButton.textContent = 'Buscando…';
   setSearchFeedback(`Consultando la release verificada para “${query}”…`, true);
