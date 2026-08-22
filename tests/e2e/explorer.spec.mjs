@@ -59,6 +59,29 @@ test('serves verified chapter and fraction-change discovery routes', async ({ pa
   await expect(page.getByRole('button', { name: /inspect release/i })).toBeVisible();
 });
 
+test('shows a bounded history of immutable data releases', async ({ page }) => {
+  await page.route('**/v1/repository', (route) => route.fulfill({
+    contentType: 'application/json',
+    body: JSON.stringify({
+      releases: [
+        {
+          tag: 'data-2026.08.22',
+          publishedAt: '2026-08-22T11:17:00Z',
+          url: 'https://github.com/jccontrerasg08-cpu/arancel-mx/releases/tag/data-2026.08.22',
+        },
+      ],
+    }),
+  }));
+  await page.goto('/changes');
+
+  await expect(page.getByRole('heading', { name: /verified release history/i })).toBeVisible();
+  await expect(page.getByRole('link', { name: /data-2026\.08\.22/i })).toHaveAttribute(
+    'href',
+    'https://github.com/jccontrerasg08-cpu/arancel-mx/releases/tag/data-2026.08.22',
+  );
+});
+
+
 test('identifies the chapter fallback when verified indexes are unavailable', async ({ page }) => {
   await page.route('**/v1/sections', (route) => route.fulfill({ status: 503, contentType: 'application/json', body: '{}' }));
   await page.route('**/v1/chapters', (route) => route.fulfill({ status: 503, contentType: 'application/json', body: '{}' }));

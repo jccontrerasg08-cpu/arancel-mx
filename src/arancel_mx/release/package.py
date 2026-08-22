@@ -12,7 +12,7 @@ import tarfile
 import tempfile
 from typing import Any
 
-from arancel_mx.release.metadata import source_identity_from_manifest
+from arancel_mx.release.metadata import SourceIdentity, source_identity_from_manifest
 
 
 RELEASE_ARTIFACTS = ("arancel_mx.csv", "arancel_mx.json", "arancel_mx.duckdb")
@@ -64,6 +64,66 @@ def _nonblank_string(manifest: dict[str, Any], field: str) -> str:
     return value
 
 
+def _validate_source_history(
+    manifest: dict[str, Any],
+    canonical_identities: tuple[SourceIdentity, ...],
+) -> None:
+    history = manifest.get("source_history")
+    if history is None:
+        return
+    if not isinstance(history, dict) or set(history) != {"previous_dataset_version", "changes"}:
+        raise ValueError("Release manifest source_history is invalid")
+    previous_version = history["previous_dataset_version"]
+    if previous_version is not None and (
+        not isinstance(previous_version, str) or not previous_version.strip()
+    ):
+        raise ValueError("Release manifest source_history.previous_dataset_version is invalid")
+    changes = history["changes"]
+    if not isinstance(changes, list):
+        raise ValueError("Release manifest source_history.changes must be a list")
+    canonical_by_key = {
+        (identity.dataset_key, identity.document_role): identity
+        for identity in canonical_identities
+    }
+    for index, item in enumerate(changes):
+        if not isinstance(item, dict) or set(item) != {
+            "change", "dataset_key", "document_role", "previous", "current"
+        }:
+            raise ValueError(f"Release manifest source_history.changes[{index}] is invalid")
+        change = item["change"]
+        if change not in {"added", "removed", "updated"}:
+            raise ValueError(f"Release manifest source_history.changes[{index}].change is invalid")
+        for field in ("dataset_key", "document_role"):
+            if not isinstance(item[field], str) or not item[field].strip():
+                raise ValueError(f"Release manifest source_history.changes[{index}].{field} is invalid")
+        previous = item["previous"]
+        current = item["current"]
+        if change == "added" and (previous is not None or not isinstance(current, dict)):
+            raise ValueError(f"Release manifest source_history.changes[{index}] is inconsistent")
+        if change == "removed" and (current is not None or not isinstance(previous, dict)):
+            raise ValueError(f"Release manifest source_history.changes[{index}] is inconsistent")
+        if change == "updated" and (not isinstance(previous, dict) or not isinstance(current, dict)):
+            raise ValueError(f"Release manifest source_history.changes[{index}] is inconsistent")
+        for identity in (previous, current):
+            if identity is not None:
+                parsed_identity = SourceIdentity(**identity)
+                if (
+                    parsed_identity.dataset_key != item["dataset_key"]
+                    or parsed_identity.document_role != item["document_role"]
+                ):
+                    raise ValueError(
+                        f"Release manifest source_history.changes[{index}] identity keys are inconsistent"
+                    )
+        if current is not None:
+            canonical_identity = canonical_by_key.get(
+                (item["dataset_key"], item["document_role"])
+            )
+            if canonical_identity != SourceIdentity(**current):
+                raise ValueError(
+                    f"Release manifest source_history.changes[{index}] current identity is not canonical"
+                )
+
+
 def _validate_schema_v2_manifest(manifest: dict[str, Any]) -> None:
     if manifest.get("schema_version") != "2":
         raise ValueError("Release manifest schema_version must be 2")
@@ -106,6 +166,8 @@ def _validate_schema_v2_manifest(manifest: dict[str, Any]) -> None:
     identities = source_identity_from_manifest(manifest)
     if not identities:
         raise ValueError("Release manifest source_identity must not be empty")
+
+    _validate_source_history(manifest, identities)
 
     nico_coverage = manifest.get("nico_coverage")
     if nico_coverage is not None:

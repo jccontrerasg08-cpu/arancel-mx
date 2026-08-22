@@ -18,6 +18,7 @@ from arancel_mx.sources.html_pages import (
     ensure_html_body_accessible,
 )
 from arancel_mx.sources.registry import load_source_registry
+from arancel_mx.sources.siicex import SIICEX_HOME_URL
 
 
 REPOSITORY_URL = "https://github.com/jccontrerasg08-cpu/arancel-mx"
@@ -36,15 +37,17 @@ EXTRA_DOCUMENTED_URLS = (
 )
 
 # VUCEM and Diputados endpoints currently terminate or time out modern TLS
-# clients (including GitHub Actions). Keep these official URLs documented and
-# syntax-validated; do not turn independently confirmed transport outages into
-# repository-code merge gates. Canonical SNICE and DOF sources remain probed.
+# clients (including GitHub Actions). SIICEX is a documented HTTP legacy reference,
+# not an official publication path. Keep these URLs syntax-validated; do not turn
+# independently confirmed transport outages into repository-code merge gates.
+# Canonical SNICE and DOF sources remain probed.
 EXTERNALLY_UNPROBEABLE_URLS = frozenset(
     {
         "https://www.ventanillaunica.gob.mx/vucem/Clasificador.html",
         "https://www.ventanillaunica.gob.mx/Clasificador/data/buildHojas1/90014002.html",
         "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm",
         "https://www.diputados.gob.mx/LeyesBiblio/pdf/LIGIE_2022.pdf",
+        SIICEX_HOME_URL,
     }
 )
 

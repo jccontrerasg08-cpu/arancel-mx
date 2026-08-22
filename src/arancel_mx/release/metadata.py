@@ -116,8 +116,50 @@ def source_identity_from_manifest(
     return tuple(identities)
 
 
+def source_identity_history(
+    current: Sequence[SourceIdentity],
+    previous_manifest: Mapping[str, object] | None,
+) -> dict[str, object]:
+    """Describe the current source diff against one prior certified release."""
+    if previous_manifest is None:
+        return {"previous_dataset_version": None, "changes": []}
+    previous_version = previous_manifest.get("dataset_version")
+    if not isinstance(previous_version, str) or not previous_version.strip():
+        raise ValueError("previous manifest dataset_version must be a non-blank string")
+    previous = source_identity_from_manifest(previous_manifest)
+    return {
+        "previous_dataset_version": previous_version,
+        "changes": source_identity_changes(current, previous),
+    }
+
+
 def source_identity_changed(
     current: Sequence[SourceIdentity],
     previous: Sequence[SourceIdentity],
 ) -> bool:
     return source_identity_digest(current) != source_identity_digest(previous)
+
+
+def source_identity_changes(
+    current: Sequence[SourceIdentity],
+    previous: Sequence[SourceIdentity],
+) -> list[dict[str, object]]:
+    """Return deterministic, inspectable changes keyed by dataset and document role."""
+    current_by_key = {(item.dataset_key, item.document_role): item for item in current}
+    previous_by_key = {(item.dataset_key, item.document_role): item for item in previous}
+    changes: list[dict[str, object]] = []
+    for dataset_key, document_role in sorted(set(current_by_key) | set(previous_by_key)):
+        before = previous_by_key.get((dataset_key, document_role))
+        after = current_by_key.get((dataset_key, document_role))
+        if before == after:
+            continue
+        changes.append(
+            {
+                "change": "added" if before is None else "removed" if after is None else "updated",
+                "dataset_key": dataset_key,
+                "document_role": document_role,
+                "previous": before.to_dict() if before is not None else None,
+                "current": after.to_dict() if after is not None else None,
+            }
+        )
+    return changes

@@ -5,6 +5,7 @@ import {
   buildPedimentoChecklist,
   calculateCustomsValue,
   calculateImportEstimate,
+  evaluateRrnaOrientation,
   evaluateTmecOrientation,
   TRADE_SOURCES,
 } from '../../website/assets/trade-tools.js';
@@ -146,6 +147,47 @@ test('keeps RRNA review as an explicit declared checklist requirement', () => {
   assert.equal(checklist.status, 'incomplete');
   assert.ok(checklist.missing.includes('Revisión documental de RRNA y programas aplicables'));
   assert.equal(checklist.checklist.at(-1).complete, false);
+});
+
+
+test('builds an evidence-bound RRNA matrix without confirming applicability', () => {
+  const result = evaluateRrnaOrientation({
+    tariffCode: '85171301',
+    hasRrnaReview: true,
+    rrnaReferenceUrl: 'https://www.snice.gob.mx/cs/avi/snice/drrnas.avisosypermisos.html',
+    rrnaReferenceConsultedAt: '2026-08-22',
+    rrnaReferenceNote: 'Se revisó el punto de entrada oficial y la medida específica sigue pendiente de contraste documental.',
+  });
+
+  assert.equal(result.status, 'evidence_review_required');
+  assert.equal(result.applicabilityConfirmed, false);
+  assert.deepEqual(result.matrix.map((row) => [row.key, row.complete]), [
+    ['tariff_code', true],
+    ['official_reference', true],
+    ['consulted_at', true],
+    ['measure_note', true],
+    ['review_declared', true],
+  ]);
+  assert.match(result.disclaimer, /no confirma.*aplicabilidad/i);
+});
+
+
+test('keeps the RRNA matrix incomplete when the proposed tariff code is invalid', () => {
+  const result = evaluateRrnaOrientation({
+    tariffCode: 'not-a-code',
+    hasRrnaReview: true,
+    rrnaReferenceUrl: 'https://www.snice.gob.mx/cs/avi/snice/drrnas.avisosypermisos.html',
+    rrnaReferenceConsultedAt: '2026-08-22',
+    rrnaReferenceNote: 'Aviso revisado para contraste documental.',
+  });
+
+  assert.equal(result.status, 'evidence_required');
+  assert.deepEqual(result.matrix[0], {
+    key: 'tariff_code',
+    label: 'Fracción propuesta',
+    value: 'Formato inválido',
+    complete: false,
+  });
 });
 
 

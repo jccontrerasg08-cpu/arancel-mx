@@ -6,6 +6,7 @@ import pytest
 
 from arancel_mx.pipeline import official_dataset
 from arancel_mx.pipeline.official_dataset import OfficialDatasetConfig, build_official_dataset
+from arancel_mx.pipeline.reconcile import ReconciliationReport
 from arancel_mx.release.metadata import SourceIdentity
 
 
@@ -172,6 +173,53 @@ def test_source_identity_order_does_not_create_false_change(tmp_path, monkeypatc
 
     assert result["status"] == "no_change"
     assert result["output_dir"] is None
+
+
+def test_release_metadata_records_prior_release_source_changes(tmp_path):
+    previous = list(identities())
+    previous[0] = identity(
+        "ligie",
+        "ligie_snapshot",
+        "https://www.snice.gob.mx/ligie.xlsx",
+        sha256=SHA_B,
+    )
+    current = identities()
+    captured = SimpleNamespace(
+        identities=current,
+        registry_version="2026-08-10",
+        registry_sha256=SHA_A,
+        reconciliation=ReconciliationReport(
+            publishable=True,
+            error_codes=(),
+            discrepancies=(),
+            legal_document_ids=(),
+            proposal_document_ids=(),
+            indicator_document_ids=(),
+        ),
+    )
+
+    metadata = official_dataset._release_metadata(
+        config(tmp_path),
+        captured,
+        [
+            {"level": "fraccion8", "code": "01010101"},
+            {"level": "nico10", "code": "0101010100"},
+        ],
+        manifest(tuple(previous)),
+    )
+
+    assert metadata["source_history"] == {
+        "previous_dataset_version": "2026.08.09",
+        "changes": [
+            {
+                "change": "updated",
+                "dataset_key": "ligie",
+                "document_role": "ligie_snapshot",
+                "previous": previous[0].to_dict(),
+                "current": current[0].to_dict(),
+            }
+        ],
+    }
 
 
 def test_changed_source_identity_proceeds_into_full_build(tmp_path, monkeypatch):

@@ -55,6 +55,7 @@ def test_transport_unprobeable_urls_remain_documented_but_are_excluded_from_live
         "https://www.ventanillaunica.gob.mx/Clasificador/data/buildHojas1/90014002.html",
         "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm",
         "https://www.diputados.gob.mx/LeyesBiblio/pdf/LIGIE_2022.pdf",
+        "http://www.siicex-caaarem.org.mx/",
     }
     assert EXTERNALLY_UNPROBEABLE_URLS <= documented
     assert EXTERNALLY_UNPROBEABLE_URLS.isdisjoint(probe_urls)
