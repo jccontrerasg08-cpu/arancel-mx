@@ -2,7 +2,7 @@
 
 Esta es la guía canónica para aplicaciones que consumen `arancel-mx` mediante releases verificadas, Python, CLI o la API HTTP pública. El **front door público** es [`https://arancel-mx.vercel.app/`](https://arancel-mx.vercel.app/), mientras GitHub Releases conserva la identidad canónica del dataset.
 
-**[Hub](https://arancel-mx.vercel.app/)** · **[OpenAPI](https://arancel-mx.vercel.app/docs)** · **[Metadata](https://arancel-mx.vercel.app/v1/meta)** · **[Readiness](https://arancel-mx.vercel.app/readyz)** · **[Última release](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest)**
+**[Hub](https://arancel-mx.vercel.app/)** · **[Documentación API](https://arancel-mx.vercel.app/documentation)** · **[Metadata](https://arancel-mx.vercel.app/v1/meta)** · **[Readiness](https://arancel-mx.vercel.app/readyz)** · **[Última release](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest)**
 
 ## Qué es y qué no es arancel-mx
 
@@ -146,9 +146,9 @@ curl "$ARANCEL_MX_API_URL/v1/search?q=telefonos&limit=5"
 curl "$ARANCEL_MX_API_URL/v1/lookup/8517130100"
 ```
 
-La documentación interactiva está en [`/docs`](https://arancel-mx.vercel.app/docs). La superficie `/v1` pública es **GET-only**, **read-only** y no requiere API key para las rutas documentadas.
+La guía local de rutas y límites está en [`/documentation`](https://arancel-mx.vercel.app/documentation). La superficie `/v1` pública es **GET-only**, **read-only** y no requiere API key para las rutas promovidas.
 
-La arquitectura pública es híbrida sin duplicar la fuente de verdad:
+La arquitectura pública conserva una única fuente de verdad:
 
 ```text
 GitHub Release verificada
@@ -157,14 +157,10 @@ sincronización operacional
           ↓
         Neon
           ↓
-Vercel: metadatos, búsqueda, ficha y evidencia activa
-
-Vercel: OpenAPI, docs y rutas no promovidas
-          ↓ proxy
-   runtime FastAPI reusable
+Vercel: rutas read-only promovidas y hub local de documentación
 ```
 
-`/v1/meta`, `/v1/search`, `/v1/suggest`, `/v1/ficha/{code}`, `/v1/sections`, `/v1/chapters`, las relaciones padre/hijos, `provenance`, notas nacionales y `/readyz` se resuelven en la capa operacional read-only de Vercel respaldada por Neon. OpenAPI, `/docs` y las rutas `/v1/*` aún no promovidas se presentan bajo el mismo dominio mediante proxy al runtime FastAPI. **Vercel y Neon son superficies de servicio; la GitHub Release verificada sigue siendo la fuente canónica.**
+`/v1/meta`, `/v1/search`, `/v1/suggest`, `/v1/ficha/{code}`, `/v1/lookup/{code}`, `/v1/sections`, `/v1/chapters`, las relaciones padre/hijos, `provenance`, notas nacionales y `/readyz` se resuelven en la capa operacional read-only de Vercel respaldada por Neon. Las rutas `/v1/*` no promovidas responden localmente sin un proxy externo. El sitio no actúa como proxy de un servicio de terceros. **Vercel y Neon son superficies de servicio; la GitHub Release verificada sigue siendo la fuente canónica.**
 
 ## Autoingesta
 

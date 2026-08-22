@@ -70,22 +70,6 @@
       "destination": "/api/operational?resource=national-notes&chapter=:chapter"
     },
     {
-      "source": "/v1/:path*",
-      "destination": "https://arancel-mx.fastapicloud.dev/v1/:path*"
-    },
-    {
-      "source": "/openapi.json",
-      "destination": "https://arancel-mx.fastapicloud.dev/openapi.json"
-    },
-    {
-      "source": "/docs/:path*",
-      "destination": "https://arancel-mx.fastapicloud.dev/docs/:path*"
-    },
-    {
-      "source": "/docs",
-      "destination": "https://arancel-mx.fastapicloud.dev/docs"
-    },
-    {
       "source": "/readyz",
       "destination": "/api/operational?resource=ready"
     },
@@ -94,8 +78,20 @@
       "destination": "/trade.html"
     },
     {
-      "source": "/((?!assets/|api/).*)",
+      "source": "/((?!assets/|api/|v1/|v1$|docs/|docs$|openapi\\.json$).*)",
       "destination": "/"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/docs",
+      "destination": "/documentation",
+      "permanent": true
+    },
+    {
+      "source": "/docs/:path*",
+      "destination": "/documentation",
+      "permanent": true
     }
   ],
   "headers": [

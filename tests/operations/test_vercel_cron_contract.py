@@ -53,4 +53,8 @@ def test_vercel_routes_retrieval_and_evidence_to_the_active_release_function() -
     assert rewrites["/v1/codes/:code/children"] == "/api/operational?resource=children&code=:code"
     assert rewrites["/v1/codes/:code/provenance"] == "/api/operational?resource=provenance&code=:code"
     assert rewrites["/v1/chapters/:chapter/national-notes"] == "/api/operational?resource=national-notes&chapter=:chapter"
-    assert rewrites["/v1/:path*"] == "https://arancel-mx.fastapicloud.dev/v1/:path*"
+    assert "/v1/:path*" not in rewrites
+    assert config["redirects"] == [
+        {"source": "/docs", "destination": "/documentation", "permanent": True},
+        {"source": "/docs/:path*", "destination": "/documentation", "permanent": True},
+    ]

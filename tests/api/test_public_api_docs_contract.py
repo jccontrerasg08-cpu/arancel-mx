@@ -22,7 +22,7 @@ def test_spanish_readme_documents_current_public_api_front_door() -> None:
         "sin API key",
         PUBLIC_ORIGIN,
         "/v1/meta",
-        "/docs",
+        "/documentation",
         "/readyz",
         "8517130100",
     )
@@ -44,7 +44,7 @@ def test_english_readme_documents_same_public_api_boundary() -> None:
         "no API key",
         PUBLIC_ORIGIN,
         "/v1/meta",
-        "/docs",
+        "/documentation",
         "/readyz",
         "8517130100",
     )
@@ -65,10 +65,10 @@ def test_external_consumption_guide_documents_hosted_vercel_contract() -> None:
         "/v1/meta",
         "/v1/search",
         "/readyz",
-        "/docs",
+        "/documentation",
         "Vercel",
         "Neon",
-        "proxy",
+        "/documentation",
         "data-YYYY.MM.DD",
     )
     for token in required:
@@ -78,7 +78,8 @@ def test_external_consumption_guide_documents_hosted_vercel_contract() -> None:
     assert "get-only" in lowered
     assert "fuente canónica" in lowered
     assert "api.example.com" not in lowered
-    assert "el sitio no actúa como proxy" not in lowered
+    assert "el sitio no actúa como proxy" in lowered
+    assert "fastapicloud.dev" not in lowered
 
 
 def test_changelog_preserves_historical_fastapi_release_context() -> None:

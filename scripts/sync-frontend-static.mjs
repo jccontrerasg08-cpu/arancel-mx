@@ -23,16 +23,26 @@ if (bundleName !== stableBundleName) {
   await rename(bundlePath, path.join(sourceAssets, stableBundleName));
 }
 
+for (const assetName of await readdir(sourceAssets)) {
+  if (assetName === stableBundleName || !assetName.endsWith('.js')) continue;
+  const assetPath = path.join(sourceAssets, assetName);
+  const sourceCode = await readFile(assetPath, 'utf8');
+  const publishedCode = sourceCode.replaceAll(`./${bundleName}`, `./${stableBundleName}`);
+  if (publishedCode !== sourceCode) await writeFile(assetPath, publishedCode);
+}
+
 const sourceIndex = path.join(source, 'index.html');
 const index = await readFile(sourceIndex, 'utf8');
 await writeFile(sourceIndex, index.replace(`/assets/${bundleName}`, `/assets/${stableBundleName}`));
+const publishedAssetNames = new Set(await readdir(sourceAssets));
+const generatedBundle = /^(?:index|glossary-page)-[A-Za-z0-9_-]{8,12}\.(?:js|css)$/;
 
 for (const destination of destinations) {
   await mkdir(destination, { recursive: true });
   const destinationAssets = path.join(destination, 'assets');
   await mkdir(destinationAssets, { recursive: true });
   for (const existing of await readdir(destinationAssets)) {
-    if (/^index-[A-Za-z0-9_-]+\.(?:js|css)$/.test(existing) && existing !== stableBundleName) {
+    if (generatedBundle.test(existing) && !publishedAssetNames.has(existing)) {
       await unlink(path.join(destinationAssets, existing));
     }
   }

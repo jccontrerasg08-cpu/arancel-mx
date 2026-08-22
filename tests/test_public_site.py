@@ -68,28 +68,17 @@ def test_vercel_deploys_the_standalone_public_site() -> None:
             "destination": "/api/operational?resource=national-notes&chapter=:chapter",
         },
         {
-            "source": "/v1/:path*",
-            "destination": "https://arancel-mx.fastapicloud.dev/v1/:path*",
-        },
-        {
-            "source": "/openapi.json",
-            "destination": "https://arancel-mx.fastapicloud.dev/openapi.json",
-        },
-        {
-            "source": "/docs/:path*",
-            "destination": "https://arancel-mx.fastapicloud.dev/docs/:path*",
-        },
-        {
-            "source": "/docs",
-            "destination": "https://arancel-mx.fastapicloud.dev/docs",
-        },
-        {
             "source": "/readyz",
             "destination": "/api/operational?resource=ready",
         },
         {"source": "/trade", "destination": "/trade.html"},
-        {"source": "/((?!assets/|api/).*)", "destination": "/"},
+        {"source": "/((?!assets/|api/|v1/|v1$|docs/|docs$|openapi\\.json$).*)", "destination": "/"},
     ]
+    assert config["redirects"] == [
+        {"source": "/docs", "destination": "/documentation", "permanent": True},
+        {"source": "/docs/:path*", "destination": "/documentation", "permanent": True},
+    ]
+    assert "fastapicloud.dev" not in json.dumps(config)
 
 
 def test_vercel_functions_bundle_the_src_layout_with_bounded_runtime() -> None:
@@ -226,8 +215,9 @@ def test_vercel_centralization_docs_match_the_promoted_retrieval_routes() -> Non
     centralization = (ROOT / "docs" / "vercel-centralization.md").read_text(encoding="utf-8")
 
     assert "| `ficha`, suggest, provenance, and national notes | Vercel operational function | Active Neon release |" in centralization
-    assert "| `/openapi.json`, `/docs`, repository telemetry | Temporary FastAPI compatibility route | Discovery/telemetry migration not yet complete |" in centralization
-    assert "Temporary FastAPI compatibility route | Awaiting the first evidence-bearing Neon promotion" not in centralization
+    assert "| `/documentation` | Local React documentation hub | Public repository documents and route limits |" in centralization
+    assert "fastapicloud.dev" not in centralization
+    assert "Temporary FastAPI compatibility route" not in centralization
 
 
 def test_trade_desk_publishes_a_visual_source_atlas_with_accessible_flags() -> None:
@@ -276,3 +266,18 @@ def test_vercel_applies_safe_defensive_headers_to_public_documents() -> None:
     assert values["Referrer-Policy"] == "strict-origin-when-cross-origin"
     assert values["Permissions-Policy"] == "geolocation=(), microphone=(), camera=()"
     assert values["X-Frame-Options"] == "DENY"
+
+
+def test_maintained_architecture_docs_describe_the_local_public_surface() -> None:
+    for relative_path in (
+        "docs/project-overview.md",
+        "docs/integration-handoff.md",
+        "docs/brand.md",
+        "docs/consumer-quickstart.md",
+    ):
+        text = (ROOT / relative_path).read_text(encoding="utf-8")
+
+        assert "/documentation" in text
+        assert "runtime FastAPI" not in text
+        assert "FastAPI reusable" not in text
+        assert "fastapicloud.dev" not in text
