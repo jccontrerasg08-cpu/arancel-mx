@@ -20,6 +20,7 @@ def test_compatibility_policy_states_verified_python_window_and_public_surfaces(
         "arancel_mx",
         "`/v1`",
         "DuckDB, CSV, JSON, manifest y PUBLIC_COLUMNS",
+        "dataset/release",
         "no clasifica mercancías",
     ):
         assert token in text
@@ -37,6 +38,7 @@ def test_compatibility_policy_requires_announced_deprecation_with_a_replacement(
         "stderr",
         "Deprecation",
         "Sunset",
+        "La ventana anunciada también se aplica a CLI y HTTP /v1.",
     ):
         assert token in text
 

@@ -15,13 +15,14 @@ El metadato de distribución declara `requires-python = ">=3.11"`. Las releases 
 
 ## Cambios compatibles y deprecaciones
 
-Los cambios aditivos son el camino predeterminado. Antes de una modificación incompatible de biblioteca, CLI o `/v1`, el cambio debe describir la alternativa, el impacto y la estrategia de migración en la pull request y en `CHANGELOG.md`.
+Los cambios aditivos son el camino predeterminado. Antes de una modificación incompatible de biblioteca, CLI, `/v1` o dataset/release, el cambio debe describir la alternativa, el impacto y la estrategia de migración en la pull request y en `CHANGELOG.md`. Para un esquema de dataset/release, la transición debe conservar el campo o artefacto anterior durante la ventana anunciada, o publicar una migración reproducible y el impacto para consumidores ETL.
 
 Una retirada futura debe seguir una de estas dos formas:
 
 1. Para biblioteca `arancel_mx`, cuando exista una alternativa ejecutable, conservar la superficie anterior durante una ventana anunciada y emitir `DeprecationWarning` que incluya el reemplazo y la **versión objetivo de retirada**. La advertencia debe tener una prueba que compruebe categoría, texto y `stacklevel`.
 2. Para CLI, el comando retirado debe emitir un aviso `DEPRECATION:` observable por `stderr`, indicar el reemplazo y reflejarlo en `--help` cuando proceda. Para HTTP `/v1`, la ruta retirada debe emitir los encabezados `Deprecation` y `Sunset` cuando haya fecha de retirada, además de un enlace al reemplazo y la entrada correspondiente de `CHANGELOG.md`. Los campos de respuesta se sustituyen mediante una alternativa aditiva documentada antes de eliminarse.
-3. Cuando una superficie siga siendo segura pero deje de evolucionar, documentarla como *soft deprecation* sin advertencia en runtime. La documentación debe indicar el reemplazo, el alcance y el criterio para una futura retirada.
+3. La ventana anunciada también se aplica a CLI y HTTP /v1. Durante esa ventana, la ruta, comando o salida retirada continúa disponible junto al reemplazo documentado; sólo después puede eliminarse mediante un cambio de versión y changelog.
+4. Cuando una superficie siga siendo segura pero deje de evolucionar, documentarla como *soft deprecation* sin advertencia en runtime. La documentación debe indicar el reemplazo, el alcance y el criterio para una futura retirada.
 
 Este flujo adapta el principio de compatibilidad de [PEP 387](https://peps.python.org/pep-0387/): las interfaces públicas requieren aviso y una ruta de migración antes de un cambio incompatible. Cuando una anotación estática pueda comunicar la deprecación sin alterar el runtime, se puede evaluar el patrón de [PEP 702](https://peps.python.org/pep-0702/) en una mejora posterior.
 
