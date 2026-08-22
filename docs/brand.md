@@ -2,7 +2,7 @@
 
 Esta guía define la identidad visual y narrativa pública de `arancel-mx`. El objetivo no es decorar el proyecto: es hacer visible, con el menor ruido posible, qué problema resuelve, qué superficies ofrece y por qué sus datos son verificables.
 
-**[Hub público](https://arancel-mx.vercel.app/)** · **[API / OpenAPI](https://arancel-mx.vercel.app/docs)** · **[Visión del proyecto](project-overview.md)** · **[Centro de documentación](README.md)**
+**[Hub público](https://arancel-mx.vercel.app/)** · **[Centro de documentación](https://arancel-mx.vercel.app/documentation)** · **[Visión del proyecto](project-overview.md)** · **[Documentación del repositorio](README.md)**
 
 ## Idea de marca
 

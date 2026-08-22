@@ -52,6 +52,10 @@ def test_vercel_deploys_the_standalone_public_site() -> None:
             "destination": "/api/operational?resource=chapters",
         },
         {
+            "source": "/v1/repository",
+            "destination": "/api/operational?resource=repository",
+        },
+        {
             "source": "/v1/codes/:code/parent",
             "destination": "/api/operational?resource=parent&code=:code",
         },

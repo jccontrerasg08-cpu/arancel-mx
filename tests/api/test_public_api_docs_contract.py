@@ -88,3 +88,12 @@ def test_changelog_preserves_historical_fastapi_release_context() -> None:
     assert "FastAPI" in text
     assert "ARANCEL_MX_API_DATASET" in text
     assert "data-2026.08.15" in text
+
+
+def test_docs_hub_and_brand_guide_link_to_local_documentation_scope() -> None:
+    for path in ("docs/README.md", "docs/brand.md"):
+        text = _text(path)
+        lowered = text.lower()
+        assert f"{PUBLIC_ORIGIN}/documentation" in text
+        assert "openapi público" not in lowered
+        assert f"{PUBLIC_ORIGIN}/docs" not in text

@@ -49,6 +49,7 @@ def test_vercel_routes_retrieval_and_evidence_to_the_active_release_function() -
     assert rewrites["/v1/lookup/:code"] == "/api/operational?resource=lookup&code=:code"
     assert rewrites["/v1/sections"] == "/api/operational?resource=sections"
     assert rewrites["/v1/chapters"] == "/api/operational?resource=chapters"
+    assert rewrites["/v1/repository"] == "/api/operational?resource=repository"
     assert rewrites["/v1/codes/:code/parent"] == "/api/operational?resource=parent&code=:code"
     assert rewrites["/v1/codes/:code/children"] == "/api/operational?resource=children&code=:code"
     assert rewrites["/v1/codes/:code/provenance"] == "/api/operational?resource=provenance&code=:code"

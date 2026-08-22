@@ -2,7 +2,7 @@
 
 La portada del repositorio explica **qué es** `arancel-mx` y cómo empezar. Este índice es la entrada canónica al detalle técnico: elige la ruta según lo que necesitas hacer.
 
-**[Hub público](https://arancel-mx.vercel.app/)** · **[Mesa de comercio exterior](https://arancel-mx.vercel.app/trade)** · **[API / OpenAPI](https://arancel-mx.vercel.app/docs)** · **[Metadata del dataset](https://arancel-mx.vercel.app/v1/meta)** · **[Última release](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest)** · **[README](../README.md)**
+**[Hub público](https://arancel-mx.vercel.app/)** · **[Mesa de comercio exterior](https://arancel-mx.vercel.app/trade)** · **[Centro de documentación](https://arancel-mx.vercel.app/documentation)** · **[Metadata del dataset](https://arancel-mx.vercel.app/v1/meta)** · **[Última release](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest)** · **[README](../README.md)**
 
 ## Usar
 
@@ -19,7 +19,7 @@ La portada del repositorio explica **qué es** `arancel-mx` y cómo empezar. Est
 | Necesidad | Lee / abre | Resultado |
 |---|---|---|
 | Integrar DuckDB/CSV/JSON, Python o HTTP | [Consumo externo](external-consumption.md) | Contratos de archivos, `Dataset` y API GET-only/read-only. |
-| Explorar el contrato HTTP | [OpenAPI público](https://arancel-mx.vercel.app/docs) | Endpoints y esquemas bajo el mismo dominio del hub. |
+| Explorar rutas, límites y contratos públicos | [Centro de documentación](https://arancel-mx.vercel.app/documentation) | Rutas GET-only promovidas, documentación mantenida y límites de integración. |
 | Identificar la release que sirve la capa pública | [`/v1/meta`](https://arancel-mx.vercel.app/v1/meta) | Identidad separada de API, paquete y dataset. |
 | Entender tablas, vigencia y manifest | [Modelo de datos](data-model.md) | Semántica del DuckDB y de una release verificable. |
 
@@ -61,4 +61,4 @@ La portada del repositorio explica **qué es** `arancel-mx` y cómo empezar. Est
 
 > `arancel-mx` es una herramienta técnica de datos. No clasifica mercancías ni constituye asesoría legal. Para decisiones regulatorias o aduaneras deben consultarse las publicaciones oficiales aplicables y, cuando corresponda, profesionales especializados.
 
-**[Hub](https://arancel-mx.vercel.app/)** · **[API](https://arancel-mx.vercel.app/docs)** · **[Español](../README.md)** · **[English](../README.en.md)** · **[Última release](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest)**
+**[Hub](https://arancel-mx.vercel.app/)** · **[Documentación](https://arancel-mx.vercel.app/documentation)** · **[Español](../README.md)** · **[English](../README.en.md)** · **[Última release](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest)**

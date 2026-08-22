@@ -5,6 +5,7 @@ from __future__ import annotations
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler
 import json
+import os
 import logging
 from pathlib import Path
 import sys
@@ -28,6 +29,7 @@ from arancel_mx.operational.query import (
     sections_active_release,
     suggest_active_release,
 )
+from arancel_mx.api.repository import repository_snapshot
 from arancel_mx.operational.runtime_config import operational_database_url
 
 
@@ -53,6 +55,10 @@ class handler(BaseHTTPRequestHandler):
         resource = query.get("resource", [""])[0]
         if resource == "health":
             self._respond(HTTPStatus.OK, {"status": "ok"})
+            return
+        if resource == "repository":
+            snapshot = repository_snapshot(os.environ.get("GITHUB_TOKEN"))
+            self._respond(HTTPStatus.OK, snapshot.model_dump(mode="json"))
             return
         if resource not in {
             "meta",

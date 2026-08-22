@@ -166,3 +166,28 @@ def test_operational_handler_serves_process_health_without_database(monkeypatch)
     request.do_GET()
 
     assert response == [module.HTTPStatus.OK, {"status": "ok"}]
+
+
+def test_operational_handler_serves_repository_history_without_database(monkeypatch):
+    module = _handler_module()
+    response: list[object] = []
+    request = module.handler.__new__(module.handler)
+    request.path = "/api/operational?resource=repository"
+    request.headers = {}
+    request._respond = lambda status, payload: response.extend((status, payload))
+    monkeypatch.delenv("ARANCEL_MX_DATABASE_URL", raising=False)
+    monkeypatch.delenv("ARANCEL_MX_DATABASE_DATABASE_URL", raising=False)
+
+    payload = {"releases": [{"tag": "data-2026.08.17"}]}
+
+    class Snapshot:
+        def model_dump(self, *, mode: str):
+            assert mode == "json"
+            return payload
+
+    monkeypatch.setenv("GITHUB_TOKEN", "release-token")
+    monkeypatch.setattr(module, "repository_snapshot", lambda token: Snapshot(), raising=False)
+
+    request.do_GET()
+
+    assert response == [module.HTTPStatus.OK, payload]
