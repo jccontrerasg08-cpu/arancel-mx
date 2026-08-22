@@ -18,6 +18,14 @@ Describe el problema, el alcance arancelario y la solución propuesta.
 - [ ] Revisé el diff completo contra `main` y no incluí archivos fuera de alcance.
 - [ ] No incluí credenciales, datos personales, `.env`, bases locales, datasets generados, descargas ni directorios de build.
 
+## Compatibilidad y decisión
+
+- [ ] Este cambio no altera una interfaz, esquema, contrato de release ni comportamiento documentado; **o** describí abajo su compatibilidad, migración y versión objetivo.
+- [ ] No requiere decisión transversal; **o** enlacé la decisión registrada en `docs/decisions/` o la issue/discusión equivalente.
+- [ ] No requiere fragmento de changelog; **o** añadí el fragmento o la nota de release correspondiente para un cambio visible.
+
+Describe aquí sólo el impacto y los enlaces que apliquen.
+
 ## Verificación
 
 - [ ] Agregué o actualicé pruebas que cubren el cambio, o documenté por qué el cambio es exclusivamente documental.

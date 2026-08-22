@@ -27,6 +27,8 @@ python -m pytest -q
 5. Para un fixture, registra el origen y evita incluir información privada.
 6. Ejecuta `python -m pytest -q`, `python -m build` y `git diff --check`.
 7. Actualiza la documentación cuando cambien interfaces, esquema o proceso de publicación, y registra evidencia fechada para cambios de seguridad, datos o despliegue.
+8. Para una decisión transversal —API, esquema, release, seguridad, automatización o mantenimiento futuro— usa la plantilla de [`docs/decisions/0000-template.md`](docs/decisions/0000-template.md). No la uses para una corrección local o cambio editorial rutinario.
+9. Para revisar reportes nuevos, sigue la checklist semanal de [`docs/operations/issue-triage.md`](docs/operations/issue-triage.md). La rutina ordena la cola; no sustituye la revisión técnica ni cierra casos controvertidos automáticamente.
 
 ## Revisión en GitHub
 
