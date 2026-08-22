@@ -161,6 +161,11 @@ test('serves the homepage-aligned verified explorer', async ({ page }) => {
 });
 
 test('shows possible verified paths while a person types without requiring a submit', async ({ page }) => {
+  await page.route('**/v1/search?**', async (route) => {
+    const query = new URL(route.request().url()).searchParams.get('q');
+    if (query !== 'teléfonos') return route.continue();
+    return route.fulfill({ contentType: 'application/json', body: JSON.stringify([{ code: '85171301', description: 'Teléfonos inteligentes', level: 'fraccion8', dataset_version: '2026.08.15' }]) });
+  });
   await page.goto('/app');
   await page.getByTestId('search-input').fill('teléfonos');
   const suggestions = page.getByTestId('live-suggestions');
