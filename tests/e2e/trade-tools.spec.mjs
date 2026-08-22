@@ -24,6 +24,21 @@ test('builds an orientative customs value from commercial components', () => {
   assert.match(customsValue.disclaimer, /orientativ/i);
 });
 
+test('uses a declared direct customs value before commercial components', () => {
+  const customsValue = calculateCustomsValue({
+    directValueMxn: 1200,
+    incoterm: 'CIF',
+    productValueMxn: 1000,
+    freightMxn: 120,
+    insuranceMxn: 30,
+    incrementablesMxn: 50,
+  });
+
+  assert.equal(customsValue.customsValueMxn, 1200);
+  assert.equal(customsValue.method, 'direct_value');
+  assert.deepEqual(customsValue.components, []);
+});
+
 test('calculates an itemized import estimate from a declared customs value', () => {
   const estimate = calculateImportEstimate({
     customsValueMxn: 1000,

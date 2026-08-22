@@ -1,3 +1,4 @@
+// Style: estimador evidence-first; el resultado breve y la fuente son primarios, el expediente se revela bajo demanda.
 import {
   buildPedimentoChecklist,
   calculateCustomsValue,
@@ -36,6 +37,33 @@ let isDraftDirty = false;
 function numberValue(id) {
   const raw = value(id).trim();
   return raw === '' ? 0 : Number(raw);
+}
+
+function normalizeTariffCode(value) {
+  const code = String(value || '').replace(/[.\s-]/g, '');
+  return /^\d{8}(?:\d{2})?$/.test(code) ? code : null;
+}
+
+function applyTariffRecord(record, { dirty = false } = {}) {
+  const code = normalizeTariffCode(record?.code);
+  if (!code) return false;
+  const rate = Number(record?.igi?.value ?? record?.igi_value);
+  byId('tariff-code').value = code;
+  byId('tmec-code').value = code;
+  byId('pedimento-code').value = code;
+  if (Number.isFinite(rate) && rate >= 0) byId('igi-rate').value = String(rate);
+  selectedRecord = Object.freeze({
+    code,
+    datasetVersion: typeof record?.dataset_version === 'string' ? record.dataset_version : null,
+  });
+  const context = byId('trade-context');
+  if (context) {
+    context.hidden = false;
+    const rateText = typeof record?.igi?.text === 'string' ? record.igi.text : Number.isFinite(rate) ? `${rate}%` : 'sin tasa numérica';
+    context.textContent = `Hipótesis cargada: ${code} · IGI publicado ${rateText}${selectedRecord.datasetVersion ? ` · release ${selectedRecord.datasetVersion}` : ''}. Verifica vigencia, clasificación y evidencia.`;
+  }
+  if (dirty) markDraftDirty();
+  return true;
 }
 
 function updateStatus(message) {
@@ -104,16 +132,14 @@ function renderEstimate(estimate, customsValue) {
 }
 
 function buildScenario() {
-  const directValue = value('customs-value').trim();
-  const customsValue = directValue
-    ? { method: 'direct_value', customsValueMxn: Number(directValue) }
-    : calculateCustomsValue({
-        incoterm: value('incoterm'),
-        productValueMxn: numberValue('product-value'),
-        freightMxn: numberValue('freight-value'),
-        insuranceMxn: numberValue('insurance-value'),
-        incrementablesMxn: numberValue('incrementables-value'),
-      });
+  const customsValue = calculateCustomsValue({
+    directValueMxn: value('customs-value'),
+    incoterm: value('incoterm'),
+    productValueMxn: numberValue('product-value'),
+    freightMxn: numberValue('freight-value'),
+    insuranceMxn: numberValue('insurance-value'),
+    incrementablesMxn: numberValue('incrementables-value'),
+  });
   const estimate = calculateImportEstimate({
     customsValueMxn: customsValue.customsValueMxn,
     igiRatePercent: numberValue('igi-rate'),
@@ -290,15 +316,7 @@ async function searchTariff() {
       if (Number.isFinite(Number(record.igi?.value))) button.dataset.igi = String(record.igi.value);
       button.textContent = `${record.code} · ${record.description}`;
       button.addEventListener('click', () => {
-        byId('tariff-code').value = button.dataset.code;
-        byId('tmec-code').value = button.dataset.code;
-        byId('pedimento-code').value = button.dataset.code;
-        selectedRecord = Object.freeze({
-          code: button.dataset.code,
-          datasetVersion: typeof record.dataset_version === 'string' ? record.dataset_version : null,
-        });
-        if (button.dataset.igi) byId('igi-rate').value = button.dataset.igi;
-        markDraftDirty();
+        if (!applyTariffRecord(record, { dirty: true })) return;
         updateStatus(`Se cargó ${button.dataset.code} como hipótesis de trabajo. Verifica clasificación, vigencia y evidencia antes de usarla.`);
       });
       const detail = document.createElement('p');
@@ -328,6 +346,27 @@ async function searchTariff() {
     output.setAttribute('aria-busy', 'false');
     searchButton.disabled = false;
     searchButton.textContent = 'Buscar';
+  }
+}
+
+async function preloadTariffFromQuery() {
+  const code = normalizeTariffCode(new URLSearchParams(window.location.search).get('code'));
+  if (!code) return;
+  const context = byId('trade-context');
+  if (context) {
+    context.hidden = false;
+    context.textContent = `Consultando ${code} en la release verificada…`;
+  }
+  try {
+    const response = await fetch(`/v1/ficha/${encodeURIComponent(code)}`);
+    if (!response.ok) throw new Error('El registro verificado no está disponible.');
+    const payload = await response.json();
+    if (!applyTariffRecord(payload?.record || payload)) throw new Error('El registro verificado no contiene una fracción utilizable.');
+    updateStatus(`Se cargó ${code} desde la ficha verificada. Revisa vigencia y evidencia antes de calcular.`);
+  } catch {
+    byId('tariff-code').value = code;
+    if (context) context.textContent = `La fracción ${code} se conservó como hipótesis, pero su tasa verificada no pudo cargarse. Consulta la release antes de calcular.`;
+    updateStatus('No fue posible cargar la tasa verificada desde la ficha.');
   }
 }
 
@@ -545,7 +584,7 @@ function initialize() {
   byId('rrna-source').textContent = TRADE_SOURCES.rrna.title;
   byId('costs-source').href = TRADE_SOURCES.costs.url;
   byId('costs-source').textContent = TRADE_SOURCES.costs.title;
-  calculateEstimate();
+  void preloadTariffFromQuery();
 }
 
 initialize();

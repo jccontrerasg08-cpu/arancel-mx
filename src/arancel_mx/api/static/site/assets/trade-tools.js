@@ -98,6 +98,19 @@ function percentOf(base, rate) {
 }
 
 export function calculateCustomsValue(input) {
+  const directValue = String(input.directValueMxn ?? '').trim();
+  if (directValue) {
+    return Object.freeze({
+      method: 'direct_value',
+      incoterm: null,
+      customsValueMxn: positiveNumber(directValue, 'El valor en aduana directo'),
+      components: Object.freeze([]),
+      disclaimer:
+        'Base directa declarada. Confirma su integración y sustento documental para la operación concreta.',
+      source: TRADE_SOURCES.costs,
+    });
+  }
+
   const allowedIncoterms = new Set(['EXW', 'FCA', 'FOB', 'CFR', 'CIF', 'CPT', 'CIP', 'DAP', 'DPU', 'DDP', 'OTHER']);
   const incoterm = String(input.incoterm || 'OTHER').toUpperCase();
   if (!allowedIncoterms.has(incoterm)) {
