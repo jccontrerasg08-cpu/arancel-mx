@@ -139,6 +139,57 @@ def test_verify_release_rejects_malformed_source_history(tmp_path):
         verify_release(release)
 
 
+@pytest.mark.parametrize(
+    "current_identity",
+    [
+        {
+            "dataset_key": "ligie",
+            "document_role": "ligie_snapshot",
+            "source_url": "https://www.snice.gob.mx/stale-ligie.xlsx",
+            "sha256": "a" * 64,
+            "registry_version": "2026-08-10",
+        },
+        {
+            "dataset_key": "nico",
+            "document_role": "ligie_snapshot",
+            "source_url": "https://www.snice.gob.mx/ligie.xlsx",
+            "sha256": "a" * 64,
+            "registry_version": "2026-08-10",
+        },
+    ],
+)
+def test_verify_release_rejects_source_history_current_identity_not_in_manifest(
+    tmp_path, current_identity
+):
+    release, _sources = _fixture(tmp_path)
+    manifest_path = release / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["source_history"] = {
+        "previous_dataset_version": "2026.08.08",
+        "changes": [
+            {
+                "change": "added",
+                "dataset_key": "ligie",
+                "document_role": "ligie_snapshot",
+                "previous": None,
+                "current": current_identity,
+            }
+        ],
+    }
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    checksums_path = release / "SHA256SUMS"
+    checksums = [
+        line
+        for line in checksums_path.read_text(encoding="ascii").splitlines()
+        if not line.endswith("  manifest.json")
+    ]
+    checksums.append(f"{_sha256(manifest_path)}  manifest.json")
+    checksums_path.write_text(chr(10).join(checksums) + chr(10), encoding="ascii")
+
+    with pytest.raises(ValueError, match="source_history"):
+        verify_release(release)
+
+
 def test_verify_release_rejects_non_publishable_reconciliation(tmp_path):
     release, _sources = _fixture(tmp_path)
     manifest_path = release / "manifest.json"

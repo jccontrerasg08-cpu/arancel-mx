@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+from functools import lru_cache
 import re
+from urllib.parse import urlparse
+
+from arancel_mx.sources.registry import load_source_registry
 
 
 _TARIFF_CODE = re.compile(r"^\d{8}(?:\d{2})?$")
@@ -22,6 +26,28 @@ def _tariff_code(value: str, field: str) -> str:
     if not _TARIFF_CODE.fullmatch(code):
         raise ValueError(f"{field} must be an 8- or 10-digit tariff code")
     return code
+
+
+@lru_cache(maxsize=1)
+def _approved_official_hosts() -> frozenset[str]:
+    return frozenset(
+        host
+        for entry in load_source_registry().values()
+        for host in entry.allowed_hosts
+    )
+
+
+def _official_evidence_urls(urls: tuple[str, ...], field: str) -> None:
+    if not urls:
+        raise ValueError(f"{field} must contain approved official evidence")
+    for url in urls:
+        parsed = urlparse(url) if isinstance(url, str) else None
+        if (
+            parsed is None
+            or parsed.scheme.lower() != "https"
+            or (parsed.hostname or "").lower() not in _approved_official_hosts()
+        ):
+            raise ValueError(f"{field} must contain approved official HTTPS evidence")
 
 
 @dataclass(frozen=True)
@@ -42,8 +68,7 @@ class ClassificationBenchmarkCase:
         object.__setattr__(self, "release_tag", release_tag)
         object.__setattr__(self, "query", _nonblank(self.query, "query"))
         object.__setattr__(self, "gold_tariff_code", _tariff_code(self.gold_tariff_code, "gold_tariff_code"))
-        if not self.evidence_urls or any(not isinstance(url, str) or not url.startswith("https://") for url in self.evidence_urls):
-            raise ValueError("evidence_urls must contain HTTPS evidence")
+        _official_evidence_urls(self.evidence_urls, "evidence_urls")
         object.__setattr__(self, "reviewed_by", _nonblank(self.reviewed_by, "reviewed_by"))
         if not isinstance(self.reviewed_at, date):
             raise ValueError("reviewed_at must be a date")
@@ -67,10 +92,10 @@ class ClassificationPrediction:
             raise ValueError("abstained predictions cannot include candidate codes")
         if not self.abstained and not codes:
             raise ValueError("non-abstained predictions require candidate codes")
-        if any(not isinstance(url, str) or not url.startswith("https://") for url in self.evidence_urls):
-            raise ValueError("prediction evidence_urls must use HTTPS")
-        if not self.abstained and not self.evidence_urls:
-            raise ValueError("prediction evidence_urls are required for non-abstained hypotheses")
+        if not self.abstained:
+            _official_evidence_urls(self.evidence_urls, "prediction evidence_urls")
+        elif self.evidence_urls:
+            _official_evidence_urls(self.evidence_urls, "prediction evidence_urls")
         object.__setattr__(self, "candidate_codes", codes)
 
 

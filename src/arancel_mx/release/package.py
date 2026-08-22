@@ -64,7 +64,10 @@ def _nonblank_string(manifest: dict[str, Any], field: str) -> str:
     return value
 
 
-def _validate_source_history(manifest: dict[str, Any]) -> None:
+def _validate_source_history(
+    manifest: dict[str, Any],
+    canonical_identities: tuple[SourceIdentity, ...],
+) -> None:
     history = manifest.get("source_history")
     if history is None:
         return
@@ -78,6 +81,10 @@ def _validate_source_history(manifest: dict[str, Any]) -> None:
     changes = history["changes"]
     if not isinstance(changes, list):
         raise ValueError("Release manifest source_history.changes must be a list")
+    canonical_by_key = {
+        (identity.dataset_key, identity.document_role): identity
+        for identity in canonical_identities
+    }
     for index, item in enumerate(changes):
         if not isinstance(item, dict) or set(item) != {
             "change", "dataset_key", "document_role", "previous", "current"
@@ -99,7 +106,22 @@ def _validate_source_history(manifest: dict[str, Any]) -> None:
             raise ValueError(f"Release manifest source_history.changes[{index}] is inconsistent")
         for identity in (previous, current):
             if identity is not None:
-                SourceIdentity(**identity)
+                parsed_identity = SourceIdentity(**identity)
+                if (
+                    parsed_identity.dataset_key != item["dataset_key"]
+                    or parsed_identity.document_role != item["document_role"]
+                ):
+                    raise ValueError(
+                        f"Release manifest source_history.changes[{index}] identity keys are inconsistent"
+                    )
+        if current is not None:
+            canonical_identity = canonical_by_key.get(
+                (item["dataset_key"], item["document_role"])
+            )
+            if canonical_identity != SourceIdentity(**current):
+                raise ValueError(
+                    f"Release manifest source_history.changes[{index}] current identity is not canonical"
+                )
 
 
 def _validate_schema_v2_manifest(manifest: dict[str, Any]) -> None:
@@ -145,7 +167,7 @@ def _validate_schema_v2_manifest(manifest: dict[str, Any]) -> None:
     if not identities:
         raise ValueError("Release manifest source_identity must not be empty")
 
-    _validate_source_history(manifest)
+    _validate_source_history(manifest, identities)
 
     nico_coverage = manifest.get("nico_coverage")
     if nico_coverage is not None:

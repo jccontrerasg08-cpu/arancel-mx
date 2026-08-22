@@ -172,6 +172,25 @@ test('builds an evidence-bound RRNA matrix without confirming applicability', ()
 });
 
 
+test('keeps the RRNA matrix incomplete when the proposed tariff code is invalid', () => {
+  const result = evaluateRrnaOrientation({
+    tariffCode: 'not-a-code',
+    hasRrnaReview: true,
+    rrnaReferenceUrl: 'https://www.snice.gob.mx/cs/avi/snice/drrnas.avisosypermisos.html',
+    rrnaReferenceConsultedAt: '2026-08-22',
+    rrnaReferenceNote: 'Aviso revisado para contraste documental.',
+  });
+
+  assert.equal(result.status, 'evidence_required');
+  assert.deepEqual(result.matrix[0], {
+    key: 'tariff_code',
+    label: 'Fracción propuesta',
+    value: 'Formato inválido',
+    complete: false,
+  });
+});
+
+
 test('keeps a T-MEC review evidence-required without a declared specific official reference', () => {
   const result = evaluateTmecOrientation({
     tariffCode: '85171301',

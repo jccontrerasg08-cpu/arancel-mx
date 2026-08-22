@@ -1,5 +1,7 @@
 from datetime import date
 
+import pytest
+
 from arancel_mx.benchmark.classification import (
     ClassificationBenchmarkCase,
     ClassificationPrediction,
@@ -54,6 +56,16 @@ def test_benchmark_reports_top_k_coverage_and_abstention_without_a_legal_decisio
         "top_k_recall": 0.5,
         "selective_top_k_recall": 1.0,
     }
+
+
+def test_benchmark_rejects_unregistered_https_evidence():
+    with pytest.raises(ValueError, match="approved official"):
+        ClassificationPrediction(
+            case_id="ligie-85171301",
+            candidate_codes=("85171301",),
+            abstained=False,
+            evidence_urls=("https://example.com/unsupported",),
+        )
 
 
 def test_benchmark_rejects_non_abstained_hypotheses_without_evidence():

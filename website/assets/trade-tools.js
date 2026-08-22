@@ -65,6 +65,13 @@ function roundCurrency(value) {
   return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
+function normalizeTariffCode(value) {
+  const declared = String(value || '').trim();
+  if (!declared) return '';
+  const normalized = declared.replace(/[.\s-]/g, '');
+  return /^\d{8}(?:\d{2})?$/.test(normalized) ? normalized : null;
+}
+
 function hasDeclaredOfficialReference(input, prefix) {
   const url = String(input[`${prefix}ReferenceUrl`] || '').trim();
   const consultedAt = String(input[`${prefix}ReferenceConsultedAt`] || '').trim();
@@ -249,13 +256,19 @@ export function evaluateTmecOrientation(input) {
 }
 
 export function evaluateRrnaOrientation(input) {
-  const tariffCode = declaredEvidence(input.tariffCode);
+  const declaredTariffCode = declaredEvidence(input.tariffCode);
+  const tariffCode = normalizeTariffCode(declaredTariffCode);
   const referenceUrl = declaredEvidence(input.rrnaReferenceUrl);
   const consultedAt = declaredEvidence(input.rrnaReferenceConsultedAt);
   const measureNote = declaredEvidence(input.rrnaReferenceNote);
   const hasOfficialReference = hasDeclaredOfficialReference(input, 'rrna');
   const matrix = Object.freeze([
-    Object.freeze({ key: 'tariff_code', label: 'Fracción propuesta', value: tariffCode || 'Pendiente', complete: Boolean(tariffCode) }),
+    Object.freeze({
+      key: 'tariff_code',
+      label: 'Fracción propuesta',
+      value: tariffCode || (declaredTariffCode ? 'Formato inválido' : 'Pendiente'),
+      complete: Boolean(tariffCode),
+    }),
     Object.freeze({ key: 'official_reference', label: 'Referencia oficial específica', value: referenceUrl || 'Pendiente', complete: hasOfficialReference }),
     Object.freeze({ key: 'consulted_at', label: 'Fecha de consulta declarada', value: consultedAt || 'Pendiente', complete: Boolean(consultedAt) }),
     Object.freeze({ key: 'measure_note', label: 'Medida o alcance revisado', value: measureNote || 'Pendiente', complete: Boolean(measureNote) }),
