@@ -25,6 +25,17 @@ test('keeps the global navigation state and skip link accessible', async ({ page
   await expect(page.getByRole('button', { name: /open navigation menu/i })).toBeFocused();
 });
 
+test('keeps secondary destinations available without giving them primary-header weight', async ({ page }) => {
+  await page.goto('/');
+  const navigation = page.getByLabel('Primary navigation');
+  await expect(navigation.getByRole('link', { name: /^explorer$/i })).toBeVisible();
+  await expect(navigation.getByRole('link', { name: /trade desk/i })).toHaveAttribute('href', '/trade');
+  await navigation.getByText(/^more$/i).click();
+  await expect(navigation.getByRole('link', { name: /^my records$/i })).toBeVisible();
+  await navigation.getByRole('link', { name: /^my records$/i }).click();
+  await expect(page).toHaveURL(/\/records$/);
+});
+
 test('updates editorial metadata when the route changes', async ({ page }) => {
   await page.goto('/documentation');
   await expect(page).toHaveTitle(/start with the contract, then write the integration/i);
@@ -173,6 +184,8 @@ test('exposes rates only on fraction cards', async ({ page }) => {
 
   await page.goto('/app/record/01');
   await expect(page.getByTestId('result-card').getByTestId('open-estimate')).toHaveCount(0);
+  await expect(page.getByTestId('estimate-guidance')).toContainText(/8-digit fraction or a 10-digit NICO/i);
+  await expect(page.getByTestId('estimate-guidance').getByRole('link', { name: /find a compatible fraction/i })).toHaveAttribute('href', '/app?q=01');
 });
 
 test('renders every non-fraction direct record without rate fields or a page error', async ({ page }) => {
@@ -226,6 +239,7 @@ test('renders every non-fraction direct record without rate fields or a page err
 test('narrows the visible decision-tree path from an entered fraction prefix', async ({ page }) => {
   await page.goto('/app/record/85171301');
   await expect(page.getByTestId('hierarchy-card')).toBeVisible();
+  await expect(page.getByRole('searchbox', { name: /filter this hierarchy by a parent code/i })).toBeVisible();
   await page.getByTestId('search-input').fill('8517');
   await expect(page.getByTestId('tree-filter-status')).toContainText('85.17');
   await expect(page.getByRole('button', { name: /apply filter/i })).toHaveCount(0);

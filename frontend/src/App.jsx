@@ -4,6 +4,11 @@ import { BrowserRouter, Link, Route, Routes, useLocation } from 'react-router-do
 import { EDITORIAL_PAGES, NAVIGATION, OFFICIAL_LINKS } from './content.js';
 import { PAGE_COMPONENTS } from './pages.jsx';
 
+// Style: la navegación mantiene Explorer, Chapters y el estimador como recorridos primarios; las fuentes y utilidades se revelan bajo demanda.
+const PRIMARY_NAVIGATION = new Set(['/app', '/chapters']);
+const PRIMARY_LINKS = NAVIGATION.filter(([, href]) => PRIMARY_NAVIGATION.has(href));
+const SECONDARY_LINKS = NAVIGATION.filter(([, href]) => !PRIMARY_NAVIGATION.has(href));
+
 const GlossaryPage = lazy(() => import('./glossary-page.jsx'));
 
 function ThemeToggle() {
@@ -18,8 +23,12 @@ function ThemeToggle() {
 function SiteHeader() {
   const [open, setOpen] = useState(false);
   const toggleRef = useRef(null);
+  const secondaryRef = useRef(null);
   const location = useLocation();
-  useEffect(() => setOpen(false), [location.pathname]);
+  useEffect(() => {
+    setOpen(false);
+    if (secondaryRef.current) secondaryRef.current.open = false;
+  }, [location.pathname]);
   useEffect(() => {
     const closeWithEscape = (event) => {
       if (event.key !== 'Escape') return;
@@ -29,7 +38,8 @@ function SiteHeader() {
     window.addEventListener('keydown', closeWithEscape);
     return () => window.removeEventListener('keydown', closeWithEscape);
   }, []);
-  return <><a className="skip-link" href="#main-content">Skip to content</a><header className="site-header"><div className="site-header__inner"><Link className="brand" to="/">arancel<span>.mx</span></Link><button ref={toggleRef} className="nav-toggle" type="button" aria-expanded={open} aria-controls="site-navigation" onClick={() => setOpen((current) => !current)}>{open ? 'Close navigation menu' : 'Open navigation menu'}</button><nav id="site-navigation" className={open ? 'site-nav is-open' : 'site-nav'} aria-label="Primary navigation">{NAVIGATION.map(([label, href]) => <Link key={href} className={location.pathname === href ? 'is-active' : ''} to={href}>{label}</Link>)}</nav><div className="site-header__actions"><ThemeToggle/><a className="github-link" href={OFFICIAL_LINKS.github} target="_blank" rel="noreferrer">GitHub <span aria-label="open issues">0</span></a></div></div></header></>;
+  const secondaryActive = SECONDARY_LINKS.some(([, href]) => location.pathname === href);
+  return <><a className="skip-link" href="#main-content">Skip to content</a><header className="site-header"><div className="site-header__inner"><Link className="brand" to="/">arancel<span>.mx</span></Link><button ref={toggleRef} className="nav-toggle" type="button" aria-expanded={open} aria-controls="site-navigation" onClick={() => setOpen((current) => !current)}>{open ? 'Close navigation menu' : 'Open navigation menu'}</button><nav id="site-navigation" className={open ? 'site-nav is-open' : 'site-nav'} aria-label="Primary navigation">{PRIMARY_LINKS.map(([label, href]) => <Link key={href} className={location.pathname === href ? 'is-active' : ''} to={href}>{label}</Link>)}<a className={location.pathname === '/trade' ? 'is-active' : ''} href="/trade">Trade desk</a><details ref={secondaryRef} className={`nav-disclosure${secondaryActive ? ' is-active' : ''}`}><summary>More</summary><div className="nav-disclosure__panel">{SECONDARY_LINKS.map(([label, href]) => <Link key={href} className={location.pathname === href ? 'is-active' : ''} to={href}>{label}</Link>)}</div></details></nav><div className="site-header__actions"><ThemeToggle/><a className="github-link" href={OFFICIAL_LINKS.github} target="_blank" rel="noreferrer">GitHub <span aria-label="open issues">0</span></a></div></div></header></>;
 }
 
 function SiteFooter() {
