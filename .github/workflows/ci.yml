@@ -47,6 +47,9 @@ jobs:
       - name: Type-check full package
         run: python -m mypy src/arancel_mx
 
+      - name: Prevent strict type-error debt growth
+        run: python -m scripts.check_type_error_budget
+
       - name: Run tests
         env:
           ARANCEL_MX_SKIP_URL_CHECKS: "1"

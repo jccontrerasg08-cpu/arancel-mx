@@ -116,6 +116,11 @@ explicit_package_bases = true
 # on arg-type / attr-defined debt in this tooling-only change.
 disable_error_code = ["arg-type", "attr-defined"]
 
+# Ratchet baseline: CI may only preserve or reduce these existing strict-type findings.
+[tool.arancel_mx.type_error_budget]
+"arg-type" = 33
+"attr-defined" = 3
+
 [tool.coverage.run]
 source_pkgs = ["arancel_mx"]
 branch = true
