@@ -162,12 +162,17 @@ test('exposes rates only on fraction cards', async ({ page }) => {
   await expect(fractionCard).toContainText('01.01.21.01');
   await expect(fractionCard).toContainText('IGI');
   await expect(fractionCard).toContainText('IGE');
+  await expect(fractionCard.getByTestId('open-estimate')).toHaveAttribute('href', '/trade?code=01012101');
 
   await page.goto('/app/record/0101210100');
   const nicoCard = page.getByTestId('result-card');
   await expect(nicoCard).toContainText('01.01.21.01.00');
   await expect(nicoCard).not.toContainText('IGI');
   await expect(nicoCard).not.toContainText('IGE');
+  await expect(nicoCard.getByTestId('open-estimate')).toHaveAttribute('href', '/trade?code=0101210100');
+
+  await page.goto('/app/record/01');
+  await expect(page.getByTestId('result-card').getByTestId('open-estimate')).toHaveCount(0);
 });
 
 test('renders every non-fraction direct record without rate fields or a page error', async ({ page }) => {

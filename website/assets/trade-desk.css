@@ -1,3 +1,4 @@
+/* Style: estimador sobrio y evidence-first; la cifra y la fuente quedan visibles, el detalle se revela bajo demanda. */
 :root {
   --trade-ink: #0d2634;
   --trade-muted: #5d6e77;
@@ -82,6 +83,14 @@ a { color: inherit; }
 .trade-source { display: inline-flex; align-items: center; gap: 7px; flex: 0 0 auto; color: var(--trade-teal); font-size: .78rem; font-weight: 800; text-decoration: none; }
 .trade-source::before { content: "↗"; font-size: 1rem; }
 .trade-source:hover { color: var(--trade-teal-dark); text-decoration: underline; text-underline-offset: 3px; }
+.trade-context { margin: -7px 0 20px; padding: 12px 14px; border-left: 3px solid var(--trade-teal); border-radius: 0 10px 10px 0; color: #25464b; background: #edf8f5; font-size: .84rem; line-height: 1.5; }
+.trade-disclosure, .trade-secondary-tools { border: 1px solid var(--trade-line); border-radius: 11px; background: #f9fcfb; }
+.trade-disclosure { grid-column: 1 / -1; padding: 0 13px 13px; }
+.trade-secondary-tools { margin-top: 24px; padding: 0 18px 18px; }
+.trade-disclosure summary, .trade-secondary-tools summary { padding: 13px 0; color: var(--trade-teal-dark); cursor: pointer; font-size: .84rem; font-weight: 800; }
+.trade-disclosure summary:focus-visible, .trade-secondary-tools summary:focus-visible { outline: 3px solid var(--trade-gold); outline-offset: 3px; }
+.trade-disclosure > p, .trade-secondary-tools > p { margin: 0 0 14px; color: var(--trade-muted); font-size: .8rem; line-height: 1.5; }
+.trade-secondary-tools .trade-tabs { margin-top: 15px; }
 
 .trade-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(310px, .85fr); gap: 22px; }
 .trade-card { padding: 23px; border: 1px solid var(--trade-line); border-radius: var(--trade-radius); background: var(--trade-panel); box-shadow: 0 5px 18px rgba(10, 33, 40, .035); }

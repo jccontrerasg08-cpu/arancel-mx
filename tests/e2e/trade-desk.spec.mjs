@@ -1,9 +1,17 @@
 import { expect, test } from '@playwright/test';
 
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('details').forEach((element) => { element.open = true; });
+    });
+  });
+});
+
 test('serves a trade desk with an itemized import orientation', async ({ page }) => {
   await page.goto('/trade');
 
-  await expect(page.getByRole('heading', { name: /mesa de comercio exterior/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /estima contribuciones/i })).toBeVisible();
   await page.getByTestId('customs-value').fill('1000');
   await page.getByTestId('igi-rate').fill('10');
   await page.getByTestId('dta-rate').fill('0.8');
@@ -144,12 +152,12 @@ test('renders an evidence-bound RRNA matrix without confirming applicability', a
 test('supports keyboard navigation across trade-desk tabs', async ({ page }) => {
   await page.goto('/trade');
 
-  await page.locator('#costs-tab').focus();
+  await page.locator('#tmec-tab').focus();
   await page.keyboard.press('ArrowRight');
 
-  await expect(page.locator('#tmec-tab')).toBeFocused();
-  await expect(page.locator('#tmec-tab')).toHaveAttribute('aria-selected', 'true');
-  await expect(page.locator('#tmec-panel')).not.toHaveAttribute('hidden', '');
+  await expect(page.locator('#rrna-tab')).toBeFocused();
+  await expect(page.locator('#rrna-tab')).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('#rrna-panel')).not.toHaveAttribute('hidden', '');
 });
 
 test('shows release validity and provenance access for a classification hypothesis', async ({ page }) => {
@@ -188,9 +196,9 @@ test('shows release validity and provenance access for a classification hypothes
 test('gives keyboard focus a visible custom indicator', async ({ page }) => {
   await page.goto('/trade');
 
-  await page.locator('#costs-tab').focus();
-  await expect(page.locator('#costs-tab')).toHaveCSS('outline-style', 'solid');
-  await expect(page.locator('#costs-tab')).toHaveCSS('outline-width', '3px');
+  await page.locator('#tmec-tab').focus();
+  await expect(page.locator('#tmec-tab')).toHaveCSS('outline-style', 'solid');
+  await expect(page.locator('#tmec-tab')).toHaveCSS('outline-width', '3px');
 });
 
 test('renders calculation exception text without interpreting HTML', async ({ page }) => {
@@ -204,6 +212,8 @@ test('renders calculation exception text without interpreting HTML', async ({ pa
     window.Number = poisonedNumber;
   });
   await page.goto('/trade');
+  await page.getByTestId('customs-value').fill('1000');
+  await page.getByTestId('calculate-import').click();
 
   await expect(page.getByTestId('injected-error-markup')).toHaveCount(0);
   await expect(page.getByTestId('import-result')).toContainText('<img data-testid="injected-error-markup" src="x">Error controlado');
@@ -318,8 +328,8 @@ test('clears selected release provenance when the tariff hypothesis is manually 
   await page.locator('#search-tariff').click();
   await page.getByRole('tab', { name: /clasificación asistida/i }).click();
   await page.locator('#classification-results button').click();
-  await page.getByRole('tab', { name: /simulador/i }).click();
   await page.locator('#tariff-code').fill('85299099');
+  await page.getByTestId('customs-value').fill('1000');
   await page.getByRole('tab', { name: /clasificación asistida/i }).click();
   await page.getByRole('button', { name: /guardar expediente local/i }).click();
 
@@ -387,7 +397,7 @@ test('lets a person clear the local trade draft from this browser', async ({ pag
   await page.goto('/trade');
   await page.getByTestId('dta-rate').fill('0.8');
   await page.getByRole('button', { name: /guardar expediente local/i }).click();
-  await expect(page.getByTestId('trade-draft-status')).toContainText(/guardado localmente/i);
+  await expect(page.getByTestId('trade-draft-status')).toContainText(/guardado/i);
 
   await page.getByRole('button', { name: /borrar expediente local/i }).click();
 
@@ -411,4 +421,38 @@ test('keeps the trade form available and explains when local storage cannot save
 
   await expect(page.getByTestId('trade-draft-status')).toContainText(/no se pudo guardar.*almacenamiento/i);
   await expect(page.getByTestId('dta-rate')).toHaveValue('0.8');
+});
+
+test('preloads a verified tariff hypothesis from a record context without writing a draft', async ({ page }) => {
+  await page.route('**/v1/ficha/85171301', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ record: { code: '85171301', igi: { value: 0, text: '0%' }, dataset_version: 'data-2026.08.22' } }),
+    });
+  });
+
+  await page.goto('/trade?code=85171301');
+
+  await expect(page.locator('#tariff-code')).toHaveValue('85171301');
+  await expect(page.getByTestId('igi-rate')).toHaveValue('0');
+  await expect(page.getByTestId('trade-context')).toContainText('data-2026.08.22');
+  await expect(page.getByTestId('rrna-matrix')).toContainText('Fracción propuesta: 85171301');
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('arancel-mx-trade-draft'))).toBeNull();
+});
+
+test('reveals verified tariff matches from the primary search', async ({ page }) => {
+  await page.route('**/v1/search?**', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify([{ record: { code: '85171301', description: 'Teléfono inteligente', igi: { value: 0, text: '0%' } } }]),
+    });
+  });
+  await page.goto('/trade');
+  await page.locator('#trade-secondary-tools').evaluate((element) => { element.open = false; });
+  await page.locator('#classification-query').fill('teléfono');
+  await page.locator('#search-tariff').click();
+
+  await expect(page.locator('#trade-secondary-tools')).toHaveJSProperty('open', true);
+  await expect(page.locator('#classification-tab')).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('#classification-results')).toContainText('Teléfono inteligente');
 });
