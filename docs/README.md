@@ -19,6 +19,7 @@ La portada del repositorio explica **qué es** `arancel-mx` y cómo empezar. Est
 | Necesidad | Lee / abre | Resultado |
 |---|---|---|
 | Integrar DuckDB/CSV/JSON, Python o HTTP | [Consumo externo](external-consumption.md) | Contratos de archivos, `Dataset` y API GET-only/read-only. |
+| Evolucionar biblioteca, CLI o `/v1` sin romper consumidores | [Política de compatibilidad](compatibility.md) | Soporte certificado, cambios aditivos y deprecaciones anunciadas. |
 | Explorar rutas, límites y contratos públicos | [Centro de documentación](https://arancel-mx.vercel.app/documentation) | Rutas GET-only promovidas, documentación mantenida y límites de integración. |
 | Identificar la release que sirve la capa pública | [`/v1/meta`](https://arancel-mx.vercel.app/v1/meta) | Identidad separada de API, paquete y dataset. |
 | Entender tablas, vigencia y manifest | [Modelo de datos](data-model.md) | Semántica del DuckDB y de una release verificable. |
