@@ -248,6 +248,34 @@ export function evaluateTmecOrientation(input) {
   });
 }
 
+export function evaluateRrnaOrientation(input) {
+  const tariffCode = declaredEvidence(input.tariffCode);
+  const referenceUrl = declaredEvidence(input.rrnaReferenceUrl);
+  const consultedAt = declaredEvidence(input.rrnaReferenceConsultedAt);
+  const measureNote = declaredEvidence(input.rrnaReferenceNote);
+  const hasOfficialReference = hasDeclaredOfficialReference(input, 'rrna');
+  const matrix = Object.freeze([
+    Object.freeze({ key: 'tariff_code', label: 'Fracción propuesta', value: tariffCode || 'Pendiente', complete: Boolean(tariffCode) }),
+    Object.freeze({ key: 'official_reference', label: 'Referencia oficial específica', value: referenceUrl || 'Pendiente', complete: hasOfficialReference }),
+    Object.freeze({ key: 'consulted_at', label: 'Fecha de consulta declarada', value: consultedAt || 'Pendiente', complete: Boolean(consultedAt) }),
+    Object.freeze({ key: 'measure_note', label: 'Medida o alcance revisado', value: measureNote || 'Pendiente', complete: Boolean(measureNote) }),
+    Object.freeze({ key: 'review_declared', label: 'Revisión humana declarada', value: input.hasRrnaReview === true ? 'Declarada' : 'Pendiente', complete: input.hasRrnaReview === true }),
+  ]);
+  const missing = Object.freeze(matrix.filter((row) => !row.complete).map((row) => row.label));
+  return Object.freeze({
+    status: missing.length ? 'evidence_required' : 'evidence_review_required',
+    applicabilityConfirmed: false,
+    matrix,
+    missing,
+    nextStep: missing.length
+      ? `Completa la evidencia declarada para: ${missing.join(' · ')}.`
+      : 'La evidencia declarada permite una revisión documental; contrasta la medida, vigencia y aplicabilidad con la autoridad competente.',
+    disclaimer: 'Matriz orientativa: no confirma la aplicabilidad de una RRNA, el cumplimiento ni el despacho.',
+    source: TRADE_SOURCES.rrna,
+  });
+}
+
+
 export function buildPedimentoChecklist(input) {
   const missing = [];
   if (!input.tariffCode) missing.push('Fracción arancelaria propuesta');

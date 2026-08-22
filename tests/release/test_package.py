@@ -117,6 +117,28 @@ def test_verify_release_requires_complete_schema_v2_provenance(tmp_path):
         verify_release(release)
 
 
+def test_verify_release_rejects_malformed_source_history(tmp_path):
+    release, _sources = _fixture(tmp_path)
+    manifest_path = release / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["source_history"] = {
+        "previous_dataset_version": "2026.08.08",
+        "changes": "not-a-list",
+    }
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    checksums_path = release / "SHA256SUMS"
+    checksums = [
+        line
+        for line in checksums_path.read_text(encoding="ascii").splitlines()
+        if not line.endswith("  manifest.json")
+    ]
+    checksums.append(f"{_sha256(manifest_path)}  manifest.json")
+    checksums_path.write_text(chr(10).join(checksums) + chr(10), encoding="ascii")
+
+    with pytest.raises(ValueError, match="source_history"):
+        verify_release(release)
+
+
 def test_verify_release_rejects_non_publishable_reconciliation(tmp_path):
     release, _sources = _fixture(tmp_path)
     manifest_path = release / "manifest.json"

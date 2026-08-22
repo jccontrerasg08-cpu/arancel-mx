@@ -31,6 +31,7 @@ from arancel_mx.release.metadata import (
     ReleaseProvenance,
     source_identity_changed,
     source_identity_from_manifest,
+    source_identity_history,
 )
 from arancel_mx.release.package import (
     prepare_release_archive,
@@ -185,6 +186,7 @@ def _release_metadata(
     config: OfficialDatasetConfig,
     snapshot: OfficialInputSnapshot,
     classifications: list[dict[str, object]],
+    previous_manifest: Mapping[str, object] | None,
 ) -> dict[str, object]:
     metadata: dict[str, object] = {
         "registry_version": snapshot.registry_version,
@@ -209,6 +211,7 @@ def _release_metadata(
                 ),
             )
         ],
+        "source_history": source_identity_history(snapshot.identities, previous_manifest),
     }
     return metadata
 
@@ -269,7 +272,8 @@ def build_official_dataset(
     # capture_official_inputs() includes the mandatory legal reconciliation gate.
     # Only a successfully reconciled current snapshot is eligible for no-change.
     snapshot = capture_official_inputs(config, session=session)
-    if previous_manifest is not None and not _is_legacy_baseline(previous_manifest):
+    legacy_baseline = previous_manifest is not None and _is_legacy_baseline(previous_manifest)
+    if previous_manifest is not None and not legacy_baseline:
         previous_identity = source_identity_from_manifest(previous_manifest)
         if not source_identity_changed(snapshot.identities, previous_identity):
             return _no_change_result(
@@ -343,7 +347,12 @@ def build_official_dataset(
         "ligie_version": config.ligie_version,
         "effective_as_of": config.effective_as_of,
         "generated_at": generated_at,
-        "release_metadata": _release_metadata(config, snapshot, classifications),
+        "release_metadata": _release_metadata(
+            config,
+            snapshot,
+            classifications,
+            None if legacy_baseline else previous_manifest,
+        ),
     }
     candidate = config.work_dir / "candidate" / "arancel_mx.duckdb"
     init_tariff_db(candidate)

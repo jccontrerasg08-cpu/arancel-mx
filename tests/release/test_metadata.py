@@ -4,7 +4,9 @@ from arancel_mx.release.metadata import (
     ReleaseProvenance,
     SourceIdentity,
     source_identity_changed,
+    source_identity_changes,
     source_identity_digest,
+    source_identity_history,
     source_identity_from_manifest,
 )
 
@@ -89,6 +91,75 @@ def test_source_identity_change_detection_uses_all_identity_fields():
     )
 
     assert all(source_identity_changed([base], [variant]) for variant in variants)
+
+
+def test_source_identity_changes_are_keyed_and_auditable():
+    previous = (
+        identity(),
+        identity(
+            dataset_key="nico",
+            document_role="nico_snapshot",
+            source_url="https://www.snice.gob.mx/files/nico.xlsx",
+            sha256=SHA_B,
+        ),
+    )
+    current = (
+        identity(source_url="https://www.snice.gob.mx/files/ligie-2026.xlsx"),
+        identity(
+            dataset_key="national_notes",
+            document_role="national_notes",
+            source_url="https://www.dof.gob.mx/notes.html",
+            sha256=SHA_B,
+        ),
+    )
+
+    assert source_identity_changes(current, previous) == [
+        {
+            "change": "updated",
+            "dataset_key": "ligie",
+            "document_role": "ligie_snapshot",
+            "previous": previous[0].to_dict(),
+            "current": current[0].to_dict(),
+        },
+        {
+            "change": "added",
+            "dataset_key": "national_notes",
+            "document_role": "national_notes",
+            "previous": None,
+            "current": current[1].to_dict(),
+        },
+        {
+            "change": "removed",
+            "dataset_key": "nico",
+            "document_role": "nico_snapshot",
+            "previous": previous[1].to_dict(),
+            "current": None,
+        },
+    ]
+
+
+def test_source_identity_history_references_the_prior_release():
+    previous = identity(sha256=SHA_B)
+    current = identity()
+
+    assert source_identity_history(
+        [current],
+        {
+            "dataset_version": "2026.08.10",
+            "source_identity": [previous.to_dict()],
+        },
+    ) == {
+        "previous_dataset_version": "2026.08.10",
+        "changes": [
+            {
+                "change": "updated",
+                "dataset_key": "ligie",
+                "document_role": "ligie_snapshot",
+                "previous": previous.to_dict(),
+                "current": current.to_dict(),
+            }
+        ],
+    }
 
 
 def test_source_identity_manifest_parsing_is_strict():

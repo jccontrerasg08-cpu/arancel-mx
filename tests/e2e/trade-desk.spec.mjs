@@ -126,6 +126,21 @@ test('makes the RRNA review explicit in the dispatch checklist', async ({ page }
   await expect(page.getByTestId('pedimento-checklist')).toContainText('Revisión documental final requerida');
 });
 
+test('renders an evidence-bound RRNA matrix without confirming applicability', async ({ page }) => {
+  await page.goto('/trade');
+  await page.getByRole('tab', { name: /rrna y despacho/i }).click();
+  await page.locator('#pedimento-code').fill('85171301');
+  await page.getByLabel(/revisé RRNA y programas aplicables/i).check();
+  await page.locator('#rrna-reference-url').fill('https://www.snice.gob.mx/cs/avi/snice/drrnas.avisosypermisos.html');
+  await page.locator('#rrna-reference-consulted-at').fill('2026-08-22');
+  await page.locator('#rrna-reference-note').fill('Aviso revisado para contraste documental.');
+
+  await expect(page.getByTestId('rrna-matrix')).toContainText('Fracción propuesta');
+  await expect(page.getByTestId('rrna-matrix')).toContainText('Revisión humana declarada');
+  await expect(page.getByTestId('rrna-matrix')).toContainText(/no confirma la aplicabilidad/i);
+});
+
+
 test('supports keyboard navigation across trade-desk tabs', async ({ page }) => {
   await page.goto('/trade');
 

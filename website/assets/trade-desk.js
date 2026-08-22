@@ -2,6 +2,7 @@ import {
   buildPedimentoChecklist,
   calculateCustomsValue,
   calculateImportEstimate,
+  evaluateRrnaOrientation,
   evaluateTmecOrientation,
   TRADE_SOURCES,
 } from './trade-tools.js';
@@ -189,7 +190,40 @@ function renderTmecResult() {
   container.append(disclaimer);
 }
 
+function renderRrnaMatrix() {
+  const container = byId('rrna-matrix');
+  if (!container) return;
+  const result = evaluateRrnaOrientation({
+    tariffCode: value('pedimento-code'),
+    hasRrnaReview: checked('pedimento-rrna-review'),
+    rrnaReferenceUrl: value('rrna-reference-url'),
+    rrnaReferenceConsultedAt: value('rrna-reference-consulted-at'),
+    rrnaReferenceNote: value('rrna-reference-note'),
+  });
+  const heading = document.createElement('strong');
+  heading.textContent = result.status === 'evidence_review_required'
+    ? 'Evidencia declarada para revisión documental'
+    : 'Evidencia pendiente';
+  const list = document.createElement('ul');
+  list.className = 'trade-checklist';
+  result.matrix.forEach((row) => {
+    const item = document.createElement('li');
+    if (row.complete) item.classList.add('is-complete');
+    item.textContent = `${row.label}: ${row.value}`;
+    list.append(item);
+  });
+  const nextStep = document.createElement('p');
+  nextStep.className = 'trade-result__caption';
+  nextStep.textContent = result.nextStep;
+  const disclaimer = document.createElement('p');
+  disclaimer.className = 'trade-disclaimer';
+  disclaimer.textContent = result.disclaimer;
+  container.replaceChildren(heading, list, nextStep, disclaimer);
+  appendSourceLink(container, result.source, 'rrna-matrix-source');
+}
+
 function renderPedimentoChecklist() {
+  renderRrnaMatrix();
   const checklist = buildPedimentoChecklist({
     tariffCode: value('pedimento-code'),
     regime: value('pedimento-regime'),
