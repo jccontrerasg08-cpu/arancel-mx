@@ -19,3 +19,14 @@ test('selects the exact verified candidate before prefix matches', async () => {
 
   assert.deepEqual(selectPrimarySearchResults(results, '85.17.13.01'), [results[0]]);
 });
+
+test('keeps descendant fractions when the exact match is a non-estimable heading', async () => {
+  const { selectPrimarySearchResults } = await import('../../frontend/src/tariff.js');
+  const results = [
+    { record: { code: '8517' } },
+    { record: { code: '85171301' } },
+    { record: { code: '85171399' } },
+  ];
+
+  assert.deepEqual(selectPrimarySearchResults(results, '8517'), results);
+});
