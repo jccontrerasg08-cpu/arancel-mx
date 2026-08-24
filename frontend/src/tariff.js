@@ -12,5 +12,6 @@ export function selectPrimarySearchResults(results, query) {
   const exact = code
     ? candidates.filter((item) => String(item?.record?.code || item?.code || '') === code)
     : [];
-  return exact.length ? exact : candidates;
+  const exactIsEstimable = exact.some((item) => /^\d{8}(?:\d{2})?$/.test(String(item?.record?.code || item?.code || '')));
+  return exact.length && exactIsEstimable ? exact : candidates;
 }
