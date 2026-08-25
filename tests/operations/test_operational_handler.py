@@ -184,7 +184,7 @@ def test_operational_handler_serves_public_api_discovery_without_database(monkey
         module.HTTPStatus.OK,
         {
             "name": "arancel-mx",
-            "api_version": "v1",
+            "api_version": module.API_VERSION,
             "docs": "/documentation",
             "meta": "/v1/meta",
             "read_only": True,

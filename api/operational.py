@@ -16,6 +16,7 @@ from api._runtime import ensure_project_source
 
 ensure_project_source()
 
+from arancel_mx.api import API_VERSION
 from arancel_mx.operational.query import (
     active_release_metadata,
     chapters_active_release,
@@ -61,7 +62,7 @@ class handler(BaseHTTPRequestHandler):
                 HTTPStatus.OK,
                 {
                     "name": "arancel-mx",
-                    "api_version": "v1",
+                    "api_version": API_VERSION,
                     "docs": "/documentation",
                     "meta": "/v1/meta",
                     "read_only": True,
