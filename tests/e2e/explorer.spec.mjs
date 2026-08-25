@@ -4,14 +4,61 @@ import { expect, test } from '@playwright/test';
 
 test('serves the public marketing root and preserves the explorer handoff', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: /tariff intelligence/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /inteligencia arancelaria/i })).toBeVisible();
   await expect(page.getByText(/Apache-2\.0/i).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: /abrir explorador/i })).toBeVisible();
+});
+
+test('defaults the public hero to Spanish and keeps English as an explicit option', async ({ page }) => {
+  await page.goto('/');
+  const language = page.getByLabel(/idioma de la interfaz/i);
+  await expect(language).toHaveValue('es');
+  await language.selectOption('en');
+  await expect(page.getByRole('heading', { name: /tariff intelligence/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /open explorer/i })).toBeVisible();
+});
+
+test('keeps Spanish document semantics on routes that are not yet localized', async ({ page }) => {
+  await page.goto('/');
+  await page.getByLabel(/idioma de la interfaz/i).selectOption('en');
+  await page.goto('/chapters');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'es-MX');
+});
+
+test('keeps the mobile header controls inside a 320 pixel viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 720 });
+  await page.goto('/');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await expect(page.getByRole('button', { name: /abrir menú de navegación/i })).toBeVisible();
+});
+
+test('keeps evidence cards controllable and backed by a loaded topical visual', async ({ page }) => {
+  await page.goto('/');
+  const evidence = page.getByTestId('example-rotator');
+  await expect(evidence.getByRole('button', { name: /pausar fichas/i })).toHaveAttribute('aria-pressed', 'false');
+  await evidence.getByRole('button', { name: /pausar fichas/i }).click();
+  await expect(evidence.getByRole('button', { name: /continuar fichas/i })).toHaveAttribute('aria-pressed', 'true');
+  expect(await evidence.locator('.evidence-card__image').evaluate((image) => image.complete && image.naturalWidth > 0)).toBe(true);
+});
+
+test('uses the public metadata release in the evidence card when it is available', async ({ page }) => {
+  await page.route('**/v1/meta', (route) => route.fulfill({ json: { dataset_version: '2026.08.24' } }));
+  await page.goto('/');
+  await expect(page.getByTestId('example-rotator')).toContainText('2026.08.24');
+});
+
+test('does not rotate evidence cards when reduced motion is requested', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  const evidence = page.getByTestId('example-rotator');
+  const initial = await evidence.locator('.evidence-card__record strong').textContent();
+  await page.waitForTimeout(5800);
+  await expect(evidence.locator('.evidence-card__record strong')).toHaveText(initial || '');
 });
 
 test('keeps the global navigation state and skip link accessible', async ({ page }) => {
   await page.goto('/');
-  const skipLink = page.getByRole('link', { name: /skip to content/i });
+  const skipLink = page.getByRole('link', { name: /saltar al contenido/i });
   await expect(skipLink).toHaveCSS('width', '1px');
   await expect(skipLink).toHaveCSS('height', '1px');
   await page.keyboard.press('Tab');
@@ -21,20 +68,20 @@ test('keeps the global navigation state and skip link accessible', async ({ page
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload();
-  const toggle = page.getByRole('button', { name: /open navigation menu/i });
+  const toggle = page.getByRole('button', { name: /abrir menú de navegación/i });
   await toggle.click();
-  await expect(page.getByRole('button', { name: /close navigation menu/i })).toBeFocused();
+  await expect(page.getByRole('button', { name: /cerrar menú de navegación/i })).toBeFocused();
   await page.keyboard.press('Escape');
-  await expect(page.getByRole('button', { name: /open navigation menu/i })).toBeFocused();
+  await expect(page.getByRole('button', { name: /abrir menú de navegación/i })).toBeFocused();
 });
 
 test('keeps all established public destinations visible in desktop navigation', async ({ page }) => {
   await page.goto('/');
-  const navigation = page.getByLabel('Primary navigation');
-  await expect(navigation.getByRole('link', { name: /^explorer$/i })).toBeVisible();
-  await expect(navigation.getByRole('link', { name: /^trade context$/i })).toHaveAttribute('href', '/trade-context');
-  await expect(navigation.getByRole('link', { name: /^my records$/i })).toBeVisible();
-  await navigation.getByRole('link', { name: /^my records$/i }).click();
+  const navigation = page.getByLabel('Navegación principal');
+  await expect(navigation.getByRole('link', { name: /^explorar$/i })).toBeVisible();
+  await expect(navigation.getByRole('link', { name: /^contexto comercial$/i })).toHaveAttribute('href', '/trade-context');
+  await expect(navigation.getByRole('link', { name: /^mis registros$/i })).toBeVisible();
+  await navigation.getByRole('link', { name: /^mis registros$/i }).click();
   await expect(page).toHaveURL(/\/records$/);
 });
 
@@ -42,9 +89,9 @@ test('rotates verified examples and lets the visitor choose a concrete path', as
   await page.goto('/');
   const examples = page.getByTestId('example-rotator');
   await expect(examples).toContainText(/85/);
-  await examples.getByRole('button', { name: /show 01\.01\.21\.01\.00/i }).click();
+  await examples.getByRole('button', { name: /mostrar 01\.01\.21\.01\.00/i }).click();
   await expect(examples).toContainText(/01\.01\.21\.01\.00/);
-  await examples.getByRole('button', { name: /inspect this path/i }).click();
+  await examples.getByRole('button', { name: /inspeccionar ficha/i }).click();
   await expect(page).toHaveURL(/\/app\?q=01.01.21.01.00/);
 });
 

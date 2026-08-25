@@ -11,6 +11,7 @@ import {
   OFFICIAL_LINKS,
   WIKI_REFERENCES,
 } from './content.js';
+import { useLocale } from './locale.jsx';
 import { asExampleFicha, exampleRecordFor, formatCode, searchExampleRecords, VERIFIED_EXAMPLES } from './verified-examples.js';
 import { displayRate, selectPrimarySearchResults } from './tariff.js';
 
@@ -32,28 +33,45 @@ function External({ href, children }) {
   return <a href={href} target="_blank" rel="noreferrer">{children} <span aria-hidden="true">↗</span></a>;
 }
 
+const exampleKind = (example) => example.level === 'hs2' ? 'HS' : example.level === 'nico10' ? 'NICO' : 'Fracción';
+
+function randomExample(current) {
+  if (VERIFIED_EXAMPLES.length < 2) return current;
+  const candidates = VERIFIED_EXAMPLES.map((_, index) => index).filter((index) => index !== current);
+  return candidates[Math.floor(Math.random() * candidates.length)];
+}
+
+// Visual direction: Spanish-first evidence hero; each calm card change preserves an inspectable tariff example.
 export function HomePage() {
   const [query, setQuery] = useState('');
   const [activeExample, setActiveExample] = useState(0);
+  const [manualPause, setManualPause] = useState(false);
+  const [insideEvidence, setInsideEvidence] = useState(false);
+  const [releaseVersion, setReleaseVersion] = useState(null);
   const navigate = useNavigate();
+  const { copy, language } = useLocale();
   const example = VERIFIED_EXAMPLES[activeExample];
+  const visibleReleaseVersion = releaseVersion || example.dataset_version;
   useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
-    const timer = window.setInterval(() => setActiveExample((current) => (current + 1) % VERIFIED_EXAMPLES.length), 4400);
-    return () => window.clearInterval(timer);
+    const controller = new AbortController();
+    api('/v1/meta', controller.signal)
+      .then((metadata) => setReleaseVersion(metadata.dataset_version || null))
+      .catch(() => {});
+    return () => controller.abort();
   }, []);
+  useEffect(() => {
+    if (manualPause || insideEvidence || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+    const timer = window.setInterval(() => setActiveExample((current) => randomExample(current)), 5600);
+    return () => window.clearInterval(timer);
+  }, [insideEvidence, manualPause]);
   const submit = (event) => {
     event.preventDefault();
     navigate(`/app${query.trim() ? `?q=${encodeURIComponent(query.trim())}` : ''}`);
   };
   return <>
-    <PageHero className="page-hero--explorer" page={EDITORIAL_PAGES['/']}>
-      <form className="hero-search" onSubmit={submit}><label htmlFor="home-query">Search a code or description</label><div className="inline-form"><input id="home-query" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="e.g. 8517.13.01 or teléfonos"/><button className="button primary" type="submit">Open explorer</button></div></form>
-      <section data-testid="example-rotator" className="example-rotator" aria-label="Verified exploration examples"><div className="example-rotator__meta"><span>Try a verified path</span><div className="example-rotator__controls">{VERIFIED_EXAMPLES.map((entry, index) => <button key={entry.code} type="button" className={index === activeExample ? 'is-active' : ''} aria-label={`Show ${formatCode(entry.code)}`} aria-pressed={index === activeExample} onClick={() => setActiveExample(index)}>{entry.level === 'hs2' ? 'HS' : entry.level === 'nico10' ? 'NICO' : 'Fraction'}</button>)}</div></div><div className="example-rotator__card" key={example.code}><div><strong>{formatCode(example.code)}</strong><span>{example.level === 'hs2' ? 'Chapter' : example.level === 'nico10' ? 'NICO' : 'Fraction'} · release {example.dataset_version}</span></div><p>{example.description}</p><button className="button" type="button" onClick={() => navigate(`/app?q=${encodeURIComponent(formatCode(example.code))}`)}>Inspect this path</button></div></section>
-      <p className="trust-line">Immutable releases · Manifest + checksums · Independent verification</p>
-    </PageHero>
-    <section className="metric-grid" aria-label="Release metrics"><article><strong>8,183</strong><span>Mexican fractions</span></article><article><strong>11,507</strong><span>NICO codes</span></article><article><strong>Daily</strong><span>release checks</span></article><article><strong>Apache-2.0</strong><span>open-source core</span></article></section>
-    <section className="card-grid"><article><h2>Data releases</h2><p>Read manifests, checksums and source archives.</p><External href={OFFICIAL_LINKS.releases}>Open releases</External></article><article><h2>Developer surfaces</h2><p>Use the API, CLI and Python package against a documented contract.</p><Link to="/documentation">Open documentation</Link></article><article><h2>Independent trust</h2><p>Inspect source roles and fail-closed publication controls.</p><Link to="/trust">Read trust model</Link></article></section>
+    <section className="home-hero" aria-labelledby="home-title"><div className="home-hero__copy"><p className="eyebrow">{copy.home.eyebrow}</p><p className="home-hero__kicker">{copy.home.kicker}</p><h1 id="home-title">{copy.home.title}<span>{copy.home.titleEmphasis}</span></h1><p>{copy.home.description}</p><form className="hero-search" onSubmit={submit}><label htmlFor="home-query">{copy.home.searchLabel}</label><div className="inline-form"><input id="home-query" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={copy.home.searchPlaceholder}/><button className="button primary" type="submit">{copy.home.submit}</button></div></form><p className="trust-line">{copy.home.trust}</p></div><aside data-testid="example-rotator" className="evidence-card" aria-label={copy.home.evidenceTitle} onMouseEnter={() => setInsideEvidence(true)} onMouseLeave={() => setInsideEvidence(false)} onFocusCapture={() => setInsideEvidence(true)} onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setInsideEvidence(false); }}><img className="evidence-card__image" src="/assets/visuals/evidence-ledger.jpg" alt=""/><div className="evidence-card__chrome"><span/><span/><span/><code>release / {visibleReleaseVersion}</code></div><div className="evidence-card__body"><p className="eyebrow">{copy.home.evidenceEyebrow}</p><div className="evidence-card__heading"><div><h2>{copy.home.evidenceTitle}</h2><p>{copy.home.evidenceDescription}</p></div><button className="evidence-card__pause" type="button" aria-pressed={manualPause} onClick={() => setManualPause((current) => !current)}>{manualPause ? copy.home.resume : copy.home.pause}</button></div><article className="evidence-card__record" key={`${language}-${example.code}`}><div><span>{exampleKind(example)}</span><strong>{formatCode(example.code)}</strong></div><p>{example.description}</p><dl><div><dt>{copy.home.release}</dt><dd>{visibleReleaseVersion}</dd></div><div><dt>{copy.home.level}</dt><dd>{exampleKind(example)}</dd></div><div><dt>{copy.home.source}</dt><dd>{copy.home.sourceValue}</dd></div></dl><p className="evidence-card__note">{language === 'en' ? copy.home.officialDescription : ''}</p><button className="button" type="button" onClick={() => navigate(`/app?q=${encodeURIComponent(formatCode(example.code))}`)}>{copy.home.inspect}</button></article><div className="evidence-card__controls" aria-label={copy.home.evidenceTitle}>{VERIFIED_EXAMPLES.map((entry, index) => <button key={entry.code} type="button" className={index === activeExample ? 'is-active' : ''} aria-label={`${copy.home.show} ${formatCode(entry.code)}`} aria-pressed={index === activeExample} onClick={() => setActiveExample(index)}>{entry.level === 'hs2' ? 'HS' : entry.level === 'nico10' ? 'NICO' : '8D'}</button>)}</div></div></aside></section>
+    <section className="metric-grid" aria-label={copy.home.evidenceTitle}>{copy.home.metrics.map(([value, label]) => <article key={label}><strong>{value}</strong><span>{label}</span></article>)}</section>
+    <section className="card-grid">{copy.home.cards.map(([title, description, action], index) => <article key={title}><h2>{title}</h2><p>{description}</p>{index === 0 ? <External href={OFFICIAL_LINKS.releases}>{action}</External> : <Link to={index === 1 ? '/documentation' : '/trust'}>{action}</Link>}</article>)}</section>
   </>;
 }
 
