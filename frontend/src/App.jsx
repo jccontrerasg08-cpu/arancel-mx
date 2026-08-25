@@ -38,7 +38,7 @@ function SiteHeader() {
     window.addEventListener('keydown', closeWithEscape);
     return () => window.removeEventListener('keydown', closeWithEscape);
   }, []);
-  return <><a className="skip-link" href="#main-content">{copy.header.skip}</a><header className="site-header"><div className="site-header__inner"><Link className="brand-lockup" to="/" aria-label="arancel.mx"><img src={brandLogo} alt=""/></Link><button ref={toggleRef} className="nav-toggle" type="button" aria-expanded={open} aria-controls="site-navigation" onClick={() => setOpen((current) => !current)}>{open ? copy.header.close : copy.header.open}</button><nav id="site-navigation" className={open ? 'site-nav is-open' : 'site-nav'} aria-label={copy.header.navigation}>{NAVIGATION.map(([, href]) => <Link key={href} className={location.pathname === href ? 'is-active' : ''} to={href}>{copy.navigation[href] || href}</Link>)}</nav><div className="site-header__actions"><LanguageToggle/><ThemeToggle/><a className="github-link" href={OFFICIAL_LINKS.github} target="_blank" rel="noreferrer">GitHub <span aria-label="open issues">0</span></a></div></div></header></>;
+  return <><a className="skip-link" href="#main-content">{copy.header.skip}</a><header className="site-header"><div className="site-header__inner"><Link className="brand-lockup" to="/" aria-label="arancel.mx"><img src={brandLogo} alt=""/></Link><button ref={toggleRef} className="nav-toggle" type="button" aria-label={open ? copy.header.close : copy.header.open} aria-expanded={open} aria-controls="site-navigation" onClick={() => setOpen((current) => !current)}><span aria-hidden="true">{open ? '×' : '☰'}</span></button><nav id="site-navigation" className={open ? 'site-nav is-open' : 'site-nav'} aria-label={copy.header.navigation}>{NAVIGATION.map(([, href]) => <Link key={href} className={location.pathname === href ? 'is-active' : ''} to={href}>{copy.navigation[href] || href}</Link>)}</nav><div className="site-header__actions"><LanguageToggle/><ThemeToggle/><a className="github-link" href={OFFICIAL_LINKS.github} target="_blank" rel="noreferrer">GitHub <span aria-label="open issues">0</span></a></div></div></header></>;
 }
 
 function SiteFooter() {
@@ -58,6 +58,7 @@ function RoutedPage({ Component }) {
   const location = useLocation();
   const { language, copy } = useLocale();
   useEffect(() => {
+    document.documentElement.lang = location.pathname === '/' && language === 'en' ? 'en' : 'es-MX';
     const page = EDITORIAL_PAGES[location.pathname];
     document.title = `arancel-mx — ${location.pathname === '/' ? `${copy.home.title}${copy.home.titleEmphasis}` : page?.title || 'Datos arancelarios mexicanos verificables.'}`;
     const description = document.querySelector('meta[name="description"]');

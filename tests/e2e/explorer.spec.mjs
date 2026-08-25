@@ -18,6 +18,20 @@ test('defaults the public hero to Spanish and keeps English as an explicit optio
   await expect(page.getByRole('button', { name: /open explorer/i })).toBeVisible();
 });
 
+test('keeps Spanish document semantics on routes that are not yet localized', async ({ page }) => {
+  await page.goto('/');
+  await page.getByLabel(/idioma de la interfaz/i).selectOption('en');
+  await page.goto('/chapters');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'es-MX');
+});
+
+test('keeps the mobile header controls inside a 320 pixel viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 720 });
+  await page.goto('/');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await expect(page.getByRole('button', { name: /abrir menú de navegación/i })).toBeVisible();
+});
+
 test('keeps evidence cards controllable and backed by a loaded topical visual', async ({ page }) => {
   await page.goto('/');
   const evidence = page.getByTestId('example-rotator');

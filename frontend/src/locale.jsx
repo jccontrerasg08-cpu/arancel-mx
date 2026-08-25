@@ -21,7 +21,6 @@ export function LocaleProvider({ children }) {
   const [language, setLanguage] = useState(() => localStorage.getItem('arancel-mx-language') || 'es');
   useEffect(() => {
     localStorage.setItem('arancel-mx-language', language);
-    document.documentElement.lang = language === 'es' ? 'es-MX' : 'en';
   }, [language]);
   const value = useMemo(() => ({ language, setLanguage, copy: LOCALES[language] }), [language]);
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
