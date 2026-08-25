@@ -15,10 +15,27 @@ test('frontend has a reproducible build that keeps trade desk assets separate', 
   const packageManifest = await readJson('package.json');
 
   assert.equal(typeof packageManifest.scripts['build:frontend'], 'string');
-  assert.ok(packageManifest.scripts['build:frontend'].includes('vite'));
+  assert.ok(packageManifest.scripts['build:frontend'].includes('node scripts/build-frontend.mjs'));
   assert.equal(existsSync(path.join(root, 'vite.config.js')), true);
   assert.equal(existsSync(path.join(root, 'frontend/index.html')), true);
   assert.equal(existsSync(path.join(root, 'frontend/src/main.jsx')), true);
+});
+
+test('published frontend bundles are built in production mode without local source metadata', async () => {
+  const packageManifest = await readJson('package.json');
+  const assets = await readdir(path.join(root, 'website/assets'));
+  const mainBundle = assets.find((name) => /^index-[A-Za-z0-9_-]+\.js$/.test(name));
+
+  assert.match(packageManifest.scripts['build:frontend'], /node scripts\/build-frontend\.mjs/);
+  assert.ok(mainBundle);
+
+  const buildScript = await readFile(path.join(root, 'scripts/build-frontend.mjs'), 'utf8');
+  assert.match(buildScript, /process\.env\.NODE_ENV\s*=\s*['\"]production['\"]/);
+  assert.match(buildScript, /await build\(\)/);
+
+  const publishedSource = await readFile(path.join(root, 'website/assets', mainBundle), 'utf8');
+  assert.doesNotMatch(publishedSource, /jsxDEV/);
+  assert.doesNotMatch(publishedSource, /fileName:\"\/home\//);
 });
 
 test('glossary recovery selects the available generated bundle instead of a stale hash', async () => {

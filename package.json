@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "test:e2e": "playwright test",
-    "build:frontend": "vite build && node scripts/sync-frontend-static.mjs",
+    "build:frontend": "node scripts/build-frontend.mjs && node scripts/sync-frontend-static.mjs",
     "dev:frontend": "vite"
   },
   "dependencies": {
