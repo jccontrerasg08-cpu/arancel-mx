@@ -24,6 +24,10 @@ def test_vercel_deploys_the_standalone_public_site() -> None:
             "destination": "/api/operational?resource=health",
         },
         {
+            "source": "/v1",
+            "destination": "/api/operational?resource=api",
+        },
+        {
             "source": "/v1/meta",
             "destination": "/api/operational?resource=meta",
         },
@@ -76,7 +80,7 @@ def test_vercel_deploys_the_standalone_public_site() -> None:
             "destination": "/api/operational?resource=ready",
         },
         {"source": "/trade", "destination": "/trade.html"},
-        {"source": "/((?!assets/|api/|v1/|v1$|docs/|docs$|openapi\\.json$).*)", "destination": "/"},
+        {"source": "/((?!assets/|api/|v1/|v1$|docs/|docs$|openapi\\.json$|robots\\.txt$).*)", "destination": "/"},
     ]
     assert config["redirects"] == [
         {"source": "/docs", "destination": "/documentation", "permanent": True},
@@ -270,6 +274,7 @@ def test_vercel_applies_safe_defensive_headers_to_public_documents() -> None:
     assert values["Referrer-Policy"] == "strict-origin-when-cross-origin"
     assert values["Permissions-Policy"] == "geolocation=(), microphone=(), camera=()"
     assert values["X-Frame-Options"] == "DENY"
+    assert values["Strict-Transport-Security"] == "max-age=63072000; includeSubDomains; preload"
 
 
 def test_maintained_architecture_docs_describe_the_local_public_surface() -> None:

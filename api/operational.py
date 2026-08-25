@@ -16,6 +16,7 @@ from api._runtime import ensure_project_source
 
 ensure_project_source()
 
+from arancel_mx.api import API_VERSION
 from arancel_mx.operational.query import (
     active_release_metadata,
     chapters_active_release,
@@ -55,6 +56,18 @@ class handler(BaseHTTPRequestHandler):
         resource = query.get("resource", [""])[0]
         if resource == "health":
             self._respond(HTTPStatus.OK, {"status": "ok"})
+            return
+        if resource == "api":
+            self._respond(
+                HTTPStatus.OK,
+                {
+                    "name": "arancel-mx",
+                    "api_version": API_VERSION,
+                    "docs": "/documentation",
+                    "meta": "/v1/meta",
+                    "read_only": True,
+                },
+            )
             return
         if resource == "repository":
             snapshot = repository_snapshot(os.environ.get("GITHUB_TOKEN"))
