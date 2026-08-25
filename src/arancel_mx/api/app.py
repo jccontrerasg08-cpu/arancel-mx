@@ -310,6 +310,12 @@ def create_app(
         name="marketing-assets",
     )
 
+    @application.get("/favicon.svg", include_in_schema=False)
+    def favicon() -> FileResponse:
+        """Serve the compact canonical mark declared by the public HTML shell."""
+
+        return FileResponse(_MARKETING_DIR / "favicon.svg", media_type="image/svg+xml")
+
     def marketing_page() -> FileResponse:
         """Serve the public product site while keeping API routes versioned."""
 

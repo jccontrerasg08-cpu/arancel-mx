@@ -9,6 +9,15 @@ test('serves the public marketing root and preserves the explorer handoff', asyn
   await expect(page.getByRole('button', { name: /abrir explorador/i })).toBeVisible();
 });
 
+test('serves the canonical favicon and renders one lockup in the public header', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('link[rel="icon"][href="/favicon.svg"]')).toHaveCount(1);
+  await expect(page.locator('header .brand-lockup img')).toHaveCount(1);
+  const favicon = await page.request.get('/favicon.svg');
+  expect(favicon.ok()).toBe(true);
+  expect(favicon.headers()['content-type']).toContain('image/svg+xml');
+});
+
 test('defaults the public hero to Spanish and keeps English as an explicit option', async ({ page }) => {
   await page.goto('/');
   const language = page.getByLabel(/idioma de la interfaz/i);

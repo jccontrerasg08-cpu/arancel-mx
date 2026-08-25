@@ -156,6 +156,7 @@ def test_public_site_serves_the_react_shell_with_canonical_brand_assets() -> Non
     index = (ROOT / "website" / "index.html").read_text(encoding="utf-8")
     logo = (ROOT / "website" / "assets" / "arancel-mx-logo.svg").read_text(encoding="utf-8")
 
+    assert (ROOT / "website" / "favicon.svg").is_file()
     assert (ROOT / "website" / "assets" / "arancel-mx-mark.svg").is_file()
     assert (ROOT / "website" / "assets" / "arancel-mx-logo.svg").is_file()
     assert '<div id="root"></div>' in index
@@ -168,6 +169,7 @@ def test_public_site_serves_the_react_shell_with_canonical_brand_assets() -> Non
     assert "/assets/hub-search.js" not in index
     assert "data-arancel-hub-search" not in index
     assert "/assets/site-brand.css" in index
+    assert '<link rel="icon" type="image/svg+xml" href="/favicon.svg" />' in index
     assert "/assets/site-bridge.js" in index
     assert "/assets/hub-interactions.js" in index
     assert "const legacyRoute" in index
