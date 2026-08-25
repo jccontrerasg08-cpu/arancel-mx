@@ -33,7 +33,13 @@ function External({ href, children }) {
   return <a href={href} target="_blank" rel="noreferrer">{children} <span aria-hidden="true">↗</span></a>;
 }
 
+const localize = (language, spanish, english) => language === 'en' ? english : spanish;
+
 const exampleKind = (example) => example.level === 'hs2' ? 'HS' : example.level === 'nico10' ? 'NICO' : 'Fracción';
+const localizedRate = (rate, language) => {
+  const value = displayRate(rate);
+  return language === 'es' && value === 'Consult release' ? 'Consultar release' : value;
+};
 
 function randomExample(current) {
   if (VERIFIED_EXAMPLES.length < 2) return current;
@@ -78,10 +84,13 @@ export function HomePage() {
 export function ExplorerPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { language } = useLocale();
   const initial = new URLSearchParams(location.search).get('q') || '';
   const [query, setQuery] = useState(initial);
   const [state, setState] = useState({ kind: initial ? 'loading' : 'idle', results: [] });
   const [suggestions, setSuggestions] = useState([]);
+  const [activeSuggestion, setActiveSuggestion] = useState(-1);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => setQuery(initial), [initial]);
   useEffect(() => {
@@ -98,7 +107,7 @@ export function ExplorerPage() {
         setState(results.length ? { kind: 'results', results, fallback: true } : { kind: 'error', results: [] });
       });
     return () => controller.abort();
-  }, [initial]);
+  }, [attempt, initial]);
   useEffect(() => {
     const candidate = query.trim();
     if (initial || !candidate) {
@@ -116,6 +125,7 @@ export function ExplorerPage() {
       controller.abort();
     };
   }, [query, initial]);
+  useEffect(() => setActiveSuggestion(-1), [suggestions, query]);
 
   const submit = (event) => {
     event.preventDefault();
@@ -124,30 +134,53 @@ export function ExplorerPage() {
     if ([2, 4, 6, 8, 10].includes(normalized.length) && normalized.length === query.replace(/[.\s-]/g, '').length) return navigate(`/app/record/${normalized}`);
     navigate(`/app?q=${encodeURIComponent(query.trim())}`);
   };
+  const selectSuggestion = (index) => {
+    const record = suggestions[index]?.record || suggestions[index];
+    if (record) navigate(`/app/record/${record.code}`);
+  };
+  const onQueryKeyDown = (event) => {
+    if (!suggestions.length) return;
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setActiveSuggestion((current) => Math.min(current + 1, suggestions.length - 1));
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setActiveSuggestion((current) => Math.max(current - 1, 0));
+    } else if (event.key === 'Enter' && activeSuggestion >= 0) {
+      event.preventDefault();
+      selectSuggestion(activeSuggestion);
+    } else if (event.key === 'Escape') {
+      setSuggestions([]);
+      setActiveSuggestion(-1);
+    }
+  };
+  const copy = {
+    hero: language === 'en' ? { eyebrow: 'VERIFIED RELEASE EXPLORER', title: 'Explore a tariff reference without losing its path.', description: 'Inspect hierarchy, release context and recorded evidence without treating a search result as a legal determination.', disclaimer: 'Public data and documented evidence. This site does not classify merchandise or provide legal advice.' } : { eyebrow: 'EXPLORADOR DE RELEASES VERIFICADOS', title: 'Explora una referencia arancelaria sin perder su camino.', description: 'Revisa jerarquía, contexto de release y evidencia registrada sin tratar un resultado de búsqueda como una determinación legal.', disclaimer: 'Datos públicos y evidencia documentada. Este sitio no clasifica mercancías ni proporciona asesoría legal.' },
+    label: localize(language, 'Código o descripción', 'Code or description'), placeholder: localize(language, 'p. ej. 8517.13.01 o teléfonos', 'e.g. 8517.13.01 or phones'), submit: localize(language, 'Consultar release', 'Inspect release'), loading: localize(language, 'Buscando…', 'Searching…'), idle: localize(language, 'Ingresa un código arancelario o una descripción.', 'Enter a tariff code or a description.'), searching: localize(language, 'Buscando en la release verificada…', 'Searching the verified release…'), results: localize(language, 'Resultados verificados encontrados en la release registrada.', 'Verified results found in the recorded release presentation.'), empty: localize(language, 'No hay registros verificados que coincidan. Prueba 2, 4, 6, 8 o 10 dígitos, o una descripción más concreta.', 'No verified records match this search. Try 2, 4, 6, 8, or 10 digits, or a more specific description.'), error: localize(language, 'La release verificada no está disponible temporalmente.', 'The verified release is temporarily unavailable.'), retry: localize(language, 'Reintentar', 'Retry'), suggestions: localize(language, 'Rutas verificadas posibles', 'Possible verified paths'), noSuggestions: localize(language, 'Ninguna ruta verificada coincide con el texto actual.', 'No verified path matches the current text.'), verifiedResults: localize(language, 'resultados verificados', 'verified results'), inspect: localize(language, 'Ver ficha verificada', 'Inspect verified record'), activeRelease: localize(language, 'Resultado de la release verificada activa.', 'Active verified release result.'), fallback: localize(language, 'Ejemplo de presentación registrada mientras la release activa no está disponible.', 'Recorded presentation example while the active release is unavailable.'), tree: localize(language, 'Árbol de decisión progresivo', 'Progressive decision tree'), ready: localize(language, 'Ingresa un código completo o una descripción.', 'Enter a complete code or a description.'), example: localize(language, 'Fracción de ejemplo · 85.17.13.01', 'Example fraction · 85.17.13.01'), exampleDescription: localize(language, 'IGI e IGE aparecen sólo cuando se recupera una fracción verificada.', 'IGI and IGE appear only when a verified fraction record is retrieved.'), try: localize(language, 'Probar teléfonos', 'Try phones'), browse: localize(language, 'Explorar árbol visual', 'Browse visual tree'), emptyTitle: localize(language, 'Estructura de ejemplo, no un resultado.', 'Example structure, not a result.'), emptyDescription: localize(language, 'Usa el Explorador para revisar sólo registros recuperados desde la release verificada activa.', 'Use the Explorer to inspect only records retrieved from the active verified release.')
+  };
 
   return <>
     <PageHero className="page-hero--explorer" page={{
-      eyebrow: 'VERIFIED RELEASE EXPLORER',
-      title: 'Explore a tariff reference without losing its path.',
-      description: 'Inspect hierarchy, release context and recorded evidence without treating a search result as a legal determination.',
-      disclaimer: 'Public data and documented evidence. This site does not classify merchandise or provide legal advice.',
+      ...copy.hero,
     }} />
-    <section className="workspace"><form onSubmit={submit} className="search-form"><label htmlFor="app-query">Code or description</label><div className="inline-form"><input data-testid="search-input" id="app-query" type="search" autoComplete="off" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="e.g. 8517.13.01 or teléfonos"/><button data-testid="search-submit" className="button primary" type="submit" disabled={state.kind === 'loading'}>{state.kind === 'loading' ? 'Loading…' : 'Inspect release'}</button></div><div role="status" aria-live="polite" className="status">{state.kind === 'idle' && 'Enter a tariff code or a description.'}{state.kind === 'loading' && 'Searching the verified release…'}{state.kind === 'results' && 'Verified results found in the recorded release presentation.'}{state.kind === 'empty' && 'No verified records match this search.'}{state.kind === 'error' && 'The verified release is temporarily unavailable.'}</div></form>
-      {!initial && query.trim() && <section data-testid="live-suggestions" className="live-suggestions" aria-label="Possible verified paths"><p>Possible verified paths</p>{suggestions.length ? <div>{suggestions.map((item) => { const record = item.record || item; return <button key={record.code} type="button" onClick={() => navigate(`/app/record/${record.code}`)}><strong>{formatCode(record.code)}</strong><span>{record.description}</span></button>; })}</div> : <small>No verified path matches the current text.</small>}</section>}
-      {state.kind === 'results' && <><p className="status">{state.fallback ? 'Recorded presentation example while the active release is unavailable.' : 'Active verified release result.'}</p><section className="result-list" aria-label="Verified search results"><h2>{state.results.length} verified results</h2>{state.results.map((item) => { const record = item.record || item; return <article data-testid="result-card" key={record.code}><div><span>{item.match_kind || 'verified match'}</span><h3>{record.code}</h3><p>{record.description}</p><small>{record.dataset_version || 'active release'} · {record.level}</small></div><Link className="button" to={`/app/record/${record.code}`}>Inspect verified record</Link></article>; })}</section><section data-testid="hierarchy-card" className="example-note"><h2>Progressive decision tree</h2><p>{state.results[0] && (state.results[0].record || state.results[0]).code}</p><p data-testid="tree-filter-status">{formatCode(initial)}</p></section></>}
-      {state.kind === 'idle' && <><h2>Enter a complete code or a description.</h2><aside data-testid="example-fraction" className="example-note"><strong>Example fraction · 85.17.13.01</strong><p>IGI and IGE appear only when a verified fraction record is retrieved.</p><div className="hero-actions"><button className="button" type="button" onClick={() => navigate('/app?q=teléfonos')}>Try teléfonos</button><Link to="/chapters">Browse visual tree</Link></div></aside></>}
-      {state.kind === 'empty' && <aside className="example-note"><strong>Example structure, not a result.</strong><p>Use the Explorer to inspect only records retrieved from the active verified release.</p><Link to="/chapters">Browse visual tree</Link></aside>}
+    <section className="workspace"><form onSubmit={submit} className="search-form"><label htmlFor="app-query">{copy.label}</label><div className="inline-form"><input data-testid="search-input" id="app-query" type="search" role="combobox" aria-autocomplete="list" aria-expanded={!initial && query.trim().length > 0 && suggestions.length > 0} aria-controls="live-suggestions-list" aria-activedescendant={activeSuggestion >= 0 ? `suggestion-${activeSuggestion}` : undefined} autoComplete="off" value={query} onKeyDown={onQueryKeyDown} onChange={(event) => setQuery(event.target.value)} placeholder={copy.placeholder}/><button data-testid="search-submit" className="button primary" type="submit" disabled={state.kind === 'loading'}>{state.kind === 'loading' ? copy.loading : copy.submit}</button></div><div role="status" aria-live="polite" className="status">{state.kind === 'idle' && copy.idle}{state.kind === 'loading' && copy.searching}{state.kind === 'results' && copy.results}{state.kind === 'empty' && copy.empty}{state.kind === 'error' && <>{copy.error} <button type="button" className="text-button" onClick={() => setAttempt((current) => current + 1)}>{copy.retry}</button></>}</div></form>
+      {!initial && query.trim() && <section data-testid="live-suggestions" className="live-suggestions" aria-label={copy.suggestions}><p>{copy.suggestions}</p>{suggestions.length ? <div id="live-suggestions-list" role="listbox">{suggestions.map((item, index) => { const record = item.record || item; return <button id={`suggestion-${index}`} key={record.code} role="option" aria-selected={index === activeSuggestion} className={index === activeSuggestion ? 'is-active' : ''} type="button" onMouseEnter={() => setActiveSuggestion(index)} onClick={() => selectSuggestion(index)}><strong>{formatCode(record.code)}</strong><span lang={language === 'en' ? 'es-MX' : undefined}>{record.description}</span></button>; })}</div> : <small>{copy.noSuggestions}</small>}</section>}
+      {state.kind === 'results' && <><p className="status">{state.fallback ? copy.fallback : copy.activeRelease}</p><section className="result-list" aria-label={copy.results}><h2>{state.results.length} {copy.verifiedResults}</h2>{state.results.map((item) => { const record = item.record || item; return <article data-testid="result-card" key={record.code}><div><span>{item.match_kind || 'verified match'}</span><h3><code>{formatCode(record.code)}</code></h3><p lang={language === 'en' ? 'es-MX' : undefined}>{record.description}</p><small>{record.dataset_version || 'active release'} · {record.level}</small></div><Link className="button" to={`/app/record/${record.code}`}>{copy.inspect}</Link></article>; })}</section><section data-testid="hierarchy-card" className="example-note"><h2>{copy.tree}</h2><p>{state.results[0] && (state.results[0].record || state.results[0]).code}</p><p data-testid="tree-filter-status">{formatCode(initial)}</p></section></>}
+      {state.kind === 'idle' && <><h2>{copy.ready}</h2><aside data-testid="example-fraction" className="example-note"><strong>{copy.example}</strong><p>{copy.exampleDescription}</p><div className="hero-actions"><button className="button" type="button" onClick={() => navigate('/app?q=teléfonos')}>{copy.try}</button><Link to="/chapters">{copy.browse}</Link></div></aside></>}
+      {state.kind === 'empty' && <aside className="example-note"><strong>{copy.emptyTitle}</strong><p>{copy.emptyDescription}</p><Link to="/chapters">{copy.browse}</Link></aside>}
     </section>
   </>;
 }
 
 export function RecordPage() {
   const { code } = useParams();
+  const { language } = useLocale();
   const [state, setState] = useState({ kind: 'loading' });
   const [retry, setRetry] = useState(0);
   const [saved, setSaved] = useState(false);
   const [snapshots, setSnapshots] = useState(() => { try { return JSON.parse(localStorage.getItem('arancel-mx-fichas-locales') || '[]'); } catch { return []; } });
   const [treeFilter, setTreeFilter] = useState('');
+  const copy = language === 'en' ? { loading: 'Retrieving verified hierarchy and recorded evidence…', unavailable: 'The verified release is temporarily unavailable.', retry: 'Retry', explorer: 'Return to Explorer', ready: 'Verified record ready.', eyebrow: 'VERIFIED RECORD', context: 'Release context, not advice.', fallback: 'Recorded presentation example while the verified release is temporarily unavailable.', unit: 'Unit', release: 'Release', estimate: 'Estimate import contributions', estimateTitle: 'Estimate after selecting a fraction or NICO.', estimateDescription: 'This hierarchy level provides context, but the estimator needs an 8-digit fraction or a 10-digit NICO.', compatible: 'Find a compatible fraction', saved: 'Saved locally', save: 'Save locally', export: 'Export snapshots', tree: 'Progressive decision tree', filter: 'Filter this hierarchy by a parent code', filterHint: 'Use a prefix such as 8517 to narrow this visible path; this does not run a new search.', provenance: 'Recorded provenance', noProvenance: 'No provenance entries are currently available.', source: 'Official source' } : { loading: 'Recuperando jerarquía verificada y evidencia registrada…', unavailable: 'La release verificada no está disponible temporalmente.', retry: 'Reintentar', explorer: 'Volver al Explorador', ready: 'Registro verificado listo.', eyebrow: 'REGISTRO VERIFICADO', context: 'Contexto de release, no asesoría.', fallback: 'Ejemplo de presentación registrada mientras la release verificada no está disponible.', unit: 'Unidad', release: 'Release', estimate: 'Estimar contribuciones de importación', estimateTitle: 'Estima después de seleccionar una fracción o NICO.', estimateDescription: 'Este nivel jerárquico aporta contexto, pero el estimador requiere una fracción de 8 dígitos o un NICO de 10 dígitos.', compatible: 'Buscar una fracción compatible', saved: 'Guardado localmente', save: 'Guardar localmente', export: 'Exportar fichas', tree: 'Árbol de decisión progresivo', filter: 'Filtrar esta jerarquía por un código padre', filterHint: 'Usa un prefijo como 8517 para acotar este camino visible; no realiza una búsqueda nueva.', provenance: 'Procedencia registrada', noProvenance: 'No hay entradas de procedencia disponibles actualmente.', source: 'Fuente oficial' };
   useEffect(() => {
     const controller = new AbortController();
     Promise.all([api(`/v1/ficha/${code}`, controller.signal), api(`/v1/codes/${code}/provenance`, controller.signal).catch(() => [])])
@@ -158,8 +191,8 @@ export function RecordPage() {
       });
     return () => controller.abort();
   }, [code, retry]);
-  if (state.kind === 'loading') return <p className="status" role="status">Retrieving verified hierarchy and recorded evidence…</p>;
-  if (state.kind === 'error') return <section className="empty-state"><h1>The verified release is temporarily unavailable.</h1><button className="button primary" type="button" onClick={() => setRetry((current) => current + 1)}>Retry</button><Link to="/app">Return to Explorer</Link></section>;
+  if (state.kind === 'loading') return <p className="status" role="status">{copy.loading}</p>;
+  if (state.kind === 'error') return <section className="empty-state"><h1>{copy.unavailable}</h1><button className="button primary" type="button" onClick={() => setRetry((current) => current + 1)}>{copy.retry}</button><Link to="/app">{copy.explorer}</Link></section>;
   const { ficha, provenance } = state;
   const record = ficha.record || ficha;
   const save = () => {
@@ -186,7 +219,7 @@ export function RecordPage() {
   const formattedCode = ficha.formatted_code || formatCode(record.code);
   const hierarchy = ficha.hierarchy || record.hierarchy || [];
   const visibleHierarchy = hierarchy.filter((entry) => !treeFilter || String(entry.code || '').startsWith(treeFilter.replace(/\D/g, '')) || String(record.code || '').startsWith(treeFilter.replace(/\D/g, '')));
-  return <section data-testid="result-card" className="record-page"><p role="status" aria-live="polite">Verified record ready.</p><p className="eyebrow">VERIFIED RECORD</p><h1>{formattedCode}</h1><p>{record.description}</p><h2>Release context, not advice.</h2>{state.fallback && <p className="example-note">Recorded presentation example while the verified release is temporarily unavailable.</p>}<div className="metric-grid record-metrics">{hasRates && <><article><strong>{displayRate(record.igi)}</strong><span>IGI</span></article><article><strong>{displayRate(record.ige)}</strong><span>IGE</span></article></>}<article><strong>{record.unit_name || '—'}</strong><span>Unit</span></article><article><strong>{record.dataset_version || '—'}</strong><span>Release</span></article></div><div className="record-actions">{hasSupportedEstimateCode ? <a data-testid="open-estimate" className="button primary" href={`/trade?code=${encodeURIComponent(record.code)}`}>Estimate import contributions</a> : <aside data-testid="estimate-guidance" className="estimate-guidance"><strong>Estimate after selecting a fraction or NICO.</strong><p>This hierarchy level provides context, but the estimator needs an 8-digit fraction or a 10-digit NICO.</p><Link className="button" to={`/app?q=${encodeURIComponent(record.code)}`}>Find a compatible fraction</Link></aside>}<div className="record-actions__secondary"><button className="button" onClick={save}>{saved ? 'Saved locally' : 'Save locally'}</button><button data-testid="export-snapshots" className="button" type="button" onClick={exportSnapshots} disabled={!snapshots.length}>Export snapshots</button><a className="button" href={`/v1/ficha/${record.code}`} target="_blank" rel="noreferrer">API JSON</a></div></div><ul data-testid="snapshot-list" aria-live="polite" className="snapshot-list">{snapshots.map((snapshot) => <li key={snapshot.code}>{formatCode(snapshot.code)} · {snapshot.dataset_version}</li>)}</ul><section data-testid="hierarchy-card"><h2>Progressive decision tree</h2><label htmlFor="tree-query">Filter this hierarchy by a parent code</label><p className="field-hint">Use a prefix such as 8517 to narrow this visible path; this does not run a new search.</p><div className="inline-form"><input data-testid="search-input" id="tree-query" type="search" value={treeFilter} onChange={(event) => setTreeFilter(event.target.value)} placeholder="e.g. 8517"/></div><p data-testid="tree-filter-status">{formatCode(treeFilter || record.code)}</p><ol className="hierarchy">{visibleHierarchy.map((entry) => { const entryCode = String(entry.code || entry); const label = entryCode.length === 2 ? 'Capítulo HS2' : entryCode.length === 4 ? 'Partida · familia HS4' : entryCode.length === 6 ? 'Subpartida · HS6' : 'Fracción o NICO'; return <li key={entryCode}><strong>{label} · {formatCode(entryCode)}</strong> {entry.description || ''}</li>; })}</ol></section><section><h2>Recorded provenance</h2>{provenance.length ? <ul>{provenance.map((entry, index) => <li key={entry.source_url || index}><External href={entry.source_url || '#'}>{entry.source_name || 'Official source'}</External></li>)}</ul> : <p>No provenance entries are currently available.</p>}</section></section>;
+  return <section data-testid="result-card" className="record-page"><p role="status" aria-live="polite">{copy.ready}</p><p className="eyebrow">{copy.eyebrow}</p><h1>{formattedCode}</h1><p lang={language === 'en' ? 'es-MX' : undefined}>{record.description}</p><h2>{copy.context}</h2>{state.fallback && <p className="example-note">{copy.fallback}</p>}<div className="metric-grid record-metrics">{hasRates && <><article><strong>{localizedRate(record.igi, language)}</strong><span>IGI</span></article><article><strong>{localizedRate(record.ige, language)}</strong><span>IGE</span></article></>}<article><strong>{record.unit_name || '—'}</strong><span>{copy.unit}</span></article><article><strong>{record.dataset_version || '—'}</strong><span>{copy.release}</span></article></div><div className="record-actions">{hasSupportedEstimateCode ? <a data-testid="open-estimate" className="button primary" href={`/trade?code=${encodeURIComponent(record.code)}`}>{copy.estimate}</a> : <aside data-testid="estimate-guidance" className="estimate-guidance"><strong>{copy.estimateTitle}</strong><p>{copy.estimateDescription}</p><Link className="button" to={`/app?q=${encodeURIComponent(record.code)}`}>{copy.compatible}</Link></aside>}<div className="record-actions__secondary"><button className="button" onClick={save}>{saved ? copy.saved : copy.save}</button><button data-testid="export-snapshots" className="button" type="button" onClick={exportSnapshots} disabled={!snapshots.length}>{copy.export}</button><a className="button" href={`/v1/ficha/${record.code}`} target="_blank" rel="noreferrer">API JSON</a></div></div><ul data-testid="snapshot-list" aria-live="polite" className="snapshot-list">{snapshots.map((snapshot) => <li key={snapshot.code}>{formatCode(snapshot.code)} · {snapshot.dataset_version}</li>)}</ul><section data-testid="hierarchy-card"><h2>{copy.tree}</h2><label htmlFor="tree-query">{copy.filter}</label><p className="field-hint">{copy.filterHint}</p><div className="inline-form"><input data-testid="search-input" id="tree-query" type="search" value={treeFilter} onChange={(event) => setTreeFilter(event.target.value)} placeholder="p. ej. 8517"/></div><p data-testid="tree-filter-status">{formatCode(treeFilter || record.code)}</p><ol className="hierarchy">{visibleHierarchy.map((entry) => { const entryCode = String(entry.code || entry); const label = entryCode.length === 2 ? 'Capítulo HS2' : entryCode.length === 4 ? 'Partida · familia HS4' : entryCode.length === 6 ? 'Subpartida · HS6' : 'Fracción o NICO'; return <li key={entryCode}><strong>{label} · {formatCode(entryCode)}</strong> {entry.description || ''}</li>; })}</ol></section><section><h2>{copy.provenance}</h2>{provenance.length ? <ul>{provenance.map((entry, index) => <li key={entry.source_url || index}><External href={entry.source_url || '#'}>{entry.source_name || copy.source}</External></li>)}</ul> : <p>{copy.noProvenance}</p>}</section></section>;
 }
 
 export function ChaptersPage() {
