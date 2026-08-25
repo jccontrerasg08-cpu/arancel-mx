@@ -26,6 +26,10 @@
       "destination": "/api/operational?resource=health"
     },
     {
+      "source": "/v1",
+      "destination": "/api/operational?resource=api"
+    },
+    {
       "source": "/v1/meta",
       "destination": "/api/operational?resource=meta"
     },
@@ -82,7 +86,7 @@
       "destination": "/trade.html"
     },
     {
-      "source": "/((?!assets/|api/|v1/|v1$|docs/|docs$|openapi\\.json$).*)",
+      "source": "/((?!assets/|api/|v1/|v1$|docs/|docs$|openapi\\.json$|robots\\.txt$).*)",
       "destination": "/"
     }
   ],
@@ -117,6 +121,10 @@
         {
           "key": "X-Frame-Options",
           "value": "DENY"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
         }
       ]
     },

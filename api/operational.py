@@ -56,6 +56,18 @@ class handler(BaseHTTPRequestHandler):
         if resource == "health":
             self._respond(HTTPStatus.OK, {"status": "ok"})
             return
+        if resource == "api":
+            self._respond(
+                HTTPStatus.OK,
+                {
+                    "name": "arancel-mx",
+                    "api_version": "v1",
+                    "docs": "/documentation",
+                    "meta": "/v1/meta",
+                    "read_only": True,
+                },
+            )
+            return
         if resource == "repository":
             snapshot = repository_snapshot(os.environ.get("GITHUB_TOKEN"))
             self._respond(HTTPStatus.OK, snapshot.model_dump(mode="json"))
