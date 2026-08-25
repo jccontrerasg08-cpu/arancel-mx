@@ -27,6 +27,12 @@ test('keeps evidence cards controllable and backed by a loaded topical visual', 
   expect(await evidence.locator('.evidence-card__image').evaluate((image) => image.complete && image.naturalWidth > 0)).toBe(true);
 });
 
+test('uses the public metadata release in the evidence card when it is available', async ({ page }) => {
+  await page.route('**/v1/meta', (route) => route.fulfill({ json: { dataset_version: '2026.08.24' } }));
+  await page.goto('/');
+  await expect(page.getByTestId('example-rotator')).toContainText('2026.08.24');
+});
+
 test('does not rotate evidence cards when reduced motion is requested', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
