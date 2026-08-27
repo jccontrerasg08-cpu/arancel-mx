@@ -58,7 +58,7 @@ function RoutedPage({ Component }) {
   const location = useLocation();
   const { language, copy } = useLocale();
   useEffect(() => {
-    const localizedRoute = location.pathname === '/' || location.pathname === '/app' || location.pathname === '/documentation' || location.pathname.startsWith('/app/record/');
+    const localizedRoute = ['/', '/app', '/product', '/documentation'].includes(location.pathname) || location.pathname.startsWith('/app/record/') || location.pathname.startsWith('/app/chapter/');
     document.documentElement.lang = localizedRoute && language === 'en' ? 'en' : 'es-MX';
     const page = EDITORIAL_PAGES[location.pathname];
     document.title = `arancel-mx — ${location.pathname === '/' ? `${copy.home.title}${copy.home.titleEmphasis}` : page?.title || 'Datos arancelarios mexicanos verificables.'}`;

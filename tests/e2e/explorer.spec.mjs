@@ -34,6 +34,22 @@ test('keeps Spanish document semantics on routes that are not yet localized', as
   await expect(page.locator('html')).toHaveAttribute('lang', 'es-MX');
 });
 
+test('keeps English document semantics on the verified-record compatibility alias', async ({ page }) => {
+  await page.goto('/');
+  await page.getByLabel(/idioma de la interfaz/i).selectOption('en');
+  await page.goto('/app/chapter/85');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+});
+
+test('keeps suggestions dismissed when Escape is pressed during their debounce', async ({ page }) => {
+  await page.goto('/app');
+  const query = page.getByTestId('search-input');
+  await query.fill('85');
+  await query.press('Escape');
+  await page.waitForTimeout(250);
+  await expect(page.getByTestId('live-suggestions')).toHaveCount(0);
+});
+
 test('keeps the mobile header controls inside a 320 pixel viewport', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 720 });
   await page.goto('/');

@@ -1,5 +1,5 @@
 // Style: la ficha conserva la evidencia como contenido principal y ofrece el estimador como una salida contextual, no como navegación adicional.
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import {
@@ -91,6 +91,7 @@ export function ExplorerPage() {
   const [suggestions, setSuggestions] = useState([]);
   const [activeSuggestion, setActiveSuggestion] = useState(-1);
   const [attempt, setAttempt] = useState(0);
+  const suggestionGeneration = useRef(0);
 
   useEffect(() => setQuery(initial), [initial]);
   useEffect(() => {
@@ -111,14 +112,20 @@ export function ExplorerPage() {
   useEffect(() => {
     const candidate = query.trim();
     if (initial || !candidate) {
+      suggestionGeneration.current += 1;
       setSuggestions([]);
       return undefined;
     }
+    const generation = ++suggestionGeneration.current;
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
       api(`/v1/search?q=${encodeURIComponent(candidate)}&limit=5`, controller.signal)
-        .then((results) => setSuggestions(selectPrimarySearchResults(results, candidate).slice(0, 5)))
-        .catch(() => setSuggestions(searchExampleRecords(candidate).slice(0, 5)));
+        .then((results) => {
+          if (generation === suggestionGeneration.current) setSuggestions(selectPrimarySearchResults(results, candidate).slice(0, 5));
+        })
+        .catch(() => {
+          if (generation === suggestionGeneration.current) setSuggestions(searchExampleRecords(candidate).slice(0, 5));
+        });
     }, 180);
     return () => {
       window.clearTimeout(timer);
@@ -139,6 +146,12 @@ export function ExplorerPage() {
     if (record) navigate(`/app/record/${record.code}`);
   };
   const onQueryKeyDown = (event) => {
+    if (event.key === 'Escape') {
+      suggestionGeneration.current += 1;
+      setSuggestions([]);
+      setActiveSuggestion(-1);
+      return;
+    }
     if (!suggestions.length) return;
     if (event.key === 'ArrowDown') {
       event.preventDefault();
@@ -149,9 +162,6 @@ export function ExplorerPage() {
     } else if (event.key === 'Enter' && activeSuggestion >= 0) {
       event.preventDefault();
       selectSuggestion(activeSuggestion);
-    } else if (event.key === 'Escape') {
-      setSuggestions([]);
-      setActiveSuggestion(-1);
     }
   };
   const copy = {
