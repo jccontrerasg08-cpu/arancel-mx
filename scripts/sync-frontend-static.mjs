@@ -32,6 +32,7 @@ for (const assetName of await readdir(sourceAssets)) {
 }
 
 const sourceIndex = path.join(source, 'index.html');
+const sourceFavicon = path.join(source, 'favicon.svg');
 const index = await readFile(sourceIndex, 'utf8');
 await writeFile(sourceIndex, index.replace(`/assets/${bundleName}`, `/assets/${stableBundleName}`));
 const publishedAssetNames = new Set(await readdir(sourceAssets));
@@ -47,6 +48,7 @@ for (const destination of destinations) {
     }
   }
   await cp(sourceIndex, path.join(destination, 'index.html'));
+  await cp(sourceFavicon, path.join(destination, 'favicon.svg'));
   await cp(sourceAssets, destinationAssets, {
     recursive: true,
     force: true,

@@ -9,6 +9,15 @@ test('serves the public marketing root and preserves the explorer handoff', asyn
   await expect(page.getByRole('button', { name: /abrir explorador/i })).toBeVisible();
 });
 
+test('serves the canonical favicon and renders one lockup in the public header', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('link[rel="icon"][href="/favicon.svg"]')).toHaveCount(1);
+  await expect(page.locator('header .brand-lockup img')).toHaveCount(1);
+  const favicon = await page.request.get('/favicon.svg');
+  expect(favicon.ok()).toBe(true);
+  expect(favicon.headers()['content-type']).toContain('image/svg+xml');
+});
+
 test('defaults the public hero to Spanish and keeps English as an explicit option', async ({ page }) => {
   await page.goto('/');
   const language = page.getByLabel(/idioma de la interfaz/i);
@@ -23,6 +32,22 @@ test('keeps Spanish document semantics on routes that are not yet localized', as
   await page.getByLabel(/idioma de la interfaz/i).selectOption('en');
   await page.goto('/chapters');
   await expect(page.locator('html')).toHaveAttribute('lang', 'es-MX');
+});
+
+test('keeps English document semantics on the verified-record compatibility alias', async ({ page }) => {
+  await page.goto('/');
+  await page.getByLabel(/idioma de la interfaz/i).selectOption('en');
+  await page.goto('/app/chapter/85');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+});
+
+test('keeps suggestions dismissed when Escape is pressed during their debounce', async ({ page }) => {
+  await page.goto('/app');
+  const query = page.getByTestId('search-input');
+  await query.fill('85');
+  await query.press('Escape');
+  await page.waitForTimeout(250);
+  await expect(page.getByTestId('live-suggestions')).toHaveCount(0);
 });
 
 test('keeps the mobile header controls inside a 320 pixel viewport', async ({ page }) => {
@@ -201,10 +226,10 @@ test('serves ANAM source-indexed wiki and searchable glossary routes', async ({ 
 
 test('serves the homepage-aligned verified explorer', async ({ page }) => {
   await page.goto('/app');
-  await expect(page.getByRole('heading', { name: /explore a tariff reference/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /explora una referencia arancelaria/i })).toBeVisible();
   await expect(page.getByTestId('search-input')).toBeVisible();
   await expect(page.getByTestId('example-fraction')).toContainText(/IGI/i);
-  await expect(page.getByRole('link', { name: /browse visual tree/i })).toHaveAttribute('href', '/chapters');
+  await expect(page.getByRole('link', { name: /explorar árbol visual/i })).toHaveAttribute('href', '/chapters');
 });
 
 test('shows possible verified paths while a person types without requiring a submit', async ({ page }) => {
@@ -216,9 +241,9 @@ test('shows possible verified paths while a person types without requiring a sub
   await page.goto('/app');
   await page.getByTestId('search-input').fill('teléfonos');
   const suggestions = page.getByTestId('live-suggestions');
-  await expect(suggestions).toContainText(/possible verified paths/i);
-  await expect(suggestions.getByRole('button', { name: /85\.17\.13\.01/i })).toBeVisible();
-  await suggestions.getByRole('button', { name: /85\.17\.13\.01/i }).click();
+  await expect(suggestions).toContainText(/rutas verificadas posibles/i);
+  await expect(suggestions.getByRole('option', { name: /85\.17\.13\.01/i })).toBeVisible();
+  await suggestions.getByRole('option', { name: /85\.17\.13\.01/i }).click();
   await expect(page).toHaveURL(/\/app\/record\/85171301$/);
 });
 
@@ -229,9 +254,9 @@ test('looks up a complete tariff fraction with evidence and a decision tree', as
   const card = page.getByTestId('result-card').first();
   await expect(card).toContainText('85.17.13.01');
   await expect(card).toContainText(/teléfonos inteligentes/i);
-  await expect(page.getByTestId('hierarchy-card')).toContainText(/progressive decision tree/i);
+  await expect(page.getByTestId('hierarchy-card')).toContainText(/árbol de decisión progresivo/i);
   await expect(page.getByTestId('tree-filter-status')).toContainText('85.17.13.01');
-  await expect(page.getByRole('status')).toHaveText(/verified record ready/i);
+  await expect(page.getByRole('status')).toHaveText(/registro verificado listo/i);
   await expect(page.getByRole('link', { name: /API JSON/i })).toHaveAttribute('href', /\/v1\/ficha\/85171301$/);
 });
 
@@ -242,8 +267,8 @@ test('retries a direct record request without leaving the record route', async (
     await route.fulfill({ status: 503, contentType: 'application/json', body: '{}' });
   });
   await page.goto('/app/record/99999999');
-  await expect(page.getByRole('heading', { name: /temporarily unavailable/i })).toBeVisible();
-  await page.getByRole('button', { name: /retry/i }).click();
+  await expect(page.getByRole('heading', { name: /no está disponible temporalmente/i })).toBeVisible();
+  await page.getByRole('button', { name: /reintentar/i }).click();
   await expect.poll(() => attempts).toBeGreaterThan(1);
   await expect(page).toHaveURL(/\/app\/record\/99999999$/);
 });
@@ -265,8 +290,8 @@ test('exposes rates only on fraction cards', async ({ page }) => {
 
   await page.goto('/app/record/01');
   await expect(page.getByTestId('result-card').getByTestId('open-estimate')).toHaveCount(0);
-  await expect(page.getByTestId('estimate-guidance')).toContainText(/8-digit fraction or a 10-digit NICO/i);
-  await expect(page.getByTestId('estimate-guidance').getByRole('link', { name: /find a compatible fraction/i })).toHaveAttribute('href', '/app?q=01');
+  await expect(page.getByTestId('estimate-guidance')).toContainText(/fracción de 8 dígitos o un NICO de 10 dígitos/i);
+  await expect(page.getByTestId('estimate-guidance').getByRole('link', { name: /buscar una fracción compatible/i })).toHaveAttribute('href', '/app?q=01');
 });
 
 test('renders every non-fraction direct record without rate fields or a page error', async ({ page }) => {
@@ -320,7 +345,7 @@ test('renders every non-fraction direct record without rate fields or a page err
 test('narrows the visible decision-tree path from an entered fraction prefix', async ({ page }) => {
   await page.goto('/app/record/85171301');
   await expect(page.getByTestId('hierarchy-card')).toBeVisible();
-  await expect(page.getByRole('searchbox', { name: /filter this hierarchy by a parent code/i })).toBeVisible();
+  await expect(page.getByRole('searchbox', { name: /filtrar esta jerarquía por un código padre/i })).toBeVisible();
   await page.getByTestId('search-input').fill('8517');
   await expect(page.getByTestId('tree-filter-status')).toContainText('85.17');
   await expect(page.getByRole('button', { name: /apply filter/i })).toHaveCount(0);
@@ -332,9 +357,9 @@ test('searches verified descriptions from input and quick action', async ({ page
   await page.getByTestId('search-input').fill('teléfonos');
   await page.getByTestId('search-submit').click();
   await expect(page.getByTestId('result-card').first()).toContainText(/teléfonos/i);
-  await expect(page.getByRole('status')).toContainText(/verified results found/i);
+  await expect(page.getByRole('status')).toContainText(/resultados verificados encontrados/i);
   await page.goto('/app');
-  await page.getByRole('button', { name: /try teléfonos/i }).click();
+  await page.getByRole('button', { name: /probar teléfonos/i }).click();
   await expect(page).toHaveURL(/\/app\?q=tel%C3%A9fonos$/);
   await expect(page.getByTestId('search-input')).toHaveValue('teléfonos');
   await expect(page.getByTestId('result-card').first()).toContainText(/teléfonos/i);
@@ -343,8 +368,8 @@ test('searches verified descriptions from input and quick action', async ({ page
 test('explains when a query is required without changing the workspace', async ({ page }) => {
   await page.goto('/app');
   await page.getByTestId('search-submit').click();
-  await expect(page.getByRole('status')).toContainText(/enter a tariff code/i);
-  await expect(page.getByRole('heading', { name: /enter a complete code or a description/i })).toBeVisible();
+  await expect(page.getByRole('status')).toContainText(/ingresa un código arancelario/i);
+  await expect(page.getByRole('heading', { name: /ingresa un código completo o una descripción/i })).toBeVisible();
 });
 
 test('opens shared and durable explorer URLs', async ({ page }) => {
@@ -353,15 +378,15 @@ test('opens shared and durable explorer URLs', async ({ page }) => {
   await expect(page.getByTestId('result-card')).toContainText(/teléfonos inteligentes/i);
   await page.goto('/app/record/85171301');
   await expect(page.getByTestId('result-card')).toContainText(/teléfonos inteligentes/i);
-  await expect(page.getByRole('heading', { name: /release context, not advice/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /contexto de release, no asesoría/i })).toBeVisible();
   await page.goto('/app/chapter/85');
   await expect(page.getByTestId('result-card')).toContainText('85');
-  await expect(page.getByRole('status')).toHaveText(/verified record ready/i);
+  await expect(page.getByRole('status')).toHaveText(/registro verificado listo/i);
 });
 
 test('opens the visual tree from the explorer and keeps its selected hierarchy inspectable', async ({ page }) => {
   await page.goto('/app');
-  await page.getByRole('link', { name: /browse visual tree/i }).click();
+  await page.getByRole('link', { name: /explorar árbol visual/i }).click();
   await expect(page).toHaveURL(/\/chapters$/);
   await expect(page.getByRole('button', { name: /^sección I /i })).toBeVisible();
   await page.goto('/app/record/85171301');
@@ -370,7 +395,7 @@ test('opens the visual tree from the explorer and keeps its selected hierarchy i
 
 test('saves and exports a browser-local research snapshot', async ({ page }) => {
   await page.goto('/app/record/85171301');
-  await page.getByRole('button', { name: /save locally/i }).click();
+  await page.getByRole('button', { name: /guardar localmente/i }).click();
   await expect(page.getByTestId('snapshot-list')).toContainText('85.17.13.01');
   const download = page.waitForEvent('download');
   await page.getByTestId('export-snapshots').click();
@@ -383,7 +408,7 @@ test('saves and exports a browser-local research snapshot', async ({ page }) => 
 
 test('keeps integrated research controls keyboard-reachable and announced', async ({ page }) => {
   await page.goto('/app/record/85171301');
-  await expect(page.getByRole('button', { name: /save locally/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /guardar localmente/i })).toBeVisible();
   await expect(page.getByRole('status')).toHaveAttribute('aria-live', 'polite');
   await expect(page.getByTestId('snapshot-list')).toHaveAttribute('aria-live', 'polite');
   await page.getByTestId('search-input').focus();
