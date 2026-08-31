@@ -11,7 +11,7 @@ coverage==7.15.4
 duckdb==1.5.5
 et-xmlfile==2.0.0
 fastapi==0.141.1
-filelock==3.32.3
+filelock==3.32.4
 httpx2==2.10.0
 idna==3.18
 iniconfig==2.3.0
