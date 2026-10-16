@@ -1,6 +1,17 @@
 # Proceso de publicación
 
-`arancel-mx` usa un pipeline autónomo y fail-closed para construir y publicar snapshots oficiales. El workflow de producción es **Official data pipeline**, definido en [`.github/workflows/official-data-pipeline.yml`](../.github/workflows/official-data-pipeline.yml), y su schedule vigente es diario con cron `17 11 * * *` ([decisión 0002](decisions/0002-arquitectura-github-primero.md)), además de admitir `workflow_dispatch`. Una ejecución sin cambios de fuente termina como `no_change` y no publica. El cron semanal `17 11 * * 1` de la integración #132 queda sólo como contexto de migración.
+Este documento es el runbook canónico del pipeline que construye, certifica y publica los datos de `arancel-mx`, desde los tests hasta la API estática en GitHub Pages y la vigilancia diaria del DOF. Está dirigido a mantenedores y a integradores que quieren saber qué garantiza cada release.
+
+`arancel-mx` usa un pipeline autónomo y fail-closed. El workflow de producción es **Official data pipeline**, definido en [`.github/workflows/official-data-pipeline.yml`](../.github/workflows/official-data-pipeline.yml). Corre a diario con cron `17 11 * * *` ([decisión 0002](decisions/0002-arquitectura-github-primero.md)) y también admite `workflow_dispatch`. Una ejecución sin cambios de fuente termina como `no_change` y no publica.
+
+El workflow tiene tres jobs en secuencia:
+
+```text
+build-and-verify  →  publish                                  →  notify
+tests, captura,      release inmutable (publish_release.py)     vigilancia SIDOF (watch_dof.py)
+reconciliación,      ↓                                          alertas del pipeline (data_alert.py)
+build, bundle        API estática en gh-pages (build_static_pages.py)
+```
 
 Las ejecuciones que pueden mutar (cron y `publish=true`) comparten un único grupo de concurrency y nunca se solapan. Los dry runs usan un grupo propio por ref: GitHub mantiene una sola ejecución pendiente por grupo y cancela la anterior, así que compartir el grupo permitiría que un dry run manual desplazara en silencio una ejecución de producción encolada.
 
@@ -93,8 +104,6 @@ Las tres capas responden preguntas diferentes:
 
 La artifact attestation **is not a legal signature** sobre los documentos oficiales mexicanos. No sustituye evidencia DOF/Diputados, la procedencia de las fuentes ni la reconciliación legal bloqueante del repositorio.
 
-Estado de A9 mientras no exista una publicación legítima posterior a su integración con verificación independiente de los seis subjects: **implemented / CI-verified; live attestation verification pending the next legitimate changed release**. La release `data-2026.08.11` fue creada antes de A9 y no constituye evidencia retroactiva de attestation.
-
 ## 8. Publicación automática e immutable release
 
 El job `publish` sólo puede ejecutarse cuando:
@@ -116,13 +125,36 @@ La política es **immutable**: nunca se sobrescribe un tag o release existente.
 
 Si ocurre un segundo cambio válido el mismo día y ya existe `data-YYYY.MM.DD`, el sistema no sobreescribe esa identidad. Falla con categoría `release_tag_collision`. Este **same-date** collision bloquea publicación y se trata como alerta operativa.
 
-## 9. Fallos, GitHub Issue y recovery
+## 9. API estática en GitHub Pages
+
+Cuando la release ya es pública, el mismo job `publish` genera la API estática de sólo lectura que consumen el frontend y terceros:
+
+1. `scripts/build_static_pages.py --tag data-YYYY.MM.DD` descarga esa misma release con el cliente público, que verifica `manifest.json` y `SHA256SUMS`, y se niega a continuar si la release no está verificada.
+2. Escribe el árbol `v1/` (`meta.json`, `records/{hs2}.json`, `search-index.json`, `manifest.json` y el resto de archivos descritos en la [arquitectura](architecture.md#archivos-de-la-api-estática)) y verifica cada archivo contra el SHA-256 de su manifest. Añade `.nojekyll` para que Pages sirva los archivos tal cual.
+3. El workflow hace force-push del árbol a la rama `gh-pages`, con un único commit por release, y pide un build a la API de GitHub Pages.
+
+Pages sirve el árbol en `https://jccontrerasg08-cpu.github.io/arancel-mx/v1/` y Vercel lo expone como `/data/v1/`. La rama `gh-pages` no contiene historial: siempre refleja la última release publicada.
+
+Estos pasos usan `continue-on-error`. La release ya es pública e inmutable cuando se ejecutan, así que una falla de Pages no se reporta como release bloqueada: el workflow emite una advertencia (`::warning::`) y la siguiente release vuelve a generar el árbol completo. Para regenerarlo sin release nueva, ejecuta `python -m scripts.build_static_pages --out out/pages --tag data-YYYY.MM.DD` y publica el resultado en `gh-pages` siguiendo el mismo procedimiento.
+
+## 10. Vigilancia del DOF en SIDOF
+
+El job `notify` corre siempre, haya o no release. Primero ejecuta `scripts/watch_dof.py --days 7`, que consulta los servicios web oficiales de SIDOF para los últimos siete días del DOF y conserva las notas cuyo título apunta a un instrumento arancelario.
+
+- Por cada nota nueva abre un issue con la etiqueta `dof-candidate` y un marcador oculto por `cod_nota`, de modo que la misma nota nunca genera dos issues.
+- El issue es la confirmación humana: la vigilancia no construye, no cambia ni publica datos. Un instrumento confirmado entra al dataset cuando sus fuentes registradas cambian y el pipeline certifica una release nueva.
+- En ejecuciones manuales con `publish=false` o fuera de `main`, corre con `--dry-run`: informa en `out/dof-watch.json` y no abre issues.
+- El paso usa `continue-on-error`: una falla de SIDOF no bloquea las alertas del pipeline que siguen.
+
+Detalle en [historial certificado de fuentes](source-history.md).
+
+## 11. Fallos, GitHub Issue y recovery
 
 **Cualquier falla bloquea la publicación.** Los pasos principales escriben JSON de diagnóstico antes de devolver un código distinto de cero. El workflow extrae mensajes acotados y sin secretos, y luego falla explícitamente el job.
 
 Esa extracción es una frontera de confianza: los outputs del job `build-and-verify` deciden si `publish` puede ejecutarse. `scripts/workflow_diagnostics.py` es el único código autorizado a escribir outputs del workflow. Valida `status` contra un vocabulario cerrado (`built`, `no_change`, `failed`), acota cada token y mensaje a una sola línea, y rechaza escribir cualquier línea si un valor no es seguro. Un `status` desconocido nunca se propaga: se degrada a `failed` con categoría `invalid_diagnostics`.
 
-El job `notify` es el único con `issues: write`:
+Después de la vigilancia del DOF, `scripts/data_alert.py` gestiona las alertas del pipeline. El job `notify` es el único con `issues: write`:
 
 - build fallido o cancelado: crea o actualiza un **GitHub Issue** determinista por stage + failure category;
 - publish fallido o cancelado, incluida una falla al crear o verificar la attestation: crea o actualiza el GitHub Issue correspondiente;
@@ -131,18 +163,26 @@ El job `notify` es el único con `issues: write`:
 
 Los Issues del usuario sin el marcador oculto de automatización nunca se cierran mediante recovery.
 
-## 10. Límites de permisos
+## 12. Límites de permisos
 
-El workflow tiene `contents: read` globalmente. El job de build permanece read-only. Sólo `publish` recibe `contents: write`; para A9 ese mismo job recibe además `attestations: write` e `id-token: write`. Sólo `notify` recibe `issues: write`. No se usa PAT, `write-all`, `artifact-metadata: write` ni `pull_request_target`.
+El workflow tiene `contents: read` globalmente. El job de build permanece read-only. Sólo `publish` recibe `contents: write` (release inmutable y rama `gh-pages`), `attestations: write` e `id-token: write` (attestation) y `pages: write` (build de Pages). Sólo `notify` recibe `issues: write`. No se usa PAT, `write-all`, `artifact-metadata: write` ni `pull_request_target`.
 
-Ningún job de este workflow conserva la credencial de checkout: los tres usan `persist-credentials: false` y llegan a GitHub mediante variables de entorno de token explícitas. El job de build es el único que instala `.[dev]`, porque es el único que ejecuta la suite; `publish` y `notify` instalan sólo el runtime, de modo que el job que firma la attestation no carga herramientas de desarrollo.
+Ningún job de este workflow conserva la credencial de checkout: los tres usan `persist-credentials: false` y llegan a GitHub mediante variables de entorno de token explícitas. El push a `gh-pages` pasa el token en un encabezado `http.extraheader` de esa sola invocación de `git`, sin escribirlo en la configuración del repositorio. El job de build es el único que instala `.[dev]`, porque es el único que ejecuta la suite; `publish` y `notify` instalan sólo el runtime, de modo que el job que firma la attestation no carga herramientas de desarrollo.
 
 Los invariantes estructurales de todos los workflows (acciones fijadas por SHA, escrituras siempre dentro de un job, permisos y timeout por job, credenciales de checkout explícitas, y ausencia de interpolación `${{ ... }}` dentro de scripts de shell) se verifican offline en `tests/test_workflow_hardening.py`.
 
 Los binarios, bases DuckDB, snapshots oficiales y bundles de release no se escriben al historial Git.
 
-## Compatibilidad del entrypoint
+## 13. Entrypoints y canario
 
 `scripts/build_official_dataset.py` permanece como entrypoint público de construcción. La automatización de producción vive únicamente en `.github/workflows/official-data-pipeline.yml`, por lo que no hay dos schedules de dataset ejecutándose en paralelo.
 
-El canario [`.github/workflows/published-bundle-canary.yml`](../.github/workflows/published-bundle-canary.yml) (`47 12 * * *`) instala el paquete runtime (`-e .`, sin extras) y corre `arancel-mx data download` más `arancel-mx data verify --bundle` contra la última release pública. No captura fuentes, no publica, y no es un segundo pipeline de dataset.
+El canario [`.github/workflows/published-bundle-canary.yml`](../.github/workflows/published-bundle-canary.yml) (`47 12 * * *`) instala el paquete runtime (`-e .`, sin extras) y corre `arancel-mx data download` más `arancel-mx data verify --bundle` contra la última release pública. Después ejecuta `python scripts/check_public_service.py --timeout 20`, que comprueba la API estática servida en `/data/v1` (ver [observabilidad del servicio público](operations/public-service-observability.md)). No captura fuentes, no publica y no es un segundo pipeline de dataset.
+
+## Relacionado
+
+- [Arquitectura](architecture.md)
+- [Configuración de GitHub](operations/github-settings.md)
+- [Historial certificado de fuentes](source-history.md)
+- [Observabilidad del servicio público](operations/public-service-observability.md)
+- [Decisión 0002](decisions/0002-arquitectura-github-primero.md)
