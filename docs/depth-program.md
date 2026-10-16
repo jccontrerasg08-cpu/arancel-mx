@@ -85,7 +85,7 @@ Proof: for each module, a sample of codes checked against the issuing authority'
 ### E. External validation (independent of you and me)
 
 - **E1. DOF re-derivation** (from A).
-- **E2. Trade-statistics coverage.** Every fraction with recorded imports in INEGI/Banxico foreign-trade statistics for a month exists and is in force in the dataset for that month. Reverse check: codes in force with zero trade for 24 months are listed (not an error, a signal).
+- **E2. Trade-statistics coverage.** Every fraction with recorded imports in INEGI foreign-trade statistics for a month exists and is in force in the dataset for that month. Reverse check: codes in force with zero trade for 24 months are listed (not an error, a signal).
 - **E3. WTO Tariff Download Facility / IDB and ITC Market Access Map.** Applied MFN rates compared code by code; every difference explained. **[owner]** registers for any account these require.
 - **E4. Annex 22 consistency.** Fraction/NICO/unit combinations match SAT catalogues.
 - **E5. Broker audit.** ISO 2859-sized, risk-stratified sample packet; a licensed customs broker reviews it blind; error rate reported with its confidence interval. **[owner]** finds and engages the broker; Claude prepares the packet and scoring.
