@@ -190,7 +190,7 @@ def test_public_docs_keep_readyz_on_the_operational_surface() -> None:
 
 
 def test_public_brand_guide_is_discoverable_and_uses_current_schedule_language() -> None:
-    """Expose the canonical brand guide and current weekly automation wording."""
+    """Expose the canonical brand guide and current daily automation wording."""
     guide_path = ROOT / "docs/brand.md"
     assert guide_path.is_file()
     guide = guide_path.read_text(encoding="utf-8")
@@ -210,8 +210,8 @@ def test_public_brand_guide_is_discoverable_and_uses_current_schedule_language()
         assert phrase in guide
 
     assert "[Marca y presentación](brand.md)" in docs_index
-    assert "pipeline semanal" in docs_index.lower()
-    assert "pipeline diario" not in docs_index.lower()
+    assert "pipeline diario" in docs_index.lower()
+    assert "pipeline semanal" not in docs_index.lower()
 
 
 def test_vercel_static_output_serves_the_react_public_shell() -> None:
