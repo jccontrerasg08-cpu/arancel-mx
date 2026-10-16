@@ -30,7 +30,7 @@ Límite esperado del repositorio, idéntico a los bloques `permissions` de `.git
 GITHUB_TOKEN por defecto (todos los workflows): contents read
 
 CI / test: contents read
-CI / fastapi-cloud-runtime: contents read
+CI / api-runtime: contents read
 CI / browser-smoke: contents read
 
 Official data pipeline / build-and-verify: contents read
