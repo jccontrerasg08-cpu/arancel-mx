@@ -9,7 +9,7 @@
   },
   "verification": {
     "level": "text_read",
-    "meaning": "Instrument text was read from the Cámara de Diputados PDF copy of the DOF publication through an external fetch service. Byte-level SHA-256 and DOF-original captures are pending the instrument-research-capture workflow.",
+    "meaning": "Instrument text was read from the Cámara de Diputados PDF copy of the DOF publication through an external fetch service. Byte-level SHA-256 and DOF-original captures are pending (SIDOF documentos services, decision 0001).",
     "sha256": null
   },
   "instruments": [

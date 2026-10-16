@@ -3,7 +3,7 @@
 - **Observed:** 2026-10-16
 - **Primary ledger:** Cámara de Diputados, [LIGIE 2022 reform index](https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm). Last law reform: DOF 2025-12-29. Latest Tarifa change: DOF 2026-10-13.
 - **Machine-readable copy:** [`ligie-instrument-inventory.json`](ligie-instrument-inventory.json)
-- **Verification level: text read, not byte-verified.** Each instrument's text was read from the Diputados PDF copy of the DOF publication through an external fetch service, because this session's sandbox cannot reach the official hosts. SHA-256 hashes and DOF-original copies come from the `Instrument research capture` workflow once it can run (see "Open items").
+- **Verification level: text read, not byte-verified.** Each instrument's text was read from the Diputados PDF copy of the DOF publication through an external fetch service, because this session's sandbox cannot reach the official hosts. SHA-256 hashes and DOF-original copies are still pending (see "Open items").
 
 This replaces the earlier search-based seed list. That list had five errors, all fixed here:
 - 2023-12-27 and 2025-12-31 are basic-basket exemption decrees, not Tarifa reforms.
@@ -72,7 +72,7 @@ Edition comes from the first-page header (VES = evening, MAT = morning). Instrum
 
 ## Open items
 
-1. **Byte capture and SHA-256:** run `Instrument research capture` (needs the workflow on the default branch) or allow the hosts for this environment.
+1. **Byte capture and SHA-256:** fetch each instrument's Word file and signed edition PDF through the SIDOF services (`/documentos/doc/{codNota}`, `/documentos/pdf/{codDiario}`; see decision 0001), or run `scripts/capture_instrument_research.py` locally for the Diputados copies.
 2. **LIGIE 2022 entry-into-force date:** find the SAT notice. The original and the consolidated Tarifa PDFs time out on the fetch service, so this was not read.
 3. **1005.90.04 white maize export rate:** the dataset shows IGE 50. The only temporary 50 % export rate ended on 2023-12-31. Confirm the base rate in the original or consolidated Tarifa.
 4. **Totoaba NICOs:** search DOF for a NICO amendment after 2024-03-22 that the ledger does not list.

@@ -1,5 +1,7 @@
 """Capture primary LIGIE instrument documents for research (read-only).
 
+Local backfill tool; new instruments are detected through SIDOF (decision 0001).
+
 Downloads the Cámara de Diputados LIGIE 2022 ledger, every document it links on
 an allowed official host, and optional DOF daily indexes and SIDOF notes. It
 writes the bytes plus a manifest with URL, SHA-256, media type and retrieval
