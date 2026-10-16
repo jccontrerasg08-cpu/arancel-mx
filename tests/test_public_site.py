@@ -206,7 +206,7 @@ def test_public_site_does_not_declare_a_vercel_fastapi_entrypoint() -> None:
 def test_public_site_bridge_keeps_current_release_and_route_aliases() -> None:
     bridge = (ROOT / "website" / "assets" / "site-bridge.js").read_text(encoding="utf-8")
 
-    assert "fetch('/v1/meta'" in bridge
+    assert "fetch('/data/v1/meta.json'" in bridge
     assert "['/moa-guide', '/moa']" in bridge
     assert "['/product', '/app']" in bridge
     assert ".release-window code" in bridge
