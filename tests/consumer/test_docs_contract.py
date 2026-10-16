@@ -84,8 +84,8 @@ def test_consumer_guide_documents_offline_formats_and_version_pinning() -> None:
 
     guide = guide_path.read_text(encoding="utf-8")
     required = (
-        "package version",
-        "dataset version",
+        "versión del paquete",
+        "versión del dataset",
         "--dataset data-YYYY.MM.DD",
         "--offline",
         "--no-offline",
@@ -108,9 +108,9 @@ def test_consumer_guide_documents_offline_formats_and_version_pinning() -> None:
 
 def test_consumer_cli_treats_pip_install_as_current_public_path() -> None:
     guide = _read("docs/consumer-cli.md").lower()
-    assert "current public install path" in guide
-    assert "once the distribution is published" not in guide
-    assert "until that publication happens" not in guide
+    assert "ruta pública de instalación vigente" in guide
+    assert "una vez que se publique la distribución" not in guide
+    assert "hasta que ocurra esa publicación" not in guide
 
 
 def test_external_consumption_guide_exists_with_required_sections_in_order() -> None:

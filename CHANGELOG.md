@@ -29,17 +29,20 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 - The official data pipeline runs daily instead of weekly; unchanged sources still end as `no_change`.
 - The frontend, trade desk and hub scripts read `/data/v1` instead of `/v1`.
+- Documentation describes only the current GitHub-first architecture. New canonical `docs/architecture.md` (macro and micro view), `docs/documentation-style.md` (Spanish, one canonical document per topic) and `docs/operations/v1-sunset.md` (the deprecated `/v1` runtime and its retirement steps). Maintainer and consumer guides are written in Spanish.
+- `scripts/check_public_service.py` and the published-bundle canary probe the static data API under `/data/v1` instead of the deprecated `/v1` routes.
+- Live docs match in-tree `0.3.3` vs PyPI `0.2.0`: cache paths, `compare`, national notes, the public source tree, and the FastAPI v1 consumption boundary.
+- Documented `/releases/latest` as `data-2026.08.15` (six public assets), Diputados `law_reform` 2025-12-29 / `tariff_decree` 2026-04-23 from that manifest, and that the PyPI long description is frozen at the `0.2.0` upload.
+- Development tests use `httpx2` with Starlette's current TestClient path; base package runtime stays independent of that test-only compatibility dependency.
 
 ### Deprecated
 
 - HTTP `/v1` on the Vercel deployment (`arancel-mx.vercel.app/v1/*`). Responses carry `Deprecation`, `Sunset: Sun, 31 Jan 2027 00:00:00 GMT` and a `Link` to the static data API. After the sunset date the Vercel functions, their cron and the Neon database are retired. The FastAPI server in `arancel_mx.api` stays available for self-hosting.
 
-- Live docs match in-tree `0.3.3` vs PyPI `0.2.0`: cache paths, `compare`, national notes, the public source tree, and the FastAPI v1 consumption boundary.
-- Documented `/releases/latest` as `data-2026.08.15` (six public assets), Diputados `law_reform` 2025-12-29 / `tariff_decree` 2026-04-23 from that manifest, and that the PyPI long description is frozen at the `0.2.0` upload.
-- Development tests use `httpx2` with Starlette's current TestClient path; base package runtime stays independent of that test-only compatibility dependency.
-
 ### Removed
 
+- Obsolete documents: `todo.md`, completed plans and specs under `docs/superpowers/`, `docs/public-product-sprint.md`, `docs/verification/`, `docs/vercel-centralization.md` and `docs/integration-handoff.md` (their still-valid content moved to `docs/architecture.md`, `docs/sources.md` and `docs/operations/v1-sunset.md`).
+- Unused `railway.toml`, the unreferenced `arancel_mx/api/static/index.html` page and the legacy `website/assets/hub-search.{js,css}` files that the site no longer loads.
 - Dropped test-only `reportlab` and `PyYAML` from the `dev` extra; parser tests use committed PDF fixtures and workflow contracts read YAML as text.
 - Unused staging promotion path, warehouse-only DDL, SNICE HTML crawler, SIICEX↔VUCEM adapter types, parse-reuse helper, demo-generation workflow, and `current_resolver_probe`.
 

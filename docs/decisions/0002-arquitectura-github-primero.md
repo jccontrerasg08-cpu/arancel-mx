@@ -31,7 +31,7 @@ La búsqueda actual (`consumer.query.search`) ya recorre en Python todos los reg
 1. **GitHub guarda todo y sirve los datos.**
    - Las **releases inmutables** siguen siendo la fuente de verdad: DuckDB, CSV, JSON, manifest y `SHA256SUMS`.
    - **GitHub Pages** publica, por cada release certificada, una API estática de solo lectura generada con los mismos modelos de respuesta de `/v1`:
-     - `static/v1/meta.json`, `sections.json` y `chapters.json`;
+     - `v1/meta.json`, `sections.json` y `chapters.json`, servidos en `https://jccontrerasg08-cpu.github.io/arancel-mx/v1/` y expuestos por Vercel en `/data/v1`;
      - por capítulo HS2, `records/{hs2}.json`, `provenance/{hs2}.json` y `national-notes/{hs2}.json`;
      - `search-index.json` y un `manifest.json` con el SHA-256 de cada archivo.
    - Pages responde con CORS abierto, por lo que el frontend y terceros pueden consumirla directamente.
@@ -63,7 +63,7 @@ La búsqueda actual (`consumer.query.search`) ya recorre en Python todos los reg
 
 - **Biblioteca, CLI y dataset:** sin cambios. Se añade el comando `arancel-mx static-api build`.
 - **HTTP `/v1`:** con deprecación anunciada y reemplazo documentado; sin retiro antes de 2027-01-31.
-- **Configuración que hace el propietario:** activar GitHub Pages con origen «GitHub Actions» en la configuración del repositorio y, al terminar la ventana, eliminar las variables de Neon y los proyectos de Railway y FastAPI Cloud.
+- **Configuración que hace el propietario:** activar GitHub Pages con origen «Deploy from a branch» → `gh-pages` / raíz (el pipeline crea la rama en la primera publicación) y, al terminar la ventana, eliminar las variables de Neon y los proyectos de Railway y FastAPI Cloud. Los pasos están en [operations/v1-sunset.md](../operations/v1-sunset.md).
 
 ## Consecuencias y seguimiento
 

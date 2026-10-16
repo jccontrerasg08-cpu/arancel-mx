@@ -21,9 +21,9 @@ def test_spanish_readme_documents_current_public_api_front_door() -> None:
         "read-only",
         "sin API key",
         PUBLIC_ORIGIN,
-        "/v1/meta",
+        "/data/v1/meta.json",
+        "/data/v1/records/85.json",
         "/documentation",
-        "/readyz",
         "8517130100",
     )
     for token in required:
@@ -43,9 +43,9 @@ def test_english_readme_documents_same_public_api_boundary() -> None:
         "read-only",
         "no API key",
         PUBLIC_ORIGIN,
-        "/v1/meta",
+        "/data/v1/meta.json",
+        "/data/v1/records/85.json",
         "/documentation",
-        "/readyz",
         "8517130100",
     )
     for token in required:
@@ -55,20 +55,24 @@ def test_english_readme_documents_same_public_api_boundary() -> None:
     assert "ARANCEL_MX_API_DATASET=data-" not in text
 
 
-def test_external_consumption_guide_documents_hosted_vercel_contract() -> None:
+def test_external_consumption_guide_documents_static_api_and_deprecated_v1() -> None:
     text = _text("docs/external-consumption.md")
     lowered = text.lower()
 
     required = (
         'ARANCEL_MX_API_URL="https://arancel-mx.vercel.app"',
+        "/data/v1/meta.json",
+        "/data/v1/records/85.json",
+        "/data/v1/search-index.json",
+        "/data/v1/manifest.json",
         "/v1/lookup/8517130100",
         "/v1/meta",
         "/v1/search",
         "/readyz",
         "/documentation",
-        "Vercel",
-        "Neon",
-        "/documentation",
+        "GitHub Pages",
+        "Deprecation",
+        "2027-01-31",
         "data-YYYY.MM.DD",
     )
     for token in required:

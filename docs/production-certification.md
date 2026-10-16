@@ -1,33 +1,33 @@
-# Production certification
+# Certificación de producción
 
-This runbook documents the repository's controlled production-certification workflow and the evidence required before its GitHub write boundaries are considered healthy.
+Este runbook es para quien mantiene el repositorio: documenta el workflow controlado de certificación de producción y la evidencia que se exige antes de considerar sanas sus fronteras de escritura en GitHub. El workflow de certificación está separado a propósito del pipeline oficial de datos arancelarios: nunca debe publicar una release de producción `data-*` ni crear un issue de producción `[DATA ALERT]`.
 
-> The certification workflow is intentionally separate from the official tariff-data pipeline. It must never publish a production `data-*` release or create a production `[DATA ALERT]` issue.
+## Línea base certificada
 
-## Certified live baseline
+Las fronteras de escritura de releases e issues se ejercitaron con éxito desde `main` protegida el 2026-08-11 UTC.
 
-The release and Issue write boundaries were successfully exercised from protected `main` on 2026-08-11 UTC.
+| Campo | Valor |
+|---|---|
+| Workflow | `Production certification` |
+| Ejecución | `31450616908` |
+| Commit | `a14c57ee3aeeb982e6aa7077ae1b34582585db8b` |
+| Conclusión general | `success` |
+| `offline` | `success` |
+| `release-boundary` | `success` |
+| `issue-boundary` | `success` |
+| Tag temporal de release | `certification-31450616908` |
+| Estado final de la release | ausente |
+| Estado final del tag/ref | ausente |
+| Issue de certificación | `#28`, `[CERTIFICATION ALERT] 31450616908`, cerrado |
+| Release de producción `data-2026.08.10` | sin cambios |
 
-- Workflow: `Production certification`
-- Run: `31450616908`
-- Commit: `a14c57ee3aeeb982e6aa7077ae1b34582585db8b`
-- Overall conclusion: `success`
-- `offline`: `success`
-- `release-boundary`: `success`
-- `issue-boundary`: `success`
-- Temporary release tag: `certification-31450616908`
-- Final release state: absent
-- Final tag/ref state: absent
-- Certification Issue: `#28`, `[CERTIFICATION ALERT] 31450616908`, closed
-- Production release `data-2026.08.10`: unchanged
+Esta evidencia certifica sólo las fronteras aisladas de escritura en GitHub. No sustituye las compuertas de fuentes oficiales, reconciliación legal, integridad de la release, sello de tiempo ni atestación de artefactos documentadas en otras partes del repositorio.
 
-This evidence certifies the isolated GitHub write boundaries only. It does not replace the official-source, legal-reconciliation, release-integrity, timestamp, or artifact-attestation gates documented elsewhere in the repository.
+## Fronteras de seguridad
 
-## Safety boundaries
+El workflow es sólo manual (`workflow_dispatch`) y corre desde `main`, que es de confianza.
 
-The workflow is manual-only (`workflow_dispatch`) and runs from trusted `main`.
-
-Its namespaces are deliberately isolated:
+Sus espacios de nombres están aislados deliberadamente:
 
 ```text
 Temporary release/tag: certification-<github-run-id>
@@ -36,9 +36,9 @@ Production release:    data-YYYY.MM.DD
 Production alert:      [DATA ALERT] ...
 ```
 
-The certification helpers reject production namespaces. A certification release remains a draft/prerelease for its entire lifetime and is deleted after verification. A certification Issue is closed and retained as an auditable trace.
+Los helpers de certificación rechazan los espacios de nombres de producción. Una release de certificación permanece como draft/prerelease durante toda su vida y se borra después de la verificación. Un issue de certificación se cierra y se conserva como rastro auditable.
 
-Permissions are job-scoped:
+Los permisos se asignan por job:
 
 ```text
 offline            contents: read
@@ -46,33 +46,31 @@ release-boundary   contents: write
 issue-boundary     contents: read + issues: write
 ```
 
-The workflow uses the built-in `github.token`; no external PAT is required.
+El workflow usa el `github.token` integrado; no requiere un PAT externo.
 
-## Manual dispatch
+## Disparo manual
 
-In GitHub:
+En GitHub:
 
-1. Open **Actions**.
-2. Select **Production certification**.
-3. Choose **Run workflow**.
-4. Select branch **main**.
-5. Run the workflow.
+1. Abre **Actions**.
+2. Selecciona **Production certification**.
+3. Elige **Run workflow**.
+4. Selecciona la rama **main**.
+5. Ejecuta el workflow.
 
-Do not dispatch the live mutation workflow from a pull-request branch.
+No dispares el workflow de mutación real desde una rama de pull request.
 
-Before dispatch, verify:
+Antes de dispararlo, verifica que:
 
-```text
-main is protected
-required check `test` is green on current main
-no open production DATA ALERT is attributable to current main
-no certification draft/tag already exists for the new run
-workflow permissions still match this runbook
-```
+- `main` está protegida;
+- el check obligatorio `test` está en verde en el `main` actual;
+- ningún `DATA ALERT` de producción abierto es atribuible al `main` actual;
+- no existe ya un draft o tag de certificación para la nueva ejecución;
+- los permisos del workflow siguen coincidiendo con este runbook.
 
-## Expected successful lifecycle
+## Ciclo de vida esperado
 
-The release boundary performs this lifecycle:
+La frontera de releases sigue este ciclo:
 
 ```text
 preflight for existing certification resources
@@ -87,24 +85,24 @@ verify tag/ref absence
 always-run cleanup repeats the absence check
 ```
 
-The Issue boundary creates an isolated certification Issue, verifies it, records completion, and closes it. The Issue remains closed as audit evidence.
+La frontera de issues crea un issue de certificación aislado, lo verifica, registra que terminó y lo cierra. El issue queda cerrado como evidencia de auditoría.
 
-A successful run must finish with all three jobs green and these postconditions:
+Una ejecución exitosa debe terminar con los tres jobs en verde y con estas poscondiciones:
 
-```text
-0 remaining certification drafts for the run
-0 remaining certification tags/refs for the run
-1 closed [CERTIFICATION ALERT] Issue for the run
-0 new data-* tags
-0 production releases modified by certification
-main SHA unchanged by certification
-```
+| Poscondición | Valor esperado |
+|---|---|
+| Drafts de certificación restantes de la ejecución | 0 |
+| Tags/refs de certificación restantes de la ejecución | 0 |
+| Issues `[CERTIFICATION ALERT]` cerrados de la ejecución | 1 |
+| Tags `data-*` nuevos | 0 |
+| Releases de producción modificadas por la certificación | 0 |
+| SHA de `main` | sin cambios por la certificación |
 
-If any cleanup postcondition fails, stop. Remove only the exact certification resource after independently checking its run ID and namespace. Never delete or edit a `data-*` release while repairing certification cleanup.
+Si falla cualquier poscondición de limpieza, detente. Borra sólo el recurso de certificación exacto después de comprobar por separado su ID de ejecución y su espacio de nombres. Nunca borres ni edites una release `data-*` mientras reparas la limpieza de la certificación.
 
-## Inspecting evidence
+## Revisar la evidencia
 
-For the certified baseline, inspect:
+Para la línea base certificada, revisa:
 
 ```text
 Actions → Production certification → run 31450616908
@@ -113,7 +111,7 @@ Releases → confirm no Production certification 31450616908 draft remains
 Tags     → confirm certification-31450616908 is absent
 ```
 
-The release-boundary log must contain a final result equivalent to:
+El log de la frontera de releases debe contener un resultado final equivalente a:
 
 ```json
 {
@@ -124,33 +122,40 @@ The release-boundary log must contain a final result equivalent to:
 }
 ```
 
-The Issue-boundary result must identify the certification Issue with `state: "closed"`.
+El resultado de la frontera de issues debe identificar el issue de certificación con `state: "closed"`.
 
-Package install smoke, public-bundle `certify_bundle()`, and routine `pytest`/`build` commands live in [`docs/release-process.md`](release-process.md) and [`docs/package-release.md`](package-release.md). This runbook covers only the isolated GitHub write boundaries.
+El smoke de instalación del paquete, `certify_bundle()` sobre el bundle público y los comandos rutinarios de `pytest`/`build` están en [`docs/release-process.md`](release-process.md) y [`docs/package-release.md`](package-release.md). Este runbook cubre sólo las fronteras aisladas de escritura en GitHub.
 
-## Failure recovery
+## Recuperación ante fallas
 
-If a live certification run fails:
+Si falla una ejecución real de certificación:
 
-1. Read the exact job log before changing code.
-2. Check Releases, Tags, and Issues independently through GitHub, because list endpoints can be eventually consistent.
-3. Identify the exact `certification-<run-id>` resource before cleanup.
-4. Never infer ownership from a partial name or delete a production `data-*` release.
-5. Add a RED test reproducing the live failure before implementing a fix.
-6. Merge the fix only after the normal repository gate passes.
-7. Remove any legacy orphan created by code that predates reliable persisted cleanup state.
-8. Re-run `Production certification` from protected `main` and require all postconditions again.
+1. Lee el log exacto del job antes de cambiar código.
+2. Revisa Releases, Tags e Issues por separado en GitHub, porque los endpoints de listado pueden tener consistencia eventual.
+3. Identifica el recurso exacto `certification-<run-id>` antes de limpiar.
+4. Nunca infieras la pertenencia a partir de un nombre parcial ni borres una release de producción `data-*`.
+5. Agrega una prueba en RED que reproduzca la falla real antes de implementar la corrección.
+6. Integra la corrección sólo después de que pase la compuerta normal del repositorio.
+7. Elimina cualquier huérfano heredado creado por código anterior al estado de limpieza persistido y confiable.
+8. Vuelve a ejecutar `Production certification` desde `main` protegida y exige de nuevo todas las poscondiciones.
 
-## Scope of this certification
+## Alcance de esta certificación
 
-The successful live run proves that the repository can safely exercise and roll back its isolated GitHub release-write boundary and can create/close an isolated Issue with least-privilege job permissions.
+La ejecución real exitosa demuestra que el repositorio puede ejercitar y revertir con seguridad su frontera aislada de escritura de releases en GitHub, y que puede crear y cerrar un issue aislado con permisos de mínimo privilegio por job.
 
-It does **not** by itself prove:
+Por sí sola **no** demuestra:
 
-- that an official tariff-source update exists;
-- that legal reconciliation will pass for a future source change;
-- that a future production release will be immutable;
-- that artifact attestations are configured and verifiable;
-- or that every external official source is currently reachable.
+- que exista una actualización de las fuentes arancelarias oficiales;
+- que la reconciliación legal vaya a pasar ante un cambio futuro de fuentes;
+- que una release de producción futura vaya a ser inmutable;
+- que las atestaciones de artefactos estén configuradas y sean verificables;
+- ni que todas las fuentes oficiales externas estén accesibles en este momento.
 
-Those are separate production gates and must be certified independently.
+Ésas son compuertas de producción distintas y deben certificarse por separado.
+
+## Relacionado
+
+- [Proceso de release](release-process.md)
+- [Configuración de GitHub](operations/github-settings.md)
+- [Arquitectura](architecture.md)
+- [Release del paquete de Python](package-release.md)

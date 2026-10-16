@@ -1,9 +1,9 @@
 # Decisión 0001: vigilancia diaria del DOF con SIDOF y ejecución por evento
 
-- **Estado:** propuesta
+- **Estado:** reemplazada en parte por la [decisión 0002](0002-arquitectura-github-primero.md)
 - **Fecha:** 2026-10-16
 - **Responsable:** @jccontrerasg08-cpu
-- **Revisión:** pendiente del propietario
+- **Revisión:** el objetivo (vigilancia diaria con SIDOF e issue como confirmación humana) se aprobó el 2026-10-16. La ubicación propuesta (Vercel Cron y Neon) se descartó: la vigilancia corre en el job `notify` del pipeline oficial de GitHub Actions (`scripts/watch_dof.py`).
 - **Enlaces:** `docs/depth-program.md` (F1), `docs/research/ligie-instrument-inventory.md`
 
 ## Contexto
