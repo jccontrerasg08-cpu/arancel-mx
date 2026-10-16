@@ -30,7 +30,7 @@ def test_release_process_documents_current_autonomous_fail_closed_pipeline() -> 
     release = _text("docs/release-process.md")
     required = (
         ".github/workflows/official-data-pipeline.yml",
-        "17 11 * * 1",
+        "17 11 * * *",
         "requirements/production-build.txt",
         "no_change",
         "github issue",

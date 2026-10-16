@@ -35,7 +35,7 @@ def test_base_install_contains_only_consumer_runtime_dependencies() -> None:
     assert names.isdisjoint(HEAVY_MAINTAINER_DEPS)
 
 
-def test_fastapi_cloud_runtime_and_entrypoint_are_declared() -> None:
+def test_fastapi_runtime_and_entrypoint_are_declared() -> None:
     payload = _payload()
     dependencies = payload["project"]["dependencies"]
 
@@ -43,7 +43,7 @@ def test_fastapi_cloud_runtime_and_entrypoint_are_declared() -> None:
     assert payload["tool"]["fastapi"]["entrypoint"] == "arancel_mx.api.app:app"
 
 
-def test_fastapi_cloud_uses_tested_python_without_pinning_library_metadata() -> None:
+def test_api_runtime_uses_tested_python_without_pinning_library_metadata() -> None:
     assert Path(".python-version").read_text(encoding="utf-8").strip() == "3.13"
     assert _project()["requires-python"] == ">=3.11"
 
