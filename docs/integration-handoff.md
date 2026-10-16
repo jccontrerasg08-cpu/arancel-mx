@@ -103,7 +103,7 @@ Los archivos legacy de búsqueda pueden permanecer temporalmente en el repositor
 
 El cron de Vercel sigue siendo un backstop de sincronización, no una fuente de verdad. Su handler descarga la release pública más reciente, verifica el bundle completo y sólo entonces promueve el candidato en Neon de forma idempotente.
 
-La expresión vigente es semanal. Si el proyecto opera bajo Hobby, la ejecución del cron tiene precisión horaria y los límites de deployments del plan también pueden afectar previews independientes del estado del código. No conviertas un error de cuota de deployment en un cambio de arquitectura o en un bypass de CI.
+La expresión vigente es semanal y queda retirada junto con las funciones de Vercel en la fecha de sunset de la [decisión 0002](decisions/0002-arquitectura-github-primero.md). Si el proyecto opera bajo Hobby, la ejecución del cron tiene precisión horaria y los límites de deployments del plan también pueden afectar previews independientes del estado del código. No conviertas un error de cuota de deployment en un cambio de arquitectura o en un bypass de CI.
 
 Una evolución posterior puede disparar la promoción después de publicar una release certificada y conservar el cron semanal como reconciliación. Ese cambio requiere un diseño separado porque introduce un nuevo límite de confianza entre GitHub Actions y Vercel.
 

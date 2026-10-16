@@ -80,7 +80,11 @@ def test_vercel_deploys_the_standalone_public_site() -> None:
             "destination": "/api/operational?resource=ready",
         },
         {"source": "/trade", "destination": "/trade.html"},
-        {"source": "/((?!assets/|api/|v1/|v1$|docs/|docs$|openapi\\.json$|robots\\.txt$).*)", "destination": "/"},
+        {
+            "source": "/data/v1/:path*",
+            "destination": "https://jccontrerasg08-cpu.github.io/arancel-mx/v1/:path*",
+        },
+        {"source": "/((?!assets/|data/|api/|v1/|v1$|docs/|docs$|openapi\\.json$|robots\\.txt$).*)", "destination": "/"},
     ]
     assert config["redirects"] == [
         {"source": "/docs", "destination": "/documentation", "permanent": True},
@@ -107,7 +111,9 @@ def test_vercel_functions_bundle_the_src_layout_with_bounded_runtime() -> None:
 def test_vercel_cache_policy_only_marks_hashed_bundles_immutable() -> None:
     config = json.loads((ROOT / "vercel.json").read_text(encoding="utf-8"))
 
-    cache_rules = [rule for rule in config["headers"] if rule["source"] != "/(.*)"]
+    cache_rules = [
+        rule for rule in config["headers"] if rule["source"] not in {"/(.*)", "/v1(.*)"}
+    ]
     assert cache_rules == [
         {
             "source": "/assets/index-(.*)",

@@ -6,6 +6,9 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Added
 
+- Static, read-only data API generated from each verified release (`arancel-mx static-api build|verify`, `arancel_mx.static_api`). It has one file per HS2 chapter, a search index and a SHA-256 manifest, and uses the same response models as `/v1`. It is published to GitHub Pages and served by Vercel at `/data/v1` through a rewrite, and by the FastAPI app at `/data/v1`. See decision 0002.
+- Daily DOF watch through the official SIDOF web services (`arancel_mx.sources.sidof`, `scripts/watch_dof.py`). It opens one `dof-candidate` issue per new tariff-relevant DOF note for human review.
+
 - Public FastAPI HTTP service with an explicit `/v1` contract over the existing verified `Dataset` facade. The service is GET-only, read-only, requires no API key, and exposes lookup, ficha, hierarchy, provenance, search, suggest, chapters, National Notes, health/readiness, OpenAPI, and metadata endpoints.
 - FastAPI Cloud deployment metadata via `[tool.fastapi]` and an import-safe `arancel_mx.api.app:app` entrypoint. Production startup requires an explicit immutable `ARANCEL_MX_API_DATASET` such as `data-2026.08.15`; there is no silent `latest` fallback.
 - API responses preserve tariff/NICO string identity, official IGI/IGE literals, source provenance, scorer metadata, and the retrieve-only classification disclaimer. The HTTP layer does not expose source capture, update, reconciliation, release publication, live VUCEM compare, or WCO download.
@@ -23,6 +26,13 @@ All notable changes to the Python package are documented here. Dataset releases 
 - English section in `TERMS.md`, GitHub issue form `.github/ISSUE_TEMPLATE/open_source_release.yml`, and a tighter tracked-text PII/secret scan.
 
 ### Changed
+
+- The official data pipeline runs daily instead of weekly; unchanged sources still end as `no_change`.
+- The frontend, trade desk and hub scripts read `/data/v1` instead of `/v1`.
+
+### Deprecated
+
+- HTTP `/v1` on the Vercel deployment (`arancel-mx.vercel.app/v1/*`). Responses carry `Deprecation`, `Sunset: Sun, 31 Jan 2027 00:00:00 GMT` and a `Link` to the static data API. After the sunset date the Vercel functions, their cron and the Neon database are retired. The FastAPI server in `arancel_mx.api` stays available for self-hosting.
 
 - Live docs match in-tree `0.3.3` vs PyPI `0.2.0`: cache paths, `compare`, national notes, the public source tree, and the FastAPI v1 consumption boundary.
 - Documented `/releases/latest` as `data-2026.08.15` (six public assets), Diputados `law_reform` 2025-12-29 / `tariff_decree` 2026-04-23 from that manifest, and that the PyPI long description is frozen at the `0.2.0` upload.

@@ -39,7 +39,7 @@ La portada del repositorio explica **qué es** `arancel-mx` y cómo empezar. Est
 
 | Necesidad | Lee | Resultado |
 |---|---|---|
-| Ejecutar o depurar el pipeline semanal | [Proceso de release](release-process.md) | Estados, publicación, no-op y recuperación. |
+| Ejecutar o depurar el pipeline diario | [Proceso de release](release-process.md) | Estados, publicación, no-op y recuperación. |
 | Certificar permisos de producción | [Certificación de producción](production-certification.md) | Runbook aislado de write-boundaries y rollback. |
 | Publicar el paquete Python | [Release del paquete](package-release.md) | Flujo TestPyPI/PyPI y gates de publicación. |
 | Configurar GitHub y checks | [Configuración de GitHub](operations/github-settings.md) | Protección de `main`, permisos y required checks. |

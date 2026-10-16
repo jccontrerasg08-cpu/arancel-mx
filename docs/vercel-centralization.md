@@ -1,5 +1,7 @@
 # Vercel Centralization
 
+> **Superseded by [decision 0002](decisions/0002-arquitectura-github-primero.md).** Vercel now serves only the static frontend. Data is served as a static API from GitHub Pages under `/data/v1`. The Vercel `/v1` functions, their cron and Neon remain only until the announced sunset (2027-01-31) and answer with `Deprecation` and `Sunset` headers. This page describes that legacy surface.
+
 The public **core retrieval** surface is being centralized on Vercel Functions backed by the one active, verified Neon release. GitHub Actions remains the only system that captures official sources, reconciles evidence, builds the immutable GitHub Release, and publishes attestation. Neon is a versioned serving projection, not a source of truth.
 
 | Public route family | Current target | Release identity |
