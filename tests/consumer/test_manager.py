@@ -108,6 +108,7 @@ class DownloadHarness:
         destination: Path,
         *,
         timeout: float,
+        max_bytes: int | None = None,
     ) -> int:
         parts = unquote(url).rstrip("/").split("/")
         tag, name = parts[-2], parts[-1]

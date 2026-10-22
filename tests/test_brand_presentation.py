@@ -257,7 +257,8 @@ def test_integration_handoff_tracks_current_vercel_and_liveness_boundaries() -> 
     assert "api/_vendor" in handoff
     assert "api/_runtime.py" in handoff
     assert "python3.13" in handoff
-    assert "psycopg[binary]>=3.3.4" in handoff
+    assert "requirements/vercel.txt" in handoff
+    assert "--require-hashes" in handoff
     assert "requirements.txt" in handoff
     assert "EXTERNALLY_UNPROBEABLE_URLS" in handoff
     assert "site-bridge.js" in handoff

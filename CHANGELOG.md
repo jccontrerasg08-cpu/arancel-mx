@@ -4,6 +4,15 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ## [Unreleased]
 
+### Security
+
+- `/v1/search` and `/v1/suggest` on Vercel reject `q` longer than 300 characters (the same bound as the FastAPI app) before loading the active release, and normalize each description once per row instead of once per query token.
+- Release asset downloads must come from `https://github.com`, because the session sends the user's GitHub token. Downloads stop as soon as they exceed the asset's declared size.
+- The Vercel cron secret is compared with `hmac.compare_digest`.
+- Data-alert issues show diagnostic text in a code block, so text from an official host cannot add mentions, links or images.
+- The Vercel build installs `psycopg` and `psycopg-binary` from `requirements/vercel.txt` with `--require-hashes`.
+- Jobs that hold write tokens (`publish`, `notify`, and the production-certification boundary jobs) no longer restore the pip cache, which a read-only job that parses untrusted documents could have seeded. A workflow test enforces it.
+
 ### Added
 
 - Public FastAPI HTTP service with an explicit `/v1` contract over the existing verified `Dataset` facade. The service is GET-only, read-only, requires no API key, and exposes lookup, ficha, hierarchy, provenance, search, suggest, chapters, National Notes, health/readiness, OpenAPI, and metadata endpoints.

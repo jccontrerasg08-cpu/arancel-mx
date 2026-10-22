@@ -120,6 +120,7 @@ FROM operational_active_release AS active
 JOIN operational_release AS release ON release.tag = active.tag
 """.strip()
 
+MAX_SEARCH_TEXT_LENGTH = 300
 _PARENT_WIDTH = {2: None, 4: 2, 6: 4, 8: 6, 10: 8}
 _CHILDREN = {2: ("hs4", 4), 4: ("hs6", 6), 6: ("fraccion8", 8), 8: ("nico10", 10)}
 
@@ -339,7 +340,8 @@ def _public_search_score(text: str, record: dict[str, object]) -> tuple[int, str
     tokens = tuple(token for token in _normalize_text(text).split(" ") if token)
     if not tokens:
         return None
-    matched = sum(token in _normalize_text(str(record["description"])) for token in tokens)
+    description = _normalize_text(str(record["description"]))
+    matched = sum(token in description for token in tokens)
     if not matched:
         return None
     score = 300 + 25 * matched + (5 if matched == len(tokens) else 0)
@@ -367,6 +369,8 @@ def search_public_active_release(
 
     if not isinstance(text, str) or not text.strip():
         raise ValueError("search text must not be empty")
+    if len(text) > MAX_SEARCH_TEXT_LENGTH:
+        raise ValueError(f"search text must be at most {MAX_SEARCH_TEXT_LENGTH} characters")
     if not 1 <= limit <= 50:
         raise ValueError("limit must be between 1 and 50")
     # ponytail: the certified active release is a bounded public tariff table. Upgrade to

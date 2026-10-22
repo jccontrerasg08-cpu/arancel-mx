@@ -48,7 +48,7 @@ Configuración relevante:
 - `ARANCEL_MX_DATABASE_URL` es el nombre canónico de la conexión operacional.
 - `ARANCEL_MX_DATABASE_DATABASE_URL` se admite como compatibilidad controlada cuando la integración administrada de Neon genera ese nombre.
 - `CRON_SECRET` es un secreto de Production enviado como Bearer token al cron operacional; no se registra ni reutiliza.
-- `vercel.json` usa `python3.13 -m pip install --target api/_vendor 'psycopg[binary]>=3.3.4'`. La versión debe mantenerse alineada con `.python-version` para compilar el driver con la familia del runtime desplegado.
+- `vercel.json` usa `python3.13 -m pip install --require-hashes --only-binary=:all: --target api/_vendor -r requirements/vercel.txt`. `requirements/vercel.txt` fija `psycopg` y `psycopg-binary` con sus hashes, de modo que una release nueva de upstream no llega a las funciones que guardan la conexión de Neon sin un cambio revisado. La versión de Python debe mantenerse alineada con `.python-version`.
 - `api/_runtime.py` agrega el directorio `src/` al principio de `sys.path` antes de importar `arancel_mx` desde los handlers de Vercel.
 - `api/operational.py` y `api/sync_operational.py` incluyen `{api/_vendor/**,src/arancel_mx/**}` mediante `functions.includeFiles`.
 - La función read-only tiene `maxDuration: 30`; la sincronización certificada tiene `maxDuration: 60`. Son límites deliberadamente inferiores al máximo de plataforma para acotar fallos y consumo.

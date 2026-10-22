@@ -168,7 +168,7 @@ La arquitectura vigente combina:
 - `/documentation` como hub local y rutas no promovidas resueltas sin proxy externo;
 - la GitHub Release verificable como fuente canónica del dataset.
 
-Desde #139, Vercel bundlea `psycopg[binary]>=3.3.4` de forma aislada en `api/_vendor` mediante `buildCommand` y sólo lo incluye en las funciones operativas. `requirements.txt` fue eliminado para que ese driver no se convierta en dependencia base del paquete. Esta decisión no es copy promocional, pero las guías técnicas deben permanecer sincronizadas con ella.
+Desde #139, Vercel bundlea `psycopg[binary]` (versión y hashes fijos en `requirements/vercel.txt`) de forma aislada en `api/_vendor` mediante `buildCommand` y sólo lo incluye en las funciones operativas. `requirements.txt` fue eliminado para que ese driver no se convierta en dependencia base del paquete. Esta decisión no es copy promocional, pero las guías técnicas deben permanecer sincronizadas con ella.
 
 Desde #143–#144, el bridge público sincroniza la identidad visible de la release con `/v1/meta` incluso después de render tardío, y `website/index.html` referencia `site-bridge.js` con un query de versión para invalidar caché cuando cambia ese comportamiento. La documentación no debe hardcodear una release como identidad operativa del hub.
 

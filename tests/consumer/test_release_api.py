@@ -261,3 +261,14 @@ def test_resolved_asset_urls_are_exact_release_urls_not_releases_latest_urls() -
     for name, asset in release.assets_by_name.items():
         assert "/releases/latest/" not in asset.url
         assert f"/releases/download/{TAG}/{name}" in asset.url
+
+
+def test_release_rejects_asset_urls_outside_github_com() -> None:
+    assets = [_asset(name) for name in EXPECTED_NAMES]
+    assets[0]["browser_download_url"] = str(assets[0]["browser_download_url"]).replace(
+        "https://github.com/", "https://evil.example/"
+    )
+    client, _ = _client(FakeResponse(_release(assets=assets)))
+
+    with pytest.raises(DatasetIntegrityError, match="must download from https://github.com"):
+        client.latest()

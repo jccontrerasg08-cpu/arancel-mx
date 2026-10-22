@@ -113,6 +113,15 @@ def test_stream_download_returns_byte_count(tmp_path: Path) -> None:
     assert written == destination.stat().st_size == len(body)
 
 
+def test_stream_download_stops_once_the_declared_size_is_exceeded(tmp_path: Path) -> None:
+    destination = tmp_path / "asset.part"
+    with _http_server(body=b"x" * 4096) as (_, url):
+        with pytest.raises(DatasetDownloadError, match="exceeds its declared size"):
+            stream_download(build_session(), url, destination, timeout=2.0, max_bytes=100)
+
+    assert destination.stat().st_size <= 100
+
+
 def test_stream_download_maps_404_to_dataset_download_error(tmp_path: Path) -> None:
     destination = tmp_path / "asset.part"
     with _http_server(statuses=[404]) as (_, url):

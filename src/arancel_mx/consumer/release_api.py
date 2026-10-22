@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import re
 from types import MappingProxyType
 from typing import Any, Mapping
+from urllib.parse import urlparse
 
 import requests
 
@@ -80,6 +81,10 @@ def _parse_asset(value: object, *, tag: str) -> ReleaseAsset:
     if not isinstance(url, str) or not url:
         raise DatasetIntegrityError(f"release asset {name} is missing browser_download_url")
     expected_path = f"/releases/download/{tag}/{name}"
+    parsed = urlparse(url)
+    # The session sends the user's GitHub token, so the download must stay on github.com.
+    if parsed.scheme != "https" or parsed.netloc != "github.com":
+        raise DatasetIntegrityError(f"release asset {name} must download from https://github.com")
     if "/releases/latest/" in url or expected_path not in url:
         raise DatasetIntegrityError(
             f"release asset {name} does not use an exact release download URL"
