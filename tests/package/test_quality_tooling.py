@@ -95,9 +95,9 @@ def test_ci_test_job_keeps_stable_check_run_name_and_python_311() -> None:
     assert "ruff format" not in job
 
 
-def test_fastapi_cloud_runtime_smokes_legacy_national_notes() -> None:
+def test_api_runtime_smokes_legacy_national_notes() -> None:
     workflow = CI.read_text(encoding="utf-8")
-    marker = "  fastapi-cloud-runtime:"
+    marker = "  api-runtime:"
     assert marker in workflow
     runtime = workflow.split(marker, 1)[1]
     assert "/v1/chapters/85/national-notes" in runtime

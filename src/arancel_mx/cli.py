@@ -110,15 +110,37 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_update_arguments(check_updates)
 
-    reconcile = subparsers.add_parser("reconcile", help="Reconcilia evidencia legal arancelaria")
+    reconcile = subparsers.add_parser(
+        "reconcile", help="Reconcilia evidencia legal arancelaria"
+    )
     reconcile.add_argument("--ledger-json", required=True)
     reconcile.add_argument("--dof-json", required=True)
     reconcile.add_argument("--snice-json", required=True)
 
-    release = subparsers.add_parser("release", help="Verifica y prepara artefactos de publicación")
+    release = subparsers.add_parser(
+        "release", help="Verifica y prepara artefactos de publicación"
+    )
     release.add_argument("--release-dir", required=True)
     release.add_argument("--source-dir", required=True)
     release.add_argument("--latest-dir", required=True)
+
+    static_api = subparsers.add_parser(
+        "static-api", help="Genera o verifica la API estática de una release"
+    )
+    static_actions = static_api.add_subparsers(dest="static_action", required=True)
+    static_build = static_actions.add_parser("build", help="Genera la API estática")
+    static_build.add_argument("--dataset", required=True, help="DuckDB de la release")
+    static_build.add_argument("--out", required=True, help="Directorio de salida")
+    static_build.add_argument("--tag", required=True, help="Tag data-YYYY.MM.DD")
+    static_build.add_argument(
+        "--release-verified",
+        action="store_true",
+        help="La release ya fue verificada contra su manifest y SHA256SUMS",
+    )
+    static_verify = static_actions.add_parser(
+        "verify", help="Comprueba los archivos contra su manifest"
+    )
+    static_verify.add_argument("--root", required=True)
     return parser
 
 
@@ -169,6 +191,23 @@ def _dispatch(namespace: argparse.Namespace) -> object:
             Path(namespace.source_dir),
             Path(namespace.latest_dir),
         )
+    if namespace.command == "static-api":
+        from arancel_mx.static_api import build_static_api, verify_static_api
+
+        if namespace.static_action == "build":
+            manifest = build_static_api(
+                Path(namespace.dataset),
+                Path(namespace.out),
+                dataset_tag=namespace.tag,
+                release_verified=namespace.release_verified,
+            )
+            return {key: manifest[key] for key in ("dataset_tag", "record_count")} | {
+                "files": len(manifest["files"])
+            }
+        problems = verify_static_api(Path(namespace.root))
+        if problems:
+            raise ValueError("static API verification failed: " + "; ".join(problems))
+        return {"verified": True}
     raise ValueError(f"Unsupported command: {namespace.command}")
 
 
