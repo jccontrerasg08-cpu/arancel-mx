@@ -9,7 +9,6 @@ import json
 import os
 from pathlib import Path
 import sys
-import tempfile
 from urllib.parse import quote, urlencode
 
 from arancel_mx.certification.bundle import certify_bundle
@@ -17,6 +16,7 @@ from arancel_mx.release.package import (
     PUBLIC_RELEASE_ASSETS,
     sha256,
 )
+from arancel_mx.sources.capture import atomic_write_json
 from scripts.github_api import GitHubApi, GitHubApiError, GitHubNotFound
 
 
@@ -65,35 +65,6 @@ def _sanitize_message(message: object, *extra_secrets: object) -> str:
         text = text[: MAX_DIAGNOSTIC_LENGTH - 3] + "..."
     return text or "publisher failed without an error message"
 
-
-def _atomic_write_json(path: Path, value: Mapping[str, object]) -> None:
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    payload = json.dumps(
-        value,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    ) + "\n"
-    handle = tempfile.NamedTemporaryFile(
-        mode="w",
-        encoding="utf-8",
-        newline="",
-        dir=path.parent,
-        prefix=f".{path.name}.",
-        suffix=".tmp",
-        delete=False,
-    )
-    temporary = Path(handle.name)
-    try:
-        with handle:
-            handle.write(payload)
-            handle.flush()
-            os.fsync(handle.fileno())
-        temporary.replace(path)
-    except Exception:
-        temporary.unlink(missing_ok=True)
-        raise
 
 
 def _release_id(value: Mapping[str, object]) -> int:
@@ -350,7 +321,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         exit_code = 2
 
     try:
-        _atomic_write_json(args.result_path, result)
+        atomic_write_json(args.result_path, result)
     except Exception as write_error:  # noqa: BLE001 - preserve a bounded stderr diagnostic
         print(
             f"error: unable to write publisher diagnostics: "

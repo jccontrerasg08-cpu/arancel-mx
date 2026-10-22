@@ -25,13 +25,25 @@ def _safe_segment(value: object) -> str:
     return segment
 
 
-def _atomic_json(path: Path, payload: Mapping[str, Any]) -> None:
+def atomic_write_json(path: Path, payload: Mapping[str, Any]) -> None:
+    """Write compact, key-sorted JSON so readers never see a partial file."""
+    path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    with NamedTemporaryFile("w", encoding="utf-8", dir=path.parent, delete=False) as handle:
-        json.dump(payload, handle, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
-        handle.write("\n")
-        temporary = Path(handle.name)
-    os.replace(temporary, path)
+    text = json.dumps(payload, ensure_ascii=False, separators=(",", ":"), sort_keys=True) + "\n"
+    handle = NamedTemporaryFile(
+        "w", encoding="utf-8", newline="", dir=path.parent,
+        prefix=f".{path.name}.", suffix=".tmp", delete=False,
+    )
+    temporary = Path(handle.name)
+    try:
+        with handle:
+            handle.write(text)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+    except BaseException:
+        temporary.unlink(missing_ok=True)
+        raise
 
 
 def capture_document(
@@ -74,5 +86,5 @@ def capture_document(
             raise ValueError(f"capture manifest conflict: {manifest_path}")
         payload = existing
     else:
-        _atomic_json(manifest_path, payload)
+        atomic_write_json(manifest_path, payload)
     return CaptureManifest(target, manifest_path, digest, payload)

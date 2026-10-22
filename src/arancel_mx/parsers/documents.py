@@ -223,10 +223,6 @@ def parse_ligie_pdf_hierarchy(
     return sorted(unique, key=lambda row: (rank[row["level"]], row["code"]))
 
 
-def _chapter_entries_from_text(text: str) -> list[tuple[str, str]]:
-    return _chapter_entries_from_pages([text])
-
-
 def _chapter_entries_from_pages(page_texts: list[str]) -> list[tuple[str, str]]:
     entries: list[tuple[str, str]] = []
     heading = re.compile(r"Cap[ií]tulo\s+(\d{2})(?:\s+\([^)]*\))?", re.IGNORECASE)
@@ -283,15 +279,15 @@ def _hierarchy_entries_from_table(
     """
 
     entries: list[tuple[str, str]] = []
-    pending_description = list(pending_description or [])
+    description_parts: list[str] = list(pending_description or [])
 
     def flush() -> None:
-        nonlocal pending_code, pending_description
-        description = _text(" ".join(pending_description))
+        nonlocal pending_code, description_parts
+        description = _text(" ".join(description_parts))
         if pending_code and description:
             entries.append((pending_code, description))
         pending_code = None
-        pending_description = []
+        description_parts = []
 
     for values in table:
         cells = [
@@ -327,7 +323,7 @@ def _hierarchy_entries_from_table(
             ]
             pending_code = code
             if descriptions:
-                pending_description.append(max(descriptions, key=len))
+                description_parts.append(max(descriptions, key=len))
             continue
 
         if pending_code:
@@ -345,7 +341,7 @@ def _hierarchy_entries_from_table(
                 )
             ]
             if continuations:
-                pending_description.append(max(continuations, key=len))
-    if pending_code and not pending_description:
+                description_parts.append(max(continuations, key=len))
+    if pending_code and not description_parts:
         pending_code = None
-    return entries, pending_code, pending_description
+    return entries, pending_code, description_parts

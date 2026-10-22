@@ -19,7 +19,6 @@ from arancel_mx.consumer.cli import register_consumer_commands, run_consumer
 from arancel_mx.consumer.errors import ArancelMXError
 
 
-COMMANDS = ("build", "check-updates", "reconcile", "release")
 _MAINTAINER_HINT = (
     "This command needs the maintainer dependencies. "
     'Install them with: pip install "arancel-mx[maintainer]"'
@@ -148,7 +147,7 @@ def build_parser() -> argparse.ArgumentParser:
 def _json_default(value: object) -> object:
     if hasattr(value, "to_dict"):
         return value.to_dict()
-    if is_dataclass(value):
+    if is_dataclass(value) and not isinstance(value, type):
         return asdict(value)
     if isinstance(value, (date, datetime)):
         return value.isoformat()
@@ -215,10 +214,6 @@ def _dispatch(namespace: argparse.Namespace) -> object:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     arguments = list(argv) if argv is not None else None
-    if arguments == []:
-        parser.print_help()
-        return 0
-
     try:
         namespace = parser.parse_args(arguments)
     except SystemExit as exc:

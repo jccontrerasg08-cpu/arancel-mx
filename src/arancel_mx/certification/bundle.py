@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+from dataclasses import dataclass
 from decimal import Decimal
 import hashlib
 import json
@@ -11,10 +12,22 @@ import tarfile
 from typing import Any
 
 from arancel_mx.certification.consumer import certify_duckdb
-from arancel_mx.certification.reports import CertificationReport
 from arancel_mx.domain.normalization import PUBLIC_COLUMNS
 from arancel_mx.release.metadata import source_identity_from_manifest
 from arancel_mx.release.package import SOURCE_ARCHIVE, verify_publication_bundle
+
+
+
+@dataclass(frozen=True)
+class CertificationReport:
+    """Successful certification result.
+
+    Certification failures raise ``ValueError`` at the first fail-closed boundary;
+    a returned report therefore represents a fully successful certification pass.
+    """
+
+    checks: tuple[str, ...]
+    row_count: int
 
 
 _CAPTURE_FIELDS = (

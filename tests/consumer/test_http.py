@@ -3,7 +3,6 @@ from __future__ import annotations
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-import socket
 import threading
 import time
 from typing import Iterator

@@ -4,11 +4,7 @@ from __future__ import annotations
 
 import re
 
-from arancel_mx.domain.normalization import fold_text
-
-
-def _fold(value: object) -> str:
-    return fold_text(value).casefold()
+from arancel_mx.domain.normalization import fold_key as _fold
 
 
 def normalize_duty(value: str | None) -> str:

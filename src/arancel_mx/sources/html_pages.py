@@ -8,12 +8,11 @@ from html.parser import HTMLParser
 import re
 from urllib.parse import urljoin, urlparse
 
-from arancel_mx.domain.normalization import fold_text
+from arancel_mx.domain.normalization import fold_key as _fold
 from arancel_mx.sources.diputados import parse_ligie_ledger
 from arancel_mx.sources.registry import RegistryEntry, load_source_registry
 from arancel_mx.sources.siicex import (
     SIICEX_HOME_URL,
-    SIICEX_SAMPLE_FRACTION_FIXTURE_URL,
     parse_fraction_document,
     validate_home_html,
 )
@@ -126,10 +125,6 @@ class HtmlAccessTarget:
     url: str
     kind: str
     page_id: str | None = None
-
-
-def _fold(value: object) -> str:
-    return fold_text(value).casefold()
 
 
 def _fold_html(html: str) -> str:
@@ -404,11 +399,7 @@ def validate_vucem_fraction_sheet_html(html: str, *, base_url: str) -> None:
         raise ValueError("VUCEM fraction sheet HTML is missing a fraction description")
 
 
-def validate_siicex_fraction_document_html(
-    html: str,
-    *,
-    base_url: str = SIICEX_SAMPLE_FRACTION_FIXTURE_URL,
-) -> None:
+def validate_siicex_fraction_document_html(html: str) -> None:
     folded = _fold(html)
     if "fraccion" not in folded and "hts code" not in folded:
         raise ValueError("SIICEX fraction document HTML is missing fraction markers")
@@ -529,9 +520,6 @@ def validate_ligie_html_page(page_id: str, html: str, *, base_url: str | None = 
         validate_home_html(html)
         return None
     if page_id == "siicex_fraction_document":
-        validate_siicex_fraction_document_html(
-            html,
-            base_url=base_url or SIICEX_SAMPLE_FRACTION_FIXTURE_URL,
-        )
+        validate_siicex_fraction_document_html(html)
         return None
     raise ValueError(f"unknown LIGIE HTML page id: {page_id}")

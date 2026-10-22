@@ -62,9 +62,11 @@ def _parse_offline(value: object, *, environment: bool = False) -> bool:
 def _parse_timeout(value: object) -> float:
     if isinstance(value, bool):
         raise ValueError("timeout must be greater than zero")
+    if not isinstance(value, (int, float, str)):
+        raise ValueError("timeout must be a number greater than zero")
     try:
         timeout = float(value)
-    except (TypeError, ValueError) as exc:
+    except ValueError as exc:
         raise ValueError("timeout must be a number greater than zero") from exc
     if timeout <= 0:
         raise ValueError("timeout must be greater than zero")

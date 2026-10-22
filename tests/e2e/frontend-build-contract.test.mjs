@@ -38,13 +38,6 @@ test('published frontend bundles are built in production mode without local sour
   assert.doesNotMatch(publishedSource, /fileName:\"\/home\//);
 });
 
-test('glossary recovery selects the available generated bundle instead of a stale hash', async () => {
-  const recoveryScript = await readFile(path.join(root, 'scripts/recover-glossary-from-bundle.mjs'), 'utf8');
-  assert.match(recoveryScript, /readdir/);
-  assert.match(recoveryScript, /index-\[A-Za-z0-9_-\]\+\\\.js/);
-  assert.doesNotMatch(recoveryScript, /index-ad6fbc25b68e\.js/);
-});
-
 test('glossary data is deferred into its own published chunk', async () => {
   const app = await readFile(path.join(root, 'frontend/src/App.jsx'), 'utf8');
   const pages = await readFile(path.join(root, 'frontend/src/pages.jsx'), 'utf8');

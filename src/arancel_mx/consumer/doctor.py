@@ -73,7 +73,7 @@ def _package_checks() -> list[DiagnosticCheck]:
                 "distribution_metadata",
                 "pass",
                 "installed distribution metadata is readable",
-                name=distribution.metadata.get("Name", "arancel-mx"),
+                name=distribution.name or "arancel-mx",
             )
         )
     except metadata.PackageNotFoundError:
@@ -152,7 +152,7 @@ def _cache_writable_check(cache_dir: Path) -> DiagnosticCheck:
 def _dataset_checks(
     config: ConsumerConfig,
     manager: DatasetManager,
-) -> tuple[list[DiagnosticCheck], str | None, Path | None]:
+) -> list[DiagnosticCheck]:
     checks: list[DiagnosticCheck] = []
     selected: str | None = None
     path: Path | None = None
@@ -181,7 +181,7 @@ def _dataset_checks(
     if path is None:
         checks.append(_check("duckdb_query", "fail", "read-only dataset query cannot run without verified data"))
         checks.append(_check("offline_readiness", "fail", "offline mode has no usable verified dataset"))
-        return checks, selected, None
+        return checks
 
     try:
         with duckdb_connect(path, read_only=True) as connection:
@@ -210,7 +210,7 @@ def _dataset_checks(
     except (duckdb.Error, OSError):
         checks.append(_check("duckdb_query", "fail", "read-only DuckDB query failed"))
         checks.append(_check("offline_readiness", "fail", "verified dataset is not ready for offline queries"))
-    return checks, selected, path
+    return checks
 
 
 def _network_check(config: ConsumerConfig, manager: DatasetManager) -> DiagnosticCheck:
@@ -235,7 +235,7 @@ def run_doctor(
     active_manager = manager if manager is not None else DatasetManager(config)
     checks = _package_checks()
     checks.append(_cache_writable_check(config.cache_dir))
-    dataset_checks, _, _ = _dataset_checks(config, active_manager)
+    dataset_checks = _dataset_checks(config, active_manager)
     checks.extend(dataset_checks)
     checks.append(_network_check(config, active_manager))
     if any(check.status == "fail" for check in checks):
