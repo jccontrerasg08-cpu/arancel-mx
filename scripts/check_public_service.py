@@ -1,4 +1,4 @@
-"""Read-only public contract canary for the deployed arancel-mx service."""
+"""Read-only canary for the static data API that the public site serves under /data/v1."""
 
 from __future__ import annotations
 
@@ -48,10 +48,16 @@ class LatencyProbeResult:
     samples: tuple[LatencySample, ...]
 
 
+DATA_PREFIX = "/data/v1"
+_META_PATH = f"{DATA_PREFIX}/meta.json"
+_MANIFEST_PATH = f"{DATA_PREFIX}/manifest.json"
+_RECORDS_PATH = f"{DATA_PREFIX}/records/85.json"
+_SEARCH_INDEX_PATH = f"{DATA_PREFIX}/search-index.json"
+
 _LATENCY_PATHS = (
-    "/v1/meta",
-    "/v1/search?q=reproductores&limit=1",
-    "/v1/suggest?q=reproductores&limit=1",
+    _META_PATH,
+    _SEARCH_INDEX_PATH,
+    _RECORDS_PATH,
 )
 
 
@@ -68,17 +74,17 @@ def _json_response(session: Session, base_url: str, path: str, *, timeout: float
     return response.json()
 
 
-def _require_record(payload: object, path: str) -> dict[str, Any]:
+def _require_object(payload: object, path: str) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise ValueError(f"{path} must return an object")
     return payload
 
 
-def _require_nico_without_rates(record: dict[str, Any], path: str) -> None:
-    if record.get("level") != "nico10" or len(str(record.get("code") or "")) != 10:
-        raise ValueError(f"{path} must return a 10-digit NICO")
-    if record.get("igi") is not None or record.get("ige") is not None:
-        raise ValueError(f"{path} must not expose IGI or IGE for a NICO")
+def _require_text(payload: dict[str, Any], field: str, path: str) -> str:
+    value = payload.get(field)
+    if not isinstance(value, str) or not value:
+        raise ValueError(f"{path} must declare {field}")
+    return value
 
 
 def check_public_contract(
@@ -87,85 +93,47 @@ def check_public_contract(
     base_url: str = DEFAULT_BASE_URL,
     timeout: float = 20.0,
 ) -> PublicContractResult:
-    """Verify the public release, NICO hierarchy, evidence, and discovery surfaces."""
+    """Verify the static data API files that the public site serves under /data/v1."""
 
-    meta = _require_record(_json_response(session, base_url, "/v1/meta", timeout=timeout), "/v1/meta")
-    dataset_version = meta.get("dataset_version")
-    if not isinstance(dataset_version, str) or not dataset_version:
-        raise ValueError("/v1/meta must declare dataset_version")
-    if meta.get("release_verified") is not True or meta.get("structural_valid") is not True:
-        raise ValueError("/v1/meta must declare a verified, structurally valid release")
+    meta = _require_object(
+        _json_response(session, base_url, _META_PATH, timeout=timeout), _META_PATH
+    )
+    dataset_tag = _require_text(meta, "dataset_tag", _META_PATH)
+    dataset_version = _require_text(meta, "dataset_version", _META_PATH)
+    if meta.get("release_verified") is not True:
+        raise ValueError(f"{_META_PATH} must declare a verified release")
 
-    lookup = _require_record(
-        _json_response(session, base_url, "/v1/lookup/0101210100", timeout=timeout),
-        "/v1/lookup/0101210100",
+    manifest = _require_object(
+        _json_response(session, base_url, _MANIFEST_PATH, timeout=timeout),
+        _MANIFEST_PATH,
     )
-    _require_nico_without_rates(lookup, "/v1/lookup/0101210100")
-    if lookup.get("dataset_version") != dataset_version:
-        raise ValueError("lookup dataset_version must match /v1/meta")
+    if manifest.get("dataset_tag") != dataset_tag:
+        raise ValueError(f"{_MANIFEST_PATH} dataset_tag must match {_META_PATH}")
+    files = manifest.get("files")
+    if not isinstance(files, dict) or "records/85.json" not in files:
+        raise ValueError(f"{_MANIFEST_PATH} must list every static file")
 
-    ficha = _require_record(
-        _json_response(session, base_url, "/v1/ficha/0101210100", timeout=timeout),
-        "/v1/ficha/0101210100",
-    )
-    record = _require_record(ficha.get("record"), "/v1/ficha/0101210100.record")
-    _require_nico_without_rates(record, "/v1/ficha/0101210100.record")
-    hierarchy = ficha.get("hierarchy")
-    if not isinstance(hierarchy, list):
-        raise ValueError("/v1/ficha/0101210100 must contain hierarchy")
-    fraction = next(
-        (
-            item
-            for item in hierarchy
-            if isinstance(item, dict) and item.get("level") == "fraccion8" and len(str(item.get("code") or "")) == 8
-        ),
-        None,
-    )
-    if not isinstance(fraction, dict) or fraction.get("igi") is None or fraction.get("ige") is None:
-        raise ValueError("NICO ficha hierarchy must retain the parent fraction's published rates")
-    if fraction.get("dataset_version") != dataset_version:
-        raise ValueError("NICO ficha parent fraction dataset_version must match /v1/meta")
-    if record.get("dataset_version") != dataset_version:
-        raise ValueError("ficha dataset_version must match /v1/meta")
+    records = _json_response(session, base_url, _RECORDS_PATH, timeout=timeout)
+    if not isinstance(records, list) or not records:
+        raise ValueError(f"{_RECORDS_PATH} must return a non-empty array")
+    for record in records:
+        if not isinstance(record, dict) or not str(record.get("code") or "").startswith("85"):
+            raise ValueError(f"{_RECORDS_PATH} must contain only chapter 85 records")
+        if record.get("dataset_version", dataset_version) != dataset_version:
+            raise ValueError(f"{_RECORDS_PATH} dataset_version must match {_META_PATH}")
 
-    provenance = _json_response(
-        session,
-        base_url,
-        "/v1/codes/01012101/provenance",
-        timeout=timeout,
+    search_index = _require_object(
+        _json_response(session, base_url, _SEARCH_INDEX_PATH, timeout=timeout),
+        _SEARCH_INDEX_PATH,
     )
-    if not isinstance(provenance, list) or not provenance:
-        raise ValueError("provenance endpoint must return at least one active source record")
-
-    notes = _json_response(
-        session,
-        base_url,
-        "/v1/chapters/01/national-notes",
-        timeout=timeout,
-    )
-    if not isinstance(notes, list):
-        raise ValueError("national-notes endpoint must return an array")
-
-    suggestion = _json_response(
-        session,
-        base_url,
-        "/v1/suggest?q=reproductores&limit=1",
-        timeout=timeout,
-    )
-    if not isinstance(suggestion, list) or not suggestion:
-        raise ValueError("suggest endpoint must return a retrieve-only match")
+    entries = search_index.get("entries")
+    if not isinstance(entries, list) or not entries:
+        raise ValueError(f"{_SEARCH_INDEX_PATH} must contain retrieve-only entries")
 
     return PublicContractResult(
         base_url=base_url.rstrip("/"),
         dataset_version=dataset_version,
-        checked_paths=(
-            "/v1/meta",
-            "/v1/lookup/0101210100",
-            "/v1/ficha/0101210100",
-            "/v1/codes/01012101/provenance",
-            "/v1/chapters/01/national-notes",
-            "/v1/suggest?q=reproductores&limit=1",
-        ),
+        checked_paths=(_META_PATH, _MANIFEST_PATH, _RECORDS_PATH, _SEARCH_INDEX_PATH),
     )
 
 
@@ -177,7 +145,7 @@ def measure_public_latency(
     samples: int = 3,
     clock: Callable[[], float] = monotonic,
 ) -> LatencyProbeResult:
-    """Measure promoted GET routes without changing service data or configuration."""
+    """Measure static data API GETs without changing service data or configuration."""
 
     if samples < 1:
         raise ValueError("samples must be at least 1")

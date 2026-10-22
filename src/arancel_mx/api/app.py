@@ -6,6 +6,8 @@ from collections.abc import Callable, Mapping
 from contextlib import asynccontextmanager
 import logging
 from pathlib import Path
+import tempfile
+import threading
 from uuid import uuid4
 
 from fastapi import FastAPI, Request
@@ -336,6 +338,44 @@ def create_app(
         """Serve the React explorer and its durable client-side routes."""
 
         return marketing_page()
+
+    static_lock = threading.Lock()
+
+    def static_root() -> Path:
+        """Build the release's static data tree once, on first request."""
+
+        with static_lock:
+            root = getattr(application.state, "static_root", None)
+            if root is not None:
+                return root
+            dataset = application.state.dataset
+            if (
+                not application.state.ready
+                or dataset is None
+                or dataset.info.path is None
+            ):
+                raise DatasetUnavailableError("verified dataset is not ready")
+            from arancel_mx.static_api import build_static_api
+
+            root = Path(tempfile.mkdtemp(prefix="arancel-mx-static-")) / "v1"
+            build_static_api(
+                Path(dataset.info.path),
+                root,
+                dataset_tag=application.state.settings.dataset_tag,
+                release_verified=bool(dataset.info.release_verified),
+            )
+            application.state.static_root = root.resolve()
+            return application.state.static_root
+
+    @application.get("/data/v1/{file_path:path}", include_in_schema=False)
+    def static_data(file_path: str) -> FileResponse:
+        """Serve the static data API (decision 0002) for local and self-hosted use."""
+
+        root = static_root()
+        target = (root / file_path).resolve()
+        if not target.is_relative_to(root) or not target.is_file():
+            raise StarletteHTTPException(status_code=404)
+        return FileResponse(target, media_type="application/json")
 
     @application.get(
         "/readyz",

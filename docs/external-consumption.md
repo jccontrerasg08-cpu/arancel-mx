@@ -1,8 +1,8 @@
 # Contrato de consumo externo
 
-Esta es la guía canónica para aplicaciones que consumen `arancel-mx` mediante releases verificadas, Python, CLI o la API HTTP pública. El **front door público** es [`https://arancel-mx.vercel.app/`](https://arancel-mx.vercel.app/), mientras GitHub Releases conserva la identidad canónica del dataset.
+Esta es la guía canónica para aplicaciones que consumen `arancel-mx` mediante releases verificadas, Python, CLI o HTTP. El **front door público** es [`https://arancel-mx.vercel.app/`](https://arancel-mx.vercel.app/); GitHub Releases conserva la identidad canónica del dataset y GitHub Pages sirve su API estática.
 
-**[Hub](https://arancel-mx.vercel.app/)** · **[Documentación API](https://arancel-mx.vercel.app/documentation)** · **[Metadata](https://arancel-mx.vercel.app/v1/meta)** · **[Readiness](https://arancel-mx.vercel.app/readyz)** · **[Última release](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest)**
+**[Hub](https://arancel-mx.vercel.app/)** · **[Documentación API](https://arancel-mx.vercel.app/documentation)** · **[Metadata](https://arancel-mx.vercel.app/data/v1/meta.json)** · **[Última release](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest)** · **[Arquitectura](architecture.md)**
 
 ## Qué es y qué no es arancel-mx
 
@@ -15,7 +15,8 @@ No es un motor de clasificación, una resolución aduanera ni asesoría legal. `
 | SQL, BI, ETL o notebooks | DuckDB/CSV/JSON de una release `data-YYYY.MM.DD` |
 | Aplicación Python | `Dataset.version("data-YYYY.MM.DD")` |
 | Terminal o automatización local | CLI `arancel-mx` |
-| Servicio o UI remota | `https://arancel-mx.vercel.app/v1/...` |
+| Servicio o UI remota | API estática `https://arancel-mx.vercel.app/data/v1/...` |
+| Servicio propio con rutas dinámicas | `arancel_mx.api` sobre una release fijada |
 | Auditoría | `manifest.json`, `SHA256SUMS`, `provenance` y fuentes capturadas |
 
 ## Instalar y fijar versiones
@@ -136,31 +137,43 @@ Los siguientes ejemplos existen para fijar semántica de tests y documentación.
 
 ### API HTTP pública
 
-Usa un solo origen público:
+La API pública es un conjunto de archivos JSON estáticos que el pipeline genera para cada release verificada y publica en GitHub Pages. Es **GET-only**, **read-only**, no requiere API key y responde con CORS abierto. El hub la expone en el mismo dominio:
 
 ```bash
 export ARANCEL_MX_API_URL="https://arancel-mx.vercel.app"
-curl "$ARANCEL_MX_API_URL/readyz"
-curl "$ARANCEL_MX_API_URL/v1/meta"
-curl "$ARANCEL_MX_API_URL/v1/search?q=telefonos&limit=5"
-curl "$ARANCEL_MX_API_URL/v1/lookup/8517130100"
+curl "$ARANCEL_MX_API_URL/data/v1/meta.json"
+curl "$ARANCEL_MX_API_URL/data/v1/chapters.json"
+curl "$ARANCEL_MX_API_URL/data/v1/records/85.json"
+curl "$ARANCEL_MX_API_URL/data/v1/search-index.json"
+curl "$ARANCEL_MX_API_URL/data/v1/manifest.json"
 ```
 
-La guía local de rutas y límites está en [`/documentation`](https://arancel-mx.vercel.app/documentation). La superficie `/v1` pública es **GET-only**, **read-only** y no requiere API key para las rutas promovidas.
+| Archivo | Equivale a |
+|---|---|
+| `meta.json` | `/v1/meta`: identidad del dataset servido. |
+| `records/{hs2}.json` | `/v1/lookup/{code}`, `/v1/ficha/{code}`, padre e hijos: todos los registros del capítulo, con el mismo modelo de respuesta. |
+| `provenance/{hs2}.json` | `/v1/codes/{code}/provenance`. |
+| `national-notes/{hs2}.json` | `/v1/chapters/{chapter}/national-notes`. |
+| `sections.json`, `chapters.json` | `/v1/sections`, `/v1/chapters`. |
+| `search-index.json` | `/v1/search` y `/v1/suggest`, evaluados por el cliente. |
+| `manifest.json` | SHA-256 y tamaño de cada archivo, más la release de origen. |
 
-La arquitectura pública conserva una única fuente de verdad:
+Para buscar `8517130100`, abre `records/85.json` y filtra por `code`. El cliente de navegador [`frontend/src/static-api.js`](../frontend/src/static-api.js) reproduce `lookup`, `ficha`, `parent`, `children`, `provenance`, `search` y `suggest` sobre estos archivos, y sus resultados se prueban contra el `Dataset` de Python. Cada archivo se puede verificar contra `manifest.json`; el origen directo, sin pasar por Vercel, es `https://jccontrerasg08-cpu.github.io/arancel-mx/v1/`.
 
-```text
-GitHub Release verificada
-          ↓
-sincronización operacional
-          ↓
-        Neon
-          ↓
-Vercel: rutas read-only promovidas y hub local de documentación
-```
+La guía de rutas y límites está en [`/documentation`](https://arancel-mx.vercel.app/documentation). El sitio no actúa como proxy de un servicio de terceros: Vercel sólo reescribe `/data/v1` hacia GitHub Pages del mismo proyecto. **La GitHub Release verificada sigue siendo la fuente canónica; Pages y Vercel sólo la distribuyen.**
 
-`/v1/meta`, `/v1/search`, `/v1/suggest`, `/v1/ficha/{code}`, `/v1/lookup/{code}`, `/v1/sections`, `/v1/chapters`, las relaciones padre/hijos, `provenance`, notas nacionales y `/readyz` se resuelven en la capa operacional read-only de Vercel respaldada por Neon. Las rutas `/v1/*` no promovidas responden localmente sin un proxy externo. El sitio no actúa como proxy de un servicio de terceros. **Vercel y Neon son superficies de servicio; la GitHub Release verificada sigue siendo la fuente canónica.**
+#### Rutas dinámicas `/v1`
+
+Las rutas `/v1/meta`, `/v1/search?q=…`, `/v1/lookup/8517130100` y `/readyz` existen en dos lugares:
+
+- **En tu propio servidor.** El paquete incluye un servidor FastAPI GET-only:
+
+  ```bash
+  ARANCEL_MX_API_DATASET=data-YYYY.MM.DD uvicorn arancel_mx.api.app:app
+  ```
+
+  `/readyz` responde *ready* sólo cuando la release fijada se descargó y verificó.
+- **En `https://arancel-mx.vercel.app/v1/...`.** Ese despliegue usa funciones de Vercel sobre Neon y está deprecado. Responde con encabezados `Deprecation` y `Sunset` y se retira el 2027-01-31. Si dependes de él, migra a `/data/v1` siguiendo la [guía de retiro](operations/v1-sunset.md).
 
 ## Autoingesta
 
@@ -189,7 +202,7 @@ No infieras del dataset o de la API medidas que el contrato no publica. Entre ot
 - NOM, permisos, franja/región, TLC/T-MEC o PROSEC como un motor de cumplimiento;
 - una resolución de clasificación;
 - una API de escritura o administración;
-- Postgres/Neon como fuente canónica del dataset;
+- una copia en Postgres u otra base como fuente canónica del dataset;
 - SIICEX, VUCEM, RGCE o dumps `tigieX` como sustitutos de la identidad LIGIE/NICO de la release;
 - interpretación jurídica automática de fuentes auxiliares.
 
@@ -215,5 +228,5 @@ Las publicaciones de Cámara de Diputados, DOF, SNICE, ANAM u otras autoridades 
 - [Fuentes y reconciliación](sources.md): cadena de confianza y goldens de contraste.
 - [Proceso de release](release-process.md): publicación autónoma y fail-closed.
 - [Release del paquete](package-release.md): estado PyPI/TestPyPI y separación código/datos.
-- [Visión del proyecto](project-overview.md): arquitectura y fronteras.
+- [Arquitectura](architecture.md): piezas, flujo de publicación y fronteras.
 - [Centro de documentación](README.md): índice completo por intención.

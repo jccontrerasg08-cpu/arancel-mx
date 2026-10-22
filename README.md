@@ -33,10 +33,10 @@ La experiencia interactiva vive en **[arancel-mx.vercel.app](https://arancel-mx.
 | Analizar muchas filas con SQL, BI, notebooks o ETL | **Datos / DuckDB** | `arancel-mx data download` |
 | Consultar códigos y fichas rápidamente | **CLI** | `arancel-mx lookup 01012101` |
 | Integrar datos en una aplicación | **Python** | `from arancel_mx import Dataset` |
-| Consumir una interfaz GET-only/read-only | **HTTP / API** | `GET /v1/meta`, `/v1/search`, `/v1/lookup/...` |
+| Consumir una interfaz GET-only/read-only | **HTTP / API** | `GET /data/v1/meta.json`, `/data/v1/records/85.json` |
 | Comprobar cómo se produjo un resultado | **Auditoría y reproducción** | `manifest.json`, `SHA256SUMS`, `provenance`, `data verify` |
 
-La **API HTTP pública** es **GET-only**, **read-only** y funciona **sin API key**. El hub local de rutas y límites vive en `/documentation`; `/readyz` reporta readiness y `/v1/meta` identifica el dataset servido.
+La **API HTTP pública** es **GET-only**, **read-only** y funciona **sin API key**: son archivos JSON estáticos que GitHub Pages publica con cada release y que el hub sirve en `/data/v1`. El hub de rutas y límites vive en `/documentation`.
 
 El paquete Python y el dataset se versionan por separado. Una versión del paquete no fija los datos: las releases del dataset usan tags inmutables `data-YYYY.MM.DD`.
 
@@ -52,12 +52,11 @@ arancel-mx lookup 01012101
 arancel-mx data verify
 ```
 
-O usa el mismo front door HTTP público:
+O lee la API estática desde el mismo dominio (el capítulo 85 contiene `8517130100`):
 
 ```bash
-curl "https://arancel-mx.vercel.app/v1/meta"
-curl "https://arancel-mx.vercel.app/v1/search?q=telefonos&limit=5"
-curl "https://arancel-mx.vercel.app/v1/lookup/8517130100"
+curl "https://arancel-mx.vercel.app/data/v1/meta.json"
+curl "https://arancel-mx.vercel.app/data/v1/records/85.json"
 ```
 
 Para formatos, caché, modo offline y selección explícita de dataset, sigue el [inicio rápido](docs/consumer-quickstart.md) y la [referencia CLI](docs/consumer-cli.md).
@@ -84,7 +83,7 @@ GitHub Release inmutable
   <img src="docs/assets/pipeline.svg" alt="Pipeline de fuentes oficiales a una release verificable" width="900" />
 </p>
 
-El hub de Vercel es una **superficie de consumo**. Las rutas `/v1` promovidas usan la capa operacional read-only sincronizada con releases verificadas; las rutas no promovidas responden localmente sin depender de un proxy externo. La **release verificada sigue siendo la fuente de verdad**.
+GitHub Actions construye y publica; GitHub guarda la release y sirve su API estática; Vercel sólo sirve el sitio. La **release verificada sigue siendo la fuente de verdad** ([arquitectura](docs/architecture.md)).
 
 Profundiza en [roles de fuentes oficiales](docs/official-source-roles.md), [fuentes y reconciliación](docs/sources.md), [modelo de datos](docs/data-model.md) y [proceso de release](docs/release-process.md).
 
@@ -97,7 +96,7 @@ Profundiza en [roles de fuentes oficiales](docs/official-source-roles.md), [fuen
 | Entender HS → fracción MX → NICO | [Guía NICO/LIGIE](docs/nico-ligie-guide.md) |
 | Entender procedencia y promoción de fuentes | [Roles oficiales](docs/official-source-roles.md) · [Fuentes](docs/sources.md) · [Promoción SNICE_DOCS](docs/source-promotion.md) |
 | Consultar el contexto oficial de comercio exterior sin mezclarlo con la tarifa | [Mapa de cobertura oficial de comercio exterior](docs/research/external-trade-coverage-map.md) |
-| Entender el proyecto y sus fronteras | [Visión del proyecto](docs/project-overview.md) |
+| Entender el proyecto y sus fronteras | [Visión del proyecto](docs/project-overview.md) · [Arquitectura](docs/architecture.md) |
 | Navegar toda la documentación | **[Centro de documentación](docs/README.md)** |
 
 ## Alcance

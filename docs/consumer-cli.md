@@ -1,12 +1,10 @@
-# Consumer CLI
+# CLI de consumo
 
-`arancel-mx` exposes a consumer-first command line for downloading, verifying, querying, and diagnosing published Mexican tariff datasets without cloning the repository.
+`arancel-mx` ofrece una línea de comandos pensada primero para consumidores: descarga, verifica, consulta y diagnostica los datasets arancelarios mexicanos publicados sin clonar el repositorio. La CLI de consumo ya está implementada en el paquete y `pip install arancel-mx` es la ruta pública de instalación vigente. Quien contribuya desde un checkout debe usar la instalación editable de desarrollo documentada en el README.
 
-> The consumer CLI is implemented in the package now. `pip install arancel-mx` is the current public install path. Contributors working from a checkout should use the editable development install documented in the README.
+## Instalación y primera ejecución
 
-## Install and first run
-
-Python 3.11 or newer is required.
+Se requiere Python 3.11 o posterior.
 
 ```bash
 pip install arancel-mx
@@ -22,18 +20,18 @@ arancel-mx suggest "camisas de algodón de punto"
 arancel-mx data verify
 ```
 
-`data download` resolves one exact public `data-YYYY.MM.DD` release, downloads its required assets, verifies integrity, and only then promotes the dataset into the local cache. A failed or partial download is not promoted as usable data.
+`data download` resuelve una release pública exacta `data-YYYY.MM.DD`, descarga sus assets obligatorios, verifica la integridad y sólo entonces promueve el dataset a la caché local. Una descarga fallida o parcial nunca se promueve como datos utilizables.
 
-## Package version and dataset version
+## Versión del paquete y versión del dataset
 
-The package version and dataset version are independent identifiers.
+La versión del paquete y la versión del dataset son identificadores independientes.
 
-- **package version**: the Python distribution and CLI implementation, reported by `arancel-mx --version`. PyPI currently publishes `0.3.6`. The checkout declares `0.3.7`; the prior `0.3.3`, `0.3.4`, and `0.3.5` candidates remain TestPyPI-only and are not eligible for PyPI promotion.
-- **dataset version**: an immutable public tariff-data release named `data-YYYY.MM.DD`. `/releases/latest` currently resolves to `data-2026.08.17`.
+- **Versión del paquete:** la distribución de Python y la implementación de la CLI, que reporta `arancel-mx --version`. PyPI publica actualmente `0.3.6`. El checkout declara `0.3.7`; los candidatos anteriores `0.3.3`, `0.3.4` y `0.3.5` siguen sólo en TestPyPI y no son elegibles para promoverse a PyPI.
+- **Versión del dataset:** una release pública e inmutable de datos arancelarios con nombre `data-YYYY.MM.DD`. `/releases/latest` resuelve actualmente a `data-2026.08.17`.
 
-Updating the Python package does not silently replace a pinned dataset version. Publishing a new dataset release does not require changing the package version.
+Actualizar el paquete de Python no reemplaza en silencio una versión de dataset fijada. Publicar una nueva release de datos no exige cambiar la versión del paquete.
 
-To select an exact data release instead of the default latest selection:
+Para elegir una release de datos exacta en lugar de la selección predeterminada (la más reciente):
 
 ```bash
 arancel-mx data download --dataset data-YYYY.MM.DD
@@ -42,13 +40,13 @@ arancel-mx data verify --dataset data-YYYY.MM.DD
 arancel-mx suggest "reproductores" --dataset arancel_mx.duckdb
 ```
 
-`--dataset` also opens a local `.duckdb` file (`Dataset.open`). That path is structurally validated, not `release_verified`.
+`--dataset` también abre un archivo `.duckdb` local (`Dataset.open`). Esa ruta se valida estructuralmente, pero no queda como `release_verified`.
 
-The same pin can be supplied through `ARANCEL_MX_DATASET`.
+La misma fijación puede darse con `ARANCEL_MX_DATASET`.
 
-## Offline use
+## Uso sin conexión
 
-After a dataset has been downloaded and verified, query commands can operate without network access:
+Después de descargar y verificar un dataset, los comandos de consulta pueden funcionar sin acceso a la red:
 
 ```bash
 arancel-mx lookup 01012101 --offline
@@ -58,13 +56,13 @@ arancel-mx data verify --offline --format json
 arancel-mx doctor --offline --json
 ```
 
-Offline mode is strict. It uses verified local data only and does not fall back to a network request. If the requested dataset is unavailable or fails local verification, the command fails instead of downloading another release.
+El modo sin conexión es estricto. Sólo usa datos locales verificados y nunca recurre a una petición de red. Si el dataset solicitado no está disponible o falla la verificación local, el comando falla en lugar de descargar otra release.
 
-Offline mode can also be enabled for a process or shell with `ARANCEL_MX_OFFLINE=1`. Explicit CLI flags take precedence: `--no-offline` forces network access even when that environment variable is set.
+El modo sin conexión también puede activarse para un proceso o una shell con `ARANCEL_MX_OFFLINE=1`. Los flags explícitos de la CLI tienen prioridad: `--no-offline` fuerza el acceso a la red aunque esa variable de entorno esté definida.
 
-## Machine-readable output
+## Salida legible por máquina
 
-Query and data commands support deterministic table, JSON, and CSV output where applicable.
+Los comandos de consulta y de datos admiten salida determinista en tabla, JSON y CSV cuando aplica.
 
 ```bash
 arancel-mx lookup 01012101 --format json
@@ -74,9 +72,9 @@ arancel-mx data list --format csv
 arancel-mx data verify --format json
 ```
 
-Use `--format json` for structured automation and `--format csv` for row-oriented interchange. `data path` intentionally prints only the selected local DuckDB path so it can be consumed directly by scripts.
+Usa `--format json` para automatización estructurada y `--format csv` para intercambio por filas. `data path` imprime a propósito sólo la ruta del DuckDB local seleccionado, para que los scripts la consuman directamente.
 
-## Query commands
+## Comandos de consulta
 
 ```bash
 arancel-mx lookup 01012101
@@ -95,18 +93,21 @@ arancel-mx wco cite 61
 arancel-mx wco download 61
 ```
 
-- `lookup` resolves an exact normalized tariff code.
-- `ficha` returns the SIICEX-style hierarchy card (section grouping, chapter → heading → subheading → fraction/NICO, UM, IGI, IGE) from the verified official dataset only. IGI/IGE are the official `igi_text` / `ige_text` values (for example `10` and `Ex.`), not rewritten percentages. Codes absent from the current official snapshot fail closed.
-- `chapters` lists current HS2 chapters.
-- `search` ranks current records. Exact code and code-prefix ranking are unchanged. Description queries rank matching HS2 chapters first, then rank current rows under those chapters. Results include `scorer_version` (`"1"`; bump when ranking changes) and a 0–1 `confidence` for analytics. `search` is not a classification.
-- `suggest` uses the same description narrowing and prints ficha plus national notes from `arancel_mx_national_notes` when that view has rows (`data-2026.08.15` contains 266 records) for the top N hits, preferring `fraccion8`. `arancel-mx suggest "camisas de algodón de punto"` / `Dataset.suggest(text, limit=5)`. Retrieve-only: it does not claim a classification. A human, or their own model, classifies; evidence stays in the official dataset.
-- `wco cite` prints the WCO HS 2022 PDF URL and local cache path if present; it never downloads. `wco download` stores the PDF in the local cache (`--offline` fails closed if missing). WCO PDFs are reading support only, not LIGIE/NICO authority. `arancel-mx wco cite gir` cites the GIR PDF.
-- `parent` returns the direct parent in the HS2 → HS4 → HS6 → MX8 → NICO10 hierarchy.
-- `children` returns direct children of a code.
-- `provenance` returns the recorded source traceability for the selected code.
-- `compare` diffs one HS6, MX8, or NICO code from the verified GitHub `data-*` dataset against the VUCEM classifier sheet (`buildHojas1/{mx8}.html`). HS6 has no VUCEM page, so children MX8/NICO are compared. VUCEM is informative, not legal identity. `--offline` skips the third-party fetch. `compare` is a verification aid, not a classifier.
+| Comando | Qué hace |
+|---|---|
+| `lookup` | Resuelve un código arancelario normalizado exacto. |
+| `ficha` | Devuelve la ficha jerárquica al estilo SIICEX (agrupación por sección, capítulo → partida → subpartida → fracción/NICO, UM, IGI, IGE), sólo a partir del dataset oficial verificado. IGI/IGE son los valores oficiales `igi_text` / `ige_text` (por ejemplo `10` y `Ex.`), no porcentajes reescritos. Los códigos ausentes del snapshot oficial vigente fallan cerrado. |
+| `chapters` | Lista los capítulos HS2 vigentes. |
+| `search` | Ordena los registros vigentes. El orden por código exacto y por prefijo de código no cambia. Las consultas por descripción ordenan primero los capítulos HS2 que coinciden y después las filas vigentes de esos capítulos. Los resultados incluyen `scorer_version` (`"1"`; se incrementa cuando cambia el orden) y un `confidence` de 0 a 1 para analítica. `search` no es una clasificación. |
+| `suggest` | Usa el mismo acotamiento por descripción e imprime la ficha y las notas nacionales de `arancel_mx_national_notes`, cuando esa vista tiene filas (`data-2026.08.15` contiene 266 registros), para los primeros N resultados, con preferencia por `fraccion8`. Ejemplos: `arancel-mx suggest "camisas de algodón de punto"` / `Dataset.suggest(text, limit=5)`. Es retrieve-only: no afirma una clasificación. Clasifica una persona, o su propio modelo; la evidencia permanece en el dataset oficial. |
+| `wco cite` | Imprime la URL del PDF del SA 2022 de la OMA (WCO HS 2022) y la ruta en la caché local si existe; nunca descarga. `arancel-mx wco cite gir` cita el PDF de las RGI (GIR). |
+| `wco download` | Guarda el PDF en la caché local (`--offline` falla cerrado si falta). Los PDF de la OMA sólo sirven de apoyo de lectura; no son autoridad sobre la LIGIE ni los NICO. |
+| `parent` | Devuelve el padre directo en la jerarquía HS2 → HS4 → HS6 → MX8 → NICO10. |
+| `children` | Devuelve los hijos directos de un código. |
+| `provenance` | Devuelve la trazabilidad de fuente registrada para el código seleccionado. |
+| `compare` | Compara un código HS6, MX8 o NICO del dataset `data-*` verificado de GitHub contra la hoja del clasificador de VUCEM (`buildHojas1/{mx8}.html`). HS6 no tiene página en VUCEM, así que se comparan sus hijos MX8/NICO. VUCEM es informativo, no identidad legal. `--offline` omite la consulta al tercero. `compare` es una ayuda de verificación, no un clasificador. |
 
-The same normalization and query semantics are shared by the public Python consumer layer and CLI.
+La capa pública de consumo en Python y la CLI comparten la misma normalización y la misma semántica de consulta.
 
 ```python
 from arancel_mx import Dataset
@@ -119,7 +120,7 @@ for node in card.hierarchy:
 dataset.suggest("camisas de algodón de punto", limit=5)  # retrieve-only; not a classification
 ```
 
-## Dataset lifecycle commands
+## Ciclo de vida del dataset
 
 ```bash
 arancel-mx data status
@@ -133,63 +134,71 @@ arancel-mx data verify --online
 arancel-mx data verify --bundle
 ```
 
-`data update` is idempotent when the newest valid release is already cached and it does not delete older verified versions. `data verify` is local by default. `--online` compares the cached metadata with the exact remote release. `--bundle` temporarily verifies the complete six-asset public release contract.
+`data update` es idempotente cuando la release válida más reciente ya está en caché y no borra versiones verificadas anteriores. `data verify` es local por omisión. `--online` compara los metadatos en caché con la release remota exacta. `--bundle` verifica temporalmente el contrato completo de seis assets de la release pública.
 
-## Doctor
+## Diagnóstico con `doctor`
 
-Run diagnostics after installation or when a dataset cannot be queried:
+Ejecuta el diagnóstico después de instalar o cuando no se pueda consultar un dataset:
 
 ```bash
 arancel-mx doctor
 arancel-mx doctor --json
 ```
 
-`doctor` checks distribution metadata, the console entrypoint, Python/platform information, the packaged source registry, cache writability, local dataset verification, read-only DuckDB access, an actual query, offline readiness, and public release metadata when network access is enabled.
+`doctor` revisa los metadatos de la distribución, el entrypoint de consola, la información de Python y plataforma, el registro de fuentes empaquetado, que la caché admita escritura, la verificación del dataset local, el acceso de sólo lectura a DuckDB, una consulta real, la preparación para uso sin conexión y, cuando hay acceso a la red, los metadatos de la release pública.
 
-The process exit contract is stable:
+El contrato de códigos de salida es estable:
 
-| Status | Exit code | Meaning |
+| Estado | Código de salida | Significado |
 |---|---:|---|
-| `HEALTHY` | 0 | Required local checks passed and no warning condition was detected |
-| `DEGRADED` | 1 | Local use remains viable but a non-fatal condition, such as unavailable remote metadata, was detected |
-| `UNHEALTHY` | 2 | A required installation, cache, integrity, or query check failed |
+| `HEALTHY` | 0 | Pasaron las verificaciones locales obligatorias y no se detectó ninguna advertencia. |
+| `DEGRADED` | 1 | El uso local sigue siendo viable, pero se detectó una condición no fatal, como metadatos remotos no disponibles. |
+| `UNHEALTHY` | 2 | Falló una verificación obligatoria de instalación, caché, integridad o consulta. |
 
-`arancel-mx doctor --json` emits the same diagnostic model as the human-readable output, with the same exit-code mapping.
+`arancel-mx doctor --json` emite el mismo modelo de diagnóstico que la salida legible por personas, con el mismo mapeo de códigos de salida.
 
-## Environment variables
+## Variables de entorno
 
-Explicit CLI or API arguments take precedence over environment variables, which take precedence over defaults.
+Los argumentos explícitos de la CLI o de la API tienen prioridad sobre las variables de entorno, y éstas sobre los valores predeterminados.
 
-| Variable | Purpose |
+| Variable | Uso |
 |---|---|
-| `ARANCEL_MX_CACHE_DIR` | Override the cross-platform user cache directory |
-| `ARANCEL_MX_DATASET` | Pin an exact `data-YYYY.MM.DD` release |
-| `ARANCEL_MX_OFFLINE` | Enable strict offline mode with `1`, `true`, `yes`, or `on` |
-| `ARANCEL_MX_TIMEOUT` | Set the positive HTTP timeout in seconds |
+| `ARANCEL_MX_CACHE_DIR` | Reemplaza el directorio de caché multiplataforma del usuario. |
+| `ARANCEL_MX_DATASET` | Fija una release exacta `data-YYYY.MM.DD`. |
+| `ARANCEL_MX_OFFLINE` | Activa el modo estricto sin conexión con `1`, `true`, `yes` u `on`. |
+| `ARANCEL_MX_TIMEOUT` | Define el timeout HTTP en segundos (positivo). |
 
-Default cache root when `ARANCEL_MX_CACHE_DIR` is unset:
+Raíz de caché predeterminada cuando `ARANCEL_MX_CACHE_DIR` no está definida:
 
-- `XDG_CACHE_HOME/arancel-mx` when `XDG_CACHE_HOME` is set
-- macOS: `~/Library/Caches/arancel-mx`
-- Windows: `%LOCALAPPDATA%/arancel-mx/Cache`
-- otherwise: `~/.cache/arancel-mx`
+- `XDG_CACHE_HOME/arancel-mx` cuando `XDG_CACHE_HOME` está definida;
+- macOS: `~/Library/Caches/arancel-mx`;
+- Windows: `%LOCALAPPDATA%/arancel-mx/Cache`;
+- en otro caso: `~/.cache/arancel-mx`.
 
-The consumer runtime does not use `platformdirs`.
+El runtime de consumo no usa `platformdirs`.
 
-Invalid consumer configuration fails with an actionable public error instead of being treated as an integrity failure.
+Una configuración de consumo inválida falla con un error público accionable en lugar de tratarse como una falla de integridad.
 
-## Integrity and cache guarantees
+## Integridad y caché
 
-The consumer flow is fail-closed:
+El flujo de consumo es fail-closed:
 
-1. Resolve one exact public data release.
-2. Download to temporary state.
-3. Verify the required asset set, SHA256 values, manifest contract, and DuckDB structure.
-4. Promote the verified version into the cache atomically.
-5. Open the selected DuckDB read-only for queries.
+1. Resuelve una release pública de datos exacta.
+2. Descarga a un estado temporal.
+3. Verifica el conjunto de assets obligatorio, los valores SHA256, el contrato del manifest y la estructura del DuckDB.
+4. Promueve la versión verificada a la caché de forma atómica.
+5. Abre el DuckDB seleccionado en sólo lectura para las consultas.
 
-Concurrent downloads are serialized with a file lock. Existing verified versions remain available, and a corrupt or incomplete candidate is not silently substituted for another dataset.
+Las descargas concurrentes se serializan con un file lock. Las versiones verificadas existentes siguen disponibles, y un candidato corrupto o incompleto nunca sustituye en silencio a otro dataset.
 
-For the publication-side six-asset contract and attestations, see [`release-process.md`](release-process.md). For the canonical database schema, see [`data-model.md`](data-model.md).
+El contrato de seis assets y las atestaciones del lado de la publicación están en [`release-process.md`](release-process.md). El esquema canónico de la base de datos está en [`data-model.md`](data-model.md).
 
-> `arancel-mx` is a technical data tool and does not constitute legal advice. Consult the applicable official publications and qualified professionals for tariff-classification or compliance decisions.
+> `arancel-mx` es una herramienta técnica de datos, no clasifica mercancías y no constituye asesoría legal. Para decisiones de clasificación arancelaria o de cumplimiento, consulta las publicaciones oficiales aplicables y a profesionales calificados.
+
+## Relacionado
+
+- [Consumo externo](external-consumption.md): archivos, Python y API HTTP.
+- [Inicio rápido de consumo](consumer-quickstart.md)
+- [Modelo de datos](data-model.md)
+- [Proceso de release](release-process.md)
+- [Release del paquete de Python](package-release.md)

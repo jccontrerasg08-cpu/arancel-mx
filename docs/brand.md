@@ -103,7 +103,7 @@ fuentes → release verificable
   ↓
 superficies de consumo
   ↓
-Central Hub en Vercel
+dónde vive cada pieza
   ↓
 modelo de confianza
 ```
@@ -138,7 +138,7 @@ DuckDB canónico
 release inmutable + manifest + checksums
 ```
 
-La release verificada es la fuente de verdad. Búsqueda, metadata, Neon, Vercel y FastAPI son superficies de consumo o proyecciones operacionales.
+La release verificada es la fuente de verdad. La API estática, el sitio, la búsqueda y cualquier servidor propio son superficies de consumo de esa release.
 
 ## Voz y copy
 
@@ -162,15 +162,13 @@ Evitar:
 
 El dominio público principal es [`https://arancel-mx.vercel.app/`](https://arancel-mx.vercel.app/). La documentación debe tratarlo como el **front door interactivo** y enlazar el hub local de rutas y límites en [`/documentation`](https://arancel-mx.vercel.app/documentation).
 
-La arquitectura vigente combina:
+La arquitectura vigente ([decisión 0002](decisions/0002-arquitectura-github-primero.md)) combina:
 
-- rutas `/v1` promovidas y `/readyz` en la capa operacional read-only de Vercel/Neon;
-- `/documentation` como hub local y rutas no promovidas resueltas sin proxy externo;
-- la GitHub Release verificable como fuente canónica del dataset.
+- la GitHub Release verificable como fuente canónica del dataset;
+- la API estática que GitHub Pages sirve y Vercel expone en `/data/v1`;
+- el sitio estático en Vercel, con `/documentation` como hub de rutas y límites.
 
-Desde #139, Vercel bundlea `psycopg[binary]` (versión y hashes fijos en `requirements/vercel.txt`) de forma aislada en `api/_vendor` mediante `buildCommand` y sólo lo incluye en las funciones operativas. `requirements.txt` fue eliminado para que ese driver no se convierta en dependencia base del paquete. Esta decisión no es copy promocional, pero las guías técnicas deben permanecer sincronizadas con ella.
-
-Desde #143–#144, el bridge público sincroniza la identidad visible de la release con `/v1/meta` incluso después de render tardío, y `website/index.html` referencia `site-bridge.js` con un query de versión para invalidar caché cuando cambia ese comportamiento. La documentación no debe hardcodear una release como identidad operativa del hub.
+El bridge público (`site-bridge.js`) muestra la release activa leyendo `/data/v1/meta.json`. La documentación no debe fijar una release concreta como identidad del hub.
 
 Los assets mantenibles del sitio viven bajo `website/assets/`. No editar manualmente los bundles `website/assets/index-*.js`, `index-*.css` ni runtime generado sólo para cambiar branding.
 
