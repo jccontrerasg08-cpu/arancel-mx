@@ -86,7 +86,11 @@
       "destination": "/trade.html"
     },
     {
-      "source": "/((?!assets/|api/|v1/|v1$|docs/|docs$|openapi\\.json$|robots\\.txt$).*)",
+      "source": "/data/v1/:path*",
+      "destination": "https://jccontrerasg08-cpu.github.io/arancel-mx/v1/:path*"
+    },
+    {
+      "source": "/((?!assets/|data/|api/|v1/|v1$|docs/|docs$|openapi\\.json$|robots\\.txt$).*)",
       "destination": "/"
     }
   ],
@@ -143,6 +147,23 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/v1(.*)",
+      "headers": [
+        {
+          "key": "Deprecation",
+          "value": "@1792108800"
+        },
+        {
+          "key": "Sunset",
+          "value": "Sun, 31 Jan 2027 00:00:00 GMT"
+        },
+        {
+          "key": "Link",
+          "value": "<https://jccontrerasg08-cpu.github.io/arancel-mx/v1/manifest.json>; rel=\"successor-version\", <https://github.com/jccontrerasg08-cpu/arancel-mx/blob/main/docs/decisions/0002-arquitectura-github-primero.md>; rel=\"deprecation\""
         }
       ]
     }

@@ -33,11 +33,14 @@
     });
   }
 
+  // Static data API (decision 0002); loaded lazily because this is a classic script.
+  let dataApi = null;
   async function fetchJson(path) {
-    const response = await fetch(path, { cache: 'no-store' });
-    if (!response.ok) throw new Error(`request failed with ${response.status}`);
-    return response.json();
+    dataApi ??= import('/assets/static-api.js').then((module) => module.createStaticApi({ base: '/data/v1' }));
+    return (await dataApi).request(path);
   }
+
+  const chapterData = (kind, code) => `/data/v1/${kind}/${encodeURIComponent(String(code).slice(0, 2))}.json`;
 
   function displayValue(value) {
     if (value && typeof value === 'object' && typeof value.text === 'string') return value.text;
@@ -84,17 +87,17 @@
       links.append(parentLink);
     }
     const hierarchy = element('a', '', 'Open verified hierarchy JSON');
-    hierarchy.href = `/v1/codes/${encodeURIComponent(record.code)}/parent`;
+    hierarchy.href = chapterData('records', record.code);
     hierarchy.target = '_blank';
     hierarchy.rel = 'noreferrer';
     links.append(hierarchy);
     const childrenLink = element('a', '', `${children.length} direct child record${children.length === 1 ? '' : 's'}`);
-    childrenLink.href = `/v1/codes/${encodeURIComponent(record.code)}/children`;
+    childrenLink.href = chapterData('records', record.code);
     childrenLink.target = '_blank';
     childrenLink.rel = 'noreferrer';
     links.append(childrenLink);
     const sourcesLink = element('a', '', 'Open source evidence');
-    sourcesLink.href = `/v1/codes/${encodeURIComponent(record.code)}/provenance`;
+    sourcesLink.href = chapterData('provenance', record.code);
     sourcesLink.target = '_blank';
     sourcesLink.rel = 'noreferrer';
     links.append(sourcesLink);

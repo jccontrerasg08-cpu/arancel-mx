@@ -1,8 +1,10 @@
 # Tipado gradual, rendimiento y atribución del ecosistema Python
 
+Este documento explica cómo `arancel-mx` controla la deuda de tipado, cómo se tratará la medición de rendimiento y cómo se atribuyen las herramientas del ecosistema Python que usa. Está dirigido a contribuyentes que cambian código en `src/arancel_mx`.
+
 ## Propósito
 
-Este proyecto usa Python y sus herramientas de tipado para mejorar la mantenibilidad de sus límites técnicos. Estas herramientas **no** certifican datos oficiales, clasificación, origen, RRNA, contribuciones ni pedimentos. Toda decisión de comercio exterior conserva sus fuentes, revisión y límites de producto propios.
+El proyecto usa Python y sus herramientas de tipado para mejorar la mantenibilidad de sus límites técnicos. Estas herramientas **no** certifican datos oficiales, clasificación, origen, RRNA, contribuciones ni pedimentos. Toda decisión de comercio exterior conserva sus fuentes, revisión y límites de producto propios.
 
 ## Tipado gradual
 
@@ -14,7 +16,7 @@ Para evitar resultados distintos a CI, el desarrollo local de tipado debe usar e
 
 ## Rendimiento
 
-`python/pyperformance` es una referencia para una fase futura, separada y no bloqueante. Antes de usarla se debe definir una línea base de hardware, versión de Python, sistema operativo, afinidad de CPU y cargas representativas de arancel-mx. Sus resultados sólo informarán regresiones técnicas de serialización, búsqueda o rutas HTTP; no determinan exactitud de datos ni criterios regulatorios.
+El proyecto no ejecuta benchmarks de rendimiento en CI. `python/pyperformance` es la referencia si se adopta una medición separada y no bloqueante; antes de usarla se debe definir una línea base de hardware, versión de Python, sistema operativo, afinidad de CPU y cargas representativas de arancel-mx. Sus resultados sólo informarían regresiones técnicas de serialización, búsqueda o rutas HTTP; no determinan exactitud de datos ni criterios regulatorios.
 
 ## Atribución y reutilización responsable
 
@@ -26,12 +28,18 @@ La adopción actual reutiliza configuraciones, especificaciones públicas y prá
 | [CPython](https://github.com/python/cpython) | Runtime y biblioteca estándar de Python. | [PSF License](https://github.com/python/cpython/blob/main/LICENSE). | No se copia código del intérprete. |
 | [typing](https://github.com/python/typing) | Especificación para anotaciones compatibles con Python 3.11. | [Especificación de typing](https://typing.python.org/en/latest/spec/meta.html). | Las anotaciones no validan datos en runtime. |
 | [typeshed](https://github.com/python/typeshed) | Stubs indirectos usados por el verificador. | [Licencia y avisos](https://github.com/python/typeshed/blob/main/LICENSE). | No se incluyen stubs manualmente sin una necesidad reproducida. |
-| [pyperformance](https://github.com/python/pyperformance) | Referencia para benchmarks futuros. | [MIT](https://github.com/python/pyperformance/blob/main/LICENSE). | No es un benchmark funcional ni regulatorio. |
+| [pyperformance](https://github.com/python/pyperformance) | Referencia para una medición de rendimiento no bloqueante. | [MIT](https://github.com/python/pyperformance/blob/main/LICENSE). | No es un benchmark funcional ni regulatorio. |
 
 ## Referencias
 
-[1]: https://mypy.readthedocs.io/en/stable/ "Documentación de mypy"
-[2]: https://docs.python.org/3.11/library/typing.html "typing en Python 3.11"
-[3]: https://pyperformance.readthedocs.io/ "Documentación de pyperformance"
-[4]: https://github.com/python/devguide "Python Developer's Guide"
-[5]: https://peps.python.org/ "Python Enhancement Proposals"
+- [Documentación de mypy](https://mypy.readthedocs.io/en/stable/)
+- [`typing` en Python 3.11](https://docs.python.org/3.11/library/typing.html)
+- [Documentación de pyperformance](https://pyperformance.readthedocs.io/)
+- [Python Developer's Guide](https://github.com/python/devguide)
+- [Python Enhancement Proposals](https://peps.python.org/)
+
+## Relacionado
+
+- [Política de lint de seguridad](security-lint.md)
+- [Arquitectura](../architecture.md)
+- [CONTRIBUTING.md](../../CONTRIBUTING.md)

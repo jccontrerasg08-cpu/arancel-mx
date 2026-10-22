@@ -10,7 +10,7 @@ Esta página ayuda a elegir el punto de entrada más pequeño para consumir una 
 | Validar instalación y release | CLI: `arancel-mx doctor` |
 | Consultar una fila o su jerarquía | CLI o `Dataset.version(...)` |
 | Analizar localmente muchas filas | `arancel_mx.duckdb` de una release verificada |
-| Integrar un servicio o UI | API HTTP GET-only/read-only bajo `https://arancel-mx.vercel.app` |
+| Integrar un servicio o UI | API estática GET-only/read-only bajo `https://arancel-mx.vercel.app/data/v1` |
 
 ## 1. Instalar y verificar
 
@@ -47,21 +47,24 @@ print(record.code, record.description)
 
 ## 4. Consumir la API HTTP pública
 
-El origen público canónico es el mismo dominio del hub:
+Cada release verificada se publica también como archivos JSON estáticos en GitHub Pages, servidos desde el mismo dominio del hub:
 
 ```bash
 export ARANCEL_MX_API_URL="https://arancel-mx.vercel.app"
-curl "$ARANCEL_MX_API_URL/readyz"
-curl "$ARANCEL_MX_API_URL/v1/meta"
-curl "$ARANCEL_MX_API_URL/v1/search?q=telefonos&limit=5"
-curl "$ARANCEL_MX_API_URL/v1/lookup/8517130100"
+curl "$ARANCEL_MX_API_URL/data/v1/meta.json"
+curl "$ARANCEL_MX_API_URL/data/v1/records/85.json"
+curl "$ARANCEL_MX_API_URL/data/v1/search-index.json"
 ```
 
-Abre [`https://arancel-mx.vercel.app/documentation`](https://arancel-mx.vercel.app/documentation) para el hub local de rutas y límites públicos.
+`meta.json` identifica la release servida, `records/{hs2}.json` contiene todos los registros de un capítulo y `manifest.json` permite verificar cada archivo por SHA-256. Abre [`https://arancel-mx.vercel.app/documentation`](https://arancel-mx.vercel.app/documentation) para el hub de rutas y límites públicos.
 
-La superficie pública mantiene una única frontera read-only: rutas `/v1` promovidas y `/readyz` se resuelven en la capa operacional de Vercel respaldada por Neon y sincronizada desde releases verificadas. Las rutas no promovidas se resuelven localmente sin proxy externo. La release verificable sigue siendo la fuente de verdad; Vercel y Neon son superficies de consumo.
+Si necesitas rutas dinámicas como `/v1/meta`, `/v1/lookup/{code}` o `/readyz`, ejecuta el servidor incluido en el paquete sobre una release fijada:
 
-La API es GET-only y read-only. `/v1/meta` separa la versión de API, la versión del paquete y la identidad del dataset servido; `/readyz` refleja la disponibilidad de esa release operacional activa.
+```bash
+ARANCEL_MX_API_DATASET=data-YYYY.MM.DD uvicorn arancel_mx.api.app:app
+```
+
+Las rutas `/v1` alojadas en `arancel-mx.vercel.app` están deprecadas y se retiran el 2027-01-31 ([guía de retiro](operations/v1-sunset.md)). La release verificable sigue siendo la fuente de verdad; cualquier API es una vista de ella.
 
 ## Continuar
 
@@ -69,4 +72,5 @@ La API es GET-only y read-only. `/v1/meta` separa la versión de API, la versió
 - [CLI de consumo](consumer-cli.md): comandos, caché, formatos y modo offline.
 - [Roles de fuentes oficiales](official-source-roles.md): qué función cumple cada publicación.
 - [Guía NICO y LIGIE](nico-ligie-guide.md): HS6, fracción mexicana y NICO.
+- [Arquitectura](architecture.md): cómo se publica y se sirve cada release.
 - [Centro de documentación](README.md): todas las rutas por intención.

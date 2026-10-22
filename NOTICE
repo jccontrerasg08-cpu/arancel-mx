@@ -9,3 +9,7 @@ endorsement by any authority.
 
 The project's original source code is licensed under the Apache License 2.0.
 Python dependencies are not vendored and retain their respective licenses.
+
+The agent rules and skills under .cursor/ (and linked from .claude/skills/) are
+adapted from Ponytail (https://github.com/dietrichgebert/ponytail), Copyright (c)
+2026 DietrichGebert, under the MIT License included in .cursor/LICENSE-ponytail.
