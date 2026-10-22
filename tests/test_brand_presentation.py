@@ -142,55 +142,49 @@ def test_repository_front_door_markdown_links_resolve_locally() -> None:
         assert not missing, f"broken local Markdown links in {source}: {missing}"
 
 
-def test_consumer_docs_use_vercel_as_the_public_http_front_door() -> None:
-    """Keep consumer guidance aligned with the deployed local read-only surface."""
+def test_consumer_docs_use_the_static_data_api_as_the_public_http_front_door() -> None:
+    """Keep consumer guidance aligned with decision 0002: Pages data behind the Vercel hub."""
     quickstart = _read("docs/consumer-quickstart.md")
     external = _read("docs/external-consumption.md")
 
     assert PUBLIC_HUB_URL in _markdown_links("docs/consumer-quickstart.md")
     assert PUBLIC_HUB_URL in _markdown_links("docs/external-consumption.md")
     for document in (quickstart, external):
-        assert "/v1/meta" in document
-        assert "/readyz" in document
+        assert "/data/v1/meta.json" in document
+        assert "/data/v1/records/85.json" in document
         assert "/documentation" in document
+        assert "uvicorn arancel_mx.api.app:app" in document
+        assert "operations/v1-sunset.md" in document
 
     api_url_match = re.search(r'export ARANCEL_MX_API_URL="([^"]+)"', external)
     assert api_url_match is not None
     assert api_url_match.group(1) == PUBLIC_HUB_URL.rstrip("/")
-    assert "Vercel" in external
-    assert "Neon" in external
+    assert "GitHub Pages" in external
     assert "el sitio no actúa como proxy" in external.lower()
 
 
-def test_public_docs_keep_readyz_on_the_operational_surface() -> None:
-    """Prevent public docs from describing readiness as a FastAPI proxy route."""
-    stale_fragments = (
-        "Vercel: /v1/* restante + /docs + /readyz",
-        "las demás rutas `/v1/*`, `/docs` y `/readyz`",
-        "las demás rutas `/v1/*`, `/docs` y `/readyz` se presentan",
-    )
+def test_public_docs_describe_only_the_current_serving_architecture() -> None:
+    """Deprecated serving layers belong in the sunset runbook, not in the overview docs."""
     for path in (
         "docs/project-overview.md",
         "docs/consumer-quickstart.md",
-        "docs/external-consumption.md",
         "docs/brand.md",
+        "README.md",
+        "README.en.md",
+        "docs/README.md",
     ):
         text = _read(path)
-        assert "/readyz" in text, path
-        assert "operacional" in text.lower(), path
-        assert not any(fragment in text for fragment in stale_fragments), path
+        assert "Neon" not in text, path
+        assert "capa operacional" not in text.lower(), path
+        assert "/data/v1" in text, path
 
     overview = _read("docs/project-overview.md")
-    assert "Vercel: metadatos, búsqueda, ficha, evidencia activa y documentación local" in overview
+    assert "GitHub Pages" in overview
     assert "runtime FastAPI" not in overview
-
-    external = _read("docs/external-consumption.md")
-    assert "/documentation" in external
-    assert "el sitio no actúa como proxy" in external.lower()
 
 
 def test_public_brand_guide_is_discoverable_and_uses_current_schedule_language() -> None:
-    """Expose the canonical brand guide and current weekly automation wording."""
+    """Expose the canonical brand guide and current daily automation wording."""
     guide_path = ROOT / "docs/brand.md"
     assert guide_path.is_file()
     guide = guide_path.read_text(encoding="utf-8")
@@ -210,8 +204,8 @@ def test_public_brand_guide_is_discoverable_and_uses_current_schedule_language()
         assert phrase in guide
 
     assert "[Marca y presentación](brand.md)" in docs_index
-    assert "pipeline semanal" in docs_index.lower()
-    assert "pipeline diario" not in docs_index.lower()
+    assert "pipeline diario" in docs_index.lower()
+    assert "pipeline semanal" not in docs_index.lower()
 
 
 def test_vercel_static_output_serves_the_react_public_shell() -> None:
@@ -242,26 +236,28 @@ def test_brand_css_uses_stable_asset_selectors_not_generated_bundle_classes() ->
     assert "index-" not in styles
 
 
-def test_integration_handoff_tracks_current_vercel_and_liveness_boundaries() -> None:
-    """Keep the handoff synchronized with the current main architecture."""
-    handoff = _read("docs/integration-handoff.md")
-    lowered = handoff.lower()
-    assert "operational" in lowered
-    assert "neon" in lowered
-    assert "proxy" in lowered
-    assert "/v1/meta" in handoff
-    assert "/readyz" in handoff
-    assert re.search(r"Baseline revisada:\*\* `?[0-9a-f]{7,40}`?", handoff)
-    assert "Vercel: metadatos, búsqueda, ficha y evidencia activa" in handoff
-    assert "ARANCEL_MX_DATABASE_DATABASE_URL" in handoff
-    assert "api/_vendor" in handoff
-    assert "api/_runtime.py" in handoff
-    assert "python3.13" in handoff
-    assert "psycopg[binary]>=3.3.4" in handoff
-    assert "requirements.txt" in handoff
-    assert "EXTERNALLY_UNPROBEABLE_URLS" in handoff
-    assert "site-bridge.js" in handoff
-    assert ".release-window code" in handoff
-    assert "maxDuration" in handoff
-    assert "must-revalidate" in handoff
-    assert "installCommand" not in handoff
+def test_v1_sunset_runbook_tracks_the_remaining_vercel_runtime() -> None:
+    """Keep the deprecated runtime documented until it is removed."""
+    runbook = _read("docs/operations/v1-sunset.md")
+    for fragment in (
+        "Neon",
+        "/v1/meta",
+        "/readyz",
+        "Vercel: metadatos, búsqueda, ficha y evidencia activa",
+        "ARANCEL_MX_DATABASE_DATABASE_URL",
+        "api/_vendor",
+        "api/_runtime.py",
+        "python3.13",
+        "psycopg[binary]>=3.3.4",
+        "requirements.txt",
+        "maxDuration",
+    ):
+        assert fragment in runbook, fragment
+    assert "installCommand" not in runbook
+
+
+def test_architecture_doc_records_frontend_cache_and_bridge_boundaries() -> None:
+    """Keep the stable-asset and bridge contracts in the canonical architecture doc."""
+    architecture = _read("docs/architecture.md")
+    for fragment in ("site-bridge.js", ".release-window code", "must-revalidate", "immutable", "gh-pages"):
+        assert fragment in architecture, fragment

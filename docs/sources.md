@@ -106,6 +106,8 @@ El pipeline y la consulta pública dependen de estas páginas HTML oficiales:
 
 `python -m scripts.check_documented_urls` verifica que estas URLs sigan siendo alcanzables desde CI y descarga el cuerpo HTML de las páginas documentadas.
 
+Documentar una URL oficial y exigir que siempre responda desde GitHub Actions son contratos distintos. VUCEM y algunos endpoints de Diputados cortan TLS o agotan el tiempo desde los runners. Siguen documentados y validados sintácticamente, pero quedan fuera del probe en vivo mediante `EXTERNALLY_UNPROBEABLE_URLS`, con una prueba que exige que cada excepción siga dentro del conjunto documentado. No se elimina una fuente oficial para volver verde la CI.
+
 ## Fixtures offline
 
 Las pruebas de PR usan fragmentos mínimos y sanitizados en `tests/fixtures/` y no dependen de que DOF, Diputados o SNICE estén disponibles en ese momento. Cada cambio de parser, reconciliación o source registry debe incluir un fixture reproducible o una construcción sintética equivalente.
