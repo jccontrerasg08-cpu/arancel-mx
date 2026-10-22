@@ -40,47 +40,49 @@ class _Session:
         return self.responses[url]
 
 
-def _responses(*, parent_dataset_version: str = "data-2026.08.17") -> dict[str, _Response]:
-    base = "https://example.test"
-    nico = {
-        "code": "0101210100",
+def _responses(*, record_dataset_version: str = "2026.08.17") -> dict[str, _Response]:
+    base = "https://example.test/data/v1"
+    record = {
+        "code": "8517130100",
         "level": "nico10",
-        "igi": None,
-        "ige": None,
-        "dataset_version": "data-2026.08.17",
-    }
-    fraction = {
-        "code": "01012101",
-        "level": "fraccion8",
-        "igi": {"text": "10", "value": 10.0},
-        "ige": {"text": "Ex.", "value": 0.0},
-        "dataset_version": parent_dataset_version,
+        "dataset_version": record_dataset_version,
     }
     return {
-        f"{base}/v1/meta": _Response(
-            {"dataset_version": "data-2026.08.17", "release_verified": True, "structural_valid": True}
+        f"{base}/meta.json": _Response(
+            {
+                "dataset_tag": "data-2026.08.17",
+                "dataset_version": "2026.08.17",
+                "release_verified": True,
+            }
         ),
-        f"{base}/v1/lookup/0101210100": _Response(nico),
-        f"{base}/v1/ficha/0101210100": _Response({"record": nico, "hierarchy": [fraction, nico]}),
-        f"{base}/v1/codes/01012101/provenance": _Response([{"code": "01012101"}]),
-        f"{base}/v1/chapters/01/national-notes": _Response([]),
-        f"{base}/v1/search?q=reproductores&limit=1": _Response([{"record": {}}]),
-        f"{base}/v1/suggest?q=reproductores&limit=1": _Response([{"search": {}}]),
-        f"{base}/openapi.json": _Response({"openapi": "3.1.0", "paths": {"/v1/meta": {}}}),
-        f"{base}/docs": _Response({}, content_type="text/html"),
+        f"{base}/manifest.json": _Response(
+            {
+                "dataset_tag": "data-2026.08.17",
+                "files": {"meta.json": {}, "records/85.json": {}, "search-index.json": {}},
+            }
+        ),
+        f"{base}/records/85.json": _Response([record]),
+        f"{base}/search-index.json": _Response(
+            {"scorer_version": "1", "entries": [["8517130100", "telefonos inteligentes"]]}
+        ),
+        "https://example.test/v1/meta": _Response({}),
     }
 
 
-def test_public_contract_uses_only_promoted_local_routes() -> None:
+def test_public_contract_probes_only_the_static_data_api() -> None:
     result = check_public_contract(_Session(_responses()), base_url="https://example.test")
 
-    assert "/documentation" not in result.checked_paths
-    assert "/docs" not in result.checked_paths
-    assert "/openapi.json" not in result.checked_paths
-    assert result.checked_paths[-1] == "/v1/suggest?q=reproductores&limit=1"
+    assert result.dataset_version == "2026.08.17"
+    assert result.checked_paths == (
+        "/data/v1/meta.json",
+        "/data/v1/manifest.json",
+        "/data/v1/records/85.json",
+        "/data/v1/search-index.json",
+    )
+    assert all(not path.startswith("/v1/") for path in result.checked_paths)
 
 
-def test_latency_probe_is_read_only_and_reports_each_promoted_query() -> None:
+def test_latency_probe_is_read_only_and_reports_each_static_file() -> None:
     ticks = iter((0.0, 0.1, 1.0, 1.3, 2.0, 2.5))
     measure_public_latency = getattr(check_public_service, "measure_public_latency", None)
     assert callable(measure_public_latency)
@@ -92,16 +94,44 @@ def test_latency_probe_is_read_only_and_reports_each_promoted_query() -> None:
     )
 
     assert tuple(sample.path for sample in result.samples) == (
-        "/v1/meta",
-        "/v1/search?q=reproductores&limit=1",
-        "/v1/suggest?q=reproductores&limit=1",
+        "/data/v1/meta.json",
+        "/data/v1/search-index.json",
+        "/data/v1/records/85.json",
     )
     assert tuple(sample.seconds for sample in result.samples) == pytest.approx((0.1, 0.3, 0.5))
     assert all(sample.status_code == 200 for sample in result.samples)
 
 
-def test_public_contract_rejects_a_parent_fraction_from_another_release() -> None:
-    session = _Session(_responses(parent_dataset_version="data-2026.08.16"))
+def test_public_contract_rejects_records_from_another_release() -> None:
+    session = _Session(_responses(record_dataset_version="2026.08.16"))
 
-    with pytest.raises(ValueError, match="parent fraction dataset_version"):
+    with pytest.raises(ValueError, match="dataset_version must match"):
         check_public_contract(session, base_url="https://example.test")
+
+
+def test_public_contract_rejects_an_unverified_release() -> None:
+    responses = _responses()
+    responses["https://example.test/data/v1/meta.json"] = _Response(
+        {"dataset_tag": "data-2026.08.17", "dataset_version": "2026.08.17", "release_verified": False}
+    )
+
+    with pytest.raises(ValueError, match="verified release"):
+        check_public_contract(_Session(responses), base_url="https://example.test")
+
+
+def test_public_contract_rejects_a_missing_dataset_tag() -> None:
+    responses = _responses()
+    responses["https://example.test/data/v1/meta.json"] = _Response(
+        {"dataset_version": "2026.08.17", "release_verified": True}
+    )
+
+    with pytest.raises(ValueError, match="dataset_tag"):
+        check_public_contract(_Session(responses), base_url="https://example.test")
+
+
+def test_public_contract_rejects_a_non_json_response() -> None:
+    responses = _responses()
+    responses["https://example.test/data/v1/records/85.json"] = _Response({}, content_type="text/html")
+
+    with pytest.raises(ValueError, match="application/json"):
+        check_public_contract(_Session(responses), base_url="https://example.test")

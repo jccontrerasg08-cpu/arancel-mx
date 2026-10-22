@@ -1,4 +1,5 @@
 // Style: estimador evidence-first; el resultado breve y la fuente son primarios, el expediente se revela bajo demanda.
+import { createStaticApi } from './static-api.js';
 import {
   buildPedimentoChecklist,
   calculateCustomsValue,
@@ -7,6 +8,8 @@ import {
   evaluateTmecOrientation,
   TRADE_SOURCES,
 } from './trade-tools.js';
+
+const dataApi = createStaticApi({ base: '/data/v1' });
 
 const money = new Intl.NumberFormat('es-MX', {
   style: 'currency',
@@ -303,9 +306,11 @@ async function searchTariff() {
   searchButton.textContent = 'Buscando…';
   setSearchFeedback(`Consultando la release verificada para “${query}”…`, true);
   try {
-    const response = await fetch(`/v1/search?q=${encodeURIComponent(query)}&limit=5`);
-    if (!response.ok) throw new Error('La búsqueda verificada no está disponible en este momento.');
-    const results = await response.json();
+    const results = await dataApi
+      .request(`/v1/search?q=${encodeURIComponent(query)}&limit=5`)
+      .catch(() => {
+        throw new Error('La búsqueda verificada no está disponible en este momento.');
+      });
     if (!Array.isArray(results)) {
       throw new Error('La respuesta de la búsqueda verificada no tiene el formato esperado.');
     }
@@ -344,7 +349,7 @@ async function searchTariff() {
       validity.textContent = `Vigencia de release: ${effectiveFrom} · ${currentStatus}${ligieVersion}${validityBasis}`;
       const provenance = document.createElement('a');
       provenance.className = 'trade-source';
-      provenance.href = `/v1/codes/${encodeURIComponent(record.code)}/provenance`;
+      provenance.href = `/data/v1/provenance/${encodeURIComponent(record.code.slice(0, 2))}.json`;
       provenance.textContent = 'Ver procedencia registrada';
       match.append(button, detail, validity, provenance);
       output.append(match);
@@ -368,9 +373,7 @@ async function preloadTariffFromQuery() {
     context.textContent = `Consultando ${code} en la release verificada…`;
   }
   try {
-    const response = await fetch(`/v1/ficha/${encodeURIComponent(code)}`);
-    if (!response.ok) throw new Error('El registro verificado no está disponible.');
-    const payload = await response.json();
+    const payload = await dataApi.request(`/v1/ficha/${encodeURIComponent(code)}`);
     if (!applyTariffRecord(payload?.record || payload)) throw new Error('El registro verificado no contiene una fracción utilizable.');
     updateStatus(`Se cargó ${code} desde la ficha verificada. Revisa vigencia y evidencia antes de calcular.`);
   } catch {

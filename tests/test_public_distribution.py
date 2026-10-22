@@ -257,7 +257,7 @@ def test_release_detail_lives_in_release_runbook_while_readmes_keep_trust_summar
         "sha256sums",
         "official-sources.tar.gz",
         "github issue",
-        "17 11 * * 1",
+        "17 11 * * *",
         "publicación automática",
         "cualquier falla bloquea la publicación",
     ):

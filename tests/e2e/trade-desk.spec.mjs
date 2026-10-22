@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+import { serveStaticRecords } from './static-data.mjs';
+
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     document.addEventListener('DOMContentLoaded', () => {
@@ -70,21 +72,14 @@ test('uses a direct customs-value base without requiring Incoterm components', a
 
 test('renders untrusted tariff-search fields as text rather than HTML', async ({ page }) => {
   await page.goto('/trade');
-  await page.route('**/v1/search?**', async (route) => {
-    await route.fulfill({
-      contentType: 'application/json',
-      body: JSON.stringify([
-        {
-          record: {
-            code: '85171301',
-            description: '<img data-testid="injected-search-markup" src="x">Teléfono',
-            igi: { value: 0, text: '<b>0%</b>' },
-            dataset_version: '<em>release</em>',
-          },
-        },
-      ]),
-    });
-  });
+  await serveStaticRecords(page, [
+    {
+      code: '85171301',
+      description: '<img data-testid="injected-search-markup" src="x">Teléfono',
+      igi: { value: 0, text: '<b>0%</b>' },
+      dataset_version: '<em>release</em>',
+    },
+  ]);
 
   await page.locator('#classification-query').fill('teléfono');
   await page.getByRole('button', { name: /buscar/i }).click();
@@ -162,27 +157,20 @@ test('supports keyboard navigation across trade-desk tabs', async ({ page }) => 
 
 test('shows release validity and provenance access for a classification hypothesis', async ({ page }) => {
   await page.goto('/trade');
-  await page.route('**/v1/search?**', async (route) => {
-    await route.fulfill({
-      contentType: 'application/json',
-      body: JSON.stringify([
-        {
-          record: {
-            code: '85171301',
-            description: 'Teléfono inteligente',
-            igi: { value: 0, text: '0%' },
-            ige: { text: 'Ex.' },
-            dataset_version: 'data-2026.08.15',
-            effective_from: '2026-04-20',
-            effective_to: null,
-            is_current: true,
-            ligie_version: 'SA 2022',
-            validity_basis: 'Release verificada',
-          },
-        },
-      ]),
-    });
-  });
+  await serveStaticRecords(page, [
+    {
+      code: '85171301',
+      description: 'Teléfono inteligente',
+      igi: { value: 0, text: '0%' },
+      ige: { text: 'Ex.' },
+      dataset_version: 'data-2026.08.15',
+      effective_from: '2026-04-20',
+      effective_to: null,
+      is_current: true,
+      ligie_version: 'SA 2022',
+      validity_basis: 'Release verificada',
+    },
+  ]);
 
   await page.locator('#classification-query').fill('teléfono');
   await page.getByRole('button', { name: /buscar/i }).click();
@@ -190,7 +178,7 @@ test('shows release validity and provenance access for a classification hypothes
   await expect(page.locator('#classification-results')).toContainText('IGE publicado: Ex.');
   await expect(page.locator('#classification-results')).toContainText('Vigencia de release: 2026-04-20 · vigente');
   await page.getByRole('tab', { name: /clasificación asistida/i }).click();
-  await expect(page.getByRole('link', { name: /ver procedencia registrada/i })).toHaveAttribute('href', '/v1/codes/85171301/provenance');
+  await expect(page.getByRole('link', { name: /ver procedencia registrada/i })).toHaveAttribute('href', '/data/v1/provenance/85.json');
 });
 
 test('gives keyboard focus a visible custom indicator', async ({ page }) => {
@@ -315,15 +303,10 @@ test('saves an incomplete local draft while leaving its calculation trace unavai
 
 test('clears selected release provenance when the tariff hypothesis is manually edited', async ({ page }) => {
   await page.goto('/trade');
-  await page.route('**/v1/search**', async (route) => {
-    await route.fulfill({
-      contentType: 'application/json',
-      body: JSON.stringify([{ record: {
-        code: '85171301', description: 'Teléfono inteligente', igi: { value: 0, text: '0%' },
-        dataset_version: 'data-2026.08.17',
-      } }]),
-    });
-  });
+  await serveStaticRecords(page, [{
+    code: '85171301', description: 'Teléfono inteligente', igi: { value: 0, text: '0%' },
+    dataset_version: 'data-2026.08.17',
+  }]);
   await page.locator('#classification-query').fill('teléfono');
   await page.locator('#search-tariff').click();
   await page.getByRole('tab', { name: /clasificación asistida/i }).click();
@@ -376,13 +359,8 @@ test('keeps the local draft action and search feedback available across the trad
   await expect(page.getByTestId('trade-draft-status')).toHaveText(/expediente guardado localmente/i);
 
   let releaseSearch;
-  await page.route('**/v1/search**', async (route) => {
-    await new Promise((resolve) => { releaseSearch = resolve; });
-    await route.fulfill({
-      contentType: 'application/json',
-      body: JSON.stringify([]),
-    });
-  });
+  const gate = new Promise((resolve) => { releaseSearch = resolve; });
+  await serveStaticRecords(page, [], { gate });
   await page.locator('#classification-query').fill('sin coincidencias');
   await page.locator('#search-tariff').click();
   await expect(page.locator('#classification-results')).toHaveAttribute('aria-busy', 'true');
@@ -424,12 +402,7 @@ test('keeps the trade form available and explains when local storage cannot save
 });
 
 test('preloads a verified tariff hypothesis from a record context without writing a draft', async ({ page }) => {
-  await page.route('**/v1/ficha/85171301', async (route) => {
-    await route.fulfill({
-      contentType: 'application/json',
-      body: JSON.stringify({ record: { code: '85171301', igi: { value: 0, text: '0%' }, dataset_version: 'data-2026.08.22' } }),
-    });
-  });
+  await serveStaticRecords(page, [{ code: '85171301', igi: { value: 0, text: '0%' }, dataset_version: 'data-2026.08.22' }]);
 
   await page.goto('/trade?code=85171301');
 
@@ -441,12 +414,7 @@ test('preloads a verified tariff hypothesis from a record context without writin
 });
 
 test('reveals verified tariff matches from the primary search', async ({ page }) => {
-  await page.route('**/v1/search?**', async (route) => {
-    await route.fulfill({
-      contentType: 'application/json',
-      body: JSON.stringify([{ record: { code: '85171301', description: 'Teléfono inteligente', igi: { value: 0, text: '0%' } } }]),
-    });
-  });
+  await serveStaticRecords(page, [{ code: '85171301', description: 'Teléfono inteligente', igi: { value: 0, text: '0%' } }]);
   await page.goto('/trade');
   await page.locator('#trade-secondary-tools').evaluate((element) => { element.open = false; });
   await page.locator('#classification-query').fill('teléfono');
