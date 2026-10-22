@@ -127,15 +127,15 @@ Si ocurre un segundo cambio válido el mismo día y ya existe `data-YYYY.MM.DD`,
 
 ## 9. API estática en GitHub Pages
 
-Cuando la release ya es pública, el mismo job `publish` genera la API estática de sólo lectura que consumen el frontend y terceros:
+El job `pages` genera la API estática de sólo lectura que consumen el frontend y terceros. Corre después de publicar una release nueva y también cuando el pipeline termina en `no_change`, de modo que `gh-pages` existe y sirve la última release aunque las fuentes no hayan cambiado:
 
-1. `scripts/build_static_pages.py --tag data-YYYY.MM.DD` descarga esa misma release con el cliente público, que verifica `manifest.json` y `SHA256SUMS`, y se niega a continuar si la release no está verificada.
+1. `scripts/build_static_pages.py` descarga la release recién publicada (`--tag data-YYYY.MM.DD`) o, en `no_change`, la última release con el cliente público, que verifica `manifest.json` y `SHA256SUMS`, y se niega a continuar si la release no está verificada.
 2. Escribe el árbol `v1/` (`meta.json`, `records/{hs2}.json`, `search-index.json`, `manifest.json` y el resto de archivos descritos en la [arquitectura](architecture.md#archivos-de-la-api-estática)) y verifica cada archivo contra el SHA-256 de su manifest. Añade `.nojekyll` para que Pages sirva los archivos tal cual.
-3. El workflow hace force-push del árbol a la rama `gh-pages`, con un único commit por release, y pide un build a la API de GitHub Pages.
+3. Si el commit de `gh-pages` ya corresponde a esa release, no hace nada. Si no, hace force-push del árbol a la rama `gh-pages`, con un único commit por release, y pide un build a la API de GitHub Pages.
 
 Pages sirve el árbol en `https://jccontrerasg08-cpu.github.io/arancel-mx/v1/` y Vercel lo expone como `/data/v1/`. La rama `gh-pages` no contiene historial: siempre refleja la última release publicada.
 
-Estos pasos usan `continue-on-error`. La release ya es pública e inmutable cuando se ejecutan, así que una falla de Pages no se reporta como release bloqueada: el workflow emite una advertencia (`::warning::`) y la siguiente release vuelve a generar el árbol completo. Para regenerarlo sin release nueva, ejecuta `python -m scripts.build_static_pages --out out/pages --tag data-YYYY.MM.DD` y publica el resultado en `gh-pages` siguiendo el mismo procedimiento.
+`pages` es un job aparte: si falla, la release ya es pública e inmutable y no se reporta como bloqueada, pero la ejecución queda en rojo y la siguiente ejecución diaria lo reintenta. Para regenerar el árbol sin esperar, lanza el workflow a mano con `publish: true`.
 
 ## 10. Vigilancia del DOF en SIDOF
 
@@ -165,9 +165,9 @@ Los Issues del usuario sin el marcador oculto de automatización nunca se cierra
 
 ## 12. Límites de permisos
 
-El workflow tiene `contents: read` globalmente. El job de build permanece read-only. Sólo `publish` recibe `contents: write` (release inmutable y rama `gh-pages`), `attestations: write` e `id-token: write` (attestation) y `pages: write` (build de Pages). Sólo `notify` recibe `issues: write`. No se usa PAT, `write-all`, `artifact-metadata: write` ni `pull_request_target`.
+El workflow tiene `contents: read` globalmente. El job de build permanece read-only. Sólo `publish` recibe `contents: write` (release inmutable), `attestations: write` e `id-token: write` (attestation). Sólo `pages` recibe `contents: write` (rama `gh-pages`) y `pages: write` (build de Pages). Sólo `notify` recibe `issues: write`. No se usa PAT, `write-all`, `artifact-metadata: write` ni `pull_request_target`.
 
-Ningún job de este workflow conserva la credencial de checkout: los tres usan `persist-credentials: false` y llegan a GitHub mediante variables de entorno de token explícitas. El push a `gh-pages` pasa el token en un encabezado `http.extraheader` de esa sola invocación de `git`, sin escribirlo en la configuración del repositorio. El job de build es el único que instala `.[dev]`, porque es el único que ejecuta la suite; `publish` y `notify` instalan sólo el runtime, de modo que el job que firma la attestation no carga herramientas de desarrollo.
+Ningún job de este workflow conserva la credencial de checkout: los cuatro usan `persist-credentials: false` y llegan a GitHub mediante variables de entorno de token explícitas. El push a `gh-pages` pasa el token en un encabezado `http.extraheader` de esa sola invocación de `git`, sin escribirlo en la configuración del repositorio. El job de build es el único que instala `.[dev]`, porque es el único que ejecuta la suite; `publish`, `pages` y `notify` instalan sólo el runtime, de modo que el job que firma la attestation no carga herramientas de desarrollo.
 
 Los invariantes estructurales de todos los workflows (acciones fijadas por SHA, escrituras siempre dentro de un job, permisos y timeout por job, credenciales de checkout explícitas, y ausencia de interpolación `${{ ... }}` dentro de scripts de shell) se verifican offline en `tests/test_workflow_hardening.py`.
 
