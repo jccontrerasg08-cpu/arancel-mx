@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import json
-import os
 from dataclasses import asdict, dataclass
 from datetime import date
 from pathlib import Path
-from tempfile import NamedTemporaryFile
 from typing import Any
 
+from arancel_mx.sources.capture import atomic_write_json
 from arancel_mx.sources.diputados import (
     LedgerDocument, LedgerLink, LedgerSnapshot, diff_ledgers, parse_ligie_ledger, route_changes,
 )
@@ -70,15 +69,6 @@ def _snapshot_from_dict(data: dict[str, Any]) -> LedgerSnapshot:
     )
 
 
-def _atomic_write(path: Path, payload: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with NamedTemporaryFile("w", encoding="utf-8", dir=path.parent, delete=False) as handle:
-        json.dump(payload, handle, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-        handle.write("\n")
-        temporary = Path(handle.name)
-    os.replace(temporary, path)
-
-
 def check_for_updates(config: UpdateConfig, client: Any | None = None) -> UpdatePlan:
     session = client or build_official_session()
     if hasattr(session, "headers"):
@@ -97,5 +87,5 @@ def check_for_updates(config: UpdateConfig, client: Any | None = None) -> Update
         jobs, _snapshot_dict(current),
     )
     if config.report_path:
-        _atomic_write(config.report_path, plan.to_dict())
+        atomic_write_json(config.report_path, plan.to_dict())
     return plan

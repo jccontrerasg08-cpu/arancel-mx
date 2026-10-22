@@ -77,7 +77,7 @@ def _code_from_url(base_url: str) -> str:
     return match.group(1)
 
 
-def _normalize_code(value: str) -> str:
+def normalize_fraction_code(value: str) -> str:
     return re.sub(r"\D", "", value)
 
 
@@ -88,7 +88,7 @@ _FRACTION_TOKEN = re.compile(r"(?<!\d)(\d{4}\.?\d{2}\.?\d{2})(?!\d)")
 def _cell_fraction_codes(cell: str) -> tuple[str, ...]:
     codes: list[str] = []
     for match in _FRACTION_TOKEN.finditer(cell):
-        digits = _normalize_code(match.group(1))
+        digits = normalize_fraction_code(match.group(1))
         if len(digits) == 8:
             codes.append(digits)
     return tuple(codes)
@@ -159,7 +159,7 @@ def _nico_rows(tables: list[list[list[str]]]) -> tuple[tuple[str, str, str | Non
 def parse_fraction_sheet(html: str, *, base_url: str) -> VucemFractionSheet:
     """Parse one VUCEM buildHojas fraction sheet into structured tariff fields."""
     code = _code_from_url(base_url)
-    if _normalize_code(html).find(code) == -1:
+    if normalize_fraction_code(html).find(code) == -1:
         raise ValueError(f"VUCEM fraction sheet HTML is missing code {code}")
 
     parser = _TableParser()
@@ -177,5 +177,4 @@ def parse_fraction_sheet(html: str, *, base_url: str) -> VucemFractionSheet:
     )
 
 
-normalize_fraction_code = _normalize_code
 TableParser = _TableParser

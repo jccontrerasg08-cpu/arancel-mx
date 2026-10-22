@@ -248,7 +248,8 @@ def test_v1_sunset_runbook_tracks_the_remaining_vercel_runtime() -> None:
         "api/_vendor",
         "api/_runtime.py",
         "python3.13",
-        "psycopg[binary]>=3.3.4",
+        "requirements/vercel.txt",
+        "--require-hashes",
         "requirements.txt",
         "maxDuration",
     ):

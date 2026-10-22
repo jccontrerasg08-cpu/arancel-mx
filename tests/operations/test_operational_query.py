@@ -325,3 +325,16 @@ def test_active_release_public_workflow_preserves_search_hierarchy_and_evidence(
     assert suggestion["national_notes"] == evidence["national_notes"]
     assert provenance_active_release(connection, "85171301")[0]["authority"] == "DOF"
     assert sections_active_release()[0]["roman"] == "I"
+
+
+def test_active_release_search_rejects_oversized_text_before_loading_records():
+    import pytest
+
+    from arancel_mx.operational.query import MAX_SEARCH_TEXT_LENGTH, search_public_active_release
+
+    class NoQueries:
+        def execute(self, *args, **kwargs):
+            raise AssertionError("the table must not be loaded for an oversized query")
+
+    with pytest.raises(ValueError, match="at most"):
+        search_public_active_release(NoQueries(), "a " * MAX_SEARCH_TEXT_LENGTH, limit=5)

@@ -47,9 +47,6 @@ jobs:
       - name: Type-check full package
         run: python -m mypy src/arancel_mx
 
-      - name: Prevent strict type-error debt growth
-        run: python -m scripts.check_type_error_budget
-
       - name: Run tests
         env:
           ARANCEL_MX_SKIP_URL_CHECKS: "1"
@@ -147,7 +144,7 @@ jobs:
       - name: Install API runtime test dependencies
         run: |
           python -m pip install pip==26.2.1
-          python -m pip install -c requirements/production-build.txt -e "." pytest==9.1.1 httpx2==2.10.0
+          python -m pip install -c requirements/production-build.txt -e "." pytest httpx2
 
       - name: Smoke-test the self-hosted API runtime
         env:

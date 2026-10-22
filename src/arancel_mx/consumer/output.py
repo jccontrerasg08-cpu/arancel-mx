@@ -92,7 +92,7 @@ _CSV_SCHEMA_FIELDS: dict[CsvSchema, tuple[str, ...]] = {
 
 
 def _plain(value: object) -> object:
-    if is_dataclass(value):
+    if is_dataclass(value) and not isinstance(value, type):
         return {key: _plain(item) for key, item in asdict(value).items()}
     if isinstance(value, Mapping):
         return {str(key): _plain(item) for key, item in value.items()}
@@ -312,10 +312,12 @@ def render_table(value: object, *, empty_csv_schema: CsvSchema | None = None) ->
     if isinstance(value, Ficha):
         return _render_ficha_table(value)
     items = _sequence(value)
-    if items and all(isinstance(item, SuggestHit) for item in items):
-        return _render_suggest_table(tuple(items))
-    if items and all(isinstance(item, SearchResult) for item in items):
-        return _render_search_table(tuple(items))
+    hits = tuple(item for item in items if isinstance(item, SuggestHit))
+    if items and len(hits) == len(items):
+        return _render_suggest_table(hits)
+    results = tuple(item for item in items if isinstance(item, SearchResult))
+    if items and len(results) == len(items):
+        return _render_search_table(results)
     if not items:
         if empty_csv_schema == "suggest":
             return f"{SUGGEST_DISCLAIMER}\nNo results."

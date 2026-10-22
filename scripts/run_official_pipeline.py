@@ -10,8 +10,7 @@ import os
 from pathlib import Path
 import re
 import sys
-import tempfile
-from typing import Any, Callable
+from typing import Callable
 from zipfile import BadZipFile
 
 import requests
@@ -21,6 +20,7 @@ from arancel_mx.pipeline.official_dataset import (
     OfficialDatasetConfig,
     build_official_dataset,
 )
+from arancel_mx.sources.capture import atomic_write_json
 
 
 MAX_DIAGNOSTIC_LENGTH = 1200
@@ -78,34 +78,6 @@ def classify_failure(error: BaseException) -> str:
     return "unexpected_error"
 
 
-def _atomic_write_json(path: Path, value: Mapping[str, object]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    payload = json.dumps(
-        value,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    ) + "\n"
-    handle = tempfile.NamedTemporaryFile(
-        mode="w",
-        encoding="utf-8",
-        newline="",
-        dir=path.parent,
-        prefix=f".{path.name}.",
-        suffix=".tmp",
-        delete=False,
-    )
-    temporary = Path(handle.name)
-    try:
-        with handle:
-            handle.write(payload)
-            handle.flush()
-            os.fsync(handle.fileno())
-        temporary.replace(path)
-    except Exception:
-        temporary.unlink(missing_ok=True)
-        raise
-
 
 def execute_pipeline(
     config: OfficialDatasetConfig,
@@ -149,7 +121,7 @@ def execute_pipeline(
         exit_code = 2
 
     try:
-        _atomic_write_json(Path(result_path), result)
+        atomic_write_json(Path(result_path), result)
     except Exception as write_error:  # noqa: BLE001 - preserve a diagnostic on stderr
         print(
             f"error: unable to write pipeline diagnostics: {_sanitize_message(write_error)}",
@@ -242,7 +214,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         previous_manifest = _load_previous_manifest(args.previous_manifest)
     except Exception as error:  # noqa: BLE001 - configuration must also emit diagnostics
         dataset_version = str(getattr(args, "dataset_version", "unknown"))
-        result = {
+        result: dict[str, object] = {
             "status": "failed",
             "stage": "configuration",
             "dataset_version": dataset_version,
@@ -250,7 +222,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "message": _sanitize_message(error),
         }
         try:
-            _atomic_write_json(result_path, result)
+            atomic_write_json(result_path, result)
         except Exception as write_error:  # noqa: BLE001
             print(
                 f"error: unable to write pipeline diagnostics: {_sanitize_message(write_error)}",

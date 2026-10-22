@@ -49,6 +49,7 @@ def stream_download(
     destination: Path,
     *,
     timeout: float,
+    max_bytes: int | None = None,
 ) -> int:
     """Stream one URL into a caller-owned temporary path and return bytes written.
 
@@ -71,8 +72,12 @@ def stream_download(
                 for chunk in response.iter_content(chunk_size=_CHUNK_SIZE):
                     if not chunk:
                         continue
-                    output.write(chunk)
                     written += len(chunk)
+                    if max_bytes is not None and written > max_bytes:
+                        raise DatasetDownloadError(
+                            f"dataset asset exceeds its declared size of {max_bytes} bytes: {url}"
+                        )
+                    output.write(chunk)
         return written
     except (requests.RequestException, OSError) as exc:
         raise DatasetDownloadError(f"failed to download dataset asset: {url}") from exc
