@@ -46,7 +46,7 @@ def test_full_consumer_cli_sequence_survives_strict_offline_mode(
 
     download_calls: list[str] = []
 
-    def fake_download(session, url: str, destination: Path, *, timeout: float) -> int:
+    def fake_download(session, url: str, destination: Path, *, timeout: float, max_bytes: int | None = None) -> int:
         name = url.rstrip("/").split("/")[-1]
         download_calls.append(name)
         body = files[name]

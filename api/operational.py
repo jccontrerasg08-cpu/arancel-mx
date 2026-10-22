@@ -18,6 +18,7 @@ ensure_project_source()
 
 from arancel_mx.api import API_VERSION
 from arancel_mx.operational.query import (
+    MAX_SEARCH_TEXT_LENGTH,
     active_release_metadata,
     chapters_active_release,
     children_active_release,
@@ -88,6 +89,10 @@ class handler(BaseHTTPRequestHandler):
             "provenance",
         }:
             self._respond(HTTPStatus.NOT_FOUND, {"status": "not_found"})
+            return
+        # Same bound as the FastAPI SearchText contract: reject before loading the table.
+        if resource in {"search", "suggest"} and len(query.get("q", [""])[0]) > MAX_SEARCH_TEXT_LENGTH:
+            self._respond(HTTPStatus.UNPROCESSABLE_ENTITY, {"status": "invalid_query"})
             return
 
         database_url = operational_database_url()
