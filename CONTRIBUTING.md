@@ -31,6 +31,16 @@ python -m pytest -q
 9. Cuando una contribución modifique biblioteca, CLI o `/v1`, aplica la [política de compatibilidad](docs/compatibility.md): los cambios incompatibles requieren reemplazo, aviso y changelog.
 10. Para revisar reportes nuevos, sigue la checklist semanal de [`docs/operations/issue-triage.md`](docs/operations/issue-triage.md). La rutina ordena la cola; no sustituye la revisión técnica ni cierra casos controvertidos automáticamente.
 
+## Mantener el código simple
+
+El repositorio incluye el método [Ponytail](https://github.com/dietrichgebert/ponytail) para agentes de código (Cursor lee `.cursor/rules/ponytail.mdc`; Claude Code, `.claude/skills/`). Resume lo que se espera también de un cambio humano: el cambio completo más pequeño, reutilizar lo que ya existe antes que escribir algo nuevo, sin abstracciones ni dependencias que nadie pidió, y una prueba para cada lógica no trivial.
+
+- `ponytail-review` revisa un diff buscando sólo sobreingeniería.
+- `ponytail-audit` hace lo mismo sobre todo el repositorio.
+- `ponytail-debt` lista los atajos marcados con `shortcut:` o `ponytail:`, cada uno con su límite y su condición de mejora.
+
+Estas herramientas no sustituyen la revisión de corrección, seguridad ni datos oficiales.
+
 ## Revisión en GitHub
 
 arancel-mx no reimplementa la UI de GitHub. Para revisar PRs, instala en el navegador:
