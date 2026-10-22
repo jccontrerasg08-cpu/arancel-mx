@@ -27,3 +27,5 @@ build/
 api/_vendor/
 
 .DS_Store
+frontend-dist/
+node_modules/

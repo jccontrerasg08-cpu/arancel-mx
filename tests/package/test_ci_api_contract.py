@@ -35,8 +35,8 @@ def test_required_ci_type_checks_the_full_package() -> None:
     assert "python -m mypy src/arancel_mx" in job
 
 
-def test_ci_smokes_the_fastapi_cloud_python_runtime() -> None:
-    job = _job("fastapi-cloud-runtime")
+def test_ci_smokes_the_self_hosted_api_python_runtime() -> None:
+    job = _job("api-runtime")
 
     assert 'python-version-file: ".python-version"' in job
     assert (
@@ -48,8 +48,8 @@ def test_ci_smokes_the_fastapi_cloud_python_runtime() -> None:
     ) in job
 
 
-def test_fastapi_cloud_job_exercises_default_verified_startup() -> None:
-    job = _job("fastapi-cloud-runtime")
+def test_api_runtime_job_exercises_default_verified_startup() -> None:
+    job = _job("api-runtime")
 
     assert "Smoke-test default FastAPI startup" in job
     assert "ARANCEL_MX_API_DATASET: data-2026.08.15" in job
