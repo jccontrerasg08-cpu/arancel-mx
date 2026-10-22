@@ -2,6 +2,8 @@ import { readFile } from 'node:fs/promises';
 
 import { expect, test } from '@playwright/test';
 
+import { failStaticFile, serveStaticRecords } from './static-data.mjs';
+
 test('serves the public marketing root and preserves the explorer handoff', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: /inteligencia arancelaria/i })).toBeVisible();
@@ -67,7 +69,7 @@ test('keeps evidence cards controllable and backed by a loaded topical visual', 
 });
 
 test('uses the public metadata release in the evidence card when it is available', async ({ page }) => {
-  await page.route('**/v1/meta', (route) => route.fulfill({ json: { dataset_version: '2026.08.24' } }));
+  await page.route('**/data/v1/meta.json', (route) => route.fulfill({ json: { dataset_version: '2026.08.24' } }));
   await page.goto('/');
   await expect(page.getByTestId('example-rotator')).toContainText('2026.08.24');
 });
@@ -155,17 +157,15 @@ test('serves verified chapter and fraction-change discovery routes', async ({ pa
 });
 
 test('shows a bounded history of immutable data releases', async ({ page }) => {
-  await page.route('**/v1/repository', (route) => route.fulfill({
+  await page.route('https://api.github.com/repos/jccontrerasg08-cpu/arancel-mx/releases**', (route) => route.fulfill({
     contentType: 'application/json',
-    body: JSON.stringify({
-      releases: [
-        {
-          tag: 'data-2026.08.22',
-          publishedAt: '2026-08-22T11:17:00Z',
-          url: 'https://github.com/jccontrerasg08-cpu/arancel-mx/releases/tag/data-2026.08.22',
-        },
-      ],
-    }),
+    body: JSON.stringify([
+      {
+        tag_name: 'data-2026.08.22',
+        published_at: '2026-08-22T11:17:00Z',
+        html_url: 'https://github.com/jccontrerasg08-cpu/arancel-mx/releases/tag/data-2026.08.22',
+      },
+    ]),
   }));
   await page.goto('/changes');
 
@@ -178,8 +178,8 @@ test('shows a bounded history of immutable data releases', async ({ page }) => {
 
 
 test('identifies the chapter fallback when verified indexes are unavailable', async ({ page }) => {
-  await page.route('**/v1/sections', (route) => route.fulfill({ status: 503, contentType: 'application/json', body: '{}' }));
-  await page.route('**/v1/chapters', (route) => route.fulfill({ status: 503, contentType: 'application/json', body: '{}' }));
+  await failStaticFile(page, 'sections.json');
+  await failStaticFile(page, 'chapters.json');
   await page.goto('/chapters');
   await expect(page.getByRole('status')).toContainText(/index unavailable.*packaged navigation/i);
   await expect(page.getByRole('button', { name: /^sección I /i })).toBeVisible();
@@ -233,11 +233,7 @@ test('serves the homepage-aligned verified explorer', async ({ page }) => {
 });
 
 test('shows possible verified paths while a person types without requiring a submit', async ({ page }) => {
-  await page.route('**/v1/search?**', async (route) => {
-    const query = new URL(route.request().url()).searchParams.get('q');
-    if (query !== 'teléfonos') return route.continue();
-    return route.fulfill({ contentType: 'application/json', body: JSON.stringify([{ code: '85171301', description: 'Teléfonos inteligentes', level: 'fraccion8', dataset_version: '2026.08.15' }]) });
-  });
+  await serveStaticRecords(page, [{ code: '85171301', description: 'Teléfonos inteligentes', level: 'fraccion8', dataset_version: '2026.08.15' }]);
   await page.goto('/app');
   await page.getByTestId('search-input').fill('teléfonos');
   const suggestions = page.getByTestId('live-suggestions');
@@ -257,19 +253,15 @@ test('looks up a complete tariff fraction with evidence and a decision tree', as
   await expect(page.getByTestId('hierarchy-card')).toContainText(/árbol de decisión progresivo/i);
   await expect(page.getByTestId('tree-filter-status')).toContainText('85.17.13.01');
   await expect(page.getByRole('status')).toHaveText(/registro verificado listo/i);
-  await expect(page.getByRole('link', { name: /API JSON/i })).toHaveAttribute('href', /\/v1\/ficha\/85171301$/);
+  await expect(page.getByRole('link', { name: /API JSON/i })).toHaveAttribute('href', /\/data\/v1\/records\/85\.json$/);
 });
 
 test('retries a direct record request without leaving the record route', async ({ page }) => {
-  let attempts = 0;
-  await page.route('**/v1/ficha/99999999', async (route) => {
-    attempts += 1;
-    await route.fulfill({ status: 503, contentType: 'application/json', body: '{}' });
-  });
+  const failures = await failStaticFile(page, 'records/99.json');
   await page.goto('/app/record/99999999');
   await expect(page.getByRole('heading', { name: /no está disponible temporalmente/i })).toBeVisible();
   await page.getByRole('button', { name: /reintentar/i }).click();
-  await expect.poll(() => attempts).toBeGreaterThan(1);
+  await expect.poll(() => failures.attempts).toBeGreaterThan(1);
   await expect(page).toHaveURL(/\/app\/record\/99999999$/);
 });
 
@@ -295,37 +287,6 @@ test('exposes rates only on fraction cards', async ({ page }) => {
 });
 
 test('renders every non-fraction direct record without rate fields or a page error', async ({ page }) => {
-  await page.route('**/v1/ficha/0101210100', async (route) => {
-    await route.fulfill({
-      contentType: 'application/json',
-      body: JSON.stringify({
-        record: {
-          code: '0101210100',
-          level: 'nico10',
-          description: 'Reproductores de raza pura.',
-          unit_name: 'Cbza',
-          igi: null,
-          ige: null,
-          parent_code: '01012101',
-          dataset_version: '2026.08.15',
-          schema_version: '2',
-          effective_from: null,
-          effective_to: null,
-          is_current: true,
-          hierarchy: {
-            hs2: '01', hs4: '0101', hs6: '010121', fraccion8: '01012101', nico2: '00', nico10: '0101210100',
-          },
-          ligie_version: 'LIGIE-2022',
-          validity_basis: 'observed_snapshot',
-        },
-        formatted_code: '0101.21.01 00',
-        section: { roman: 'I', name: 'Animales vivos y productos del reino animal' },
-        hierarchy: [],
-        children: [],
-      }),
-    });
-  });
-
   for (const { code, formatted } of [
     { code: '01', formatted: '01' },
     { code: '0101', formatted: '01.01' },

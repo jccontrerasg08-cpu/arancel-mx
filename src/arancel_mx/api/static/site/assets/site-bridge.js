@@ -60,7 +60,7 @@ function synchronizeDisplayedRelease() {
     return;
   }
   if (releaseMetadataRequest) return;
-  releaseMetadataRequest = fetch('/v1/meta', { cache: 'no-store' })
+  releaseMetadataRequest = fetch('/data/v1/meta.json', { cache: 'no-store' })
     .then((response) => (response.ok ? response.json() : null))
     .then((metadata) => {
       if (metadata && typeof metadata.dataset_tag === 'string') {
