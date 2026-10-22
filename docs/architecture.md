@@ -104,7 +104,7 @@ Las fronteras de importación (por ejemplo, que `consumer` no dependa de `pipeli
 | Script | Lo usa |
 |---|---|
 | `run_official_pipeline.py`, `fetch_previous_release.py`, `workflow_diagnostics.py`, `publish_release.py`, `build_static_pages.py`, `watch_dof.py`, `data_alert.py` | Official data pipeline |
-| `check_type_error_budget.py`, `check_documented_urls.py`, `validate_ligie_html_pages.py`, `check_duckdb_compat.py`, `certify_package_install.py` | CI |
+| `check_documented_urls.py`, `validate_ligie_html_pages.py`, `check_duckdb_compat.py`, `certify_package_install.py` | CI |
 | `validate_package_tag.py`, `certify_testpypi_candidate.py` | Publicación del paquete |
 | `certify_github_release.py`, `certify_github_issue.py` | Certificación de producción |
 | `check_public_service.py` | Canario diario del bundle publicado |
@@ -113,7 +113,7 @@ Las fronteras de importación (por ejemplo, que `consumer` no dependa de `pipeli
 | `capture_instrument_research.py` | Captura local de instrumentos para el [inventario](research/ligie-instrument-inventory.md) |
 | `dependency_compatibility_probe.py` | Pruebas de compatibilidad de dependencias |
 | `promote_operational_release.py` | Promoción manual a Neon; se retira con `/v1` |
-| `build-frontend.mjs`, `sync-frontend-static.mjs`, `recover-glossary-from-bundle.mjs` | `npm run build:frontend` y mantenimiento del frontend |
+| `build-frontend.mjs`, `sync-frontend-static.mjs` | `npm run build:frontend` y mantenimiento del frontend |
 
 ## 6. Workflows (`.github/workflows/`)
 

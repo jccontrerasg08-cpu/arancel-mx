@@ -16,17 +16,6 @@ from arancel_mx.consumer.wco_support import cite_chapter, cite_gir, download_cha
 
 
 _OUTPUT_FORMATS = ("table", "json", "csv")
-_QUERY_ACTIONS = {
-    "lookup",
-    "search",
-    "suggest",
-    "parent",
-    "children",
-    "provenance",
-    "ficha",
-    "chapters",
-    "compare",
-}
 _QUERY_CSV_SCHEMAS: dict[str, CsvSchema] = {
     "lookup": "tariff",
     "search": "search",
@@ -482,7 +471,7 @@ def run_consumer(namespace: argparse.Namespace) -> int:
     """Run one parsed consumer command and return its process exit code."""
 
     action = getattr(namespace, "consumer_action", None)
-    if action in _QUERY_ACTIONS:
+    if action in _QUERY_CSV_SCHEMAS:
         return _run_query(namespace)
     if action == "data_download":
         return _run_data_download(namespace)

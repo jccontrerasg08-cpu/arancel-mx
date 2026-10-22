@@ -111,13 +111,21 @@ def test_ruff_enables_a_small_rule_set() -> None:
     ruff = tool["ruff"]
     lint = ruff.get("lint", ruff)
     select = set(lint.get("select", ruff.get("select", [])))
-    assert {"E9", "F63", "F7", "F82"} <= select
+    # Full pyflakes: unused imports and variables fail CI, not only syntax-level errors.
+    assert {"E9", "F", "S"} <= select
 
 
 def test_mypy_targets_the_public_consumer_api() -> None:
     mypy = _payload()["tool"]["mypy"]
     assert mypy.get("ignore_missing_imports") is True
     assert mypy.get("python_version") == "3.11"
+
+
+def test_mypy_does_not_silence_error_codes() -> None:
+    """The arg-type/attr-defined debt was paid down; no error code may be disabled again."""
+    mypy = _payload()["tool"]["mypy"]
+    assert "disable_error_code" not in mypy
+    assert "type_error_budget" not in _payload()["tool"].get("arancel_mx", {})
 
 
 def test_coverage_uses_branch_measurement_with_a_conservative_floor() -> None:

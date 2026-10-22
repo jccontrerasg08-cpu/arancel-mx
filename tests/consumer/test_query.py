@@ -7,7 +7,7 @@ import duckdb
 import pytest
 
 from arancel_mx.consumer.errors import InvalidCodeError, QueryError, RecordNotFoundError
-from arancel_mx.consumer.models import NationalNote, ProvenanceRecord, SearchResult, SuggestHit, TariffRecord
+from arancel_mx.consumer.models import NationalNote, ProvenanceRecord, SuggestHit, TariffRecord
 from arancel_mx.consumer.query import (
     SCORER_VERSION,
     chapters,

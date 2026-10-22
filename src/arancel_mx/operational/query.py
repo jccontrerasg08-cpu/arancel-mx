@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import Any, Protocol
 
 
@@ -125,7 +126,11 @@ _CHILDREN = {2: ("hs4", 4), 4: ("hs6", 6), 6: ("fraccion8", 8), 8: ("nico10", 10
 
 
 def _public_number(value: object) -> float | None:
-    return None if value is None else float(value)
+    if value is None:
+        return None
+    if isinstance(value, (Decimal, int, float, str)):
+        return float(value)
+    raise TypeError(f"expected a numeric value, got {type(value).__name__}")
 
 
 def _public_record(payload: object, dataset_version: object) -> dict[str, object]:

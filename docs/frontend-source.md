@@ -18,7 +18,7 @@ El repositorio usa npm con `package-lock.json`.
 
 ## Fuente de las rutas
 
-El manifiesto central está en `frontend/src/routes.js`; `frontend/src/App.jsx` lo convierte en rutas React. El contenido editorial vive en `frontend/src/content.js` y `frontend/src/pages.jsx` contiene los componentes de cada superficie. El glosario se publica como módulo declarativo de 189 entradas y puede regenerarse desde el bundle histórico con `scripts/recover-glossary-from-bundle.mjs`.
+El manifiesto central está en `frontend/src/routes.js`; `frontend/src/App.jsx` lo convierte en rutas React. El contenido editorial vive en `frontend/src/content.js` y `frontend/src/pages.jsx` contiene los componentes de cada superficie. El glosario se publica como módulo declarativo de 189 entradas en `frontend/src/glossary-data.js`.
 
 | Superficie | Fuente principal | Comportamiento |
 |---|---|---|

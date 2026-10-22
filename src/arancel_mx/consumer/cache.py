@@ -218,7 +218,6 @@ class DatasetCache:
         self._ensure_root()
 
         staging_dir = Path(staging_dir)
-        root_resolved = self.root.resolve()
         staging_resolved = staging_dir.resolve()
         staging_parent = (self.root / ".staging").resolve()
         if not staging_resolved.is_relative_to(staging_parent):

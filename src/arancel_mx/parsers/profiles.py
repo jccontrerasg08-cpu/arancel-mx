@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import re
 import unicodedata
+from typing import Final, TypedDict
 
 from arancel_mx.domain.normalization import normalize_code
 from arancel_mx.parsers.workbooks import WorkbookProbe, WorkbookProfile
@@ -17,7 +18,13 @@ class ResolvedWorkbookProfile:
     profile: WorkbookProfile
 
 
-_PROFILE_ALIASES = {
+class _ProfileDefinition(TypedDict):
+    required: dict[str, tuple[str, ...]]
+    optional: dict[str, tuple[str, ...]]
+    parser_version: str
+
+
+_PROFILE_ALIASES: Final[dict[str, _ProfileDefinition]] = {
     "ligie_snapshot": {
         "required": {
             "code": ("FRACCION", "FRACCION ARANCELARIA"),
@@ -218,6 +225,6 @@ def resolve_workbook_profile(
         )
     return ResolvedWorkbookProfile(
         family=family,
-        parser_version=str(definition["parser_version"]),
+        parser_version=definition["parser_version"],
         profile=candidates[0],
     )

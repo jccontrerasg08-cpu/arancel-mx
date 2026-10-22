@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import asdict
 from datetime import date
 from typing import Literal
 
@@ -251,19 +252,7 @@ class ProvenanceResponse(FrozenModel):
 
     @classmethod
     def from_record(cls, record: ProvenanceRecord) -> ProvenanceResponse:
-        return cls(**record.__dict__) if hasattr(record, "__dict__") else cls(
-            source_document_id=record.source_document_id,
-            role=record.role,
-            is_primary=record.is_primary,
-            authority=record.authority,
-            publication_venue=record.publication_venue,
-            title=record.title,
-            source_url=record.source_url,
-            sha256=record.sha256,
-            published_at=record.published_at,
-            effective_from=record.effective_from,
-            effective_to=record.effective_to,
-        )
+        return cls(**asdict(record))
 
 
 class SearchResponse(FrozenModel):

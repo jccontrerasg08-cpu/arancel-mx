@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 import re
 import tempfile
-from typing import Any
+from typing import Any, cast
 
 import duckdb
 import requests
@@ -21,6 +21,7 @@ from arancel_mx.operational import (
     load_certified_release,
     promote_release,
 )
+from arancel_mx.operational.query import QueryCursor
 from arancel_mx.release.package import PUBLIC_RELEASE_ASSETS
 
 
@@ -94,10 +95,14 @@ def download_latest_publication_bundle(destination: Path, *, release_url: str = 
 
 def _active_release_state(connection: OperationalConnection) -> tuple[str, object] | None:
     ensure_schema(connection)
-    row = connection.execute(
-        "SELECT release.tag, release.evidence_json FROM operational_active_release AS active "
-        "JOIN operational_release AS release ON release.tag = active.tag"
-    ).fetchone()
+    cursor = cast(
+        QueryCursor,
+        connection.execute(
+            "SELECT release.tag, release.evidence_json FROM operational_active_release AS active "
+            "JOIN operational_release AS release ON release.tag = active.tag"
+        ),
+    )
+    row = cursor.fetchone()
     return None if row is None else (str(row[0]), row[1])
 
 
