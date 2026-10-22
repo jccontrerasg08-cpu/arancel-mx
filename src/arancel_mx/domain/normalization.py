@@ -373,8 +373,8 @@ def consolidate_records(
                 effective = _interval_intersection(
                     classification_start,
                     classification_end,
-                    rate.get("rate_effective_from"),
-                    rate.get("rate_effective_to"),
+                    cast(date | None, rate.get("rate_effective_from")),
+                    cast(date | None, rate.get("rate_effective_to")),
                 )
             if effective is None:
                 continue
@@ -382,8 +382,8 @@ def consolidate_records(
                 effective = _interval_intersection(
                     effective[0],
                     effective[1],
-                    parent_classification.get("classification_effective_from"),
-                    parent_classification.get("classification_effective_to"),
+                    cast(date | None, parent_classification.get("classification_effective_from")),
+                    cast(date | None, parent_classification.get("classification_effective_to")),
                 )
                 if effective is None:
                     continue

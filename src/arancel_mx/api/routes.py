@@ -29,6 +29,7 @@ from arancel_mx.api.openapi import (
 )
 from arancel_mx.api.repository import repository_snapshot
 from arancel_mx.consumer import Dataset
+from arancel_mx.consumer.errors import DatasetUnavailableError
 from arancel_mx.consumer.hs_sections import hs_sections
 
 
@@ -74,6 +75,8 @@ def metadata(
 
     settings = request.app.state.settings
     info = dataset.info
+    if info.dataset_version is None or info.schema_version is None:
+        raise DatasetUnavailableError("the served dataset does not declare its version")
     return MetaResponse(
         api_version=API_VERSION,
         package_version=__version__,

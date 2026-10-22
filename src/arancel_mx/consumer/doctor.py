@@ -73,7 +73,7 @@ def _package_checks() -> list[DiagnosticCheck]:
                 "distribution_metadata",
                 "pass",
                 "installed distribution metadata is readable",
-                name=distribution.metadata.get("Name", "arancel-mx"),
+                name=distribution.name or "arancel-mx",
             )
         )
     except metadata.PackageNotFoundError:

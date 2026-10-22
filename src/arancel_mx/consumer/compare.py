@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 import re
+from types import EllipsisType
 
 import requests
 
@@ -58,9 +59,9 @@ def _row(
     *,
     other_source: str = "vucem",
     note: str = "",
-    match: bool | None | object = ...,
+    match: bool | None | EllipsisType = ...,
 ) -> CompareRow:
-    resolved = _match_text(field, dataset, other) if match is ... else match
+    resolved = _match_text(field, dataset, other) if isinstance(match, EllipsisType) else match
     return CompareRow(
         code=code,
         level=level,

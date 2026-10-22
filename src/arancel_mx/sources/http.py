@@ -75,9 +75,11 @@ def _is_redirect(response: object) -> bool:
     if getattr(response, "is_redirect", False):
         return True
     status = getattr(response, "status_code", None)
+    if not isinstance(status, (int, str)):
+        return False
     try:
         return int(status) in _REDIRECT_STATUSES
-    except (TypeError, ValueError):
+    except ValueError:
         return False
 
 

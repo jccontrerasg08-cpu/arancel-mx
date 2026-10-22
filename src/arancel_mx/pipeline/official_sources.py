@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import timezone
+from datetime import date, timezone
 import hashlib
 from importlib.resources import files
 import json
@@ -78,6 +78,14 @@ class OfficialInputSnapshot:
     registry_version: str
     registry_sha256: str
     reconciliation: ReconciliationReport
+
+
+def _isoformat_or_none(value: object) -> str | None:
+    if not value:
+        return None
+    if isinstance(value, date):
+        return value.isoformat()
+    raise TypeError(f"published_at must be a date, got {type(value).__name__}")
 
 
 def _source_document_id(identity_key: str, final_url: str, source_sha256: str) -> str:
@@ -483,11 +491,7 @@ def write_release_sources(
             "sha256": item.capture.sha256,
             "source_document_id": source_document["source_document_id"],
             "source_url": source_document["source_url"],
-            "published_at": (
-                source_document["published_at"].isoformat()
-                if source_document.get("published_at")
-                else None
-            ),
+            "published_at": _isoformat_or_none(source_document.get("published_at")),
         }
         if source_document.get("discovery_url") is not None:
             row["discovery_url"] = source_document["discovery_url"]
