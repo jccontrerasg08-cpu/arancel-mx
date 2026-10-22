@@ -43,7 +43,7 @@ def test_package_release_doc_explains_lightweight_install_and_python_api() -> No
     document = _read("docs/package-release.md")
     assert 'pip install "arancel-mx[maintainer]"' in document
     assert "data-YYYY.MM.DD" in document
-    assert "dataset is not embedded" in document.lower()
+    assert "el dataset no se empaqueta" in document.lower()
     assert "pkg-v0.3.7" in document
     assert "[`docs/consumer-cli.md`](consumer-cli.md)" in document
     assert "[`docs/external-consumption.md`](external-consumption.md)" in document
@@ -68,16 +68,16 @@ def test_package_release_doc_keeps_code_and_data_release_channels_separate() -> 
     assert "GitHub Releases" in document
     assert "TestPyPI" in document
     assert "PyPI" in document
-    assert "not create a GitHub Release" in document
+    assert "no debe crear una GitHub Release" in document
 
 
 def test_package_release_doc_is_the_source_of_truth_for_pypi_status() -> None:
     document = _read("docs/package-release.md")
     lowered = document.lower()
     assert "arancel-mx==0.2.0" in document
-    assert "published on pypi" in lowered
+    assert "publicado en pypi" in lowered
     assert "0.3.7" in document
-    assert "not on pypi" in lowered
+    assert "no está en pypi" in lowered
 
     for readme in (_read("README.md"), _read("README.en.md")):
         assert "pip install arancel-mx" in readme
@@ -98,12 +98,12 @@ def test_changelog_020_heading_is_pypi_upload_date_not_unreleased_candidate() ->
 def test_package_release_doc_describes_020_as_published() -> None:
     document = _read("docs/package-release.md")
     lowered = document.lower()
-    assert "must not claim that the candidate has already been published" not in lowered
+    assert "no debe afirmar que el candidato ya se publicó" not in lowered
     assert "0.2.0" in document
-    assert "published" in lowered
+    assert "publicado" in lowered
     assert "0.3.7" in document
-    assert "matrix" in lowered
-    assert "production-certified" not in lowered
+    assert "matriz" in lowered
+    assert "certificado para producción" not in lowered
 
 
 def test_readme_en_links_external_consumption_with_english_ingest_summary() -> None:

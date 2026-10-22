@@ -10,7 +10,10 @@ El metadato de distribución declara `requires-python = ">=3.11"`. Las releases 
 |---|---|---|
 | Biblioteca `arancel_mx` | Las importaciones y firmas documentadas cambian de forma aditiva por defecto. | Prueba de regresión, changelog y, si afecta varias fronteras, una decisión registrada. |
 | CLI `arancel-mx` | Los comandos y salidas documentadas no se eliminan silenciosamente. | Prueba de CLI, guía de consumo y entrada en `CHANGELOG.md`. |
+| API estática bajo `/data/v1` | Los nombres de archivo y los campos de cada respuesta siguen los modelos de `/v1` y cambian de forma aditiva; `meta.json` declara la versión del exportador. | Prueba de paridad (`tests/test_static_api.py`), manifest y changelog. |
 | HTTP read-only bajo `/v1` | Las rutas, campos y semántica publicada no se retiran sin transición documentada. | Contrato de API, prueba de ruta y changelog. |
+
+**Retiro en curso:** las rutas `/v1` alojadas en `arancel-mx.vercel.app` están deprecadas con `Sunset` el 2027-01-31 ([decisión 0002](decisions/0002-arquitectura-github-primero.md), [runbook](operations/v1-sunset.md)). El servidor `arancel_mx.api` del paquete conserva `/v1` sin fecha de retiro.
 | Dataset y release | Los contratos públicos de DuckDB, CSV, JSON, manifest y PUBLIC_COLUMNS evolucionan de forma aditiva por defecto; identidad, procedencia y validación permanecen separadas de los contratos de ejecución. | Manifest certificado, prueba de release y changelog con transición de esquema. |
 
 ## Cambios compatibles y deprecaciones

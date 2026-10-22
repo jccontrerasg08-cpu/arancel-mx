@@ -19,7 +19,7 @@ def test_setup_checklist_covers_required_prerequisites() -> None:
         "environment",
         "required reviewer",
         "pkg-v",
-        "no long-lived",
+        "ningún secreto de larga duración",
     )
     assert [item for item in required if item not in text] == []
 

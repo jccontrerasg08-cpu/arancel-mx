@@ -80,7 +80,11 @@ def test_vercel_deploys_the_standalone_public_site() -> None:
             "destination": "/api/operational?resource=ready",
         },
         {"source": "/trade", "destination": "/trade.html"},
-        {"source": "/((?!assets/|api/|v1/|v1$|docs/|docs$|openapi\\.json$|robots\\.txt$).*)", "destination": "/"},
+        {
+            "source": "/data/v1/:path*",
+            "destination": "https://jccontrerasg08-cpu.github.io/arancel-mx/v1/:path*",
+        },
+        {"source": "/((?!assets/|data/|api/|v1/|v1$|docs/|docs$|openapi\\.json$|robots\\.txt$).*)", "destination": "/"},
     ]
     assert config["redirects"] == [
         {"source": "/docs", "destination": "/documentation", "permanent": True},
@@ -107,7 +111,9 @@ def test_vercel_functions_bundle_the_src_layout_with_bounded_runtime() -> None:
 def test_vercel_cache_policy_only_marks_hashed_bundles_immutable() -> None:
     config = json.loads((ROOT / "vercel.json").read_text(encoding="utf-8"))
 
-    cache_rules = [rule for rule in config["headers"] if rule["source"] != "/(.*)"]
+    cache_rules = [
+        rule for rule in config["headers"] if rule["source"] not in {"/(.*)", "/v1(.*)"}
+    ]
     assert cache_rules == [
         {
             "source": "/assets/index-(.*)",
@@ -206,7 +212,7 @@ def test_public_site_does_not_declare_a_vercel_fastapi_entrypoint() -> None:
 def test_public_site_bridge_keeps_current_release_and_route_aliases() -> None:
     bridge = (ROOT / "website" / "assets" / "site-bridge.js").read_text(encoding="utf-8")
 
-    assert "fetch('/v1/meta'" in bridge
+    assert "fetch('/data/v1/meta.json'" in bridge
     assert "['/moa-guide', '/moa']" in bridge
     assert "['/product', '/app']" in bridge
     assert ".release-window code" in bridge
@@ -219,15 +225,23 @@ def test_public_site_bridge_keeps_current_release_and_route_aliases() -> None:
     assert "node.nodeValue.replace(currentReleasePattern" not in bridge
 
 
-def test_vercel_centralization_docs_match_the_promoted_retrieval_routes() -> None:
-    """Keep documented ownership aligned with the Vercel rewrite contract."""
+def test_v1_sunset_runbook_matches_the_deprecation_contract() -> None:
+    """Keep the /v1 retirement runbook aligned with vercel.json and decision 0002."""
 
-    centralization = (ROOT / "docs" / "vercel-centralization.md").read_text(encoding="utf-8")
+    runbook = (ROOT / "docs" / "operations" / "v1-sunset.md").read_text(encoding="utf-8")
+    vercel = json.loads((ROOT / "vercel.json").read_text(encoding="utf-8"))
+    v1_headers = {
+        header["key"]: header["value"]
+        for rule in vercel["headers"]
+        if rule["source"] == "/v1(.*)"
+        for header in rule["headers"]
+    }
 
-    assert "| `ficha`, suggest, provenance, and national notes | Vercel operational function | Active Neon release |" in centralization
-    assert "| `/documentation` | Local React documentation hub | Public repository documents and route limits |" in centralization
-    assert "fastapicloud.dev" not in centralization
-    assert "Temporary FastAPI compatibility route" not in centralization
+    assert v1_headers["Deprecation"] in runbook
+    assert v1_headers["Sunset"] in runbook
+    assert "2027-01-31" in runbook
+    assert "/data/v1/records/{hs2}.json" in runbook
+    assert "fastapicloud.dev" not in runbook
 
 
 def test_trade_desk_publishes_a_visual_source_atlas_with_accessible_flags() -> None:
@@ -282,7 +296,6 @@ def test_vercel_applies_safe_defensive_headers_to_public_documents() -> None:
 def test_maintained_architecture_docs_describe_the_local_public_surface() -> None:
     for relative_path in (
         "docs/project-overview.md",
-        "docs/integration-handoff.md",
         "docs/brand.md",
         "docs/consumer-quickstart.md",
     ):
