@@ -127,6 +127,19 @@ def test_body_contains_marker_run_commit_candidate_and_blocked_state():
     assert "\nmissing DOF evidence" not in body
 
 
+def test_untrusted_diagnostic_text_cannot_mention_or_link_from_the_issue():
+    item = alert(message="host https://evil.example asked @maintainer ``` [x](https://evil.example)")
+
+    body = item.body()
+    comment = item.recurrence_comment()
+
+    diagnostic = body.split("## Diagnostic\n", 1)[1].split("\n## ", 1)[0]
+    assert diagnostic.startswith("```text\n")
+    assert diagnostic.count("```") == 2
+    assert "- Diagnostic: `" in comment
+    assert comment.count("`") % 2 == 0
+
+
 def test_body_caps_excessive_message_but_preserves_run_link():
     item = alert(message="x" * 10000)
 

@@ -23,7 +23,12 @@ def test_vercel_bundles_the_operational_driver_only_for_operational_functions() 
     read_handler = (ROOT / "api" / "operational.py").read_text(encoding="utf-8")
     sync_handler = (ROOT / "api" / "sync_operational.py").read_text(encoding="utf-8")
 
-    assert config["buildCommand"] == "python3.13 -m pip install --target api/_vendor 'psycopg[binary]>=3.3.4'"
+    assert config["buildCommand"] == (
+        "python3.13 -m pip install --require-hashes --only-binary=:all: --target api/_vendor -r requirements/vercel.txt"
+    )
+    pins = (ROOT / "requirements" / "vercel.txt").read_text(encoding="utf-8")
+    assert "psycopg==" in pins and "psycopg-binary==" in pins
+    assert pins.count("--hash=sha256:") >= 2
     assert config["functions"] == {
         "api/operational.py": {
             "includeFiles": "{api/_vendor/**,src/arancel_mx/**}",

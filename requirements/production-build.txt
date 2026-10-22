@@ -5,7 +5,7 @@ setuptools==84.0.0
 ast-serialize==0.8.0
 build==1.6.0
 check-wheel-contents==0.6.3
-certifi==2026.7.22
+certifi==2026.10.19
 charset-normalizer==3.5.1
 coverage==7.15.4
 duckdb==1.5.5

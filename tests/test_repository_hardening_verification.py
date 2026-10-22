@@ -77,7 +77,7 @@ def test_no_workflow_installs_the_hs_classifier_or_an_openai_key():
 
     assert development in ci
     assert "python -m pip install pip==26.2.1" in ci
-    assert production.count("python -m pip install pip==26.2.1") == 3
+    assert production.count("python -m pip install pip==26.2.1") == 4
     assert "python -m pip install --upgrade" not in production
     assert runtime in canary
     assert "python -m pip install pip==26.2.1" in canary
@@ -95,7 +95,7 @@ def test_only_the_read_only_build_job_installs_development_tooling():
 
     assert development in build_block
     assert production.count(development) == 1
-    assert production.count(f"{runtime}\n") == 2
+    assert production.count(f"{runtime}\n") == 3
 
 
 def test_generated_official_data_and_local_secrets_are_not_tracked():
@@ -128,7 +128,7 @@ def test_production_write_permissions_remain_job_scoped():
 
     canary = (WORKFLOWS / "published-bundle-canary.yml").read_text(encoding="utf-8")
 
-    assert production.count("contents: write") == 1
+    assert production.count("contents: write") == 2  # publish and pages
     assert production.count("issues: write") == 1
     assert "pull-requests: write" not in production
     assert "contents: write" not in ci

@@ -89,7 +89,9 @@ class DataAlert:
                 f"Failure category: `{self.failure_category}`",
                 "",
                 "## Diagnostic",
-                self.message,
+                "```text",
+                self.message.replace("```", "'''"),
+                "```",
                 "",
                 "## Run provenance",
                 f"- Run: {self.run_url}",
@@ -111,7 +113,7 @@ class DataAlert:
                 f"- Run: {self.run_url}",
                 f"- Attempt: `{self.run_attempt}`",
                 f"- Commit: `{self.commit_sha}`",
-                f"- Diagnostic: {self.message}",
+                "- Diagnostic: `" + self.message.replace("`", "'") + "`",
             ]
         )
 
