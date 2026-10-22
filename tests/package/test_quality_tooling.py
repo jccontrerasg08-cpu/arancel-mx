@@ -120,6 +120,13 @@ def test_mypy_targets_the_public_consumer_api() -> None:
     assert mypy.get("python_version") == "3.11"
 
 
+def test_mypy_does_not_silence_error_codes() -> None:
+    """The arg-type/attr-defined debt was paid down; no error code may be disabled again."""
+    mypy = _payload()["tool"]["mypy"]
+    assert "disable_error_code" not in mypy
+    assert "type_error_budget" not in _payload()["tool"].get("arancel_mx", {})
+
+
 def test_coverage_uses_branch_measurement_with_a_conservative_floor() -> None:
     coverage = _payload()["tool"]["coverage"]
     report = coverage.get("report", coverage)

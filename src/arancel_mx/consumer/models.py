@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Literal
 
+MatchKind = Literal["exact_code", "code_prefix", "description"]
+
 
 @dataclass(frozen=True, slots=True)
 class TariffRecord:
@@ -46,7 +48,7 @@ class TariffRecord:
 class SearchResult:
     record: TariffRecord
     score: int
-    match_kind: Literal["exact_code", "code_prefix", "description"]
+    match_kind: MatchKind
     scorer_version: str = "1"
     confidence: float = 0.0
 

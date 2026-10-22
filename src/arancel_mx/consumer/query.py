@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import date
 from decimal import Decimal
 import re
 import unicodedata
@@ -9,7 +10,15 @@ from typing import Iterable
 
 from arancel_mx.consumer.errors import InvalidCodeError, QueryError, RecordNotFoundError
 from arancel_mx.consumer.hs_sections import section_for_chapter
-from arancel_mx.consumer.models import Ficha, NationalNote, ProvenanceRecord, SearchResult, SuggestHit, TariffRecord
+from arancel_mx.consumer.models import (
+    Ficha,
+    MatchKind,
+    NationalNote,
+    ProvenanceRecord,
+    SearchResult,
+    SuggestHit,
+    TariffRecord,
+)
 from arancel_mx.domain.normalization import format_normalized_code
 
 
@@ -66,9 +75,15 @@ def normalize_code(value: str) -> str:
 def _as_float(value: object) -> float | None:
     if value is None:
         return None
-    if isinstance(value, Decimal):
+    if isinstance(value, (Decimal, int, float, str)):
         return float(value)
-    return float(value)
+    raise TypeError(f"expected a numeric value, got {type(value).__name__}")
+
+
+def _as_optional_date(value: object) -> date | None:
+    if value is None or isinstance(value, date):
+        return value
+    raise TypeError(f"expected a date, got {type(value).__name__}")
 
 
 def _as_optional_str(value: object) -> str | None:
@@ -99,8 +114,8 @@ def _row_to_tariff_record(row: Iterable[object]) -> TariffRecord:
         parent_code=_parent_code(code),
         dataset_version=str(values[10]),
         schema_version=str(values[11]),
-        effective_from=values[12],
-        effective_to=values[13],
+        effective_from=_as_optional_date(values[12]),
+        effective_to=_as_optional_date(values[13]),
         is_current=bool(values[14]),
         hs2=_as_optional_str(values[15]),
         hs4=_as_optional_str(values[16]),
@@ -150,7 +165,7 @@ def _chapter(record: TariffRecord) -> str:
     return record.hs2 or record.code[:2]
 
 
-def _confidence(match_kind: str, matched: int, query_token_count: int) -> float:
+def _confidence(match_kind: MatchKind, matched: int, query_token_count: int) -> float:
     if match_kind == "exact_code":
         return 1.0
     if match_kind == "code_prefix":
@@ -177,7 +192,7 @@ def search(connection, text: str, *, limit: int) -> tuple[SearchResult, ...]:
     for row in rows:
         record = _row_to_tariff_record(row)
         score = 0
-        match_kind = None
+        match_kind: MatchKind | None = None
         matched = 0
 
         if code_candidate is not None and record.code == code_candidate:

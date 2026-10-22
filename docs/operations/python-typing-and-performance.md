@@ -8,14 +8,9 @@ El proyecto usa Python y sus herramientas de tipado para mejorar la mantenibilid
 
 ## Tipado gradual
 
-La CI usa Python 3.11 y ejecuta `python -m mypy src/arancel_mx`. El proyecto conserva una línea base temporal de hallazgos estrictos mediante `python -m scripts.check_type_error_budget`, con los límites declarados en `[tool.arancel_mx.type_error_budget]` de `pyproject.toml`. La comprobación permite mantener o reducir los hallazgos ya revisados, pero bloquea cualquier aumento de los códigos `arg-type` y `attr-defined`.
+La CI usa Python 3.11 y ejecuta `python -m mypy src/arancel_mx` con todos los códigos de error de mypy activos. No hay códigos deshabilitados ni una línea base de deuda tolerada: el último presupuesto (`arg-type` y `attr-defined`) se saldó y se retiró. `tests/package/test_quality_tooling.py` impide volver a deshabilitar códigos en `pyproject.toml`.
 
-| Código de mypy | Línea base inicial | Política |
-|---|---:|---|
-| `arg-type` | 33 | No puede aumentar; se reduce por módulo y con pruebas. |
-| `attr-defined` | 3 | No puede aumentar; se reduce por módulo y con pruebas. |
-
-Las reducciones deben empezar en las fronteras con mayor valor de contrato: `release`, `pipeline`, `benchmark` y `api`. No se eliminan exclusiones globales hasta que el módulo correspondiente quede tipado y su suite funcional esté aprobada.
+Al tipar valores que llegan de DuckDB, JSON o HTTP como `object`, se estrecha el tipo con `isinstance` y se falla con `TypeError` ante un valor inesperado, en lugar de usar `cast` sobre datos externos.
 
 Para evitar resultados distintos a CI, el desarrollo local de tipado debe usar el runtime y las restricciones declaradas por el repositorio. La instalación global del sistema puede contener stubs que no sean compatibles con Python 3.11.
 

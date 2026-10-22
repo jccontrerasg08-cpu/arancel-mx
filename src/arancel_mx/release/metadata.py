@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, fields
+from dataclasses import asdict, dataclass, fields, is_dataclass
 import hashlib
 import json
 import re
@@ -13,6 +13,8 @@ _SHA256 = re.compile(r"^[0-9a-fA-F]{64}$")
 
 
 def _validate_nonblank_dataclass(value: object) -> None:
+    if not is_dataclass(value):
+        raise TypeError(f"expected a dataclass instance, got {type(value).__name__}")
     for field in fields(value):
         item = getattr(value, field.name)
         if not isinstance(item, str) or not item.strip():

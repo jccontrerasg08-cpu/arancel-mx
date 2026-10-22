@@ -112,14 +112,6 @@ pretty = true
 show_error_codes = true
 mypy_path = "src"
 explicit_package_bases = true
-# Existing consumer code is partially typed; do not block the first quality gate
-# on arg-type / attr-defined debt in this tooling-only change.
-disable_error_code = ["arg-type", "attr-defined"]
-
-# Ratchet baseline: CI may only preserve or reduce these existing strict-type findings.
-[tool.arancel_mx.type_error_budget]
-"arg-type" = 33
-"attr-defined" = 3
 
 [tool.coverage.run]
 source_pkgs = ["arancel_mx"]

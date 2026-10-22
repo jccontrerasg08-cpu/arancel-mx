@@ -148,7 +148,7 @@ def build_parser() -> argparse.ArgumentParser:
 def _json_default(value: object) -> object:
     if hasattr(value, "to_dict"):
         return value.to_dict()
-    if is_dataclass(value):
+    if is_dataclass(value) and not isinstance(value, type):
         return asdict(value)
     if isinstance(value, (date, datetime)):
         return value.isoformat()

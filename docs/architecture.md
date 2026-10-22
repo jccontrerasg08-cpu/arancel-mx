@@ -104,7 +104,7 @@ Las fronteras de importación (por ejemplo, que `consumer` no dependa de `pipeli
 | Script | Lo usa |
 |---|---|
 | `run_official_pipeline.py`, `fetch_previous_release.py`, `workflow_diagnostics.py`, `publish_release.py`, `build_static_pages.py`, `watch_dof.py`, `data_alert.py` | Official data pipeline |
-| `check_type_error_budget.py`, `check_documented_urls.py`, `validate_ligie_html_pages.py`, `check_duckdb_compat.py`, `certify_package_install.py` | CI |
+| `check_documented_urls.py`, `validate_ligie_html_pages.py`, `check_duckdb_compat.py`, `certify_package_install.py` | CI |
 | `validate_package_tag.py`, `certify_testpypi_candidate.py` | Publicación del paquete |
 | `certify_github_release.py`, `certify_github_issue.py` | Certificación de producción |
 | `check_public_service.py` | Canario diario del bundle publicado |

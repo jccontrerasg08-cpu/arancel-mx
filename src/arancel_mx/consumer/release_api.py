@@ -154,7 +154,7 @@ class GitHubReleaseClient:
         self,
         url: str,
         *,
-        params: Mapping[str, object] | None = None,
+        params: Mapping[str, str | int] | None = None,
     ) -> object:
         try:
             response = self._session.get(url, params=params, timeout=self._timeout)
