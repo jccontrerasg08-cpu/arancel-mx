@@ -39,10 +39,11 @@ def test_ci_smokes_the_fastapi_cloud_python_runtime() -> None:
     job = _job("fastapi-cloud-runtime")
 
     assert 'python-version-file: ".python-version"' in job
+    # Versions come from the constraints file only, so Dependabot bumps stay in one place.
     assert (
-        'python -m pip install -c requirements/production-build.txt -e "." '
-        "pytest==9.1.1 httpx2==2.10.0"
+        'python -m pip install -c requirements/production-build.txt -e "." pytest httpx2'
     ) in job
+    assert "==" not in job.split("-e \".\"", 1)[1].split("\n", 1)[0]
     assert (
         "python -m pytest -q tests/api tests/package/test_api_install_smoke.py"
     ) in job

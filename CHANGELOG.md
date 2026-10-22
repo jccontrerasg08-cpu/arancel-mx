@@ -24,6 +24,7 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Changed
 
+- Official build pins refreshed: build 1.6.0, filelock 3.32.4, httpx2 2.12.0, idna 3.19, ruff 0.16.4 and urllib3 2.8.0 (`requirements/production-build.txt`), plus source-map-js 1.2.2 in `package-lock.json`. The API runtime CI job now takes its pytest and httpx2 versions from that constraints file instead of repeating them.
 - Live docs match in-tree `0.3.3` vs PyPI `0.2.0`: cache paths, `compare`, national notes, the public source tree, and the FastAPI v1 consumption boundary.
 - Documented `/releases/latest` as `data-2026.08.15` (six public assets), Diputados `law_reform` 2025-12-29 / `tariff_decree` 2026-04-23 from that manifest, and that the PyPI long description is frozen at the `0.2.0` upload.
 - Development tests use `httpx2` with Starlette's current TestClient path; base package runtime stays independent of that test-only compatibility dependency.
