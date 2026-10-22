@@ -113,7 +113,7 @@ Las fronteras de importación (por ejemplo, que `consumer` no dependa de `pipeli
 | `capture_instrument_research.py` | Captura local de instrumentos para el [inventario](research/ligie-instrument-inventory.md) |
 | `dependency_compatibility_probe.py` | Pruebas de compatibilidad de dependencias |
 | `promote_operational_release.py` | Promoción manual a Neon; se retira con `/v1` |
-| `build-frontend.mjs`, `sync-frontend-static.mjs`, `recover-glossary-from-bundle.mjs` | `npm run build:frontend` y mantenimiento del frontend |
+| `build-frontend.mjs`, `sync-frontend-static.mjs` | `npm run build:frontend` y mantenimiento del frontend |
 
 ## 6. Workflows (`.github/workflows/`)
 

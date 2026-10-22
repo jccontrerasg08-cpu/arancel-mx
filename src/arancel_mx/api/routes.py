@@ -24,7 +24,6 @@ from arancel_mx.api.models import (
 from arancel_mx.api.openapi import (
     LOOKUP_ERROR_RESPONSES,
     META_ERROR_RESPONSES,
-    NOTES_ERROR_RESPONSES,
     RETRIEVAL_ERROR_RESPONSES,
 )
 from arancel_mx.api.repository import repository_snapshot
@@ -169,7 +168,7 @@ def sections() -> list[SectionResponse]:
 @router.get(
     "/v1/chapters/{chapter}/national-notes",
     response_model=list[NationalNoteResponse],
-    responses=NOTES_ERROR_RESPONSES,
+    responses=RETRIEVAL_ERROR_RESPONSES,
     tags=["legal-notes"],
 )
 def national_notes(

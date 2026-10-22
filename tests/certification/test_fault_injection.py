@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import pytest
 import requests
 
 from arancel_mx.parsers.documents import parse_ligie_pdf_hierarchy

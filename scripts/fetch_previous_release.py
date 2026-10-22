@@ -10,9 +10,9 @@ import os
 from pathlib import Path
 import re
 import sys
-import tempfile
 
 from arancel_mx.release.metadata import source_identity_from_manifest
+from arancel_mx.sources.capture import atomic_write_json
 from scripts.github_api import GitHubApi
 
 
@@ -117,34 +117,6 @@ def _parse_manifest(raw: bytes, expected_version: str) -> dict[str, object]:
     return value
 
 
-def _atomic_write_json(path: Path, value: Mapping[str, object]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    payload = json.dumps(
-        value,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    ) + "\n"
-    handle = tempfile.NamedTemporaryFile(
-        mode="w",
-        encoding="utf-8",
-        newline="",
-        dir=path.parent,
-        prefix=f".{path.name}.",
-        suffix=".tmp",
-        delete=False,
-    )
-    temp_path = Path(handle.name)
-    try:
-        with handle:
-            handle.write(payload)
-            handle.flush()
-            os.fsync(handle.fileno())
-        temp_path.replace(path)
-    except Exception:
-        temp_path.unlink(missing_ok=True)
-        raise
-
 
 def fetch_previous_manifest(
     client: GitHubApi,
@@ -167,7 +139,7 @@ def fetch_previous_manifest(
         accept="application/octet-stream",
     )
     manifest = _parse_manifest(raw, expected_version)
-    _atomic_write_json(Path(output_path), manifest)
+    atomic_write_json(Path(output_path), manifest)
     return manifest
 
 

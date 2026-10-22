@@ -15,6 +15,7 @@ from typing import Any, Mapping, Sequence
 import duckdb
 
 from arancel_mx.domain.normalization import PUBLIC_COLUMNS, canonical_json, consolidate_records
+from arancel_mx.release.package import sha256
 from arancel_mx.storage.duckdb import ensure_tariff_schema, init_tariff_db
 
 
@@ -753,11 +754,6 @@ def _csv_text(value: object) -> str:
     return str(value)
 
 
-def _sha256(path: Path) -> str:
-    with path.open("rb") as stream:
-        return hashlib.file_digest(stream, "sha256").hexdigest()
-
-
 def _create_public_database(source_path: Path, target_path: Path) -> None:
     """Copy only canonical tariff tables into the distributable DuckDB."""
     init_tariff_db(target_path)
@@ -879,7 +875,7 @@ def _export_arancel_release(
         raise ValueError("JSON record hashes differ from the DuckDB view")
 
     artifact_hashes = {
-        path.name: _sha256(path) for path in (duckdb_path, csv_path, json_path)
+        path.name: sha256(path) for path in (duckdb_path, csv_path, json_path)
     }
     manifest: dict[str, Any] = {
         "dataset_version": release_row[0],
@@ -918,7 +914,7 @@ def _export_arancel_release(
         newline="",
     )
     checksum_paths = [duckdb_path, csv_path, json_path, manifest_path]
-    checksum_lines = [f"{_sha256(path)}  {path.name}\r\n" for path in checksum_paths]
+    checksum_lines = [f"{sha256(path)}  {path.name}\r\n" for path in checksum_paths]
     (output_dir / "SHA256SUMS").write_text(
         "".join(checksum_lines),
         encoding="ascii",

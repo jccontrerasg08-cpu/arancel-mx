@@ -75,24 +75,15 @@ def _row(
 
 
 def _sheet_failure(code: str, level: str, sheet: object) -> CompareRow:
-    if sheet is None:
-        return _row(
-            code,
-            level,
-            "present",
-            "yes",
-            None,
-            match=None,
-            note="offline; third-party not fetched",
-        )
+    offline = sheet is None
     return _row(
         code,
         level,
         "present",
         "yes",
         None,
-        match=False,
-        note=str(sheet),
+        match=None if offline else False,
+        note="offline; third-party not fetched" if offline else str(sheet),
     )
 
 

@@ -25,12 +25,6 @@ RETRIEVAL_ERROR_RESPONSES: Final[dict[int | str, dict[str, Any]]] = {
     500: _error("Internal server error."),
 }
 
-NOTES_ERROR_RESPONSES: Final[dict[int | str, dict[str, Any]]] = {
-    422: _error("Request validation failed."),
-    503: _error("Verified dataset unavailable or inconsistent."),
-    500: _error("Internal server error."),
-}
-
 META_ERROR_RESPONSES: Final[dict[int | str, dict[str, Any]]] = {
     503: _error("Verified dataset unavailable."),
     500: _error("Internal server error."),

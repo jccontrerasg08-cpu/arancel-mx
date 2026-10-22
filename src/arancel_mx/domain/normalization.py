@@ -165,6 +165,11 @@ def fold_text(value: object) -> str:
     return "".join(char for char in normalized if not unicodedata.combining(char))
 
 
+def fold_key(value: object) -> str:
+    """Case-insensitive ``fold_text`` for substring checks against official pages."""
+    return fold_text(value).casefold()
+
+
 def format_normalized_code(digits: str) -> str:
     if len(digits) == 2:
         return digits
