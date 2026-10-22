@@ -174,12 +174,12 @@ def _validate_release(release: OperationalRelease) -> None:
         raise PromotionError("schema_version is required")
     if not _SHA256.fullmatch(release.manifest_sha256):
         raise PromotionError("manifest_sha256 must be a lowercase SHA-256 digest")
-    for field, value in (
+    for name, value in (
         ("generated_at", release.generated_at),
         ("published_at", release.published_at),
         ("source_checked_at", release.source_checked_at),
     ):
-        _require_timezone(value, field)
+        _require_timezone(value, name)
     _validate_evidence(release.evidence)
 
 

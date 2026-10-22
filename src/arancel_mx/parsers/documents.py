@@ -223,10 +223,6 @@ def parse_ligie_pdf_hierarchy(
     return sorted(unique, key=lambda row: (rank[row["level"]], row["code"]))
 
 
-def _chapter_entries_from_text(text: str) -> list[tuple[str, str]]:
-    return _chapter_entries_from_pages([text])
-
-
 def _chapter_entries_from_pages(page_texts: list[str]) -> list[tuple[str, str]]:
     entries: list[tuple[str, str]] = []
     heading = re.compile(r"Cap[ií]tulo\s+(\d{2})(?:\s+\([^)]*\))?", re.IGNORECASE)

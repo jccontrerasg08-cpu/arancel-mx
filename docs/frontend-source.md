@@ -15,7 +15,7 @@ El script `scripts/sync-frontend-static.mjs` conserva `trade.html`, sus estilos,
 
 ## Fuente de las rutas
 
-El manifiesto central está en `frontend/src/routes.js`; `frontend/src/App.jsx` convierte ese manifiesto en rutas React. El contenido editorial se conserva en `frontend/src/content.js`, mientras que `frontend/src/pages.jsx` contiene los componentes y comportamientos de cada superficie. El glosario recuperado se publica como módulo declarativo de 189 entradas y puede regenerarse desde el bundle histórico mediante `scripts/recover-glossary-from-bundle.mjs`.
+El manifiesto central está en `frontend/src/routes.js`; `frontend/src/App.jsx` convierte ese manifiesto en rutas React. El contenido editorial se conserva en `frontend/src/content.js`, mientras que `frontend/src/pages.jsx` contiene los componentes y comportamientos de cada superficie. El glosario se mantiene como módulo declarativo de 189 entradas en `frontend/src/glossary-data.js`.
 
 | Superficie | Fuente principal | Comportamiento mantenido |
 |---|---|---|

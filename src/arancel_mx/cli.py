@@ -19,7 +19,6 @@ from arancel_mx.consumer.cli import register_consumer_commands, run_consumer
 from arancel_mx.consumer.errors import ArancelMXError
 
 
-COMMANDS = ("build", "check-updates", "reconcile", "release")
 _MAINTAINER_HINT = (
     "This command needs the maintainer dependencies. "
     'Install them with: pip install "arancel-mx[maintainer]"'
@@ -176,10 +175,6 @@ def _dispatch(namespace: argparse.Namespace) -> object:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     arguments = list(argv) if argv is not None else None
-    if arguments == []:
-        parser.print_help()
-        return 0
-
     try:
         namespace = parser.parse_args(arguments)
     except SystemExit as exc:

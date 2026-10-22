@@ -4,17 +4,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import re
-from arancel_mx.domain.normalization import fold_text
+from arancel_mx.domain.normalization import fold_key as _fold
 from arancel_mx.sources.vucem import TableParser, normalize_fraction_code
 
 
 SIICEX_HOME_URL = "http://www.siicex-caaarem.org.mx/"
 
-SIICEX_SAMPLE_FRACTION_CODE = "90014002"
-SIICEX_SAMPLE_FRACTION_FIXTURE_URL = (
-    "http://www.siicex-caaarem.org.mx/Bases/tigiei.nsf/"
-    "d58945443a3d19d886256bab00510b2e/c08642781ad9ca4e8625730200736507?OpenDocument"
-)
 
 SIICEX_HTTP_HOSTS = frozenset(
     {
@@ -30,10 +25,6 @@ class SiicexFractionDocument:
     description: str
     import_duty: str | None
     export_duty: str | None
-
-
-def _fold(value: object) -> str:
-    return fold_text(value).casefold()
 
 
 def _duty_from_tables(tables: list[list[list[str]]]) -> tuple[str | None, str | None]:
