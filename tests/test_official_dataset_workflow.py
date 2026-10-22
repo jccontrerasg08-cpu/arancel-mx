@@ -95,9 +95,10 @@ def test_build_job_is_read_only_constrained_tested_and_fail_closed():
 
 def test_only_publisher_has_contents_write_and_it_requires_built_trusted_main():
     workflow = _workflow()
-    publish = _job_block(workflow, "publish", "notify")
+    publish = _job_block(workflow, "publish", "pages")
 
-    assert workflow.count("contents: write") == 1
+    # publish (immutable release) and pages (gh-pages) are the only writers.
+    assert workflow.count("contents: write") == 2
     assert "contents: write" in publish
     assert "issues: write" not in publish
     assert "needs: build-and-verify" in publish
@@ -110,10 +111,32 @@ def test_only_publisher_has_contents_write_and_it_requires_built_trusted_main():
     assert "python -m scripts.publish_release" in publish
 
 
+def test_pages_job_publishes_gh_pages_from_trusted_main_even_without_a_release():
+    workflow = _workflow()
+    publish = _job_block(workflow, "publish", "pages")
+    pages = _job_block(workflow, "pages", "notify")
+
+    assert "pages: write" not in publish
+    assert workflow.count("pages: write") == 1
+    assert "contents: write" in pages
+    assert "pages: write" in pages
+    assert "issues: write" not in pages
+    assert "id-token: write" not in pages
+    assert "needs.build-and-verify.result == 'success'" in pages
+    assert "github.ref == 'refs/heads/main'" in pages
+    assert "needs.build-and-verify.outputs.status == 'no_change'" in pages
+    assert "needs.publish.result == 'success'" in pages
+    assert "python -m scripts.build_static_pages" in pages
+    assert "cache: pip" not in pages
+    assert "persist-credentials: false" in pages
+    assert "::add-mask::" in pages
+    assert '"https://github.com/${GITHUB_REPOSITORY}.git" gh-pages' in pages
+
+
 def test_artifact_name_survives_a_publish_only_rerun():
     workflow = _workflow()
     build = _job_block(workflow, "build-and-verify", "publish")
-    publish = _job_block(workflow, "publish", "notify")
+    publish = _job_block(workflow, "publish", "pages")
 
     # github.run_attempt increments on a re-run, and re-running only the failed
     # publisher does not re-upload from the already successful build, so neither end
@@ -144,7 +167,7 @@ def test_dry_runs_cannot_displace_a_queued_production_run():
 def test_publisher_is_only_attestation_signer_and_uses_pinned_first_party_action():
     workflow = _workflow()
     build = _job_block(workflow, "build-and-verify", "publish")
-    publish = _job_block(workflow, "publish", "notify")
+    publish = _job_block(workflow, "publish", "pages")
     notify = _job_block(workflow, "notify")
 
     assert workflow.count("attestations: write") == 1
@@ -164,7 +187,7 @@ def test_publisher_is_only_attestation_signer_and_uses_pinned_first_party_action
 
 def test_attestation_subjects_are_exactly_the_six_public_release_files():
     workflow = _workflow()
-    publish = _job_block(workflow, "publish", "notify")
+    publish = _job_block(workflow, "publish", "pages")
 
     match = re.search(
         r"subject-path:\s*\|\n(?P<body>(?:\s+out/release/[^\n]+\n){6})",
@@ -179,7 +202,7 @@ def test_attestation_subjects_are_exactly_the_six_public_release_files():
 
 def test_attestation_is_verified_before_existing_release_publisher():
     workflow = _workflow()
-    publish = _job_block(workflow, "publish", "notify")
+    publish = _job_block(workflow, "publish", "pages")
 
     assert "Generate build provenance attestation" in publish
     assert "Verify build provenance attestation" in publish
@@ -210,7 +233,7 @@ def test_attestation_is_verified_before_existing_release_publisher():
 
 def test_publisher_uses_structured_result_file_instead_of_console_redirection():
     workflow = _workflow()
-    publish = _job_block(workflow, "publish", "notify")
+    publish = _job_block(workflow, "publish", "pages")
 
     assert "--result-path out/publisher-result.json" in publish
     assert "> out/publisher-result.json" not in publish
@@ -247,7 +270,7 @@ def test_no_change_with_skipped_publisher_is_explicitly_healthy_recovery():
 
 def test_failed_build_can_never_satisfy_publisher_condition():
     workflow = _workflow()
-    publish = _job_block(workflow, "publish", "notify")
+    publish = _job_block(workflow, "publish", "pages")
 
     assert "needs.build-and-verify.result == 'success'" in publish
     assert "needs.build-and-verify.outputs.status == 'built'" in publish
@@ -258,7 +281,7 @@ def test_failed_build_can_never_satisfy_publisher_condition():
 
 def test_manual_publish_false_is_a_non_mutating_dry_run():
     workflow = _workflow()
-    publish = _job_block(workflow, "publish", "notify")
+    publish = _job_block(workflow, "publish", "pages")
     build = _job_block(workflow, "build-and-verify", "publish")
     notify = _job_block(workflow, "notify")
 

@@ -47,7 +47,7 @@ Production certification / release-boundary: contents write
 Production certification / issue-boundary: contents read + issues write
 ```
 
-En `publish`, `contents: write` crea la release inmutable y actualiza la rama `gh-pages`, `attestations: write` e `id-token: write` firman la attestation SLSA y `pages: write` solicita el build de GitHub Pages. Cada escritura vive dentro del job que la necesita; ningún workflow concede permisos de escritura a nivel de workflow. El contrato se verifica offline en `tests/test_workflow_hardening.py`, de modo que un cambio que amplíe el alcance falla en `test` antes de llegar a `main`.
+En `publish`, `contents: write` crea la release inmutable y `attestations: write` e `id-token: write` firman la attestation SLSA. En `pages`, `contents: write` actualiza la rama `gh-pages` y `pages: write` solicita el build de GitHub Pages. Cada escritura vive dentro del job que la necesita; ningún workflow concede permisos de escritura a nivel de workflow. El contrato se verifica offline en `tests/test_workflow_hardening.py`, de modo que un cambio que amplíe el alcance falla en `test` antes de llegar a `main`.
 
 ### Schedules
 
@@ -136,13 +136,13 @@ Sigue este orden antes de permitir que la publicación programada modifique GitH
 
 Ruta en la interfaz: **Settings → Pages**.
 
-La rama `gh-pages` la crea la primera ejecución del job `publish` que llega al paso **Publish static data API to gh-pages**; antes de eso no aparece en el selector.
+La rama `gh-pages` la crea la primera ejecución de producción del job `pages` (diaria, o manual con `publish: true`), aunque no haya release nueva; antes de eso no aparece en el selector.
 
 1. En **Build and deployment → Source**, selecciona **Deploy from a branch**.
 2. En **Branch**, selecciona `gh-pages` y la carpeta `/ (root)`, y guarda.
 3. Comprueba que `https://jccontrerasg08-cpu.github.io/arancel-mx/v1/meta.json` responde con el `dataset_tag` de la última release y que `https://arancel-mx.vercel.app/data/v1/meta.json` devuelve lo mismo a través del rewrite de Vercel.
 
-El árbol incluye `.nojekyll`, así que Pages sirve los archivos sin procesarlos. Si Pages no está configurado, el job `publish` deja la advertencia `gh-pages updated, but the Pages build request failed` y la release sigue publicada; la API estática se actualiza en la siguiente publicación una vez configurado Pages.
+El árbol incluye `.nojekyll`, así que Pages sirve los archivos sin procesarlos. Si Pages no está configurado, el job `pages` deja la advertencia `gh-pages updated, but the Pages build request failed`; en cuanto se configure, Pages sirve la rama que ya existe.
 
 ## Lista de verificación
 
