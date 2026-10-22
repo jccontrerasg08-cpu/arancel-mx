@@ -186,6 +186,7 @@ class DatasetManager:
             asset.url,
             destination,
             timeout=self.config.timeout,
+            max_bytes=asset.size,
         )
         if written != asset.size:
             raise DatasetIntegrityError(

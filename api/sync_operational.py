@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler
+import hmac
 import json
 import logging
 import os
@@ -42,7 +43,7 @@ class handler(BaseHTTPRequestHandler):
             self._respond(HTTPStatus.SERVICE_UNAVAILABLE, {"status": "not_configured"})
             return
         authorization = self.headers.get("Authorization")
-        if authorization != f"Bearer {cron_secret}":
+        if not hmac.compare_digest(authorization or "", f"Bearer {cron_secret}"):
             self._respond(HTTPStatus.UNAUTHORIZED, {"status": "unauthorized"})
             return
 

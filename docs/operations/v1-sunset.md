@@ -44,7 +44,7 @@ Toda respuesta bajo `/v1` lleva estos encabezados, definidos en `vercel.json`:
 |---|---|
 | Conexión | `ARANCEL_MX_DATABASE_URL`. `ARANCEL_MX_DATABASE_DATABASE_URL` se acepta porque la integración de Neon genera ese nombre. |
 | Cron | `CRON_SECRET`, enviado como Bearer token. |
-| Driver | `buildCommand` ejecuta `python3.13 -m pip install --target api/_vendor 'psycopg[binary]>=3.3.4'`. `api/_vendor/` está en `.gitignore`. No se reintroduce `requirements.txt` para esto. |
+| Driver | `buildCommand` ejecuta `python3.13 -m pip install --require-hashes --only-binary=:all: --target api/_vendor -r requirements/vercel.txt`, que fija `psycopg` y `psycopg-binary` con sus hashes. `api/_vendor/` está en `.gitignore`. No se reintroduce `requirements.txt` para esto. |
 | Arranque | `api/_runtime.py` antepone `src/` a `sys.path`. Las funciones incluyen `{api/_vendor/**,src/arancel_mx/**}`. |
 | Límites | `maxDuration` de 30 s para la consulta y 60 s para la sincronización. |
 | Paquete | El extra `operational` (`psycopg[binary]`) sólo existe para este runtime. |

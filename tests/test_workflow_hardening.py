@@ -367,3 +367,12 @@ def test_workflow_outputs_are_only_written_through_the_reviewed_boundary():
             f"{name} writes step outputs inline; use scripts.workflow_diagnostics "
             "so the values stay validated and single-line"
         )
+
+
+def test_jobs_with_write_permissions_do_not_restore_dependency_caches():
+    # A cache saved by a read-only job that parses untrusted input could otherwise
+    # be installed by a job holding write tokens.
+    for name, text in _workflow_texts().items():
+        for job_name, block in _job_blocks(text).items():
+            if ": write" in block:
+                assert not re.search(r"^\s+cache:", block, re.MULTILINE), f"{name}:{job_name}"
