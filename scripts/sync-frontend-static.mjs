@@ -54,6 +54,9 @@ for (const destination of destinations) {
     force: true,
   });
 
+  // Standalone pages (trade desk, hub scripts) import the same static data client.
+  await cp(path.join(root, 'frontend/src/static-api.js'), path.join(destinationAssets, 'static-api.js'));
+
   // `trade.html` and its dedicated assets are independently maintained.
   await stat(path.join(destination, 'trade.html'));
 }

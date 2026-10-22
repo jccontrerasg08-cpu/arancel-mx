@@ -33,10 +33,10 @@ The interactive experience lives at **[arancel-mx.vercel.app](https://arancel-mx
 | Analyze many rows with SQL, BI, notebooks, or ETL | **Data / DuckDB** | `arancel-mx data download` |
 | Query codes and tariff cards quickly | **CLI** | `arancel-mx lookup 01012101` |
 | Integrate data into an application | **Python** | `from arancel_mx import Dataset` |
-| Consume a GET-only/read-only interface | **HTTP / API** | `GET /v1/meta`, `/v1/search`, `/v1/lookup/...` |
+| Consume a GET-only/read-only interface | **HTTP / API** | `GET /data/v1/meta.json`, `/data/v1/records/85.json` |
 | Verify how a result was produced | **Audit and reproduction** | `manifest.json`, `SHA256SUMS`, `provenance`, `data verify` |
 
-The **public HTTP API** is **GET-only**, **read-only**, and requires **no API key**. The local route-and-limit hub lives at `/documentation`; `/readyz` reports readiness and `/v1/meta` identifies the served dataset.
+The **public HTTP API** is **GET-only**, **read-only**, and requires **no API key**: static JSON files that GitHub Pages publishes with each release and the hub serves under `/data/v1`. The route-and-limit hub lives at `/documentation`.
 
 The Python package and the dataset have separate version cycles. A package version does not pin the data: dataset releases use immutable `data-YYYY.MM.DD` tags.
 
@@ -52,12 +52,11 @@ arancel-mx lookup 01012101
 arancel-mx data verify
 ```
 
-Or use the same public HTTP front door:
+Or read the static API from the same domain (chapter 85 contains `8517130100`):
 
 ```bash
-curl "https://arancel-mx.vercel.app/v1/meta"
-curl "https://arancel-mx.vercel.app/v1/search?q=phones&limit=5"
-curl "https://arancel-mx.vercel.app/v1/lookup/8517130100"
+curl "https://arancel-mx.vercel.app/data/v1/meta.json"
+curl "https://arancel-mx.vercel.app/data/v1/records/85.json"
 ```
 
 For formats, cache behavior, offline mode, and explicit dataset selection, continue with the [consumer quickstart](docs/consumer-quickstart.md) and [CLI reference](docs/consumer-cli.md).
@@ -84,7 +83,7 @@ immutable GitHub Release
   <img src="docs/assets/pipeline.svg" alt="Pipeline from official sources to a verifiable release" width="900" />
 </p>
 
-The Vercel hub is a **consumption surface**. Promoted `/v1` routes use the read-only operational layer synchronized from verified releases; non-promoted routes resolve locally without an external proxy. The **verified release remains the source of truth**.
+GitHub Actions builds and publishes; GitHub stores the release and serves its static API; Vercel only serves the site. The **verified release remains the source of truth** ([architecture](docs/architecture.md)).
 
 Go deeper with [official source roles](docs/official-source-roles.md), [sources and reconciliation](docs/sources.md), the [data model](docs/data-model.md), and the [release process](docs/release-process.md).
 
@@ -96,7 +95,7 @@ Go deeper with [official source roles](docs/official-source-roles.md), [sources 
 | Integrate files, Python, or HTTP | [External consumption](docs/external-consumption.md) |
 | Understand HS → MX tariff fraction → NICO | [NICO/LIGIE guide](docs/nico-ligie-guide.md) |
 | Understand provenance and source promotion | [Official roles](docs/official-source-roles.md) · [Sources](docs/sources.md) · [SNICE_DOCS promotion](docs/source-promotion.md) |
-| Understand the project and its boundaries | [Project overview](docs/project-overview.md) |
+| Understand the project and its boundaries | [Project overview](docs/project-overview.md) · [Architecture](docs/architecture.md) |
 | Browse all documentation | **[Documentation center](docs/README.md)** |
 
 ## Scope

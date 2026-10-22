@@ -21,7 +21,7 @@ La frontera del proyecto incluye:
 - DuckDB canónico y exportaciones CSV/JSON;
 - manifest, checksums y archivo de fuentes capturadas;
 - CLI y API Python para consumidores;
-- API HTTP pública GET-only/read-only;
+- API HTTP pública GET-only/read-only, estática y versionada con cada release;
 - releases de dataset inmutables y verificables.
 
 No intenta sustituir un sistema integral de comercio exterior, un motor de cumplimiento ni una resolución de clasificación arancelaria. Tampoco convierte una búsqueda o sugerencia en asesoría legal.
@@ -60,35 +60,34 @@ Una misma release puede consumirse de varias formas, según la tarea:
 | SQL, BI, notebooks y ETL | DuckDB / CSV / JSON de GitHub Releases |
 | Consultas de terminal | CLI `arancel-mx` |
 | Integración dentro de Python | `Dataset` y tipos públicos |
-| Servicios y UIs | HTTP `/v1`, GET-only/read-only |
+| Servicios y UIs | API estática `/data/v1` o servidor propio con `/v1` |
 | Auditoría | `manifest.json`, `SHA256SUMS`, procedencia y fuentes capturadas |
 
 La versión del paquete Python y la identidad del dataset son conceptos distintos. El paquete evoluciona con versiones PEP 440; los datos se identifican mediante releases inmutables `data-YYYY.MM.DD`.
 
-## Central Hub en Vercel
+## Dónde vive cada pieza
 
-El dominio público principal es `https://arancel-mx.vercel.app/`. La superficie combina dos piezas sin cambiar la fuente canónica de datos:
+GitHub guarda y sirve los datos; Vercel sólo sirve el sitio:
 
 ```text
-GitHub Release verificada
-          ↓
-sincronización operacional idempotente
-          ↓
-        Neon
-          ↓
-Vercel: metadatos, búsqueda, ficha, evidencia activa y documentación local
+fuentes oficiales
+      ↓
+GitHub Actions: pipeline diario fail-closed
+      ↓
+GitHub Release data-YYYY.MM.DD  ──→  GitHub Pages: API estática /v1
+      ↓                                     ↓
+pip · CLI · DuckDB              Vercel: sitio, explorador y /data/v1
 ```
 
-`/v1/meta`, `/v1/search`, `/v1/suggest`, `/v1/ficha/{code}`, la jerarquía, `provenance`, notas nacionales y `/readyz` se resuelven mediante una proyección operacional read-only sincronizada desde releases verificadas. `/documentation` presenta el hub local de rutas y límites; las rutas `/v1/*` no promovidas se resuelven localmente sin proxy externo. **Neon y Vercel son superficies de servicio, no sustituyen la release verificable como fuente de verdad.**
-
-Para consumidores, esto permite usar un solo origen público:
+El dominio público es `https://arancel-mx.vercel.app/`. `/documentation` presenta el hub de rutas y límites, y `/data/v1/...` entrega los archivos JSON de la release activa:
 
 ```bash
 export ARANCEL_MX_API_URL="https://arancel-mx.vercel.app"
-curl "$ARANCEL_MX_API_URL/readyz"
-curl "$ARANCEL_MX_API_URL/v1/meta"
-curl "$ARANCEL_MX_API_URL/v1/lookup/8517130100"
+curl "$ARANCEL_MX_API_URL/data/v1/meta.json"
+curl "$ARANCEL_MX_API_URL/data/v1/records/85.json"
 ```
+
+Quien necesite rutas dinámicas (`/v1/lookup/{code}`, `/readyz`) puede ejecutar el servidor FastAPI incluido en el paquete sobre una release fijada. **GitHub Pages y Vercel distribuyen la release; no la sustituyen como fuente de verdad.** El detalle técnico está en [Arquitectura](architecture.md).
 
 ## Modelo de confianza
 
@@ -111,6 +110,7 @@ Por eso, “última release” significa la última publicación que pasó los g
 - [Modelo de datos](data-model.md): tablas y semántica de release.
 - [Roles de fuentes oficiales](official-source-roles.md): autoridad y función de cada fuente.
 - [Fuentes y reconciliación](sources.md): cadena de confianza y gates.
+- [Arquitectura](architecture.md): piezas, flujo y módulos.
 - [Proceso de release](release-process.md): automatización y publicación.
 - [Marca y presentación](brand.md): cómo contar el proyecto sin exagerar capacidades.
 - [Centro de documentación](README.md): índice completo por intención.
