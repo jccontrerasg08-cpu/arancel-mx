@@ -186,7 +186,7 @@ jobs:
           python - <<'PY'
           from pathlib import Path
 
-          from arancel_mx.certification import certify_bundle
+          from arancel_mx.certification.bundle import certify_bundle
 
           certify_bundle(Path("out/release"))
           PY
