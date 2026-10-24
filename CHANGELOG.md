@@ -60,6 +60,7 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Fixed
 
+- The official data pipeline could not publish `data-2026.10.23`: the publisher imported `certify_bundle` from `arancel_mx.certification`, which no longer re-exports it, and failed before uploading. The workflow imports it from `arancel_mx.certification.bundle`, and a new test imports every `from arancel_mx… import …` quoted in workflows and docs so such a break fails CI.
 - The static data API is published to `gh-pages` even when the daily pipeline ends as `no_change`. Before, only a new release created the branch, so `/data/v1` returned 404 and the published-bundle canary failed. Pages publication is now its own `pages` job (the only one with `pages: write`), skips the push when `gh-pages` already serves the latest release, and masks the push credential.
 - Preserve National Note applicability (`section` vs `chapter`) from materialization through DuckDB, the consumer API, and FastAPI. Newer clients remain compatible with older immutable datasets by reporting legacy note scope as unresolved instead of inferring legal scope.
 - OpenAPI now documents the sanitized `ErrorEnvelope` used by handled 400/404/422/500/503 responses and typed health/readiness schemas, including the legitimate 503 not-ready response.
