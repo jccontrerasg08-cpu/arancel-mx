@@ -145,6 +145,36 @@ def test_text_decoder_falls_back_to_windows_1252_for_legacy_html_without_charset
     assert decode_fetched_text(fetched) == text
 
 
+def test_text_decoder_accepts_json_documents():
+    text = '{"messageCode":200,"titulo":"Decreto por el que se modifica la Tarifa"}'
+    fetched = fetch_official_document(
+        Session(
+            Response(
+                "https://sidofqa.segob.gob.mx/dof/sidof/notas/13-10-2026",
+                content=text.encode("utf-8"),
+                content_type="application/json;charset=UTF-8",
+            )
+        ),
+        "https://sidofqa.segob.gob.mx/dof/sidof/notas/13-10-2026",
+        ("sidofqa.segob.gob.mx",),
+        ("application/json",),
+    )
+
+    assert decode_fetched_text(fetched) == text
+
+
+def test_text_decoder_still_rejects_binary_documents():
+    fetched = fetch_official_document(
+        Session(Response("https://www.snice.gob.mx/file.pdf")),
+        "https://www.snice.gob.mx/file.pdf",
+        ("www.snice.gob.mx",),
+        ("application/pdf",),
+    )
+
+    with pytest.raises(ValueError, match="not text"):
+        decode_fetched_text(fetched)
+
+
 def test_declared_size_over_limit_is_rejected():
     with pytest.raises(ValueError, match="size"):
         fetch_official_document(

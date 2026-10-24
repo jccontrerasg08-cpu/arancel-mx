@@ -127,6 +127,8 @@ def test_pages_job_publishes_gh_pages_from_trusted_main_even_without_a_release()
     assert "needs.build-and-verify.outputs.status == 'no_change'" in pages
     assert "needs.publish.result == 'success'" in pages
     assert "python -m scripts.build_static_pages" in pages
+    # The build output is redirected into out/, which a fresh checkout lacks.
+    assert pages.index("mkdir -p out") < pages.index("python -m scripts.build_static_pages")
     assert "cache: pip" not in pages
     assert "persist-credentials: false" in pages
     assert "::add-mask::" in pages

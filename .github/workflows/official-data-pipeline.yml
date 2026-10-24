@@ -292,6 +292,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          mkdir -p out
           python -m scripts.build_static_pages \
             --out out/pages \
             ${DATASET_VERSION:+--tag "data-${DATASET_VERSION}"} \

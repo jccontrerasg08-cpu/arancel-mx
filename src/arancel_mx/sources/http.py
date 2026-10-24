@@ -150,7 +150,8 @@ def build_official_session() -> requests.Session:
 
 def decode_fetched_text(document: FetchedDocument) -> str:
     """Decode registered text content without silently replacing invalid bytes."""
-    if not document.media_type.startswith("text/"):
+    # JSON is text by definition (RFC 8259); SIDOF serves its API as application/json.
+    if not (document.media_type.startswith("text/") or document.media_type == "application/json"):
         raise ValueError(f"official document is not text: {document.media_type}")
 
     if document.charset:
