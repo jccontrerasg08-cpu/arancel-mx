@@ -223,6 +223,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             }
         )
     )
+    # The result file is not uploaded, so the run log is the only place a
+    # maintainer can see why SIDOF could not be read.
+    for failure in result["failures"]:
+        print(f"::warning::SIDOF {failure['date']}: {failure['error']}")
     return 0 if result["status"] == "ok" else 1
 
 
