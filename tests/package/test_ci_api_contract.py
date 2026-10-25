@@ -21,11 +21,14 @@ def _job(name: str) -> str:
     return workflow[start:end]
 
 
-def test_ci_allows_live_source_probes_to_report_before_job_timeout() -> None:
-    job = _job("test")
+def test_live_source_probes_run_outside_the_required_check() -> None:
+    # An official host outage must not block merges through the required `test`.
+    assert "Verify documented official URLs are accessible" not in _job("test")
+    job = _job("official-sources")
 
     assert "timeout-minutes: 30" in job
-    assert "Verify documented official URLs are accessible" in job
+    assert "python -m scripts.check_documented_urls --timeout 15" in job
+    assert "python -m scripts.validate_ligie_html_pages --timeout 15" in job
 
 
 def test_required_ci_type_checks_the_full_package() -> None:
