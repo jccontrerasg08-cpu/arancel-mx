@@ -104,7 +104,7 @@ El pipeline y la consulta pública dependen de estas páginas HTML oficiales:
 
 `python -m scripts.validate_ligie_html_pages` verifica que sigan siendo alcanzables, que el HTML contenga contenido utilizable y que los recursos enlazados respondan.
 
-`python -m scripts.check_documented_urls` verifica que estas URLs sigan siendo alcanzables desde CI y descarga el cuerpo HTML de las páginas documentadas.
+`python -m scripts.check_documented_urls` verifica que estas URLs sigan siendo alcanzables desde CI y descarga el cuerpo HTML de las páginas documentadas. Ambos scripts corren en el job `official-sources` de CI, que no es un check requerido: una caída de un sitio oficial se reporta en cada PR sin bloquear el merge. Ambos scripts corren en el job `official-sources` de CI, que no es un check requerido: una caída de un sitio oficial se reporta en cada PR sin bloquear el merge.
 
 Documentar una URL oficial y exigir que siempre responda desde GitHub Actions son contratos distintos. VUCEM y algunos endpoints de Diputados cortan TLS o agotan el tiempo desde los runners. Siguen documentados y validados sintácticamente, pero quedan fuera del probe en vivo mediante `EXTERNALLY_UNPROBEABLE_URLS`, con una prueba que exige que cada excepción siga dentro del conjunto documentado. No se elimina una fuente oficial para volver verde la CI.
 

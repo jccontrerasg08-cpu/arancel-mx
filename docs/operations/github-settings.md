@@ -10,7 +10,7 @@ El código del repositorio asume:
 - la rama `main` protegida;
 - GitHub Pages servido desde la rama `gh-pages`.
 
-El workflow se muestra como `CI`, pero los rulesets de GitHub exigen el contexto que emite el check run, que es el nombre del job: `test`.
+El workflow se muestra como `CI`, pero los rulesets de GitHub exigen el contexto que emite el check run, que es el nombre del job: `test`. Los jobs `official-sources`, `api-runtime` y `browser-smoke` también corren en cada PR, pero no son requeridos; `official-sources` depende de sitios oficiales que a veces se caen. Los jobs `official-sources`, `api-runtime` y `browser-smoke` también corren en cada PR, pero no se marcan como requeridos; `official-sources` depende de sitios oficiales que a veces se caen.
 
 Los nombres de botones y opciones se citan en **negrita** tal como aparecen en la interfaz de GitHub, que está en inglés.
 
