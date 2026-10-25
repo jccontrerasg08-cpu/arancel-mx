@@ -142,7 +142,7 @@ La rama `gh-pages` la crea la primera ejecución de producción del job `pages` 
 2. En **Branch**, selecciona `gh-pages` y la carpeta `/ (root)`, y guarda.
 3. Comprueba que `https://jccontrerasg08-cpu.github.io/arancel-mx/v1/meta.json` responde con el `dataset_tag` de la última release y que `https://arancel-mx.vercel.app/data/v1/meta.json` devuelve lo mismo a través del rewrite de Vercel.
 
-El árbol incluye `.nojekyll`, así que Pages sirve los archivos sin procesarlos. Si Pages no está configurado, el job `pages` deja la advertencia `gh-pages updated, but the Pages build request failed`; en cuanto se configure, Pages sirve la rama que ya existe.
+El árbol incluye `.nojekyll`, así que Pages sirve los archivos sin procesarlos, y `vercel.json` con `git.deploymentEnabled: false`, así que Vercel no despliega la rama. Si Pages no está configurado, el job `pages` deja la advertencia `gh-pages updated, but the Pages build request failed`; en cuanto se configure, Pages sirve la rama que ya existe.
 
 ## Lista de verificación
 
