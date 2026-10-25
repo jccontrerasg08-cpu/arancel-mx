@@ -130,7 +130,7 @@ Si ocurre un segundo cambio válido el mismo día y ya existe `data-YYYY.MM.DD`,
 El job `pages` genera la API estática de sólo lectura que consumen el frontend y terceros. Corre después de publicar una release nueva y también cuando el pipeline termina en `no_change`, de modo que `gh-pages` existe y sirve la última release aunque las fuentes no hayan cambiado:
 
 1. `scripts/build_static_pages.py` descarga la release recién publicada (`--tag data-YYYY.MM.DD`) o, en `no_change`, la última release con el cliente público, que verifica `manifest.json` y `SHA256SUMS`, y se niega a continuar si la release no está verificada.
-2. Escribe el árbol `v1/` (`meta.json`, `records/{hs2}.json`, `search-index.json`, `manifest.json` y el resto de archivos descritos en la [arquitectura](architecture.md#archivos-de-la-api-estática)) y verifica cada archivo contra el SHA-256 de su manifest. Añade `.nojekyll` para que Pages sirva los archivos tal cual.
+2. Escribe el árbol `v1/` (`meta.json`, `records/{hs2}.json`, `search-index.json`, `manifest.json` y el resto de archivos descritos en la [arquitectura](architecture.md#archivos-de-la-api-estática)) y verifica cada archivo contra el SHA-256 de su manifest. Añade `.nojekyll` para que Pages sirva los archivos tal cual, y un `vercel.json` que impide que Vercel intente desplegar la rama.
 3. Si el commit de `gh-pages` ya corresponde a esa release, no hace nada. Si no, hace force-push del árbol a la rama `gh-pages`, con un único commit por release, y pide un build a la API de GitHub Pages.
 
 Pages sirve el árbol en `https://jccontrerasg08-cpu.github.io/arancel-mx/v1/` y Vercel lo expone como `/data/v1/`. La rama `gh-pages` no contiene historial: siempre refleja la última release publicada.

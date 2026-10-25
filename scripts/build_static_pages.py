@@ -17,6 +17,16 @@ from arancel_mx.consumer.dataset import Dataset
 from arancel_mx.static_api import build_static_api, verify_static_api
 
 
+def write_host_files(out: Path) -> None:
+    """Write the files that tell hosts how to treat the gh-pages branch."""
+    # Serve files as they are; Pages must not run Jekyll over the tree.
+    (out / ".nojekyll").write_text("", encoding="utf-8")
+    # The Vercel project builds every pushed branch; gh-pages holds only data.
+    (out / "vercel.json").write_text(
+        json.dumps({"git": {"deploymentEnabled": False}}) + "\n", encoding="utf-8"
+    )
+
+
 def build_pages(
     out: Path, *, tag: str | None, cache_dir: Path | None
 ) -> dict[str, object]:
@@ -35,8 +45,7 @@ def build_pages(
     problems = verify_static_api(root)
     if problems:
         raise ValueError("static API verification failed: " + "; ".join(problems))
-    # Serve files as they are; Pages must not run Jekyll over the tree.
-    (out / ".nojekyll").write_text("", encoding="utf-8")
+    write_host_files(out)
     return {
         "dataset_tag": resolved_tag,
         "files": len(manifest["files"]),
