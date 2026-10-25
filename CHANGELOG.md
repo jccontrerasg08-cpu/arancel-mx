@@ -60,6 +60,8 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Fixed
 
+- The `gh-pages` tree carries a `vercel.json` that turns off Vercel Git deployments for that branch. Every data publish used to start a Vercel build that failed with `FASTAPI_ENTRYPOINT_NOT_FOUND`.
+- The deprecated `/v1` API stopped at `data-2026.09.14`: the weekly Vercel cron inserted the 26,641 records one statement at a time, about 146 s at 4 ms of database latency against the 60 s function limit, so every promotion timed out and rolled back. Records are now inserted with one batched `executemany` (3.1 s in the same conditions), and a failed sync logs the error type and message instead of a generic line.
 - The daily DOF watch never read SIDOF: `decode_fetched_text` rejected its `application/json` responses as non-text, so every day failed. JSON is now decoded as text.
 - The `pages` job created `gh-pages` only after redirecting the build summary into `out/`, which does not exist on a fresh checkout; it now creates the directory first.
 - The official data pipeline could not publish `data-2026.10.23`: the publisher imported `certify_bundle` from `arancel_mx.certification`, which no longer re-exports it, and failed before uploading. The workflow imports it from `arancel_mx.certification.bundle`, and a new test imports every `from arancel_mx… import …` quoted in workflows and docs so such a break fails CI.

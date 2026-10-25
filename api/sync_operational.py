@@ -54,8 +54,12 @@ class handler(BaseHTTPRequestHandler):
         try:
             with _connect(database_url) as connection:
                 result = synchronize_latest_release(connection)
-        except (OperationalSyncError, OSError, RuntimeError, ValueError):
-            logger.error("verified operational release synchronization failed")
+        except (OperationalSyncError, OSError, RuntimeError, ValueError) as error:
+            logger.error(
+                "verified operational release synchronization failed: %s: %s",
+                type(error).__name__,
+                str(error)[:300],
+            )
             self._respond(HTTPStatus.SERVICE_UNAVAILABLE, {"status": "not_promoted"})
             return
         self._respond(HTTPStatus.OK, {"status": "promoted", **result})

@@ -35,10 +35,20 @@ class Transaction(Protocol):
     ) -> bool: ...
 
 
+class BatchCursor(Protocol):
+    def __enter__(self) -> "BatchCursor": ...
+
+    def __exit__(self, *exc_info: object) -> object: ...
+
+    def executemany(self, statement: str, values: Sequence[tuple[object, ...]]) -> object: ...
+
+
 class OperationalConnection(Protocol):
     def transaction(self) -> Transaction: ...
 
     def execute(self, statement: str, values: tuple[object, ...] | None = None) -> object: ...
+
+    def cursor(self) -> BatchCursor: ...
 
 
 @dataclass(frozen=True)
@@ -363,19 +373,25 @@ def promote_release(
                 json.dumps(release.evidence, sort_keys=True, separators=(",", ":")),
             ),
         )
-        for record in records:
-            connection.execute(
-                _INSERT_RECORD,
-                (
-                    release.tag,
-                    record.code,
-                    record.level,
-                    record.description,
-                    record.record_hash,
-                    json.dumps(record.source_document_ids, separators=(",", ":")),
-                    json.dumps(record.payload, sort_keys=True, separators=(",", ":")),
-                ),
-            )
+        # One batched statement: psycopg pipelines executemany, whereas one execute per
+        # record (~26k round trips) outlasted the 60 s Vercel limit and rolled back.
+        if records:
+            with connection.cursor() as cursor:
+                cursor.executemany(
+                    _INSERT_RECORD,
+                    [
+                        (
+                            release.tag,
+                            record.code,
+                            record.level,
+                            record.description,
+                            record.record_hash,
+                            json.dumps(record.source_document_ids, separators=(",", ":")),
+                            json.dumps(record.payload, sort_keys=True, separators=(",", ":")),
+                        )
+                        for record in records
+                    ],
+                )
         connection.execute(_SET_ACTIVE_RELEASE, (release.tag,))
 
 

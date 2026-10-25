@@ -21,12 +21,32 @@ class RecordingConnection:
     def __init__(self) -> None:
         self.events: list[str] = []
         self.statements: list[tuple[str, tuple[object, ...] | None]] = []
+        self.batches: list[int] = []
 
     def transaction(self) -> RecordingTransaction:
         return RecordingTransaction(self)
 
     def execute(self, statement: str, values: tuple[object, ...] | None = None) -> None:
         self.statements.append((statement, values))
+
+    def cursor(self) -> "RecordingCursor":
+        return RecordingCursor(self)
+
+
+class RecordingCursor:
+    def __init__(self, connection: RecordingConnection) -> None:
+        self.connection = connection
+
+    def __enter__(self) -> "RecordingCursor":
+        return self
+
+    def __exit__(self, *exc_info: object) -> None:
+        return None
+
+    def executemany(self, statement: str, values) -> None:
+        self.connection.batches.append(len(values))
+        for row in values:
+            self.connection.statements.append((statement, row))
 
 
 def test_verified_release_promotion_loads_versioned_rows_before_switching_active_pointer():
@@ -76,6 +96,38 @@ def test_verified_release_promotion_loads_versioned_rows_before_switching_active
     )
     assert release_position < record_position < active_pointer_position
     assert connection.statements[-1][1] == ("data-2026.08.18",)
+
+
+def test_records_are_inserted_in_one_batched_statement():
+    from arancel_mx.operational import OperationalRecord, OperationalRelease, promote_release
+
+    connection = RecordingConnection()
+    release = OperationalRelease(
+        tag="data-2026.10.24",
+        dataset_version="2026.10.24",
+        schema_version="2",
+        manifest_sha256="a" * 64,
+        generated_at=datetime(2026, 10, 24, 16, 0, tzinfo=timezone.utc),
+        published_at=datetime(2026, 10, 24, 16, 17, tzinfo=timezone.utc),
+        source_checked_at=datetime(2026, 10, 24, 16, 0, tzinfo=timezone.utc),
+    )
+    records = [
+        OperationalRecord(
+            code=f"{98030000 + index}",
+            level="fraccion8",
+            description=f"Registro {index}.",
+            record_hash=f"{index:064x}",
+            source_document_ids=("source-1",),
+            payload={"code": f"{98030000 + index}"},
+        )
+        for index in range(1, 501)
+    ]
+
+    promote_release(connection, release, records)
+
+    # 26k single-row round trips outlasted the 60 s Vercel limit; one batch does not.
+    assert connection.batches == [500]
+    assert connection.events == ["begin", "commit"]
 
 
 def test_rejected_release_never_opens_a_database_transaction():
