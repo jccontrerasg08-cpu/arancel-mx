@@ -28,6 +28,25 @@ function api(path, signal) {
   return dataClient.request(path, signal);
 }
 
+// A generic row ("Los demás.") only makes sense under its heading and
+// subheading, so each result carries the descriptions of its HS4 and HS6
+// ancestors. Missing context never hides a result.
+async function withHierarchyContext(results, signal) {
+  return Promise.all(results.map(async (item) => {
+    const record = item.record || item;
+    if (!record.code || record.code.length <= 4) return item;
+    // Ancestors live in the chapter file the search already loaded.
+    const widths = [4, 6, 8].filter((width) => width < record.code.length);
+    const ancestors = await Promise.all(
+      widths.map((width) => api(`/v1/lookup/${record.code.slice(0, width)}`, signal).catch(() => null)),
+    );
+    const context = ancestors
+      .filter((entry) => entry && entry.description)
+      .map((entry) => entry.description.replace(/[.:]$/u, ''));
+    return context.length ? { ...item, context } : item;
+  }));
+}
+
 const chapterDataUrl = (code) => `${DATA_BASE}/records/${String(code).slice(0, 2)}.json`;
 
 function PageHero({ page, children, className = '' }) {
@@ -104,8 +123,8 @@ export function ExplorerPage() {
     const controller = new AbortController();
     setState({ kind: 'loading', results: [] });
     api(`/v1/search?q=${encodeURIComponent(initial)}&limit=10`, controller.signal)
-      .then((results) => {
-        const primaryResults = selectPrimarySearchResults(results, initial);
+      .then((results) => withHierarchyContext(selectPrimarySearchResults(results, initial), controller.signal))
+      .then((primaryResults) => {
         setState(primaryResults.length ? { kind: 'results', results: primaryResults } : { kind: 'empty', results: [] });
       })
       .catch(() => {
@@ -180,7 +199,7 @@ export function ExplorerPage() {
     }} />
     <section className="workspace"><form onSubmit={submit} className="search-form"><label htmlFor="app-query">{copy.label}</label><div className="inline-form"><input data-testid="search-input" id="app-query" type="search" role="combobox" aria-autocomplete="list" aria-expanded={!initial && query.trim().length > 0 && suggestions.length > 0} aria-controls="live-suggestions-list" aria-activedescendant={activeSuggestion >= 0 ? `suggestion-${activeSuggestion}` : undefined} autoComplete="off" value={query} onKeyDown={onQueryKeyDown} onChange={(event) => setQuery(event.target.value)} placeholder={copy.placeholder}/><button data-testid="search-submit" className="button primary" type="submit" disabled={state.kind === 'loading'}>{state.kind === 'loading' ? copy.loading : copy.submit}</button></div><div role="status" aria-live="polite" className="status">{state.kind === 'idle' && copy.idle}{state.kind === 'loading' && copy.searching}{state.kind === 'results' && copy.results}{state.kind === 'empty' && copy.empty}{state.kind === 'error' && <>{copy.error} <button type="button" className="text-button" onClick={() => setAttempt((current) => current + 1)}>{copy.retry}</button></>}</div></form>
       {!initial && query.trim() && <section data-testid="live-suggestions" className="live-suggestions" aria-label={copy.suggestions}><p>{copy.suggestions}</p>{suggestions.length ? <div id="live-suggestions-list" role="listbox">{suggestions.map((item, index) => { const record = item.record || item; return <button id={`suggestion-${index}`} key={record.code} role="option" aria-selected={index === activeSuggestion} className={index === activeSuggestion ? 'is-active' : ''} type="button" onMouseEnter={() => setActiveSuggestion(index)} onClick={() => selectSuggestion(index)}><strong>{formatCode(record.code)}</strong><span lang={language === 'en' ? 'es-MX' : undefined}>{record.description}</span></button>; })}</div> : <small>{copy.noSuggestions}</small>}</section>}
-      {state.kind === 'results' && <><p className="status">{state.fallback ? copy.fallback : copy.activeRelease}</p><section className="result-list" aria-label={copy.results}><h2>{state.results.length} {copy.verifiedResults}</h2>{state.results.map((item) => { const record = item.record || item; return <article data-testid="result-card" key={record.code}><div><span>{item.match_kind || 'verified match'}</span><h3><code>{formatCode(record.code)}</code></h3><p lang={language === 'en' ? 'es-MX' : undefined}>{record.description}</p><small>{record.dataset_version || 'active release'} · {record.level}</small></div><Link className="button" to={`/app/record/${record.code}`}>{copy.inspect}</Link></article>; })}</section><section data-testid="hierarchy-card" className="example-note"><h2>{copy.tree}</h2><p>{state.results[0] && (state.results[0].record || state.results[0]).code}</p><p data-testid="tree-filter-status">{formatCode(initial)}</p></section></>}
+      {state.kind === 'results' && <><p className="status">{state.fallback ? copy.fallback : copy.activeRelease}</p><section className="result-list" aria-label={copy.results}><h2>{state.results.length} {copy.verifiedResults}</h2>{state.results.map((item) => { const record = item.record || item; return <article data-testid="result-card" key={record.code}><div><span>{item.match_kind || 'verified match'}</span><h3><code>{formatCode(record.code)}</code></h3>{item.context?.length > 0 && <p data-testid="result-context" className="result-context" lang="es-MX" title={item.context.join(' › ')}>{item.context.join(' › ')}</p>}<p lang={language === 'en' ? 'es-MX' : undefined}>{record.description}</p><small>{record.dataset_version || 'active release'} · {record.level}</small></div><Link className="button" to={`/app/record/${record.code}`}>{copy.inspect}</Link></article>; })}</section><section data-testid="hierarchy-card" className="example-note"><h2>{copy.tree}</h2><p>{state.results[0] && (state.results[0].record || state.results[0]).code}</p><p data-testid="tree-filter-status">{formatCode(initial)}</p></section></>}
       {state.kind === 'idle' && <><h2>{copy.ready}</h2><aside data-testid="example-fraction" className="example-note"><strong>{copy.example}</strong><p>{copy.exampleDescription}</p><div className="hero-actions"><button className="button" type="button" onClick={() => navigate('/app?q=teléfonos')}>{copy.try}</button><Link to="/chapters">{copy.browse}</Link></div></aside></>}
       {state.kind === 'empty' && <aside className="example-note"><strong>{copy.emptyTitle}</strong><p>{copy.emptyDescription}</p><Link to="/chapters">{copy.browse}</Link></aside>}
     </section>
