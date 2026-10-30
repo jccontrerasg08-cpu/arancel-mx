@@ -169,3 +169,11 @@ def test_pymupdf_stays_below_the_major_that_breaks_table_extraction() -> None:
     block = DEPENDABOT.read_text(encoding="utf-8")
     assert 'dependency-name: "PyMuPDF"' in block
     assert 'versions: [">=2"]' in block
+
+
+def test_psycopg_and_its_binary_are_pinned_to_the_same_version() -> None:
+    # psycopg-binary must match psycopg exactly; Dependabot bumps them separately.
+    pins = dict(_constraint_rows())
+
+    assert pins["psycopg"] == pins["psycopg-binary"]
+
