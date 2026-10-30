@@ -22,6 +22,12 @@ updates:
     cooldown:
       default-days: 7
     open-pull-requests-limit: 5
+    # PyMuPDF 2.x drops the spaces inside table cells and splits "01.01" into
+    # "0101" and "." in the LIGIE PDF parser (find_tables().extract()), which
+    # corrupts codes and descriptions. Stay on 1.x until the parser is migrated.
+    ignore:
+      - dependency-name: "PyMuPDF"
+        versions: [">=2"]
 
   # Left ungrouped on purpose: each action SHA bump is a supply-chain change that
   # deserves its own review.
