@@ -45,6 +45,7 @@ def test_wheel_contains_public_runtime_contract(distributions: tuple[Path, Path]
         "arancel_mx/api/static/site/assets/flags/NOTICE",
         "arancel_mx/sources/source_registry.json",
         "arancel_mx/sources/legal_instruments.json",
+        "arancel_mx/sources/rate_corrections.json",
         "arancel_mx/sources/description_corrections.json",
         "arancel_mx/py.typed",
     }
@@ -76,6 +77,7 @@ def test_wheel_excludes_repository_and_dataset_payloads(distributions: tuple[Pat
     assert sorted(json_files) == [
         "arancel_mx/sources/description_corrections.json",
         "arancel_mx/sources/legal_instruments.json",
+        "arancel_mx/sources/rate_corrections.json",
         "arancel_mx/sources/source_registry.json",
     ]
 
@@ -105,6 +107,7 @@ def test_sdist_contains_rebuild_inputs_and_public_package_docs(distributions: tu
         f"{root}/src/arancel_mx/py.typed",
         f"{root}/src/arancel_mx/sources/source_registry.json",
         f"{root}/src/arancel_mx/sources/legal_instruments.json",
+        f"{root}/src/arancel_mx/sources/rate_corrections.json",
         f"{root}/src/arancel_mx/sources/description_corrections.json",
     }
     assert required <= names

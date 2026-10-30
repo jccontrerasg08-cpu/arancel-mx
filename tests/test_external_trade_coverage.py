@@ -68,3 +68,24 @@ def test_coverage_map_and_documentation_indexes_expose_the_catalog() -> None:
     assert "external-trade-source-catalog.json" in coverage_map
     assert "Mapa de cobertura de comercio exterior" in docs_index
     assert "Mapa de cobertura oficial de comercio exterior" in root_readme
+
+
+def test_legal_framework_lists_current_federal_laws_from_their_official_index() -> None:
+    catalog = json.loads(CATALOG_PATH.read_text(encoding="utf-8"))
+    framework = catalog["legal_framework"]
+    laws = framework["laws"]
+
+    assert framework["index_url"] == "https://www.diputados.gob.mx/LeyesBiblio/index.htm"
+    assert len({law["id"] for law in laws}) == len(laws)
+    # The customs and foreign trade laws are already first-level sources.
+    assert not {law["official_url"] for law in laws} & {
+        item["official_url"] for item in catalog["sources"]
+    }
+    for law in laws:
+        assert law["official_url"].startswith("https://www.diputados.gob.mx/LeyesBiblio/pdf/")
+        assert law["title"] and law["relevance"]
+        reform = law["last_reform_dof"]
+        assert reform is None or len(reform) == 10
+    for page in framework["official_pages"]:
+        assert urlparse(page["official_url"]).netloc.endswith(".gob.mx")
+        assert page["relevance"]

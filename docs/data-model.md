@@ -39,6 +39,14 @@ La descripción de cada fila es la que publica SNICE. Cuando SNICE trae una erra
 
 Una corrección aplica únicamente mientras SNICE publique exactamente el texto registrado. Si SNICE la corrige o cambia la descripción, la corrección se omite y aparece como `stale` en `description_corrections` del manifest, junto con las aplicadas. Un cambio del registro también genera una release nueva.
 
+### Tasas vencidas que SNICE sigue publicando
+
+Cuando SNICE sigue publicando una tasa que fijó un decreto temporal ya vencido, [`rate_corrections.json`](../src/arancel_mx/sources/rate_corrections.json) registra la tasa exacta de SNICE, la que fija hoy el texto del DOF, el día en que ésta entró en vigor y los PDF del DOF (URL y SHA-256) que lo respaldan. La corrección se aplica antes de calcular la vigencia, así que la tasa corregida se compara con los instrumentos como cualquier otra.
+
+El único caso registrado es la exportación del maíz blanco 1005.90.04. El 50 % lo fijaron dos decretos temporales: el del DOF 2023-01-16, vigente hasta el 2023-06-30, y el del DOF 2023-06-23, vigente hasta el 2023-12-31. Ningún instrumento posterior lo vuelve a fijar, así que desde el 2024-01-01 rige la Tarifa original: IGI 20, IGE Ex. SNICE ya publica IGI 20, pero conserva IGE 50. El texto consolidado de la Cámara de Diputados muestra 50/50, porque anota el último decreto sin marcar su vencimiento.
+
+Como con las erratas, la corrección aplica sólo mientras SNICE publique exactamente la tasa registrada. Si SNICE la cambia, la corrección se omite y aparece como `stale` en `rate_corrections` del manifest. Un cambio del registro genera una release nueva.
+
 ## Procedencia documental
 
 Cada registro canónico señala una fuente primaria y puede incluir evidencia adicional. La procedencia conserva autoridad, URL, hash, papel documental, source role y referencia al registro de fuentes. Las propuestas e indicadores no se presentan como tarifa legal vigente.
