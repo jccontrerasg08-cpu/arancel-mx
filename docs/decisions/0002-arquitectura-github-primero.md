@@ -12,7 +12,7 @@ Hoy la superficie pública depende de cinco plataformas:
 
 | Pieza | Dónde vive hoy |
 |---|---|
-| Sitio y explorador | Vercel, estático (`website/`) |
+| Sitio y explorador | Vercel, estático (`src/arancel_mx/api/static/site/`) |
 | API `/v1` | Funciones Python de Vercel (`api/operational.py`) sobre Neon Postgres |
 | Sincronización de datos a Neon | Vercel Cron semanal (`api/sync_operational.py`) |
 | API de respaldo | Railway (FastAPI) y FastAPI Cloud |

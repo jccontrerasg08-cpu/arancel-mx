@@ -49,7 +49,7 @@ La portada del repositorio explica **qué es** `arancel-mx` y cómo empezar. Est
 | Entender cómo encajan todas las piezas | [Arquitectura](architecture.md) | Vista general, flujo de publicación, módulos, scripts, workflows e invariantes. |
 | Registrar o consultar una decisión de arquitectura | [Decisiones](decisions/) | Contexto, alternativas y compatibilidad de cada cambio de rumbo. |
 | Escribir o revisar documentación | [Guía de estilo](documentation-style.md) | Idioma, estructura y documentos canónicos. |
-| Mantener o compilar la interfaz pública | [Fuente mantenible del frontend](frontend-source.md) | Rutas React, contenido declarativo, build Vite y copia a `website/` y al paquete. |
+| Mantener o compilar la interfaz pública | [Fuente mantenible del frontend](frontend-source.md) | Rutas React, contenido declarativo, build Vite y copia al directorio publicado `src/arancel_mx/api/static/site/`. |
 | Aplicar las reglas comunes del ecosistema | [Política de desarrollo verificable](governance/DEVELOPMENT_POLICY.md) | Evidencia, contratos, seguridad, excepciones y recuperación para Central Hub y RFA. |
 | Enviar cambios | [CONTRIBUTING.md](../CONTRIBUTING.md) | Flujo y criterios de contribución. |
 | Reportar un problema de seguridad | [SECURITY.md](../SECURITY.md) | Canal de reporte privado. |

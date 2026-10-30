@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
   "buildCommand": "python3.13 -m pip install --require-hashes --only-binary=:all: --target api/_vendor -r requirements/vercel.txt",
-  "outputDirectory": "website",
+  "outputDirectory": "src/arancel_mx/api/static/site",
   "functions": {
     "api/operational.py": {
       "includeFiles": "{api/_vendor/**,src/arancel_mx/**}",

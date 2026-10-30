@@ -26,7 +26,7 @@ DOF / SIDOF               ┘            → publicación                       
 | Release de datos | GitHub Releases `data-YYYY.MM.DD` | `arancel_mx.duckdb`, `.csv`, `.json`, `manifest.json`, `SHA256SUMS`, `official-sources.tar.gz`. | Vigente. Fuente de verdad. |
 | API estática | rama `gh-pages`, servida por GitHub Pages | JSON por capítulo HS2, índice de búsqueda y manifest con SHA-256 por archivo. | Vigente. |
 | Paquete Python | PyPI `arancel-mx` | Cliente `Dataset`, CLI y servidor FastAPI opcional. | Vigente. |
-| Frontend | Vercel (`website/`) | Sitio y explorador; leen `/data/v1`, que Vercel reescribe hacia Pages. | Vigente. |
+| Frontend | Vercel (`src/arancel_mx/api/static/site/`) | Sitio y explorador; leen `/data/v1`, que Vercel reescribe hacia Pages. | Vigente. |
 | Vigilancia del DOF | job `notify` del pipeline | Consulta SIDOF y abre un issue por instrumento candidato. | Vigente. |
 | API dinámica `/v1` | Funciones de Vercel sobre Neon | Proyección operacional de la release. | **Deprecada**, se retira el 2027-01-31. |
 
@@ -128,11 +128,9 @@ Las fronteras de importación (por ejemplo, que `consumer` no dependa de `pipeli
 ## 7. Frontend
 
 - **Fuente:** `frontend/` (Vite + React). Las rutas se declaran en `frontend/src/routes.js` y el contenido en `frontend/src/content.js`.
-- **Build:** `npm run build:frontend` compila con Vite y `sync-frontend-static.mjs` copia el resultado, con nombre por hash de contenido, a dos destinos:
-  - `website/`, que publica Vercel;
-  - `src/arancel_mx/api/static/site/`, que sirve FastAPI.
+- **Build:** `npm run build:frontend` compila con Vite y `sync-frontend-static.mjs` copia el resultado, con nombre por hash de contenido, a un único directorio, `src/arancel_mx/api/static/site/`. Vercel lo publica (`outputDirectory` en `vercel.json`), FastAPI lo sirve y el wheel lo incluye.
 - **Datos:** el navegador llama a `/data/v1/...`. En Vercel esa ruta se reescribe a GitHub Pages; en un servidor FastAPI local, `app.py` genera el árbol desde el dataset activo la primera vez que se pide.
-- **Scripts estables** en `website/assets/` (no generados por Vite):
+- **Scripts estables** en `src/arancel_mx/api/static/site/assets/` (no generados por Vite):
   - `site-bridge.js` muestra la release activa leyendo `meta.json` y sólo reescribe `.release-window code`;
   - `hub-interactions.js` y `trade-desk.js` usan el mismo cliente `static-api.js`.
 - **Caché en `vercel.json`:**

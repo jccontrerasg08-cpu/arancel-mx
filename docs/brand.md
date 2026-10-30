@@ -51,11 +51,11 @@ El nombre se presenta como `arancel.mx` en minúsculas, con navy como color prin
 | Asset | Función |
 |---|---|
 | `docs/assets/arancel-mx-logo.svg` | logo horizontal principal |
-| `website/assets/arancel-mx-mark.svg` | mark compacto para navegación |
-| `website/assets/arancel-mx-logo.svg` | wordmark desplegable del sitio |
+| `src/arancel_mx/api/static/site/assets/arancel-mx-mark.svg` | mark compacto para navegación |
+| `src/arancel_mx/api/static/site/assets/arancel-mx-logo.svg` | wordmark desplegable del sitio |
 | `docs/assets/arancel-mx-banner.svg` | hero del README |
 | `docs/assets/arancel-mx-social.svg` | master social 1280×640 |
-| `website/assets/arancel-mx-social.svg` | copia desplegable social |
+| `src/arancel_mx/api/static/site/assets/arancel-mx-social.svg` | copia desplegable social |
 | `docs/assets/arancel-mx-cover.svg` | portada 1600×900 para presentaciones |
 
 Los SVG son masters vectoriales. No incrustar PNG/JPEG, elementos `<image>` ni payloads base64. Si una plataforma exige raster, exportarlo desde el master SVG sin reemplazar el archivo canónico.
@@ -170,7 +170,7 @@ La arquitectura vigente ([decisión 0002](decisions/0002-arquitectura-github-pri
 
 El bridge público (`site-bridge.js`) muestra la release activa leyendo `/data/v1/meta.json`. La documentación no debe fijar una release concreta como identidad del hub.
 
-Los assets mantenibles del sitio viven bajo `website/assets/`. No editar manualmente los bundles `website/assets/index-*.js`, `index-*.css` ni runtime generado sólo para cambiar branding.
+Los assets mantenibles del sitio viven bajo `src/arancel_mx/api/static/site/assets/`. No editar manualmente los bundles `src/arancel_mx/api/static/site/assets/index-*.js`, `index-*.css` ni runtime generado sólo para cambiar branding.
 
 ## Presentaciones
 

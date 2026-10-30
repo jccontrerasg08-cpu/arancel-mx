@@ -8,7 +8,7 @@ import {
   evaluateRrnaOrientation,
   evaluateTmecOrientation,
   TRADE_SOURCES,
-} from '../../website/assets/trade-tools.js';
+} from '../../src/arancel_mx/api/static/site/assets/trade-tools.js';
 
 test('builds an orientative customs value from commercial components', () => {
   const customsValue = calculateCustomsValue({

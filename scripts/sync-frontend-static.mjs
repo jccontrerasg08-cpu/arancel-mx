@@ -6,10 +6,8 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const source = path.join(root, 'frontend-dist');
 const sourceAssets = path.join(source, 'assets');
-const destinations = [
-  path.join(root, 'website'),
-  path.join(root, 'src/arancel_mx/api/static/site'),
-];
+// Single published copy: Vercel serves it (`outputDirectory`) and the wheel ships it.
+const destination = path.join(root, 'src/arancel_mx/api/static/site');
 
 await stat(source);
 const assetNames = await readdir(sourceAssets);
@@ -38,25 +36,23 @@ await writeFile(sourceIndex, index.replace(`/assets/${bundleName}`, `/assets/${s
 const publishedAssetNames = new Set(await readdir(sourceAssets));
 const generatedBundle = /^(?:index|glossary-page)-[A-Za-z0-9_-]{8,12}\.(?:js|css)$/;
 
-for (const destination of destinations) {
-  await mkdir(destination, { recursive: true });
-  const destinationAssets = path.join(destination, 'assets');
-  await mkdir(destinationAssets, { recursive: true });
-  for (const existing of await readdir(destinationAssets)) {
-    if (generatedBundle.test(existing) && !publishedAssetNames.has(existing)) {
-      await unlink(path.join(destinationAssets, existing));
-    }
+await mkdir(destination, { recursive: true });
+const destinationAssets = path.join(destination, 'assets');
+await mkdir(destinationAssets, { recursive: true });
+for (const existing of await readdir(destinationAssets)) {
+  if (generatedBundle.test(existing) && !publishedAssetNames.has(existing)) {
+    await unlink(path.join(destinationAssets, existing));
   }
-  await cp(sourceIndex, path.join(destination, 'index.html'));
-  await cp(sourceFavicon, path.join(destination, 'favicon.svg'));
-  await cp(sourceAssets, destinationAssets, {
-    recursive: true,
-    force: true,
-  });
-
-  // Standalone pages (trade desk, hub scripts) import the same static data client.
-  await cp(path.join(root, 'frontend/src/static-api.js'), path.join(destinationAssets, 'static-api.js'));
-
-  // `trade.html` and its dedicated assets are independently maintained.
-  await stat(path.join(destination, 'trade.html'));
 }
+await cp(sourceIndex, path.join(destination, 'index.html'));
+await cp(sourceFavicon, path.join(destination, 'favicon.svg'));
+await cp(sourceAssets, destinationAssets, {
+  recursive: true,
+  force: true,
+});
+
+// Standalone pages (trade desk, hub scripts) import the same static data client.
+await cp(path.join(root, 'frontend/src/static-api.js'), path.join(destinationAssets, 'static-api.js'));
+
+// `trade.html` and its dedicated assets are independently maintained.
+await stat(path.join(destination, 'trade.html'));

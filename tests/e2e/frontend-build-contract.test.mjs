@@ -23,7 +23,7 @@ test('frontend has a reproducible build that keeps trade desk assets separate', 
 
 test('published frontend bundles are built in production mode without local source metadata', async () => {
   const packageManifest = await readJson('package.json');
-  const assets = await readdir(path.join(root, 'website/assets'));
+  const assets = await readdir(path.join(root, 'src/arancel_mx/api/static/site/assets'));
   const mainBundle = assets.find((name) => /^index-[A-Za-z0-9_-]+\.js$/.test(name));
 
   assert.match(packageManifest.scripts['build:frontend'], /node scripts\/build-frontend\.mjs/);
@@ -33,7 +33,7 @@ test('published frontend bundles are built in production mode without local sour
   assert.match(buildScript, /process\.env\.NODE_ENV\s*=\s*['\"]production['\"]/);
   assert.match(buildScript, /await build\(\)/);
 
-  const publishedSource = await readFile(path.join(root, 'website/assets', mainBundle), 'utf8');
+  const publishedSource = await readFile(path.join(root, 'src/arancel_mx/api/static/site/assets', mainBundle), 'utf8');
   assert.doesNotMatch(publishedSource, /jsxDEV/);
   assert.doesNotMatch(publishedSource, /fileName:\"\/home\//);
 });
@@ -41,7 +41,7 @@ test('published frontend bundles are built in production mode without local sour
 test('glossary data is deferred into its own published chunk', async () => {
   const app = await readFile(path.join(root, 'frontend/src/App.jsx'), 'utf8');
   const pages = await readFile(path.join(root, 'frontend/src/pages.jsx'), 'utf8');
-  const assets = await readdir(path.join(root, 'website/assets'));
+  const assets = await readdir(path.join(root, 'src/arancel_mx/api/static/site/assets'));
   const mainBundle = assets.find((name) => /^index-[A-Za-z0-9_-]+\.js$/.test(name));
   const glossaryBundle = assets.find((name) => /^glossary-page-[A-Za-z0-9_-]+\.js$/.test(name));
 
@@ -49,7 +49,7 @@ test('glossary data is deferred into its own published chunk', async () => {
   assert.doesNotMatch(pages, /GLOSSARY_ENTRIES/);
   assert.ok(mainBundle);
   assert.ok(glossaryBundle);
-  const glossarySource = await readFile(path.join(root, 'website/assets', glossaryBundle), 'utf8');
+  const glossarySource = await readFile(path.join(root, 'src/arancel_mx/api/static/site/assets', glossaryBundle), 'utf8');
   assert.match(glossarySource, new RegExp(`from["']\\./${mainBundle}["']`));
 });
 
@@ -69,7 +69,7 @@ test('static-site sync script preserves the independently maintained trade desk'
 
 
 test('static-site sync preserves the maintained hub interactions asset', async () => {
-  const interactions = await readFile(path.join(root, 'website/assets/hub-interactions.js'), 'utf8');
+  const interactions = await readFile(path.join(root, 'src/arancel_mx/api/static/site/assets/hub-interactions.js'), 'utf8');
 
   assert.match(interactions, /verified record/i);
 });
