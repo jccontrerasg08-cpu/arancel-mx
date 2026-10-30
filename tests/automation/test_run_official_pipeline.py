@@ -172,3 +172,23 @@ def test_unexpected_error_is_sanitized_and_never_contains_environment_secrets(
     assert "token-value-that-must-not-leak" not in result["message"]
     assert "other-secret-value" not in result["message"]
     assert "[REDACTED]" in result["message"]
+
+
+def test_a_second_change_on_the_same_day_waits_for_the_next_daily_run(tmp_path):
+    build_config = config(tmp_path)
+
+    def builder(config, session=None, previous_manifest=None):
+        raise AssertionError("the build must not start")
+
+    exit_code, result = execute_pipeline(
+        build_config,
+        previous_manifest={"dataset_version": "2026.08.10", "source_identity": []},
+        result_path=result_file(tmp_path),
+        builder=builder,
+    )
+
+    assert exit_code == 0
+    assert result["status"] == "no_change"
+    assert result["stage"] == "deferred"
+    assert "data-2026.08.10 is already published" in result["message"]
+    assert json.loads(result_file(tmp_path).read_text(encoding="utf-8")) == result

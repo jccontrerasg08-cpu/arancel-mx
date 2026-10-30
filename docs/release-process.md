@@ -61,6 +61,7 @@ El pipeline descarga el `manifest.json` de la última release válida y compara 
 - Si la identidad no cambió, el resultado es `no_change`: la ejecución termina en verde, el publisher queda `skipped` y no se crea tag ni release.
 - Si hubo un cambio y todos los gates pasan, el resultado es `built`: se genera el bundle verificado y puede continuar a publicación.
 - Si falla cualquier gate, el resultado es `failed`: publicación bloqueada y diagnóstico disponible para el notifier.
+- Si la última release publicada ya tiene la versión del día (`data-YYYY.MM.DD` es inmutable y nombra un día UTC), el resultado es `no_change` con etapa `deferred`: no se construye nada y el cambio se publica con la ejecución del siguiente día UTC. Antes, un segundo cambio el mismo día fallaba al publicar con `release_tag_collision`.
 
 ## 6. Manifest schema v2 y procedencia
 
