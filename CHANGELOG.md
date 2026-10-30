@@ -41,6 +41,7 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Changed
 
+- A second data change on the same UTC day no longer fails the pipeline with `release_tag_collision`. Release tags are immutable and name one day, so the run ends as `no_change` (stage `deferred`) and the change publishes with the next daily run.
 - The official data pipeline runs daily instead of weekly; unchanged sources still end as `no_change`.
 - The frontend, trade desk and hub scripts read `/data/v1` instead of `/v1`.
 - Documentation describes only the current GitHub-first architecture. New canonical `docs/architecture.md` (macro and micro view), `docs/documentation-style.md` (Spanish, one canonical document per topic) and `docs/operations/v1-sunset.md` (the deprecated `/v1` runtime and its retirement steps). Maintainer and consumer guides are written in Spanish.
