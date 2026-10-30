@@ -23,6 +23,16 @@ La importación (`IGI`) y exportación (`IGE`) conservan texto original, tipo no
 
 Observar o descargar un documento no permite inventar su fecha de publicación o entrada en vigor. Separar `retrieved_at` de `generated_at` evita convertir la hora del workflow en una propiedad falsa de la fuente.
 
+### Vigencia de la tasa
+
+`rate_effective_from` y `rate_effective_to` dicen desde cuándo y, si es temporal, hasta qué día (inclusive) rige la tasa IGI/IGE vigente de cada fracción. Los NICO heredan las fechas de su fracción, y `effective_from`/`effective_to` del registro las reflejan. Las calcula `arancel_mx.pipeline.rate_validity` a partir de [`legal_instruments.json`](../src/arancel_mx/sources/legal_instruments.json): las filas de la Tarifa de la LIGIE 2022 original (en vigor el 2022-12-12) y de cada instrumento posterior del DOF que fijó tasas generales, extraídas de los PDF del registro de la Cámara de Diputados con `scripts/extract_legal_instruments.py`.
+
+- La tasa en vigor un día es la fila del instrumento más reciente en vigor ese día.
+- La vigencia empieza donde comienza el último tramo ininterrumpido con la misma IGI/IGE: la entrada en vigor del instrumento que la fijó, o el día siguiente al fin de una tasa temporal, cuando vuelve la anterior.
+- Termina el último día del instrumento que la rige, si es temporal (por ejemplo, 9803.00.01 está exenta del 2026-10-14 al 2031-10-14).
+
+Una fracción queda sin fechas cuando no hay certeza: si la tasa de SNICE no coincide con la de los instrumentos (se reporta como discrepancia) o si la menciona un instrumento que el registro no modela (las tasas escalonadas y tablas sectoriales del decreto del 2022-11-18 y los decretos de exención) y su tasa vendría del texto base. El manifest publica el resumen en `rate_validity`: cuántas fracciones fechó cada instrumento, cuántas quedaron sin fecha y por qué, las discrepancias y la URL y el SHA-256 de cada instrumento. Un cambio del registro genera una release nueva aunque las fuentes no cambien.
+
 ## Procedencia documental
 
 Cada registro canónico señala una fuente primaria y puede incluir evidencia adicional. La procedencia conserva autoridad, URL, hash, papel documental, source role y referencia al registro de fuentes. Las propuestas e indicadores no se presentan como tarifa legal vigente.

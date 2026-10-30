@@ -69,7 +69,7 @@ def issue_body(note: DofNote) -> str:
             "**Revisión humana**",
             "",
             "- [ ] Confirmar si el instrumento cambia tasas, fracciones, NICO o medidas que sigue el proyecto.",
-            "- [ ] Si las cambia, registrar sus operaciones y su entrada en vigor en el inventario de instrumentos.",
+            "- [ ] Si las cambia, registrar sus operaciones y su entrada en vigor en el inventario de instrumentos y en `scripts/extract_legal_instruments.py` (regenera `legal_instruments.json`).",
             "- [ ] Comprobar que la siguiente release certificada lo refleje, o documentar por qué no.",
             "",
             "Esta alerta no es una interpretación jurídica: es un aviso para revisar la fuente primaria.",

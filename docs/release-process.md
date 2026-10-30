@@ -50,6 +50,10 @@ Los bytes capturados se procesan con parsers offline. El candidato se materializ
 
 Si cualquiera de estos gates falla, no existe camino hacia el job publisher.
 
+### Vigencia de las tasas
+
+Después de leer las tasas del libro de SNICE, el pipeline les asigna `rate_effective_from`/`rate_effective_to` con el registro de instrumentos (`src/arancel_mx/sources/legal_instruments.json`; ver el [modelo de datos](data-model.md#vigencia-de-la-tasa)) y publica el resumen en `manifest.rate_validity`. No consulta la red: el registro guarda las filas extraídas y el SHA-256 de cada PDF. Cuando el DOF publica un instrumento de Tarifa nuevo, se captura con `scripts/capture_instrument_research.py`, se agrega a `scripts/extract_legal_instruments.py` y se regenera el registro; mientras no se agregue, las fracciones que cambie quedan sin fecha porque su tasa ya no coincide.
+
 ## 5. `no_change` y detección de cambios
 
 El pipeline descarga el `manifest.json` de la última release válida y compara la identidad registrada de las fuentes.

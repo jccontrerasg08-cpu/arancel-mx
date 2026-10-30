@@ -27,6 +27,7 @@ from arancel_mx.pipeline.official_sources import (
     capture_official_inputs,
     write_release_sources,
 )
+from arancel_mx.pipeline.rate_validity import assign_rate_validity, load_registry
 from arancel_mx.release.metadata import (
     ReleaseProvenance,
     source_identity_changed,
@@ -187,8 +188,10 @@ def _release_metadata(
     snapshot: OfficialInputSnapshot,
     classifications: list[dict[str, object]],
     previous_manifest: Mapping[str, object] | None,
+    rate_validity: Mapping[str, object],
 ) -> dict[str, object]:
     metadata: dict[str, object] = {
+        "rate_validity": dict(rate_validity),
         "registry_version": snapshot.registry_version,
         "registry_sha256": snapshot.registry_sha256,
         **config.provenance().to_dict(),
@@ -238,6 +241,13 @@ def _no_change_result(
     ).to_dict()
 
 
+def _rate_registry_changed(previous_manifest: Mapping[str, object]) -> bool:
+    """A new instrument registry changes the published dates, so it rebuilds."""
+    previous = previous_manifest.get("rate_validity")
+    previous_sha = previous.get("registry_sha256") if isinstance(previous, Mapping) else None
+    return previous_sha != load_registry().sha256
+
+
 def _is_legacy_baseline(previous_manifest: Mapping[str, object]) -> bool:
     status = previous_manifest.get("baseline_status")
     if status != "legacy_baseline":
@@ -275,7 +285,9 @@ def build_official_dataset(
     legacy_baseline = previous_manifest is not None and _is_legacy_baseline(previous_manifest)
     if previous_manifest is not None and not legacy_baseline:
         previous_identity = source_identity_from_manifest(previous_manifest)
-        if not source_identity_changed(snapshot.identities, previous_identity):
+        if not source_identity_changed(
+            snapshot.identities, previous_identity
+        ) and not _rate_registry_changed(previous_manifest):
             return _no_change_result(
                 config,
                 previous_manifest,
@@ -309,6 +321,7 @@ def build_official_dataset(
         str(ligie_source.source_document["source_document_id"]),
         config,
     )
+    rate_validity = assign_rate_validity(rate_rows, config.effective_as_of)
 
     nico_profile = resolve_workbook_profile(
         probe_workbook(nico_source.capture.path), "nico_snapshot"
@@ -352,6 +365,7 @@ def build_official_dataset(
             snapshot,
             classifications,
             None if legacy_baseline else previous_manifest,
+            rate_validity,
         ),
     }
     candidate = config.work_dir / "candidate" / "arancel_mx.duckdb"
