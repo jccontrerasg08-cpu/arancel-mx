@@ -149,3 +149,23 @@ def test_dependabot_keeps_the_range_and_the_pin_in_one_reviewed_pull_request():
 
     assert "group-by: dependency-name" in pip_block
     assert re.search(r"cooldown:\n\s+default-days: \d+", pip_block)
+
+
+def test_pymupdf_stays_below_the_major_that_breaks_table_extraction() -> None:
+    # 2.x returns table cells without spaces and with split punctuation, which
+    # corrupts LIGIE codes and descriptions. Public ranges and the pin must agree.
+    payload = tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))
+    extras = payload["project"]["optional-dependencies"]
+    specs = [
+        spec
+        for name in ("maintainer", "dev")
+        for spec in extras[name]
+        if _normalized(re.split(r"[<>=!~;\s\[]", spec, maxsplit=1)[0]) == "pymupdf"
+    ]
+
+    assert len(specs) == 2
+    assert all(spec.endswith(",<2") for spec in specs)
+    assert dict(_constraint_rows())["pymupdf"].startswith("1.")
+    block = DEPENDABOT.read_text(encoding="utf-8")
+    assert 'dependency-name: "PyMuPDF"' in block
+    assert 'versions: [">=2"]' in block

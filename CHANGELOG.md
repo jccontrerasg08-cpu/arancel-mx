@@ -60,6 +60,7 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Fixed
 
+- The `maintainer` and `dev` extras cap PyMuPDF at `<2`, and Dependabot ignores 2.x. PyMuPDF 2.0 returns table cells without spaces and splits `01.01` into `0101` and `.`, which corrupted the LIGIE PDF codes and descriptions; `get_text()` is unchanged. A test keeps the range, the pin and the Dependabot rule in agreement.
 - The `gh-pages` tree carries a `vercel.json` that turns off Vercel Git deployments for that branch. Every data publish used to start a Vercel build that failed with `FASTAPI_ENTRYPOINT_NOT_FOUND`.
 - The deprecated `/v1` API stopped at `data-2026.09.14`: the weekly Vercel cron inserted the 26,641 records one statement at a time, about 146 s at 4 ms of database latency against the 60 s function limit, so every promotion timed out and rolled back. Records are now inserted with one batched `executemany` (3.1 s in the same conditions), and a failed sync logs the error type and message instead of a generic line.
 - The daily DOF watch never read SIDOF: `decode_fetched_text` rejected its `application/json` responses as non-text, so every day failed. JSON is now decoded as text.
