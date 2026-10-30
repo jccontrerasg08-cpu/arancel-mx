@@ -4,6 +4,10 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ## [Unreleased]
 
+### Changed
+
+- The built site now has a single committed copy, `src/arancel_mx/api/static/site/`. Vercel publishes it directly (`outputDirectory`), FastAPI serves it and the wheel ships it; `sync-frontend-static.mjs` writes only there. This removes the identical `website/` copy and the identical `docs/assets/visuals/` and `docs/assets/flags/` copies. The local FastAPI site also gains `site-brand.css` and the brand SVGs it was missing.
+
 ### Security
 
 - `/v1/search` and `/v1/suggest` on Vercel reject `q` longer than 300 characters (the same bound as the FastAPI app) before loading the active release, and normalize each description once per row instead of once per query token.

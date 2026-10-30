@@ -10,7 +10,7 @@ El repositorio usa npm con `package-lock.json`.
 |---|---|---|
 | Instalar dependencias | `npm ci` | Instala React, React Router, Vite y Playwright con las versiones exactas del lockfile. |
 | Previsualizar fuente | `npm run dev:frontend` | Sirve la aplicación React desde `frontend/` con Vite para revisión local. |
-| Compilar y sincronizar | `npm run build:frontend` | Ejecuta `scripts/build-frontend.mjs` y `scripts/sync-frontend-static.mjs`: genera la salida de Vite y la copia a `website/` (Vercel) y a `src/arancel_mx/api/static/site/` (FastAPI). |
+| Compilar y sincronizar | `npm run build:frontend` | Ejecuta `scripts/build-frontend.mjs` y `scripts/sync-frontend-static.mjs`: genera la salida de Vite y la copia a `src/arancel_mx/api/static/site/`, el único directorio publicado: Vercel lo sirve, FastAPI lo monta y el wheel lo incluye. |
 | Probar contratos fuente | `node --test tests/e2e/*.test.mjs` | Verifica rutas, contenido declarativo, build, glosario y normalización de códigos. |
 | Probar en navegador | `npm run test:e2e` | Ejecuta Playwright (`tests/e2e/*.spec.mjs`) contra el sitio servido por uvicorn. |
 

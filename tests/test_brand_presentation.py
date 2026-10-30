@@ -14,9 +14,9 @@ BRAND_ASSETS = (
     "docs/assets/arancel-mx-banner.svg",
     "docs/assets/arancel-mx-social.svg",
     "docs/assets/arancel-mx-cover.svg",
-    "website/assets/arancel-mx-mark.svg",
-    "website/assets/arancel-mx-logo.svg",
-    "website/assets/arancel-mx-social.svg",
+    "src/arancel_mx/api/static/site/assets/arancel-mx-mark.svg",
+    "src/arancel_mx/api/static/site/assets/arancel-mx-logo.svg",
+    "src/arancel_mx/api/static/site/assets/arancel-mx-social.svg",
 )
 
 
@@ -210,7 +210,7 @@ def test_public_brand_guide_is_discoverable_and_uses_current_schedule_language()
 
 def test_vercel_static_output_serves_the_react_public_shell() -> None:
     """Keep Vercel's published static output aligned with the React public shell."""
-    index = _read("website/index.html")
+    index = _read("src/arancel_mx/api/static/site/index.html")
 
     for fragment in (
         '<div id="root"></div>',
@@ -223,13 +223,13 @@ def test_vercel_static_output_serves_the_react_public_shell() -> None:
     assert "/assets/hub-search.js" not in index
     assert "manus-analytics.com" not in index
 
-    assert (ROOT / "website/assets/arancel-mx-logo.svg").is_file()
-    assert (ROOT / "website/assets/arancel-mx-social.svg").is_file()
+    assert (ROOT / "src/arancel_mx/api/static/site/assets/arancel-mx-logo.svg").is_file()
+    assert (ROOT / "src/arancel_mx/api/static/site/assets/arancel-mx-social.svg").is_file()
 
 
 def test_brand_css_uses_stable_asset_selectors_not_generated_bundle_classes() -> None:
     """Keep brand CSS independent from generated or minified application classes."""
-    styles = _read("website/assets/site-brand.css")
+    styles = _read("src/arancel_mx/api/static/site/assets/site-brand.css")
     assert "/assets/arancel-mx-mark.svg" in styles
     assert "/assets/arancel-mx-logo.svg" in styles
     assert ".arancel-brand-header" in styles

@@ -13,7 +13,7 @@ def test_vercel_promotes_api_discovery_and_keeps_robots_outside_the_spa_rewrite(
 
     assert {"source": "/v1", "destination": "/api/operational?resource=api"} in rewrites
     assert "robots\\.txt$" in rewrites[-1]["source"]
-    assert (ROOT / "website" / "robots.txt").read_text(encoding="utf-8") == "User-agent: *\nAllow: /\n"
+    assert (ROOT / "src" / "arancel_mx" / "api" / "static" / "site" / "robots.txt").read_text(encoding="utf-8") == "User-agent: *\nAllow: /\n"
 
 
 def test_vercel_serves_the_static_data_api_from_github_pages() -> None:

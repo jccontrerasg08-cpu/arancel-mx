@@ -8,6 +8,7 @@ import sys
 
 
 ROOT = Path(__file__).resolve().parents[1]
+SITE = ROOT / "src" / "arancel_mx" / "api" / "static" / "site"
 
 
 def test_vercel_deploys_the_standalone_public_site() -> None:
@@ -15,7 +16,7 @@ def test_vercel_deploys_the_standalone_public_site() -> None:
     runtime_version = (ROOT / ".python-version").read_text(encoding="utf-8").strip()
 
     assert config["framework"] is None
-    assert config["outputDirectory"] == "website"
+    assert config["outputDirectory"] == "src/arancel_mx/api/static/site"
     assert "installCommand" not in config
     assert config["buildCommand"].startswith(f"python{runtime_version} -m pip install ")
     assert config["rewrites"] == [
@@ -159,16 +160,16 @@ def test_vercel_runtime_bootstrap_adds_the_src_layout_first() -> None:
 
 
 def test_public_site_serves_the_react_shell_with_canonical_brand_assets() -> None:
-    index = (ROOT / "website" / "index.html").read_text(encoding="utf-8")
-    logo = (ROOT / "website" / "assets" / "arancel-mx-logo.svg").read_text(encoding="utf-8")
+    index = (SITE / "index.html").read_text(encoding="utf-8")
+    logo = (SITE / "assets" / "arancel-mx-logo.svg").read_text(encoding="utf-8")
 
-    assert (ROOT / "website" / "favicon.svg").is_file()
-    assert (ROOT / "website" / "assets" / "arancel-mx-mark.svg").is_file()
-    assert (ROOT / "website" / "assets" / "arancel-mx-logo.svg").is_file()
+    assert (SITE / "favicon.svg").is_file()
+    assert (SITE / "assets" / "arancel-mx-mark.svg").is_file()
+    assert (SITE / "assets" / "arancel-mx-logo.svg").is_file()
     assert '<div id="root"></div>' in index
     match = re.search(r'/assets/(index-[a-f0-9]{12}\.js)', index)
     assert match is not None
-    assert (ROOT / "website" / "assets" / match.group(1)).is_file()
+    assert (SITE / "assets" / match.group(1)).is_file()
     assert 'type="module"' in index
 
     assert "/assets/hub-search.css" not in index
@@ -192,7 +193,7 @@ def test_public_site_serves_the_react_shell_with_canonical_brand_assets() -> Non
 
 
 def test_public_site_interactions_link_results_to_verified_record_data() -> None:
-    interactions = (ROOT / "website" / "assets" / "hub-interactions.js").read_text(encoding="utf-8")
+    interactions = (SITE / "assets" / "hub-interactions.js").read_text(encoding="utf-8")
 
     assert "Inspect verified record" in interactions
     assert "/v1/lookup/" in interactions
@@ -210,7 +211,7 @@ def test_public_site_does_not_declare_a_vercel_fastapi_entrypoint() -> None:
 
 
 def test_public_site_bridge_keeps_current_release_and_route_aliases() -> None:
-    bridge = (ROOT / "website" / "assets" / "site-bridge.js").read_text(encoding="utf-8")
+    bridge = (SITE / "assets" / "site-bridge.js").read_text(encoding="utf-8")
 
     assert "fetch('/data/v1/meta.json'" in bridge
     assert "['/moa-guide', '/moa']" in bridge
@@ -245,8 +246,8 @@ def test_v1_sunset_runbook_matches_the_deprecation_contract() -> None:
 
 
 def test_trade_desk_publishes_a_visual_source_atlas_with_accessible_flags() -> None:
-    trade = (ROOT / "website" / "trade.html").read_text(encoding="utf-8")
-    style = (ROOT / "website" / "assets" / "trade-desk.css").read_text(encoding="utf-8")
+    trade = (SITE / "trade.html").read_text(encoding="utf-8")
+    style = (SITE / "assets" / "trade-desk.css").read_text(encoding="utf-8")
 
     assert 'data-testid="trade-visual-atlas"' in trade
     assert 'data-testid="trade-partner-flags"' in trade
@@ -267,11 +268,7 @@ def test_trade_desk_publishes_a_visual_source_atlas_with_accessible_flags() -> N
         "assets/flags/ca.svg",
         "assets/flags/NOTICE",
     ):
-        website_asset = ROOT / "website" / relative_path
-        static_asset = ROOT / "src" / "arancel_mx" / "api" / "static" / "site" / relative_path
-        assert website_asset.is_file()
-        assert static_asset.is_file()
-        assert website_asset.read_bytes() == static_asset.read_bytes()
+        assert (SITE / relative_path).is_file()
 
 
 def test_visual_atlas_docs_do_not_claim_unimplemented_flag_attributes() -> None:

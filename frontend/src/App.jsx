@@ -4,7 +4,7 @@ import { BrowserRouter, Link, Route, Routes, useLocation } from 'react-router-do
 import { EDITORIAL_PAGES, NAVIGATION, OFFICIAL_LINKS } from './content.js';
 import { LocaleProvider, useLocale } from './locale.jsx';
 import { PAGE_COMPONENTS } from './pages.jsx';
-import brandLogo from '../../website/assets/arancel-mx-logo.svg';
+import brandLogo from '../../src/arancel_mx/api/static/site/assets/arancel-mx-logo.svg';
 
 const GlossaryPage = lazy(() => import('./glossary-page.jsx'));
 
