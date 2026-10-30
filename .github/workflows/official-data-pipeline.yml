@@ -56,7 +56,7 @@ jobs:
 
       - name: Install exact production environment
         run: |
-          python -m pip install pip==26.2.1
+          python -m pip install pip==26.2.2
           python -m pip install -c requirements/production-build.txt -e ".[dev]"
 
       - name: Run offline tests before source access
@@ -170,7 +170,7 @@ jobs:
 
       - name: Install exact production runtime
         run: |
-          python -m pip install pip==26.2.1
+          python -m pip install pip==26.2.2
           python -m pip install -c requirements/production-build.txt -e .
 
       - name: Download exact verified build artifact
@@ -282,7 +282,7 @@ jobs:
 
       - name: Install exact production runtime
         run: |
-          python -m pip install pip==26.2.1
+          python -m pip install pip==26.2.2
           python -m pip install -c requirements/production-build.txt -e .
 
       - name: Build static data API
@@ -355,7 +355,7 @@ jobs:
 
       - name: Install exact production runtime
         run: |
-          python -m pip install pip==26.2.1
+          python -m pip install pip==26.2.2
           python -m pip install -c requirements/production-build.txt -e .
 
       # Daily DOF watch (decision 0002): opens one issue per new tariff-relevant

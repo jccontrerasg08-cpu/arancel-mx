@@ -74,7 +74,7 @@ def test_mutation_boundaries_use_builtin_token_and_module_entrypoints():
 def test_certification_workflow_uses_reviewed_dependency_install_and_pinned_actions():
     workflow = _workflow()
 
-    assert workflow.count("python -m pip install pip==26.2.1") == 3
+    assert workflow.count("python -m pip install pip==26.2.2") == 3
     assert (
         'python -m pip install -c requirements/production-build.txt -e ".[dev]"'
         in workflow

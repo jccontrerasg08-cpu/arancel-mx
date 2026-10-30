@@ -76,11 +76,11 @@ def test_no_workflow_installs_the_hs_classifier_or_an_openai_key():
     runtime = "python -m pip install -c requirements/production-build.txt -e ."
 
     assert development in ci
-    assert "python -m pip install pip==26.2.1" in ci
-    assert production.count("python -m pip install pip==26.2.1") == 4
+    assert "python -m pip install pip==26.2.2" in ci
+    assert production.count("python -m pip install pip==26.2.2") == 4
     assert "python -m pip install --upgrade" not in production
     assert runtime in canary
-    assert "python -m pip install pip==26.2.1" in canary
+    assert "python -m pip install pip==26.2.2" in canary
     assert ".[dev]" not in canary
     assert "[hs]" not in canary
 
