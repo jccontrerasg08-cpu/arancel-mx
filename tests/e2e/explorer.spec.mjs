@@ -345,6 +345,13 @@ test('opens shared and durable explorer URLs', async ({ page }) => {
   await expect(page.getByRole('status')).toHaveText(/registro verificado listo/i);
 });
 
+test('shows the heading path of a generic "Los demás." search result', async ({ page }) => {
+  await page.goto('/app?q=85176999');
+  const card = page.getByTestId('result-card').first();
+  await expect(card).toContainText('Los demás.');
+  await expect(card.getByTestId('result-context')).toContainText(/^Teléfonos, incluidos los teléfonos inteligentes.* › Los demás$/);
+});
+
 test('opens the visual tree from the explorer and keeps its selected hierarchy inspectable', async ({ page }) => {
   await page.goto('/app');
   await page.getByRole('link', { name: /explorar árbol visual/i }).click();
