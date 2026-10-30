@@ -39,6 +39,46 @@ La arquitectura conserva tres niveles que no deben mezclarse:
 | Referencias oficiales | Leyes, RGCE, tratados, RRNA, programas y portales de consulta | URL oficial, función de fuente y fecha de consulta documental. |
 | Servicios transaccionales | Trámites, expedientes, permisos, pedimentos y consultas con autenticación | Exclusivamente la autoridad o plataforma oficial correspondiente. |
 
+## Marco jurídico relacionado
+
+Además de la Ley Aduanera y la Ley de Comercio Exterior, varias leyes federales fijan contribuciones, permisos o requisitos que dependen de la mercancía. El catálogo las lista en `legal_framework`, con la fecha de su última reforma según el [índice de leyes federales de la Cámara de Diputados](https://www.diputados.gob.mx/LeyesBiblio/index.htm), consultado el 2026-10-30. Son referencias de consulta: el dataset no las incorpora ni deduce de ellas obligaciones para una fracción.
+
+| Ley | Última reforma (DOF) | Relación con comercio exterior |
+|---|---|---|
+| [Código Fiscal de la Federación](https://www.diputados.gob.mx/LeyesBiblio/pdf/CFF.pdf) | 2026-04-09 | Contribuciones, actualización, recargos e infracciones; se aplica supletoriamente a las contribuciones de comercio exterior. |
+| [Ley del Impuesto al Valor Agregado](https://www.diputados.gob.mx/LeyesBiblio/pdf/LIVA.pdf) | 2021-11-12 | IVA en la importación de bienes y servicios. |
+| [Ley del Impuesto Especial sobre Producción y Servicios](https://www.diputados.gob.mx/LeyesBiblio/pdf/LIEPS.pdf) | 2025-12-22 | IEPS en la importación de bienes gravados (bebidas, tabacos, combustibles y otros). |
+| [Ley del Impuesto sobre la Renta](https://www.diputados.gob.mx/LeyesBiblio/pdf/LISR.pdf) | 2024-04-01 | Maquila, IMMEX y precios de transferencia en operaciones con el extranjero. |
+| [Ley Federal de Derechos](https://www.diputados.gob.mx/LeyesBiblio/pdf/LFD.pdf) | 2025-12-28 | Derecho de trámite aduanero (DTA) y demás derechos por servicios aduaneros. |
+| [Ley Federal del Impuesto sobre Automóviles Nuevos](https://www.diputados.gob.mx/LeyesBiblio/pdf/LFISAN.pdf) | 2025-12-28 | ISAN en la importación definitiva de automóviles. |
+| [Ley Federal de Sanidad Animal](https://www.diputados.gob.mx/LeyesBiblio/pdf/LFSA.pdf) | 2024-05-21 | Requisitos zoosanitarios de importación y exportación. |
+| [Ley Federal de Sanidad Vegetal](https://www.diputados.gob.mx/LeyesBiblio/pdf/LFSV.pdf) | 2022-05-11 | Requisitos fitosanitarios de importación y exportación. |
+| [Ley General de Salud](https://www.diputados.gob.mx/LeyesBiblio/pdf/LGS.pdf) | 2026-01-15 | Permisos sanitarios de importación (COFEPRIS). |
+| [Ley General del Equilibrio Ecológico y la Protección al Ambiente](https://www.diputados.gob.mx/LeyesBiblio/pdf/LGEEPA.pdf) | 2026-01-19 | Autorizaciones ambientales para materiales y residuos peligrosos. |
+| [Ley General de Vida Silvestre](https://www.diputados.gob.mx/LeyesBiblio/pdf/LGVS.pdf) | 2025-07-16 | Comercio de especies silvestres y CITES. |
+| [Ley General de Pesca y Acuacultura Sustentables](https://www.diputados.gob.mx/LeyesBiblio/pdf/LGPAS.pdf) | 2024-04-01 | Sanidad e inocuidad acuícola y pesquera en importación. |
+| [Ley de Infraestructura de la Calidad](https://www.diputados.gob.mx/LeyesBiblio/pdf/LICal_010720.pdf) | Sin reforma | Normas Oficiales Mexicanas y evaluación de la conformidad exigibles en la importación. |
+| [Ley Federal de Armas de Fuego y Explosivos](https://www.diputados.gob.mx/LeyesBiblio/pdf/LFAFE.pdf) | 2025-05-29 | Permisos de importación y exportación de armas, explosivos y sustancias relacionadas. |
+| [Ley Federal para el Control de Precursores Químicos, Productos Químicos Esenciales y Máquinas para Elaborar Cápsulas, Tabletas y/o Comprimidos](https://www.diputados.gob.mx/LeyesBiblio/pdf/LFCPQ.pdf) | 2023-05-03 | Avisos y permisos para precursores y químicos esenciales. |
+| [Ley Reglamentaria del Artículo 27 Constitucional en Materia Nuclear](https://www.diputados.gob.mx/LeyesBiblio/pdf/207.pdf) | 2012-04-09 | Materiales radiactivos y nucleares. |
+| [Ley del Sector Hidrocarburos](https://www.diputados.gob.mx/LeyesBiblio/pdf/LSH.pdf) | Sin reforma | Permisos de importación y exportación de hidrocarburos y petrolíferos. |
+| [Ley Federal sobre Monumentos y Zonas Arqueológicos, Artísticos e Históricos](https://www.diputados.gob.mx/LeyesBiblio/pdf/LFMZAAH.pdf) | 2025-11-14 | Restricciones a la exportación de bienes arqueológicos, artísticos e históricos. |
+| [Ley Federal de Zonas Económicas Especiales](https://www.diputados.gob.mx/LeyesBiblio/pdf/LFZEE.pdf) | 2024-04-01 | Régimen aduanero de zonas económicas especiales. |
+| [Ley de Navegación y Comercio Marítimos](https://www.diputados.gob.mx/LeyesBiblio/pdf/LNCM.pdf) | 2025-11-14 | Transporte marítimo de mercancías. |
+| [Ley de Puertos](https://www.diputados.gob.mx/LeyesBiblio/pdf/65_071220.pdf) | 2020-12-07 | Operación portuaria. |
+| [Ley de Caminos, Puentes y Autotransporte Federal](https://www.diputados.gob.mx/LeyesBiblio/pdf/LCPAF.pdf) | 2025-11-14 | Autotransporte federal de carga. |
+| [Ley General de Organizaciones y Actividades Auxiliares del Crédito](https://www.diputados.gob.mx/LeyesBiblio/pdf/LGOAAC.pdf) | 2025-11-14 | Almacenes generales de depósito, usados en el régimen de depósito fiscal. |
+| [Ley General de Títulos y Operaciones de Crédito](https://www.diputados.gob.mx/LeyesBiblio/pdf/LGTOC.pdf) | 2024-03-26 | Cartas de crédito y certificados de depósito en el financiamiento del comercio. |
+
+Páginas oficiales de consulta complementarias:
+
+- [Tasas de tratados de libre comercio — SNICE](https://www.snice.gob.mx/cs/avi/snice/biblioteca.juridica.tasas.html): Decretos de tasas preferenciales por acuerdo comercial.
+- [Resoluciones en materia aduanera de tratados — SNICE](https://www.snice.gob.mx/cs/avi/snice/biblioteca.juridica.tlc.html): Reglas de origen, certificación y verificación por tratado.
+- [SICAIT — Sistema de Consulta de Aranceles e Información de Tratados (Secretaría de Economía)](http://www.economia-snci.gob.mx/sicait/5.0/): Consulta de aranceles preferenciales por tratado; sólo se publica por HTTP.
+- [Estudios e indicadores internacionales — SNICE](https://www.snice.gob.mx/cs/avi/snice/f.c.indic.int.html): Indicadores de facilitación comercial (WEF, Banco Mundial, OCDE); contexto, no normativa.
+
+El portal [SIICEX-CAAAREM](http://www.siicex-caaarem.org.mx/) no es fuente oficial: lo mantiene la confederación de agentes aduanales (ver [Fuentes y reconciliación](../sources.md)).
+
 ## Ruta de consulta responsable
 
 La consulta empieza con la release verificable de `arancel-mx` para ubicar el código, su jerarquía, sus tasas publicadas, vigencia registrada y notas nacionales. Después se abre el recurso oficial asociado a la pregunta: la Ley Aduanera y las RGCE para marco operativo; la Ley de Comercio Exterior y SNICE para medidas no arancelarias; la Secretaría de Economía para tratados; y VUCEM o SAT cuando la necesidad consiste en un trámite o padrón.
