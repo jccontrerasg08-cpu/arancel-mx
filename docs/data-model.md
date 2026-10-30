@@ -33,6 +33,12 @@ Observar o descargar un documento no permite inventar su fecha de publicación o
 
 Una fracción queda sin fechas cuando no hay certeza: si la tasa de SNICE no coincide con la de los instrumentos (se reporta como discrepancia) o si la menciona un instrumento que el registro no modela (las tasas escalonadas y tablas sectoriales del decreto del 2022-11-18 y los decretos de exención) y su tasa vendría del texto base. El manifest publica el resumen en `rate_validity`: cuántas fracciones fechó cada instrumento, cuántas quedaron sin fecha y por qué, las discrepancias y la URL y el SHA-256 de cada instrumento. Un cambio del registro genera una release nueva aunque las fuentes no cambien.
 
+### Erratas de la descripción
+
+La descripción de cada fila es la que publica SNICE. Cuando SNICE trae una errata tipográfica que el texto del DOF no tiene, [`description_corrections.json`](../src/arancel_mx/sources/description_corrections.json) registra el texto exacto de SNICE, el corregido y el PDF del DOF (URL y SHA-256) que lo respalda. Sólo admite erratas: nunca reescribe una descripción.
+
+Una corrección aplica únicamente mientras SNICE publique exactamente el texto registrado. Si SNICE la corrige o cambia la descripción, la corrección se omite y aparece como `stale` en `description_corrections` del manifest, junto con las aplicadas. Un cambio del registro también genera una release nueva.
+
 ## Procedencia documental
 
 Cada registro canónico señala una fuente primaria y puede incluir evidencia adicional. La procedencia conserva autoridad, URL, hash, papel documental, source role y referencia al registro de fuentes. Las propuestas e indicadores no se presentan como tarifa legal vigente.
