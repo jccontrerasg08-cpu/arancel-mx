@@ -7,6 +7,7 @@ import pytest
 from arancel_mx.pipeline import official_dataset
 from arancel_mx.pipeline.official_dataset import OfficialDatasetConfig, build_official_dataset
 from arancel_mx.pipeline.description_corrections import load_corrections
+from arancel_mx.pipeline.rate_corrections import load_rate_corrections
 from arancel_mx.pipeline.rate_validity import load_registry
 from arancel_mx.pipeline.reconcile import ReconciliationReport
 from arancel_mx.release.metadata import SourceIdentity
@@ -107,10 +108,15 @@ def manifest(source_identities):
         "description_corrections": {
             "registry_sha256": load_corrections()[0],
         },
+        "rate_corrections": {
+            "registry_sha256": load_rate_corrections()[0],
+        },
     }
 
 
-@pytest.mark.parametrize("report", ["rate_validity", "description_corrections"])
+@pytest.mark.parametrize(
+    "report", ["rate_validity", "description_corrections", "rate_corrections"]
+)
 @pytest.mark.parametrize("previous_registry", [SHA_B, None])
 def test_new_packaged_registry_rebuilds_even_with_identical_sources(
     tmp_path, monkeypatch, previous_registry, report
@@ -243,6 +249,7 @@ def test_release_metadata_records_prior_release_source_changes(tmp_path):
         manifest(tuple(previous)),
         {"registry_sha256": SHA_A},
         {"registry_sha256": SHA_B, "applied": [], "stale": []},
+        {"registry_sha256": SHA_A, "applied": [], "stale": [], "dated": 0},
     )
 
     assert metadata["rate_validity"] == {"registry_sha256": SHA_A}
