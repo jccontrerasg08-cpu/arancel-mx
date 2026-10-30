@@ -95,6 +95,8 @@ La vista pública `arancel_mx` expone códigos, descripción, jerarquía, unidad
 
 El paquete declara `duckdb>=1.1`. CI protege esa promesa con una prueba ejecutada, no sólo documental: primero genera un `arancel_mx.duckdb` usando el exporter y el entorno productivo actual, y luego abre ese mismo archivo en modo read-only dentro de un entorno aislado con `duckdb==1.1.0`.
 
+`init_tariff_db` crea cada base con `storage_compatibility_version = 'v1.0.0'`, de modo que el build puede usar DuckDB 2.x y el archivo sigue abriendo en DuckDB 1.1. Un archivo conserva el formato con el que se creó.
+
 La prueba consulta la vista `arancel_mx` y `dataset_release`. Si una futura actualización del DuckDB usado para construir releases deja de producir un archivo consumible por 1.1.0, `CI / test` falla antes de integrar el cambio. El floor sólo debe cambiar mediante un cambio explícito y revisado respaldado por esa evidencia ejecutada.
 
 ## `dataset_release.release_metadata_json`

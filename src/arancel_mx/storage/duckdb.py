@@ -290,8 +290,21 @@ def connect(
         conn.close()
 
 
+# Published databases must open in every DuckDB the package supports
+# (``duckdb>=1.1``). A file keeps the storage format it was created with, so
+# setting it at creation is enough even for builders on DuckDB 2.x.
+STORAGE_COMPATIBILITY_VERSION = "v1.0.0"
+
+
 def init_tariff_db(db_path: Path) -> Path:
     """Create a database containing the tariff schema and return its path."""
-    with connect(db_path) as conn:
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    conn = duckdb.connect(
+        str(db_path),
+        config={"storage_compatibility_version": STORAGE_COMPATIBILITY_VERSION},
+    )
+    try:
         ensure_tariff_schema(conn)
+    finally:
+        conn.close()
     return db_path
