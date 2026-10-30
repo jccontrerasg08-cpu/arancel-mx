@@ -87,10 +87,27 @@ def execute_pipeline(
     builder: Callable[..., dict[str, object]] = build_official_dataset,
 ) -> tuple[int, dict[str, object]]:
     try:
+        if previous_manifest is not None and previous_manifest.get(
+            "dataset_version"
+        ) == config.dataset_version:
+            # Release tags are immutable and name one UTC day, so a second change on
+            # the same day waits for the next daily run instead of failing to publish.
+            result: dict[str, object] = {
+                "status": "no_change",
+                "stage": "deferred",
+                "dataset_version": config.dataset_version,
+                "artifact_name": config.github_artifact_name,
+                "message": (
+                    f"release data-{config.dataset_version} is already published; "
+                    "a change publishes with the next UTC day's run"
+                ),
+            }
+            atomic_write_json(Path(result_path), result)
+            return 0, result
         summary = builder(config, previous_manifest=previous_manifest)
         status = summary.get("status")
         if status == "no_change":
-            result: dict[str, object] = {
+            result = {
                 "status": "no_change",
                 "stage": "complete",
                 "dataset_version": config.dataset_version,
