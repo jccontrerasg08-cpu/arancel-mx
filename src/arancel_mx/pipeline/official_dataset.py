@@ -25,6 +25,11 @@ from arancel_mx.pipeline.description_corrections import (
     load_corrections,
 )
 from arancel_mx.pipeline.hierarchy import assemble_classifications
+from arancel_mx.pipeline.rate_corrections import (
+    apply_rate_corrections,
+    date_corrected_rates,
+    load_rate_corrections,
+)
 from arancel_mx.pipeline.nico_coverage import nico_coverage_report
 from arancel_mx.pipeline.official_sources import (
     OfficialInputSnapshot,
@@ -194,10 +199,12 @@ def _release_metadata(
     previous_manifest: Mapping[str, object] | None,
     rate_validity: Mapping[str, object],
     description_corrections: Mapping[str, object],
+    rate_corrections: Mapping[str, object],
 ) -> dict[str, object]:
     metadata: dict[str, object] = {
         "rate_validity": dict(rate_validity),
         "description_corrections": dict(description_corrections),
+        "rate_corrections": dict(rate_corrections),
         "registry_version": snapshot.registry_version,
         "registry_sha256": snapshot.registry_sha256,
         **config.provenance().to_dict(),
@@ -258,6 +265,8 @@ def _rate_registry_changed(previous_manifest: Mapping[str, object]) -> bool:
         _registry_sha(previous_manifest, "rate_validity") != load_registry().sha256
         or _registry_sha(previous_manifest, "description_corrections")
         != load_corrections()[0]
+        or _registry_sha(previous_manifest, "rate_corrections")
+        != load_rate_corrections()[0]
     )
 
 
@@ -334,7 +343,10 @@ def build_official_dataset(
         str(ligie_source.source_document["source_document_id"]),
         config,
     )
+    # Corrections run first, so validity is computed for the corrected rate.
+    rate_corrections = apply_rate_corrections(rate_rows)
     rate_validity = assign_rate_validity(rate_rows, config.effective_as_of)
+    rate_corrections["dated"] = date_corrected_rates(rate_rows, rate_corrections)
 
     nico_profile = resolve_workbook_profile(
         probe_workbook(nico_source.capture.path), "nico_snapshot"
@@ -381,6 +393,7 @@ def build_official_dataset(
             None if legacy_baseline else previous_manifest,
             rate_validity,
             description_corrections,
+            rate_corrections,
         ),
     }
     candidate = config.work_dir / "candidate" / "arancel_mx.duckdb"

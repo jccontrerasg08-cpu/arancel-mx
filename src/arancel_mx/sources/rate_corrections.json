@@ -1,0 +1,27 @@
+{
+  "kind": "arancel-mx/rate-corrections",
+  "version": "2026-10-30",
+  "policy": "Sólo tasas que SNICE sigue publicando después de que el instrumento que las fijó dejó de estar vigente, verificadas contra el texto del DOF. Cada corrección aplica únicamente mientras SNICE publique exactamente la tasa 'snapshot'.",
+  "corrections": [
+    {
+      "code": "10059004",
+      "duty": "ige",
+      "snapshot": "50",
+      "corrected": "Ex.",
+      "rate_effective_from": "2024-01-01",
+      "evidence": "La exportación del maíz blanco al 50 % la fijaron decretos temporales: el del DOF 2023-01-16 (vigente hasta el 2023-06-30) y el del DOF 2023-06-23, cuyo transitorio Primero dice «estará vigente hasta el 31 de diciembre de 2023». Ningún instrumento posterior del registro de la LIGIE 2022 vuelve a fijar ese arancel, así que desde el 2024-01-01 rige la Tarifa original: IGI 20, IGE Ex. SNICE ya publica IGI 20 pero conserva IGE 50.",
+      "sources": [
+        {
+          "title": "LIGIE 2022, Tarifa original (DOF 2022-06-07)",
+          "source_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_orig_07jun22.pdf",
+          "sha256": "b4eb3e050ee7aeae8a4b6f26eee26f370d9726c82c0d3492d32022161ad2d1d5"
+        },
+        {
+          "title": "Decreto relativo a los aranceles aplicables al maíz blanco (DOF 2023-06-23)",
+          "source_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa06_23jun23.pdf",
+          "sha256": "b51e6cc96544fd67210c24b7f8379d4a81f3086ca982a1e6ff2b02069cc6f215"
+        }
+      ]
+    }
+  ]
+}
