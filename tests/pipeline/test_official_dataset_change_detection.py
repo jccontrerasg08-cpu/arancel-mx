@@ -6,6 +6,7 @@ import pytest
 
 from arancel_mx.pipeline import official_dataset
 from arancel_mx.pipeline.official_dataset import OfficialDatasetConfig, build_official_dataset
+from arancel_mx.pipeline.description_corrections import load_corrections
 from arancel_mx.pipeline.rate_validity import load_registry
 from arancel_mx.pipeline.reconcile import ReconciliationReport
 from arancel_mx.release.metadata import SourceIdentity
@@ -94,21 +95,25 @@ def snapshot(current_identities):
     )
 
 
-def manifest(source_identities, rate_registry_sha256=None):
+def manifest(source_identities):
     return {
         "dataset_version": "2026.08.09",
         "validation_status": "passed",
         "row_count": 123,
         "source_identity": [item.to_dict() for item in source_identities],
         "rate_validity": {
-            "registry_sha256": rate_registry_sha256 or load_registry().sha256,
+            "registry_sha256": load_registry().sha256,
+        },
+        "description_corrections": {
+            "registry_sha256": load_corrections()[0],
         },
     }
 
 
+@pytest.mark.parametrize("report", ["rate_validity", "description_corrections"])
 @pytest.mark.parametrize("previous_registry", [SHA_B, None])
-def test_new_instrument_registry_rebuilds_even_with_identical_sources(
-    tmp_path, monkeypatch, previous_registry
+def test_new_packaged_registry_rebuilds_even_with_identical_sources(
+    tmp_path, monkeypatch, previous_registry, report
 ):
     build_config = config(tmp_path, "registry-changed")
     current = identities()
@@ -122,9 +127,11 @@ def test_new_instrument_registry_rebuilds_even_with_identical_sources(
         raise RuntimeError("full build started")
 
     monkeypatch.setattr(official_dataset, "_required_source", parse_started)
-    previous = manifest(current, previous_registry)
+    previous = manifest(current)
     if previous_registry is None:
-        del previous["rate_validity"]  # releases published before rate validity
+        del previous[report]  # releases published before the registry existed
+    else:
+        previous[report] = {"registry_sha256": previous_registry}
 
     with pytest.raises(RuntimeError, match="full build started"):
         build_official_dataset(build_config, previous_manifest=previous)
@@ -235,9 +242,11 @@ def test_release_metadata_records_prior_release_source_changes(tmp_path):
         ],
         manifest(tuple(previous)),
         {"registry_sha256": SHA_A},
+        {"registry_sha256": SHA_B, "applied": [], "stale": []},
     )
 
     assert metadata["rate_validity"] == {"registry_sha256": SHA_A}
+    assert metadata["description_corrections"]["registry_sha256"] == SHA_B
     assert metadata["source_history"] == {
         "previous_dataset_version": "2026.08.09",
         "changes": [

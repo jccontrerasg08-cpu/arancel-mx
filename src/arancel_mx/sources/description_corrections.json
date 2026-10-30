@@ -1,0 +1,25 @@
+{
+  "kind": "arancel-mx/description-corrections",
+  "version": "2026-10-30",
+  "policy": "Sólo erratas tipográficas verificadas contra el texto del DOF. Cada corrección aplica únicamente mientras el snapshot oficial publique exactamente el texto 'snapshot'.",
+  "corrections": [
+    {
+      "level": "fraccion8",
+      "code": "03048902",
+      "snapshot": "Totoabas de manejo intesivo.",
+      "corrected": "Totoabas de manejo intensivo.",
+      "evidence": "El DOF dice «Totoabas de manejo intensivo» (reforma de la LIGIE, DOF 2025-07-21).",
+      "source_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_ref01_21jul25.pdf",
+      "sha256": "abb7c0b0b8d4357a8736be5879bf084962000a4d3bc4c369e9593881bc577361"
+    },
+    {
+      "level": "fraccion8",
+      "code": "39079908",
+      "snapshot": "Resina para electrodepositación catódica poliéster-epoxiaminada, con un contenido de solidos superior o igual al 60% pero inferior o igual al 80%.",
+      "corrected": "Resina para electrodepositación catódica poliéster-epoxiaminada, con un contenido de sólidos superior o igual al 60% pero inferior o igual al 80%.",
+      "evidence": "El DOF dice «sólidos» (LIGIE 2022, DOF 2022-06-07), igual que el NICO 3907.99.08.00 de SNICE.",
+      "source_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_orig_07jun22.pdf",
+      "sha256": "b4eb3e050ee7aeae8a4b6f26eee26f370d9726c82c0d3492d32022161ad2d1d5"
+    }
+  ]
+}

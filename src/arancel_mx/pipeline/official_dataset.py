@@ -20,6 +20,10 @@ from arancel_mx.parsers.workbooks import (
     probe_workbook,
 )
 from arancel_mx.pipeline.build import export_arancel_release, materialize_arancel
+from arancel_mx.pipeline.description_corrections import (
+    apply_description_corrections,
+    load_corrections,
+)
 from arancel_mx.pipeline.hierarchy import assemble_classifications
 from arancel_mx.pipeline.nico_coverage import nico_coverage_report
 from arancel_mx.pipeline.official_sources import (
@@ -189,9 +193,11 @@ def _release_metadata(
     classifications: list[dict[str, object]],
     previous_manifest: Mapping[str, object] | None,
     rate_validity: Mapping[str, object],
+    description_corrections: Mapping[str, object],
 ) -> dict[str, object]:
     metadata: dict[str, object] = {
         "rate_validity": dict(rate_validity),
+        "description_corrections": dict(description_corrections),
         "registry_version": snapshot.registry_version,
         "registry_sha256": snapshot.registry_sha256,
         **config.provenance().to_dict(),
@@ -241,11 +247,18 @@ def _no_change_result(
     ).to_dict()
 
 
+def _registry_sha(previous_manifest: Mapping[str, object], key: str) -> object:
+    report = previous_manifest.get(key)
+    return report.get("registry_sha256") if isinstance(report, Mapping) else None
+
+
 def _rate_registry_changed(previous_manifest: Mapping[str, object]) -> bool:
-    """A new instrument registry changes the published dates, so it rebuilds."""
-    previous = previous_manifest.get("rate_validity")
-    previous_sha = previous.get("registry_sha256") if isinstance(previous, Mapping) else None
-    return previous_sha != load_registry().sha256
+    """A new packaged registry changes published rows, so it rebuilds."""
+    return (
+        _registry_sha(previous_manifest, "rate_validity") != load_registry().sha256
+        or _registry_sha(previous_manifest, "description_corrections")
+        != load_corrections()[0]
+    )
 
 
 def _is_legacy_baseline(previous_manifest: Mapping[str, object]) -> bool:
@@ -349,6 +362,7 @@ def build_official_dataset(
         row["published_at"] = None
         row["validity_basis"] = "observed_snapshot"
     classifications = assemble_classifications(hs_rows, fraction_rows, nico_rows)
+    description_corrections = apply_description_corrections(classifications)
 
     source_documents = sorted(
         (item.source_document for item in snapshot.sources),
@@ -366,6 +380,7 @@ def build_official_dataset(
             classifications,
             None if legacy_baseline else previous_manifest,
             rate_validity,
+            description_corrections,
         ),
     }
     candidate = config.work_dir / "candidate" / "arancel_mx.duckdb"
