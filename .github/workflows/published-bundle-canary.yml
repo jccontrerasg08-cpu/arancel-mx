@@ -34,7 +34,7 @@ jobs:
 
       - name: Install runtime package without extras
         run: |
-          python -m pip install pip==26.2.1
+          python -m pip install pip==26.2.2
           python -m pip install -c requirements/production-build.txt -e .
 
       - name: Download and verify the published six-asset bundle

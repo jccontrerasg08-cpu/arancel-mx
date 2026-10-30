@@ -303,7 +303,7 @@ def test_ci_workflow_builds_package_without_secrets_or_network_updates() -> None
         "contents: read",
         "test:",
         'python-version: "3.11"',
-        "python -m pip install pip==26.2.1",
+        "python -m pip install pip==26.2.2",
         'python -m pip install -c requirements/production-build.txt -e ".[dev]"',
         "python -m pytest -q",
         "python -m build",

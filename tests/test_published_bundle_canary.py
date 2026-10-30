@@ -38,7 +38,7 @@ def test_canary_is_read_only_scheduled_and_does_not_publish() -> None:
 def test_canary_installs_runtime_package_without_classifier_or_dev_extras() -> None:
     workflow = _workflow()
 
-    assert "python -m pip install pip==26.2.1" in workflow
+    assert "python -m pip install pip==26.2.2" in workflow
     assert "python -m pip install -c requirements/production-build.txt -e ." in workflow
     assert ".[dev]" not in workflow
     assert "[hs]" not in workflow

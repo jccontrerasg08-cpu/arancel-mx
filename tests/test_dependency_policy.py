@@ -57,7 +57,7 @@ def test_official_python_toolchain_is_exactly_pinned():
     payload = tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))
     constrained = dict(_constraint_rows())
 
-    assert constrained["pip"] == "26.2.1"
+    assert constrained["pip"] == "26.2.2"
     # Dependabot bumps only the constraints file; the build backend must match it.
     assert payload["build-system"]["requires"] == [
         f"setuptools=={constrained['setuptools']}"
@@ -88,7 +88,7 @@ def test_classifier_stack_is_not_pinned_into_the_official_build():
 def test_ci_uses_exact_pip_and_constraints_file():
     workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
 
-    assert "python -m pip install pip==26.2.1" in workflow
+    assert "python -m pip install pip==26.2.2" in workflow
     assert 'python -m pip install -c requirements/production-build.txt -e ".[dev]"' in workflow
     assert "[hs]" not in workflow
     assert "OPENAI_API_KEY" not in workflow

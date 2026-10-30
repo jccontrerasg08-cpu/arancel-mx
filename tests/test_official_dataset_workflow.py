@@ -74,7 +74,7 @@ def test_build_job_is_read_only_constrained_tested_and_fail_closed():
         "timeout-minutes:",
         "contents: read",
         'python-version: "3.11"',
-        "python -m pip install pip==26.2.1",
+        "python -m pip install pip==26.2.2",
         'python -m pip install -c requirements/production-build.txt -e ".[dev]"',
         "python -m pytest -q",
         "python -m scripts.fetch_previous_release",
