@@ -6,6 +6,7 @@ import pytest
 
 from arancel_mx.pipeline import official_dataset
 from arancel_mx.pipeline.official_dataset import OfficialDatasetConfig, build_official_dataset
+from arancel_mx.pipeline.rate_validity import load_registry
 from arancel_mx.pipeline.reconcile import ReconciliationReport
 from arancel_mx.release.metadata import SourceIdentity
 
@@ -93,13 +94,40 @@ def snapshot(current_identities):
     )
 
 
-def manifest(source_identities):
+def manifest(source_identities, rate_registry_sha256=None):
     return {
         "dataset_version": "2026.08.09",
         "validation_status": "passed",
         "row_count": 123,
         "source_identity": [item.to_dict() for item in source_identities],
+        "rate_validity": {
+            "registry_sha256": rate_registry_sha256 or load_registry().sha256,
+        },
     }
+
+
+@pytest.mark.parametrize("previous_registry", [SHA_B, None])
+def test_new_instrument_registry_rebuilds_even_with_identical_sources(
+    tmp_path, monkeypatch, previous_registry
+):
+    build_config = config(tmp_path, "registry-changed")
+    current = identities()
+    monkeypatch.setattr(
+        official_dataset,
+        "capture_official_inputs",
+        lambda config, session=None: snapshot(current),
+    )
+
+    def parse_started(*_args, **_kwargs):
+        raise RuntimeError("full build started")
+
+    monkeypatch.setattr(official_dataset, "_required_source", parse_started)
+    previous = manifest(current, previous_registry)
+    if previous_registry is None:
+        del previous["rate_validity"]  # releases published before rate validity
+
+    with pytest.raises(RuntimeError, match="full build started"):
+        build_official_dataset(build_config, previous_manifest=previous)
 
 
 def test_identical_source_identity_skips_parsing_and_creates_no_release(
@@ -206,8 +234,10 @@ def test_release_metadata_records_prior_release_source_changes(tmp_path):
             {"level": "nico10", "code": "0101010100"},
         ],
         manifest(tuple(previous)),
+        {"registry_sha256": SHA_A},
     )
 
+    assert metadata["rate_validity"] == {"registry_sha256": SHA_A}
     assert metadata["source_history"] == {
         "previous_dataset_version": "2026.08.09",
         "changes": [
