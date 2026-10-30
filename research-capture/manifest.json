@@ -1,0 +1,1138 @@
+{
+  "kind": "arancel-mx/instrument-research-capture",
+  "generated_at": "2026-10-30T04:49:35.239539+00:00",
+  "ledger_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm",
+  "ledger": {
+    "last_law_reform": "2025-12-29",
+    "latest_tariff_modification": "2026-10-13",
+    "documents": [
+      {
+        "category": "law_reform",
+        "ordinal": "02",
+        "title": "DECRETO por el que se reforman diversas fracciones arancelarias de la Tarifa de la Ley de los Impuestos Generales de Importación y de Exportación. | DOF 29-12-2025 | Word |",
+        "displayed_date": "2025-12-29",
+        "links": [
+          {
+            "role": "dof",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_ref02_29dic25.pdf",
+            "label": "DOF 29-12-2025"
+          },
+          {
+            "role": "word",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_ref02_29dic25.doc",
+            "label": "Word"
+          }
+        ]
+      },
+      {
+        "category": "law_reform",
+        "ordinal": "01",
+        "title": "DECRETO por el que se reforman y adicionan diversas disposiciones de la Ley de los Impuestos Generales de Importación y de Exportación. | DOF 21-07-2025 | Word |",
+        "displayed_date": "2025-07-21",
+        "links": [
+          {
+            "role": "dof",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_ref01_21jul25.pdf",
+            "label": "DOF 21-07-2025"
+          },
+          {
+            "role": "word",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_ref01_21jul25.doc",
+            "label": "Word"
+          }
+        ]
+      },
+      {
+        "category": "original",
+        "ordinal": "Orig",
+        "title": "DECRETO por el que se expide la Ley de los Impuestos Generales de Importación y de Exportación . | DOF 07-06-2022 | Word |",
+        "displayed_date": "2022-06-07",
+        "links": [
+          {
+            "role": "dof",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_orig_07jun22.pdf",
+            "label": "DOF 07-06-2022"
+          },
+          {
+            "role": "word",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_orig_07jun22.doc",
+            "label": "Word"
+          }
+        ]
+      },
+      {
+        "category": "tariff_decree",
+        "ordinal": "16",
+        "title": "DECRETO por el que se modifica la Tarifa de la Ley de los Impuestos Generales de Importación y de Exportación . | DOF 13-10-2026 | Word | Nuevo",
+        "displayed_date": "2026-10-13",
+        "links": [
+          {
+            "role": "dof",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa16_13oct26.pdf",
+            "label": "DOF 13-10-2026"
+          },
+          {
+            "role": "word",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa16_13oct26.doc",
+            "label": "Word"
+          }
+        ]
+      },
+      {
+        "category": "tariff_decree",
+        "ordinal": "15",
+        "title": "DECRETO por el que se modifica la Tarifa de la Ley de los Impuestos Generales de Importación y de Exportación, y el Decreto por el que se establecen diversos Programas de Promoción Sectorial . | DOF 23-04-2026 | Word |",
+        "displayed_date": "2026-04-23",
+        "links": [
+          {
+            "role": "dof",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa15_23abr26.pdf",
+            "label": "DOF 23-04-2026"
+          },
+          {
+            "role": "word",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa15_23abr26.doc",
+            "label": "Word"
+          }
+        ]
+      },
+      {
+        "category": "tariff_decree",
+        "ordinal": "14",
+        "title": "DECRETO por el que se modifica el diverso por el que se exenta el pago de arancel de importación y se otorgan facilidades administrativas a diversas mercancías de la canasta básica y de consumo básico de las familias . | DOF 31-12-2025 | Word |",
+        "displayed_date": "2025-12-31",
+        "links": [
+          {
+            "role": "dof",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa14_31dic25.pdf",
+            "label": "DOF 31-12-2025"
+          },
+          {
+            "role": "word",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa14_31dic25.doc",
+            "label": "Word"
+          }
+        ]
+      },
+      {
+        "category": "tariff_decree",
+        "ordinal": "13",
+        "title": "DECRETO por el que se modifica la Tarifa de la Ley de los Impuestos Generales de Importación y de Exportación . | DOF 10-11-2025 | Word |",
+        "displayed_date": "2025-11-10",
+        "links": [
+          {
+            "role": "dof",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa13_10nov25.pdf",
+            "label": "DOF 10-11-2025"
+          },
+          {
+            "role": "word",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa13_10nov25.doc",
+            "label": "Word"
+          }
+        ]
+      },
+      {
+        "category": "tariff_decree",
+        "ordinal": "12",
+        "title": "DECRETO por el que se modifica el diverso por el que se exenta el pago de arancel de importación y se otorgan facilidades administrativas a diversas mercancías de la canasta básica y de consumo básico de las familias . | DOF 31-12-2024 | Word |",
+        "displayed_date": "2024-12-31",
+        "links": [
+          {
+            "role": "dof",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa12_31dic24.pdf",
+            "label": "DOF 31-12-2024"
+          },
+          {
+            "role": "word",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa12_31dic24.doc",
+            "label": "Word"
+          }
+        ]
+      },
+      {
+        "category": "tariff_decree",
+        "ordinal": "11",
+        "title": "DECRETO por el que se modifica la tarifa de la Ley de los Impuestos Generales de Importación y de Exportación y el Decreto para el Fomento de la Industria Manufacturera, Maquiladora y de Servicios de Exportación . | DOF 19-12-2024 | Word |",
+        "displayed_date": "2024-12-19",
+        "links": [
+          {
+            "role": "dof",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa11_19dic24.pdf",
+            "label": "DOF 19-12-2024"
+          },
+          {
+            "role": "word",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa11_19dic24.doc",
+            "label": "Word"
+          }
+        ]
+      },
+      {
+        "category": "tariff_decree",
+        "ordinal": "10",
+        "title": "DECRETO por el que se reforman el diverso por el que se modifica la Tarifa de la Ley de los Impuestos Generales de Importación y de Exportación, y el Decreto por el que se exenta el pago de arancel de importación y se otorgan facilidades administrativas a diversas mercancías de la canasta básica y de consumo básico de las familias . | DOF 08-05-2024 | Word |",
+        "displayed_date": "2024-05-08",
+        "links": [
+          {
+            "role": "dof",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa10_08may24.pdf",
+            "label": "DOF 08-05-2024"
+          },
+          {
+            "role": "word",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa10_08may24.doc",
+            "label": "Word"
+          }
+        ]
+      },
+      {
+        "category": "tariff_decree",
+        "ordinal": "09",
+        "title": "DECRETO por el que se modifica la Tarifa de la Ley de los Impuestos Generales de Importación y de Exportación . | DOF 22-04-2024 | Word |",
+        "displayed_date": "2024-04-22",
+        "links": [
+          {
+            "role": "dof",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa09_22abr24.pdf",
+            "label": "DOF 22-04-2024"
+          },
+          {
+            "role": "word",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa09_22abr24.doc",
+            "label": "Word"
+          }
+        ]
+      },
+      {
+        "category": "tariff_decree",
+        "ordinal": "08",
+        "title": "DECRETO por el que se modifica el diverso por el que se exenta el pago de arancel de importación y se otorgan facilidades administrativas a diversas mercancías de la canasta básica y de consumo básico de las familias . | DOF 27-12-2023 | Word |",
+        "displayed_date": "2023-12-27",
+        "links": [
+          {
+            "role": "dof",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa08_27dic23.pdf",
+            "label": "DOF 27-12-2023"
+          },
+          {
+            "role": "word",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa08_27dic23.doc",
+            "label": "Word"
+          }
+        ]
+      },
+      {
+        "category": "tariff_decree",
+        "ordinal": "07",
+        "title": "DECRETO por el que se modifica la Tarifa de la Ley de los Impuestos Generales de Importación y de Exportación . | DOF 15-08-2023 | Word |",
+        "displayed_date": "2023-08-15",
+        "links": [
+          {
+            "role": "dof",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa07_15ago23.pdf",
+            "label": "DOF 15-08-2023"
+          },
+          {
+            "role": "word",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa07_15ago23.doc",
+            "label": "Word"
+          }
+        ]
+      },
+      {
+        "category": "tariff_decree",
+        "ordinal": "06",
+        "title": "DECRETO por el que se modifican diversos ordenamientos jurídicos relativos a los aranceles aplicables al maíz blanco . | DOF 23-06-2023 | Word |",
+        "displayed_date": "2023-06-23",
+        "links": [
+          {
+            "role": "dof",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa06_23jun23.pdf",
+            "label": "DOF 23-06-2023"
+          },
+          {
+            "role": "word",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa06_23jun23.doc",
+            "label": "Word"
+          }
+        ]
+      },
+      {
+        "category": "tariff_decree",
+        "ordinal": "05",
+        "title": "DECRETO por el que se modifica el diverso por el que se exenta el pago de arancel de importación y se otorgan facilidades administrativas a diversas mercancías de la canasta básica y de consumo básico de las familias, publicado en el Diario Oficial de la Federación el 6 de enero de 2023 . | DOF 18-05-2023 | Word |",
+        "displayed_date": "2023-05-18",
+        "links": [
+          {
+            "role": "dof",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa05_18may23.pdf",
+            "label": "DOF 18-05-2023"
+          },
+          {
+            "role": "word",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa05_18may23.doc",
+            "label": "Word"
+          }
+        ]
+      },
+      {
+        "category": "tariff_decree",
+        "ordinal": "04",
+        "title": "DECRETO por el que se modifica la Tarifa de la Ley de los Impuestos Generales de Importación y de Exportación . | DOF 16-01-2023 | Word |",
+        "displayed_date": "2023-01-16",
+        "links": [
+          {
+            "role": "dof",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa04_16ene23.pdf",
+            "label": "DOF 16-01-2023"
+          },
+          {
+            "role": "word",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa04_16ene23.doc",
+            "label": "Word"
+          }
+        ]
+      },
+      {
+        "category": "tariff_decree",
+        "ordinal": "03",
+        "title": "DECRETO por el que se exenta el pago de arancel de importación y se otorgan facilidades administrativas a diversas mercancías de la canasta básica y de consumo básico de las familias . | DOF 06-01-2023 | Word |",
+        "displayed_date": "2023-01-06",
+        "links": [
+          {
+            "role": "dof",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa03_06ene23.pdf",
+            "label": "DOF 06-01-2023"
+          },
+          {
+            "role": "word",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa03_06ene23.doc",
+            "label": "Word"
+          }
+        ]
+      },
+      {
+        "category": "tariff_decree",
+        "ordinal": "02",
+        "title": "DECRETO por el que se modifica la Tarifa de la Ley de los Impuestos Generales de Importación y de Exportación, el Decreto para el apoyo de la competitividad de la industria automotriz terminal y el impulso al desarrollo del mercado interno de automóviles, el Decreto para el Fomento de la Industria Manufacturera, Maquiladora y de Servicios de Exportación, el Decreto por el que se establece el impuesto general de importación para la región fronteriza y la franja fronteriza norte, el Decreto de la zona libre de Chetumal, el Decreto por el que se establecen diversos Programas de Promoción Sectorial, el Decreto por el que se regula la importación definitiva de vehículos usados y los diversos por los que se establecen aranceles-cupo . | DOF 18-11-2022 | Word | Modificación | DOF 22-04-2024 | Word | Modificación | DOF 26-03-2026 | Word |",
+        "displayed_date": "2022-11-18",
+        "links": [
+          {
+            "role": "dof",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa02_18nov22.pdf",
+            "label": "DOF 18-11-2022"
+          },
+          {
+            "role": "word",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa02_18nov22.doc",
+            "label": "Word"
+          },
+          {
+            "role": "dof",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa02_mod01_22abr24.pdf",
+            "label": "DOF 22-04-2024"
+          },
+          {
+            "role": "word",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa02_mod01_22abr24.doc",
+            "label": "Word"
+          },
+          {
+            "role": "dof",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa02_mod02_26mar26.pdf",
+            "label": "DOF 26-03-2026"
+          },
+          {
+            "role": "word",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa02_mod02_26mar26.doc",
+            "label": "Word"
+          }
+        ]
+      },
+      {
+        "category": "tariff_decree",
+        "ordinal": "01",
+        "title": "DECRETO por el que se exenta el pago de arancel de importación a las mercancías que se indican . | DOF 18-11-2022 | Word |",
+        "displayed_date": "2022-11-18",
+        "links": [
+          {
+            "role": "dof",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa01_18nov22.pdf",
+            "label": "DOF 18-11-2022"
+          },
+          {
+            "role": "word",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa01_18nov22.doc",
+            "label": "Word"
+          }
+        ]
+      },
+      {
+        "category": "national_notes",
+        "ordinal": "03",
+        "title": "ACUERDO por el que se dan a conocer las Notas Nacionales de la Tarifa de la Ley de los Impuestos Generales de Importación y de Exportación . | DOF 02-12-2022 | Word |",
+        "displayed_date": "2022-12-02",
+        "links": [
+          {
+            "role": "dof",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_acuerdo03_02dic22.pdf",
+            "label": "DOF 02-12-2022"
+          },
+          {
+            "role": "word",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_acuerdo03_02dic22.doc",
+            "label": "Word"
+          }
+        ]
+      },
+      {
+        "category": "nico_agreement",
+        "ordinal": "02",
+        "title": "ACUERDO por el que se dan a conocer los Números de Identificación Comercial (NICO) y sus tablas de correlación . | DOF 22-08-2022 | Word | Modificación | DOF 30-06-2023 | Word | Modificación | DOF 22-03-2024 | Word |",
+        "displayed_date": "2022-08-22",
+        "links": [
+          {
+            "role": "dof",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_acuerdo02_22ago22.pdf",
+            "label": "DOF 22-08-2022"
+          },
+          {
+            "role": "word",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_acuerdo02_22ago22.doc",
+            "label": "Word"
+          },
+          {
+            "role": "dof",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_acuerdo02_mod01_30jun23.pdf",
+            "label": "DOF 30-06-2023"
+          },
+          {
+            "role": "word",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_acuerdo02_mod01_30jun23.doc",
+            "label": "Word"
+          },
+          {
+            "role": "dof",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_acuerdo02_mod02_22mar24.pdf",
+            "label": "DOF 22-03-2024"
+          },
+          {
+            "role": "word",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_acuerdo02_mod02_22mar24.doc",
+            "label": "Word"
+          }
+        ]
+      },
+      {
+        "category": "correlation",
+        "ordinal": "01",
+        "title": "ACUERDO por el que se dan a conocer las tablas de correlación entre las fracciones arancelarias de la Tarifa de la Ley de los Impuestos Generales de Importación y de Exportación (TIGIE) 2020-2022 . | DOF 14-07-2022 | Word |",
+        "displayed_date": "2022-07-14",
+        "links": [
+          {
+            "role": "dof",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_acuerdo01_14jul22.pdf",
+            "label": "DOF 14-07-2022"
+          },
+          {
+            "role": "word",
+            "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_acuerdo01_14jul22.doc",
+            "label": "Word"
+          }
+        ]
+      },
+      {
+        "category": "nico_agreement",
+        "ordinal": "Secretaría General Secretaría de Servicios Parlamentarios Tel. 55 5628-1300, Ext. 2045 Correo electrónico : armando.torres@diputados.gob.mx",
+        "title": "Secretaría General Secretaría de Servicios Parlamentarios Tel. 55 5628-1300, Ext. 2045 Correo electrónico : armando.torres@diputados.gob.mx",
+        "displayed_date": null,
+        "links": [
+          {
+            "role": "document",
+            "url": "mailto:armando.torres@diputados.gob.mx",
+            "label": "armando.torres@diputados.gob.mx"
+          }
+        ]
+      }
+    ]
+  },
+  "dof_matches": [],
+  "counts": {
+    "ok": 56
+  },
+  "documents": [
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/doc/LIGIE_2022.doc",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/doc/LIGIE_2022.doc",
+      "origin": "diputados_ledger_link",
+      "label": "",
+      "status": "ok",
+      "media_type": "application/msword",
+      "bytes": 26289152,
+      "sha256": "d61045132412e188f65323099de479170464382a13fc06add849b20cdf253112",
+      "retrieved_at": "2026-10-30T04:49:29.922546+00:00",
+      "path": "documents/c6573c5c2876_LIGIE_2022.doc"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LIGIE_2022.pdf",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LIGIE_2022.pdf",
+      "origin": "diputados_ledger_link",
+      "label": "",
+      "status": "ok",
+      "media_type": "application/pdf",
+      "bytes": 19158939,
+      "sha256": "955510d7ea82cf42d18c72e3146f999af254c0fda5eda3f12a1fd1c10e9864ce",
+      "retrieved_at": "2026-10-30T04:49:29.346121+00:00",
+      "path": "documents/5ce50061c56e_LIGIE_2022.pdf"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/pdf_mov/Ley_de_los_Impuestos_Generales_de_Importacion_y_de_Exportacion-2022.pdf",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/pdf_mov/Ley_de_los_Impuestos_Generales_de_Importacion_y_de_Exportacion-2022.pdf",
+      "origin": "diputados_ledger_link",
+      "label": "",
+      "status": "ok",
+      "media_type": "application/pdf",
+      "bytes": 18649455,
+      "sha256": "2ad39a3cc5b2fb06a985211a6fb504011bf5f2d4f211378c7c6f0aeccfce5bf8",
+      "retrieved_at": "2026-10-30T04:49:30.371686+00:00",
+      "path": "documents/b7a6fa0bbb8c_Ley_de_los_Impuestos_Generales_de_Importacion_y_de_Exportacion-2022.pdf"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm",
+      "origin": "diputados_index",
+      "label": "LIGIE 2022 ledger",
+      "status": "ok",
+      "media_type": "text/html",
+      "bytes": 70732,
+      "sha256": "e9acfbac24452a5bc0540b101968c20160e4ed49e04bf76f2c762c8fff7a16a5",
+      "retrieved_at": "2026-10-30T04:49:28.651289+00:00",
+      "path": "documents/35412f42ace7_ligie_2022.htm.html"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_acuerdo01_14jul22.doc",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_acuerdo01_14jul22.doc",
+      "origin": "diputados_ledger_link",
+      "label": "Word",
+      "status": "ok",
+      "media_type": "application/msword",
+      "bytes": 7020544,
+      "sha256": "f35fb2c557b569d080336d802d96208ffca04778fc84f5ecbc42d0fc0e54380c",
+      "retrieved_at": "2026-10-30T04:49:35.234322+00:00",
+      "path": "documents/a18c0eb4aa33_LIGIE_2022_acuerdo01_14jul22.doc"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_acuerdo01_14jul22.pdf",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_acuerdo01_14jul22.pdf",
+      "origin": "diputados_ledger_link",
+      "label": "DOF 14-07-2022",
+      "status": "ok",
+      "media_type": "application/pdf",
+      "bytes": 5626427,
+      "sha256": "ad92554330764926f116cf80d3ff9186f3f6b72f0246f814970562b8653659d9",
+      "retrieved_at": "2026-10-30T04:49:35.072946+00:00",
+      "path": "documents/ad5aace0b8d0_LIGIE_2022_acuerdo01_14jul22.pdf"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_acuerdo02_22ago22.doc",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_acuerdo02_22ago22.doc",
+      "origin": "diputados_ledger_link",
+      "label": "Word",
+      "status": "ok",
+      "media_type": "application/msword",
+      "bytes": 17275904,
+      "sha256": "9cc28ce44bfb585054b31195eb0991a38c15e6368e5bb98fd6f11bd78e214cd6",
+      "retrieved_at": "2026-10-30T04:49:34.674425+00:00",
+      "path": "documents/cdd2551c62f6_LIGIE_2022_acuerdo02_22ago22.doc"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_acuerdo02_22ago22.pdf",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_acuerdo02_22ago22.pdf",
+      "origin": "diputados_ledger_link",
+      "label": "DOF 22-08-2022",
+      "status": "ok",
+      "media_type": "application/pdf",
+      "bytes": 2809180,
+      "sha256": "c5fd56aa5e6d39623539e87ad15336f55d166b0649e616f0c3cedab682c21460",
+      "retrieved_at": "2026-10-30T04:49:34.290450+00:00",
+      "path": "documents/7d13ccdf592a_LIGIE_2022_acuerdo02_22ago22.pdf"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_acuerdo02_mod01_30jun23.doc",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_acuerdo02_mod01_30jun23.doc",
+      "origin": "diputados_ledger_link",
+      "label": "Word",
+      "status": "ok",
+      "media_type": "application/msword",
+      "bytes": 104960,
+      "sha256": "a58c01cb553d97e9583716d6f383c6b162e9749d0177d0936c3d569db0b2d108",
+      "retrieved_at": "2026-10-30T04:49:34.809529+00:00",
+      "path": "documents/b99a5ee9127a_LIGIE_2022_acuerdo02_mod01_30jun23.doc"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_acuerdo02_mod01_30jun23.pdf",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_acuerdo02_mod01_30jun23.pdf",
+      "origin": "diputados_ledger_link",
+      "label": "DOF 30-06-2023",
+      "status": "ok",
+      "media_type": "application/pdf",
+      "bytes": 184690,
+      "sha256": "4cc5f6f38c1be002554ae66c3e6870e4541b5489b95850d6e060dfd9b13ecda9",
+      "retrieved_at": "2026-10-30T04:49:34.748425+00:00",
+      "path": "documents/14380f9a7405_LIGIE_2022_acuerdo02_mod01_30jun23.pdf"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_acuerdo02_mod02_22mar24.doc",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_acuerdo02_mod02_22mar24.doc",
+      "origin": "diputados_ledger_link",
+      "label": "Word",
+      "status": "ok",
+      "media_type": "application/msword",
+      "bytes": 51200,
+      "sha256": "12ba3481efa0027c5c6eedf6fb4071eb1b4ef6d690071ae84eee1a8f59f2c1dc",
+      "retrieved_at": "2026-10-30T04:49:34.931675+00:00",
+      "path": "documents/e8f80842755e_LIGIE_2022_acuerdo02_mod02_22mar24.doc"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_acuerdo02_mod02_22mar24.pdf",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_acuerdo02_mod02_22mar24.pdf",
+      "origin": "diputados_ledger_link",
+      "label": "DOF 22-03-2024",
+      "status": "ok",
+      "media_type": "application/pdf",
+      "bytes": 131669,
+      "sha256": "f0906faff2fe6510f26798578f9993ad54d0014a4850983144c5bdbb2a317420",
+      "retrieved_at": "2026-10-30T04:49:34.869169+00:00",
+      "path": "documents/ad58224b8150_LIGIE_2022_acuerdo02_mod02_22mar24.pdf"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_acuerdo03_02dic22.doc",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_acuerdo03_02dic22.doc",
+      "origin": "diputados_ledger_link",
+      "label": "Word",
+      "status": "ok",
+      "media_type": "application/msword",
+      "bytes": 343040,
+      "sha256": "613a9e13d52bb3f55ed5dd58d2f3fab3d75fceee11d01586f306bea2e98d88a4",
+      "retrieved_at": "2026-10-30T04:49:34.207556+00:00",
+      "path": "documents/d483a48d185f_LIGIE_2022_acuerdo03_02dic22.doc"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_acuerdo03_02dic22.pdf",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_acuerdo03_02dic22.pdf",
+      "origin": "diputados_ledger_link",
+      "label": "DOF 02-12-2022",
+      "status": "ok",
+      "media_type": "application/pdf",
+      "bytes": 513056,
+      "sha256": "1ae40b80d798dc6e104ffa47bd4219efd8c095cdf9860b24093b764874cabdbe",
+      "retrieved_at": "2026-10-30T04:49:34.143737+00:00",
+      "path": "documents/29d97d677a04_LIGIE_2022_acuerdo03_02dic22.pdf"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_orig_07jun22.doc",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_orig_07jun22.doc",
+      "origin": "diputados_ledger_link",
+      "label": "Word",
+      "status": "ok",
+      "media_type": "application/msword",
+      "bytes": 25591808,
+      "sha256": "a2a05960c255de604aa46880c85f524738cf4bfb5a59127fe9232130b635c883",
+      "retrieved_at": "2026-10-30T04:49:31.317703+00:00",
+      "path": "documents/de62cf5cb33c_LIGIE_2022_orig_07jun22.doc"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_orig_07jun22.pdf",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_orig_07jun22.pdf",
+      "origin": "diputados_ledger_link",
+      "label": "DOF 07-06-2022",
+      "status": "ok",
+      "media_type": "application/pdf",
+      "bytes": 17987107,
+      "sha256": "b4eb3e050ee7aeae8a4b6f26eee26f370d9726c82c0d3492d32022161ad2d1d5",
+      "retrieved_at": "2026-10-30T04:49:30.778540+00:00",
+      "path": "documents/ffeb468eea5a_LIGIE_2022_orig_07jun22.pdf"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_ref01_21jul25.doc",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_ref01_21jul25.doc",
+      "origin": "diputados_ledger_link",
+      "label": "Word",
+      "status": "ok",
+      "media_type": "application/msword",
+      "bytes": 61952,
+      "sha256": "6ad47157643bc0706350737c2caf5c5ed7e05288d6a643bbe4779b876cb10ce5",
+      "retrieved_at": "2026-10-30T04:49:31.612049+00:00",
+      "path": "documents/c77cd5f6b206_LIGIE_2022_ref01_21jul25.doc"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_ref01_21jul25.pdf",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_ref01_21jul25.pdf",
+      "origin": "diputados_ledger_link",
+      "label": "DOF 21-07-2025",
+      "status": "ok",
+      "media_type": "application/pdf",
+      "bytes": 137527,
+      "sha256": "abb7c0b0b8d4357a8736be5879bf084962000a4d3bc4c369e9593881bc577361",
+      "retrieved_at": "2026-10-30T04:49:31.551638+00:00",
+      "path": "documents/ad694c6a94a9_LIGIE_2022_ref01_21jul25.pdf"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_ref02_29dic25.doc",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_ref02_29dic25.doc",
+      "origin": "diputados_ledger_link",
+      "label": "Word",
+      "status": "ok",
+      "media_type": "application/msword",
+      "bytes": 1649664,
+      "sha256": "ebeb47a45d56dc8466b93a665f26555d2c904f41c0163cc517674c947f463f43",
+      "retrieved_at": "2026-10-30T04:49:31.488417+00:00",
+      "path": "documents/0b2d112c9718_LIGIE_2022_ref02_29dic25.doc"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_ref02_29dic25.pdf",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_ref02_29dic25.pdf",
+      "origin": "diputados_ledger_link",
+      "label": "DOF 29-12-2025",
+      "status": "ok",
+      "media_type": "application/pdf",
+      "bytes": 1241762,
+      "sha256": "3c5285cf2b250af0175ae9f31d69d069915834acdfa7150c3449349f087690bf",
+      "retrieved_at": "2026-10-30T04:49:31.405447+00:00",
+      "path": "documents/64bdbd4e9ba7_LIGIE_2022_ref02_29dic25.pdf"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa01_18nov22.doc",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa01_18nov22.doc",
+      "origin": "diputados_ledger_link",
+      "label": "Word",
+      "status": "ok",
+      "media_type": "application/msword",
+      "bytes": 181248,
+      "sha256": "50a3e24f2eb674209bb34445efe125118576aff45a64ee4b302d31b9740205e3",
+      "retrieved_at": "2026-10-30T04:49:34.078178+00:00",
+      "path": "documents/6bae8047157f_LIGIE_2022_tarifa01_18nov22.doc"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa01_18nov22.pdf",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa01_18nov22.pdf",
+      "origin": "diputados_ledger_link",
+      "label": "DOF 18-11-2022",
+      "status": "ok",
+      "media_type": "application/pdf",
+      "bytes": 232659,
+      "sha256": "8cedf2187d633474c260a0edb43f81769ff4d5dd146289199629121eef292eea",
+      "retrieved_at": "2026-10-30T04:49:34.015933+00:00",
+      "path": "documents/ab826e0a7542_LIGIE_2022_tarifa01_18nov22.pdf"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa02_18nov22.doc",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa02_18nov22.doc",
+      "origin": "diputados_ledger_link",
+      "label": "Word",
+      "status": "ok",
+      "media_type": "application/msword",
+      "bytes": 7397888,
+      "sha256": "e2adf3dabbbf31f2b21764107f98f75df00bfcf5fa65c717570f2e4676185439",
+      "retrieved_at": "2026-10-30T04:49:33.705043+00:00",
+      "path": "documents/d8c7be55333e_LIGIE_2022_tarifa02_18nov22.doc"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa02_18nov22.pdf",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa02_18nov22.pdf",
+      "origin": "diputados_ledger_link",
+      "label": "DOF 18-11-2022",
+      "status": "ok",
+      "media_type": "application/pdf",
+      "bytes": 5664286,
+      "sha256": "bd876ca2b79ad54c60a6341f69403e3dd8ef1781968eb7d943363f71f8f8be3a",
+      "retrieved_at": "2026-10-30T04:49:33.505036+00:00",
+      "path": "documents/aea713eebd48_LIGIE_2022_tarifa02_18nov22.pdf"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa02_mod01_22abr24.doc",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa02_mod01_22abr24.doc",
+      "origin": "diputados_ledger_link",
+      "label": "Word",
+      "status": "ok",
+      "media_type": "application/msword",
+      "bytes": 47616,
+      "sha256": "b75745da7e33343581717c34beb312008294b92a90e8d02f3e9e8af7dd027cad",
+      "retrieved_at": "2026-10-30T04:49:33.833011+00:00",
+      "path": "documents/a7519542f35d_LIGIE_2022_tarifa02_mod01_22abr24.doc"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa02_mod01_22abr24.pdf",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa02_mod01_22abr24.pdf",
+      "origin": "diputados_ledger_link",
+      "label": "DOF 22-04-2024",
+      "status": "ok",
+      "media_type": "application/pdf",
+      "bytes": 221533,
+      "sha256": "37161dcbf54e98a103fbc3791f5ce5a2a6ca4bc5eddbd7000a0144cd4fbbe071",
+      "retrieved_at": "2026-10-30T04:49:33.772647+00:00",
+      "path": "documents/778ff5b1df2a_LIGIE_2022_tarifa02_mod01_22abr24.pdf"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa02_mod02_26mar26.doc",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa02_mod02_26mar26.doc",
+      "origin": "diputados_ledger_link",
+      "label": "Word",
+      "status": "ok",
+      "media_type": "application/msword",
+      "bytes": 47104,
+      "sha256": "0980f8c3e391ea93cda0114da72fa47bc69f3d58e7b7eb87a506a69c0c7c5af0",
+      "retrieved_at": "2026-10-30T04:49:33.954607+00:00",
+      "path": "documents/f7ef11e6dd4d_LIGIE_2022_tarifa02_mod02_26mar26.doc"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa02_mod02_26mar26.pdf",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa02_mod02_26mar26.pdf",
+      "origin": "diputados_ledger_link",
+      "label": "DOF 26-03-2026",
+      "status": "ok",
+      "media_type": "application/pdf",
+      "bytes": 213615,
+      "sha256": "713679495185645c28a7595de9dbc618ec4c1879281578f85f81f17e66c9fad6",
+      "retrieved_at": "2026-10-30T04:49:33.894350+00:00",
+      "path": "documents/de6972f4de32_LIGIE_2022_tarifa02_mod02_26mar26.pdf"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa03_06ene23.doc",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa03_06ene23.doc",
+      "origin": "diputados_ledger_link",
+      "label": "Word",
+      "status": "ok",
+      "media_type": "application/msword",
+      "bytes": 247296,
+      "sha256": "f8ac2908e06020a3c8b53cf900fa767c1aba063f7df61bccb327d62921c1d65e",
+      "retrieved_at": "2026-10-30T04:49:33.359342+00:00",
+      "path": "documents/468741119e1c_LIGIE_2022_tarifa03_06ene23.doc"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa03_06ene23.pdf",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa03_06ene23.pdf",
+      "origin": "diputados_ledger_link",
+      "label": "DOF 06-01-2023",
+      "status": "ok",
+      "media_type": "application/pdf",
+      "bytes": 437016,
+      "sha256": "49e63ef882cdfa11336b8e2ea4dfa293aa3928b6e9f39aac2a4560f092a8eec2",
+      "retrieved_at": "2026-10-30T04:49:33.296809+00:00",
+      "path": "documents/d706783f882e_LIGIE_2022_tarifa03_06ene23.pdf"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa04_16ene23.doc",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa04_16ene23.doc",
+      "origin": "diputados_ledger_link",
+      "label": "Word",
+      "status": "ok",
+      "media_type": "application/msword",
+      "bytes": 41472,
+      "sha256": "f0ac00dc8231cd21c55be8f6d4d3ab9c8b61078b6a2d5912f31f29943d287c1c",
+      "retrieved_at": "2026-10-30T04:49:33.231416+00:00",
+      "path": "documents/aeb7954eea13_LIGIE_2022_tarifa04_16ene23.doc"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa04_16ene23.pdf",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa04_16ene23.pdf",
+      "origin": "diputados_ledger_link",
+      "label": "DOF 16-01-2023",
+      "status": "ok",
+      "media_type": "application/pdf",
+      "bytes": 124180,
+      "sha256": "314d48266d8a1c2dc5a2686c4cb82563f6264a58c07e9d9d3ca61a52e4a14200",
+      "retrieved_at": "2026-10-30T04:49:33.171529+00:00",
+      "path": "documents/fb9e8e1c993b_LIGIE_2022_tarifa04_16ene23.pdf"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa05_18may23.doc",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa05_18may23.doc",
+      "origin": "diputados_ledger_link",
+      "label": "Word",
+      "status": "ok",
+      "media_type": "application/msword",
+      "bytes": 48640,
+      "sha256": "5d821828424456288cc0e6891c1a26957b693bd9a3ccdacbbb408fb1796bfe30",
+      "retrieved_at": "2026-10-30T04:49:33.110349+00:00",
+      "path": "documents/f83bdbbcb725_LIGIE_2022_tarifa05_18may23.doc"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa05_18may23.pdf",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa05_18may23.pdf",
+      "origin": "diputados_ledger_link",
+      "label": "DOF 18-05-2023",
+      "status": "ok",
+      "media_type": "application/pdf",
+      "bytes": 194862,
+      "sha256": "92ca7b1afabb604493ad5ee1346e0e53e6f664fa3b49dc245f2c3fa1b1cbc13c",
+      "retrieved_at": "2026-10-30T04:49:33.050793+00:00",
+      "path": "documents/c06a37a1fe96_LIGIE_2022_tarifa05_18may23.pdf"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa06_23jun23.doc",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa06_23jun23.doc",
+      "origin": "diputados_ledger_link",
+      "label": "Word",
+      "status": "ok",
+      "media_type": "application/msword",
+      "bytes": 44544,
+      "sha256": "936660a2b648ed96446604910de5f04471dc1a5751b36a2423d8715dbbaf6cb8",
+      "retrieved_at": "2026-10-30T04:49:32.986892+00:00",
+      "path": "documents/eac6d901552e_LIGIE_2022_tarifa06_23jun23.doc"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa06_23jun23.pdf",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa06_23jun23.pdf",
+      "origin": "diputados_ledger_link",
+      "label": "DOF 23-06-2023",
+      "status": "ok",
+      "media_type": "application/pdf",
+      "bytes": 129752,
+      "sha256": "b51e6cc96544fd67210c24b7f8379d4a81f3086ca982a1e6ff2b02069cc6f215",
+      "retrieved_at": "2026-10-30T04:49:32.927185+00:00",
+      "path": "documents/badcdb9025fd_LIGIE_2022_tarifa06_23jun23.pdf"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa07_15ago23.doc",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa07_15ago23.doc",
+      "origin": "diputados_ledger_link",
+      "label": "Word",
+      "status": "ok",
+      "media_type": "application/msword",
+      "bytes": 615936,
+      "sha256": "0ab455c56cdc1b9d44442586d879a87e11b802fd3dd464e002bfa61aaea4cfab",
+      "retrieved_at": "2026-10-30T04:49:32.865969+00:00",
+      "path": "documents/7a8186e3ed2f_LIGIE_2022_tarifa07_15ago23.doc"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa07_15ago23.pdf",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa07_15ago23.pdf",
+      "origin": "diputados_ledger_link",
+      "label": "DOF 15-08-2023",
+      "status": "ok",
+      "media_type": "application/pdf",
+      "bytes": 436827,
+      "sha256": "b2d3c7e5fef6b287d75ca802b8713818c63175f2788cb183bcde6a4c21144167",
+      "retrieved_at": "2026-10-30T04:49:32.796486+00:00",
+      "path": "documents/3659c6f7b963_LIGIE_2022_tarifa07_15ago23.pdf"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa08_27dic23.doc",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa08_27dic23.doc",
+      "origin": "diputados_ledger_link",
+      "label": "Word",
+      "status": "ok",
+      "media_type": "application/msword",
+      "bytes": 37376,
+      "sha256": "f44d7c58e82798151896499e2bfe1d43d229bb73344ecd98b1071eb2717c695a",
+      "retrieved_at": "2026-10-30T04:49:32.731580+00:00",
+      "path": "documents/6c652a958de4_LIGIE_2022_tarifa08_27dic23.doc"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa08_27dic23.pdf",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa08_27dic23.pdf",
+      "origin": "diputados_ledger_link",
+      "label": "DOF 27-12-2023",
+      "status": "ok",
+      "media_type": "application/pdf",
+      "bytes": 121250,
+      "sha256": "4791fcff54b0a08c9f7ddf0e71b98311f09cb2669d3eabe06f023a0c111aeb25",
+      "retrieved_at": "2026-10-30T04:49:32.671417+00:00",
+      "path": "documents/82029d6bf9f8_LIGIE_2022_tarifa08_27dic23.pdf"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa09_22abr24.doc",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa09_22abr24.doc",
+      "origin": "diputados_ledger_link",
+      "label": "Word",
+      "status": "ok",
+      "media_type": "application/msword",
+      "bytes": 478208,
+      "sha256": "ff5b2427e3ba9a753b96ec1e2e50ef32545fe493bedd3802331d25a90b7f1f4d",
+      "retrieved_at": "2026-10-30T04:49:32.610870+00:00",
+      "path": "documents/0c2c523dada2_LIGIE_2022_tarifa09_22abr24.doc"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa09_22abr24.pdf",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa09_22abr24.pdf",
+      "origin": "diputados_ledger_link",
+      "label": "DOF 22-04-2024",
+      "status": "ok",
+      "media_type": "application/pdf",
+      "bytes": 585391,
+      "sha256": "5718bf510e2c90c7df3b2bd8c82f26bd882568d7188b1dd6a29c608e7c0ab6c3",
+      "retrieved_at": "2026-10-30T04:49:32.545296+00:00",
+      "path": "documents/24aec22fd42a_LIGIE_2022_tarifa09_22abr24.pdf"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa10_08may24.doc",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa10_08may24.doc",
+      "origin": "diputados_ledger_link",
+      "label": "Word",
+      "status": "ok",
+      "media_type": "application/msword",
+      "bytes": 49152,
+      "sha256": "e337ac928a5e146f5471479770b8a70977532493674ad8f8172ecff1dc72b82d",
+      "retrieved_at": "2026-10-30T04:49:32.480607+00:00",
+      "path": "documents/7754a540f701_LIGIE_2022_tarifa10_08may24.doc"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa10_08may24.pdf",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa10_08may24.pdf",
+      "origin": "diputados_ledger_link",
+      "label": "DOF 08-05-2024",
+      "status": "ok",
+      "media_type": "application/pdf",
+      "bytes": 138947,
+      "sha256": "6173d7c9766ebe9a417712ba9db9ce0ed6cebb614be22fde2d160ac504ec7dee",
+      "retrieved_at": "2026-10-30T04:49:32.419390+00:00",
+      "path": "documents/1ab8973df879_LIGIE_2022_tarifa10_08may24.pdf"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa11_19dic24.doc",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa11_19dic24.doc",
+      "origin": "diputados_ledger_link",
+      "label": "Word",
+      "status": "ok",
+      "media_type": "application/msword",
+      "bytes": 691200,
+      "sha256": "cfdd360466d4123600419657a17941fcb1d074bb353dc2747179695fd6e407b0",
+      "retrieved_at": "2026-10-30T04:49:32.358249+00:00",
+      "path": "documents/33bc4a9af90d_LIGIE_2022_tarifa11_19dic24.doc"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa11_19dic24.pdf",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa11_19dic24.pdf",
+      "origin": "diputados_ledger_link",
+      "label": "DOF 19-12-2024",
+      "status": "ok",
+      "media_type": "application/pdf",
+      "bytes": 593217,
+      "sha256": "7aad66011ac60e817a28b37a0e28d58d513d19685a56d69b0dbd417479225dd5",
+      "retrieved_at": "2026-10-30T04:49:32.290079+00:00",
+      "path": "documents/ba520bd1ceb8_LIGIE_2022_tarifa11_19dic24.pdf"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa12_31dic24.doc",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa12_31dic24.doc",
+      "origin": "diputados_ledger_link",
+      "label": "Word",
+      "status": "ok",
+      "media_type": "application/msword",
+      "bytes": 107008,
+      "sha256": "eaefad9d3b14613bffe438c814835cca1b5d1e28da10bcb4a771df085d49d827",
+      "retrieved_at": "2026-10-30T04:49:32.225905+00:00",
+      "path": "documents/9e38fbe1325b_LIGIE_2022_tarifa12_31dic24.doc"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa12_31dic24.pdf",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa12_31dic24.pdf",
+      "origin": "diputados_ledger_link",
+      "label": "DOF 31-12-2024",
+      "status": "ok",
+      "media_type": "application/pdf",
+      "bytes": 206422,
+      "sha256": "ca965c7a8dd0f3cbe0480c2993d8773c769e209ff5a6d9aa27854dd291ea8c14",
+      "retrieved_at": "2026-10-30T04:49:32.165105+00:00",
+      "path": "documents/fae37b584e32_LIGIE_2022_tarifa12_31dic24.pdf"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa13_10nov25.doc",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa13_10nov25.doc",
+      "origin": "diputados_ledger_link",
+      "label": "Word",
+      "status": "ok",
+      "media_type": "application/msword",
+      "bytes": 48128,
+      "sha256": "801acf0a96f9c36c2099624564bef9c87510a4b2807c3041ab094d3d88e5ef0f",
+      "retrieved_at": "2026-10-30T04:49:32.104012+00:00",
+      "path": "documents/59709f98b9be_LIGIE_2022_tarifa13_10nov25.doc"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa13_10nov25.pdf",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa13_10nov25.pdf",
+      "origin": "diputados_ledger_link",
+      "label": "DOF 10-11-2025",
+      "status": "ok",
+      "media_type": "application/pdf",
+      "bytes": 135013,
+      "sha256": "ae4a6e7259e5cc9e99945441f051a9ac42327c2f645f9f8f39d5a98eeedbb4a9",
+      "retrieved_at": "2026-10-30T04:49:32.043916+00:00",
+      "path": "documents/6510e48fe4d5_LIGIE_2022_tarifa13_10nov25.pdf"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa14_31dic25.doc",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa14_31dic25.doc",
+      "origin": "diputados_ledger_link",
+      "label": "Word",
+      "status": "ok",
+      "media_type": "application/msword",
+      "bytes": 111104,
+      "sha256": "84102604b0bc42701d0aa1eee9187b2a807c7ddb20953aafdea63de3762a3dfd",
+      "retrieved_at": "2026-10-30T04:49:31.982858+00:00",
+      "path": "documents/af1e91c3ff7c_LIGIE_2022_tarifa14_31dic25.doc"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa14_31dic25.pdf",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa14_31dic25.pdf",
+      "origin": "diputados_ledger_link",
+      "label": "DOF 31-12-2025",
+      "status": "ok",
+      "media_type": "application/pdf",
+      "bytes": 278115,
+      "sha256": "5dbe798573d078a6adf5c352f9ef93b0112c42bb422fe2abd884b313bf9b6c3f",
+      "retrieved_at": "2026-10-30T04:49:31.921801+00:00",
+      "path": "documents/a6ca0a5c2216_LIGIE_2022_tarifa14_31dic25.pdf"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa15_23abr26.doc",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa15_23abr26.doc",
+      "origin": "diputados_ledger_link",
+      "label": "Word",
+      "status": "ok",
+      "media_type": "application/msword",
+      "bytes": 293888,
+      "sha256": "1e5c1bc6dac51f1c0e668b11ccc2613b2b1111d2d0c11db2b46debc19b3c9ff8",
+      "retrieved_at": "2026-10-30T04:49:31.860716+00:00",
+      "path": "documents/f645e836c859_LIGIE_2022_tarifa15_23abr26.doc"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa15_23abr26.pdf",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa15_23abr26.pdf",
+      "origin": "diputados_ledger_link",
+      "label": "DOF 23-04-2026",
+      "status": "ok",
+      "media_type": "application/pdf",
+      "bytes": 413952,
+      "sha256": "f7285321fc0de8f2fba6bdb7667b2e77963cc23be524af62ba5bb9373b72e5bb",
+      "retrieved_at": "2026-10-30T04:49:31.797366+00:00",
+      "path": "documents/359984f1c8ca_LIGIE_2022_tarifa15_23abr26.pdf"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa16_13oct26.doc",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa16_13oct26.doc",
+      "origin": "diputados_ledger_link",
+      "label": "Word",
+      "status": "ok",
+      "media_type": "application/msword",
+      "bytes": 48128,
+      "sha256": "1ce69794b143aa1863a32e786a49037e2e20af7aa09cf56ede190aad36e3e479",
+      "retrieved_at": "2026-10-30T04:49:31.734427+00:00",
+      "path": "documents/131f5070f2a5_LIGIE_2022_tarifa16_13oct26.doc"
+    },
+    {
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa16_13oct26.pdf",
+      "final_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022/LIGIE_2022_tarifa16_13oct26.pdf",
+      "origin": "diputados_ledger_link",
+      "label": "DOF 13-10-2026",
+      "status": "ok",
+      "media_type": "application/pdf",
+      "bytes": 217185,
+      "sha256": "035f0b32311f44b0f64582750c146c20572e03a9498eca748509783e6468d7e7",
+      "retrieved_at": "2026-10-30T04:49:31.673900+00:00",
+      "path": "documents/395d4099b0c9_LIGIE_2022_tarifa16_13oct26.pdf"
+    }
+  ]
+}
