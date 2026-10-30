@@ -6,7 +6,7 @@ from pathlib import Path
 import duckdb
 import pytest
 
-from arancel_mx.storage.duckdb import ensure_tariff_schema
+from arancel_mx.storage.duckdb import init_tariff_db
 
 
 _DATASET_VERSION = "2026.08.11"
@@ -32,10 +32,10 @@ def create_consumer_duckdb(
     include_view: bool = True,
     include_release: bool = True,
 ) -> Path:
-    path.parent.mkdir(parents=True, exist_ok=True)
+    # Created like a published release, so floor-version consumers can open it.
+    init_tariff_db(path)
     conn = duckdb.connect(str(path))
     try:
-        ensure_tariff_schema(conn)
         conn.execute(
             """
             INSERT INTO source_document (
