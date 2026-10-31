@@ -433,3 +433,12 @@ test('shows the trust, records and changes pages in English when the language is
   await page.goto('/changes');
   await expect(page.getByRole('button', { name: /inspect release/i })).toBeVisible();
 });
+
+test('lists every HS section and loads the families of a chapter when it opens', async ({ page }) => {
+  await page.goto('/chapters');
+  const section = page.getByRole('button', { name: /^sección XVI /i });
+  await expect(section).toBeVisible();
+  await section.click();
+  await page.getByRole('button', { name: /capítulo 85/i }).click();
+  await expect(page.getByRole('button', { name: /partida · familia HS4 85\.17 · teléfonos/i })).toBeVisible();
+});
