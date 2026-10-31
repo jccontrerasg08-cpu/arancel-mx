@@ -15,6 +15,11 @@ test('motion is defined as a spring easing and only runs when motion is allowed'
   assert.match(motion, /@media \(prefers-reduced-motion:reduce\) \{ ::view-transition-group\(\*\)/);
 });
 
+test('large corners use continuous curvature only where the browser supports it', async () => {
+  const css = await read('frontend/src/styles.css');
+  assert.match(css, /@supports \(corner-shape:squircle\) \{[^}]*\.home-tile__badge[^}]*corner-shape:squircle/s);
+});
+
 test('page transitions and counters honor reduced motion', async () => {
   const countUp = await read('frontend/src/count-up.jsx');
   assert.match(countUp, /prefers-reduced-motion: reduce/);
