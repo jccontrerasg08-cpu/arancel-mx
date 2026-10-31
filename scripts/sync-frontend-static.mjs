@@ -34,7 +34,7 @@ const sourceFavicon = path.join(source, 'favicon.svg');
 const index = await readFile(sourceIndex, 'utf8');
 await writeFile(sourceIndex, index.replace(`/assets/${bundleName}`, `/assets/${stableBundleName}`));
 const publishedAssetNames = new Set(await readdir(sourceAssets));
-const generatedBundle = /^(?:index|glossary-page)-[A-Za-z0-9_-]{8,12}\.(?:js|css)$/;
+const generatedBundle = /^(?:index|glossary-page|data-page|dof-changes-page|dof-changes|dof-change-detail)-[A-Za-z0-9_-]{8,12}\.(?:js|css)$/;
 
 await mkdir(destination, { recursive: true });
 const destinationAssets = path.join(destination, 'assets');

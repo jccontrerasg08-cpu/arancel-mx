@@ -209,3 +209,47 @@ input { width:min(100%,38rem); min-height:2.8rem; border:1px solid var(--line); 
 .record-skeleton>div { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.9rem; }
 .record-skeleton>div span { height:6rem; border-radius:1.2rem; }
 @media (max-width:600px) { .record-skeleton>div { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+
+/* Cifras: tarjetas, datos curiosos y tablas con barras. */
+.stat-tiles { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:.9rem; margin:0 0 2.5rem; }
+.stat-tiles article { border:1px solid var(--line); border-radius:1.2rem; background:var(--tile-bg,var(--panel)); padding:1.1rem; }
+.stat-tiles strong { display:block; color:var(--ink); font:600 clamp(1.5rem,2.4vw,2rem) var(--display); }
+.stat-tiles span { color:color-mix(in srgb,var(--ink) 80%,var(--tile-bg,var(--panel))); font-size:.85rem; }
+.data-section { margin:0 0 3rem; }
+.data-section h2 { margin-bottom:1rem; font:600 clamp(1.5rem,2.6vw,2rem) var(--display); }
+.fact-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1rem; }
+.fact-grid article { border:1px solid var(--line); border-radius:1.2rem; background:var(--panel); padding:1.2rem 1.3rem; }
+.fact-grid strong { display:block; color:var(--brand); font:600 2.4rem/1.1 var(--display); }
+.fact-grid p { margin:.4rem 0 0; }
+.data-table-wrap { overflow-x:auto; border:1px solid var(--line); border-radius:1rem; background:var(--panel); }
+.data-table { width:100%; border-collapse:collapse; font-size:.95rem; }
+.data-table caption { padding:.9rem 1rem; color:var(--muted); font-size:.85rem; text-align:left; }
+.data-table th,.data-table td { border-top:1px solid var(--line); padding:.7rem 1rem; text-align:left; vertical-align:middle; }
+.data-table thead th { background:var(--surface); color:var(--muted); font:500 .75rem 'DM Mono',monospace; letter-spacing:.06em; text-transform:uppercase; }
+.data-table tbody th { font-weight:700; }
+.data-table .is-numeric { text-align:right; font-family:'DM Mono',monospace; font-variant-numeric:tabular-nums; }
+.data-bar { display:block; width:min(10rem,100%); height:.6rem; overflow:hidden; border-radius:999px; background:var(--line); }
+.data-bar span { display:block; height:100%; border-radius:inherit; background:var(--brand); }
+@media (max-width:900px) { .stat-tiles { grid-template-columns:repeat(3,minmax(0,1fr)); }.fact-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:600px) { .stat-tiles { grid-template-columns:repeat(2,minmax(0,1fr)); }.fact-grid { grid-template-columns:1fr; }.data-table th,.data-table td { padding:.6rem .7rem; } }
+
+/* Cambios en el DOF: línea del tiempo, detalle por publicación y paginación. */
+.dof-timeline { display:grid; gap:1rem; margin:1rem 0 0; padding:0; list-style:none; }
+.dof-timeline>li { display:grid; grid-template-columns:11rem minmax(0,1fr); gap:1.2rem; border:1px solid var(--line); border-radius:1.2rem; background:var(--panel); padding:1.2rem 1.4rem; }
+.dof-timeline time { color:var(--brand); font:600 1.1rem/1.3 var(--display); }
+.dof-timeline h3 { margin:0 0 .6rem; font-size:1.08rem; line-height:1.35; }
+.dof-timeline h3 a { color:var(--ink); text-decoration:none; }
+.dof-timeline h3 a:hover { color:var(--brand); text-decoration:underline; }
+.dof-chips { display:flex; flex-wrap:wrap; gap:.4rem; margin:0 0 .8rem; }
+.dof-chips span { border-radius:999px; background:color-mix(in srgb,var(--brand) 12%,var(--panel)); color:var(--ink); padding:.18rem .65rem; font-size:.8rem; font-weight:600; }
+.dof-chips span:first-child { background:var(--tile-learn-bg); }
+.dof-actions { display:flex; flex-wrap:wrap; gap:.6rem; margin:0; }
+.change-matches { display:grid; gap:.4rem; margin:.8rem 0 0; padding-left:1.2rem; }
+.dof-title { max-width:none; margin:.3rem 0 .8rem; font-family:var(--display); font-size:clamp(1.5rem,3vw,2.3rem); font-weight:600; letter-spacing:-.02em; line-height:1.2; }
+.dof-facts { display:grid; grid-template-columns:repeat(auto-fit,minmax(14rem,1fr)); gap:.9rem; margin:1rem 0; }
+.dof-facts div { border:1px solid var(--line); border-radius:1rem; background:var(--panel); padding:.9rem 1.1rem; }
+.dof-facts dt { color:var(--muted); font-size:.82rem; }
+.dof-facts dd { margin:.15rem 0 0; font-weight:700; }
+.dof-pager { display:flex; justify-content:space-between; gap:1rem; margin-top:2rem; border-top:1px solid var(--line); padding-top:1rem; }
+.code-chips { display:flex; flex-wrap:wrap; gap:.4rem; }
+@media (max-width:700px) { .dof-timeline>li { grid-template-columns:1fr; gap:.4rem; } }

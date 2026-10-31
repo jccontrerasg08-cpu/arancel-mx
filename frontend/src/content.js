@@ -2,6 +2,7 @@ export const NAVIGATION = [
   ['Explorer', '/app'],
   ['Chapters', '/chapters'],
   ['Changes', '/changes'],
+  ['Figures', '/data'],
   ['MOA guide', '/moa'],
   ['Wiki', '/wiki'],
   ['Glossary', '/glossary'],
@@ -17,7 +18,7 @@ export const NAVIGATION = [
 export const NAV_GROUPS = [
   { id: 'explore', href: '/app' },
   { id: 'learn', items: ['/glossary', '/wiki', '/moa', '/trade-context'] },
-  { id: 'data', items: ['/chapters', '/changes', '/documentation'] },
+  { id: 'data', items: ['/data', '/chapters', '/changes', '/documentation'] },
   { id: 'trust', href: '/trust' },
 ];
 
@@ -66,7 +67,13 @@ export const EDITORIAL_PAGES = {
     description: 'Explicación y series oficiales para importaciones, exportaciones, balanza, entidades y socios.',
     disclaimer: 'El contexto histórico no determina una fracción ni una operación individual.',
   },
-  '/documentation': {
+  '/data': {
+    eyebrow: 'DATOS · CIFRAS DE LA RELEASE',
+    title: 'El arancel de México en cifras.',
+    description: 'Estadísticas, tablas y datos curiosos calculados a partir de la release verificada, con su fuente a la vista.',
+    disclaimer: 'Son cifras descriptivas del dataset; no determinan la clasificación ni el tratamiento arancelario de una mercancía.',
+    en: { eyebrow: 'DATA · RELEASE FIGURES', title: 'Mexico’s tariff in figures.', description: 'Statistics, tables and fun facts computed from the verified release, with its source in view.', disclaimer: 'These are descriptive dataset figures; they do not determine how a good is classified or taxed.' },
+  },  '/documentation': {
     eyebrow: 'CENTRO DE DOCUMENTACIÓN',
     title: 'Empieza por el contrato y luego escribe la integración.',
     description: 'Guías técnicas para consumir releases verificables, API y artefactos de verificación.',
@@ -94,11 +101,11 @@ export const EDITORIAL_PAGES = {
     disclaimer: 'Esta es una superficie de consulta, no una herramienta de clasificación.',
   },
   '/changes': {
-    eyebrow: 'SEÑALES DE RELEASE · PRIMERO LA EVIDENCIA',
-    title: 'Consulta qué muestra hoy una fracción verificada.',
-    description: 'Inspecciona campos de release, jerarquía, vigencia y procedencia antes de interpretar una diferencia.',
-    disclaimer: 'La evidencia documentada no afirma que una reforma legal aplique a una operación individual.',
-    en: { eyebrow: 'RELEASE SIGNALS · EVIDENCE FIRST', title: 'Find what a verified fraction shows now.', description: 'Inspect release fields, hierarchy, validity and provenance before interpreting a difference.', disclaimer: 'Documented evidence does not state that a legal reform applies to an individual operation.' },
+    eyebrow: 'CAMBIOS EN EL DOF · CÓDIGOS ARANCELARIOS',
+    title: 'Cambios del DOF a los códigos arancelarios.',
+    description: 'Cada decreto o acuerdo publicado en el Diario Oficial que modifica la tarifa: cuándo salió, qué fracciones tocó y dónde leer el documento original.',
+    disclaimer: 'La publicación de un cambio no determina cómo se aplica a una operación individual; verifica su vigencia en la fuente oficial.',
+    en: { eyebrow: 'DOF CHANGES · TARIFF CODES', title: 'DOF changes to tariff codes.', description: 'Every decree or agreement published in the Diario Oficial that changes the tariff: when it came out, which fractions it touched and where to read the original document.', disclaimer: 'The publication of a change does not determine how it applies to an individual operation; check its validity in the official source.' },
   },
 };
 

@@ -52,6 +52,7 @@ _MARKETING_PAGES = (
     "/records",
     "/chapters",
     "/changes",
+    "/data",
     "/moa",
     "/moa-guide",
     "/wiki",
@@ -336,6 +337,12 @@ def create_app(
     @application.get("/app/{client_path:path}", include_in_schema=False)
     def explorer(client_path: str = "") -> FileResponse:
         """Serve the React explorer and its durable client-side routes."""
+
+        return marketing_page()
+
+    @application.get("/changes/{client_path:path}", include_in_schema=False)
+    def change_detail(client_path: str = "") -> FileResponse:
+        """Serve the client-side page of one DOF publication."""
 
         return marketing_page()
 

@@ -145,28 +145,7 @@ test('serves verified chapter and fraction-change discovery routes', async ({ pa
   await page.goto('/chapters');
   await expect(page.getByRole('heading', { name: /capítulos, familias y jerarquía/i })).toBeVisible();
   await page.goto('/changes');
-  await expect(page.getByRole('heading', { name: /consulta qué muestra hoy una fracción verificada/i })).toBeVisible();
-  await expect(page.getByRole('button', { name: /consultar release/i })).toBeVisible();
-});
-
-test('shows a bounded history of immutable data releases', async ({ page }) => {
-  await page.route('https://api.github.com/repos/jccontrerasg08-cpu/arancel-mx/releases**', (route) => route.fulfill({
-    contentType: 'application/json',
-    body: JSON.stringify([
-      {
-        tag_name: 'data-2026.08.22',
-        published_at: '2026-08-22T11:17:00Z',
-        html_url: 'https://github.com/jccontrerasg08-cpu/arancel-mx/releases/tag/data-2026.08.22',
-      },
-    ]),
-  }));
-  await page.goto('/changes');
-
-  await expect(page.getByRole('heading', { name: /historial de releases verificadas/i })).toBeVisible();
-  await expect(page.getByRole('link', { name: /data-2026\.08\.22/i })).toHaveAttribute(
-    'href',
-    'https://github.com/jccontrerasg08-cpu/arancel-mx/releases/tag/data-2026.08.22',
-  );
+  await expect(page.getByRole('heading', { name: /cambios del dof a los códigos arancelarios/i })).toBeVisible();
 });
 
 
@@ -431,7 +410,24 @@ test('shows the trust, records and changes pages in English when the language is
   await expect(page.getByRole('heading', { name: /save evidence you can return to/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /check verified record/i })).toBeVisible();
   await page.goto('/changes');
-  await expect(page.getByRole('button', { name: /inspect release/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /dof changes to tariff codes/i })).toBeVisible();
+});
+
+test('shows figures, fun facts and tables computed from the verified release', async ({ page }) => {
+  await page.goto('/data');
+  await expect(page.getByRole('heading', { name: /el arancel de méxico en cifras/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /sabías que/i })).toBeVisible();
+  await expect(page.getByRole('table', { name: /10 capítulos con más fracciones/i })).toBeVisible();
+  await expect(page.getByRole('table', { name: /registros tiene cada nivel/i })).toBeVisible();
+  await expect(page.getByTestId('data-source')).toContainText(/release/i);
+});
+
+test('reaches the figures page from the Datos menu', async ({ page }) => {
+  await page.goto('/');
+  const navigation = page.getByLabel('Navegación principal');
+  await navigation.getByRole('button', { name: /^datos$/i }).click();
+  await navigation.getByRole('link', { name: /^cifras$/i }).click();
+  await expect(page).toHaveURL(/\/data$/);
 });
 
 test('lists every HS section and loads the families of a chapter when it opens', async ({ page }) => {
@@ -441,4 +437,34 @@ test('lists every HS section and loads the families of a chapter when it opens',
   await section.click();
   await page.getByRole('button', { name: /capítulo 85/i }).click();
   await expect(page.getByRole('button', { name: /partida · familia HS4 85\.17 · teléfonos/i })).toBeVisible();
+});
+
+test('lists the DOF publications that changed the tariff and filters them by type', async ({ page }) => {
+  await page.goto('/changes');
+  const items = page.getByTestId('dof-timeline').locator(':scope > li');
+  await expect(items.first()).toBeVisible();
+  expect(await items.count()).toBeGreaterThan(20);
+  const before = await items.count();
+  await page.getByRole('button', { name: /^acuerdos$/i }).click();
+  await expect(page.getByRole('button', { name: /^acuerdos$/i })).toHaveAttribute('aria-pressed', 'true');
+  expect(await items.count()).toBeLessThan(before);
+  await expect(page.getByText(/historial de releases/i)).toHaveCount(0);
+});
+
+test('opens a publication with its fractions, the DOF link and the original document', async ({ page }) => {
+  await page.goto('/changes');
+  await page.getByRole('link', { name: /modifica la tarifa de la ligie y el decreto prosec/i }).first().click();
+  await expect(page).toHaveURL(/\/changes\/tarifa15$/);
+  const detail = page.getByTestId('dof-detail');
+  await expect(detail.getByRole('table')).toBeVisible();
+  expect(await detail.locator('tbody tr').count()).toBeGreaterThan(50);
+  await expect(detail.getByRole('link', { name: /ver en el dof/i })).toHaveAttribute('href', /year=2026&month=04&day=23/);
+  await expect(detail.getByRole('link', { name: /documento de la publicación/i })).toHaveAttribute('href', /LIGIE_2022_tarifa15_23abr26\.pdf$/);
+});
+
+test('finds which DOF publications touched a fraction', async ({ page }) => {
+  await page.goto('/changes');
+  await page.getByLabel(/código o prefijo/i).fill('28272001');
+  await expect(page.getByRole('status').filter({ hasText: /publicaciones del DOF tocan/i })).toBeVisible();
+  await expect(page.locator('.change-matches li').first()).toContainText(/IGI 35%/);
 });
