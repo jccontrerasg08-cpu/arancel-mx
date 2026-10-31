@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { editorialPage, OFFICIAL_LINKS } from './content.js';
+import { CountUp } from './count-up.jsx';
 import { computeStats } from './data-stats.js';
 import { useLocale } from './locale.jsx';
 import { DATA_BASE } from './pages.jsx';
@@ -52,10 +53,10 @@ export default function DataPage() {
     const nico = stats.mostNico;
     const wide = stats.widestSection;
     const list = [];
-    if (first) list.push([number(first.fractions, language), t(`El capítulo ${first.code} (${short(first.description)}) es el que tiene más fracciones.`, `Chapter ${first.code} (${short(first.description)}) has the most fractions.`)]);
-    if (heading.count) list.push([number(heading.count, language), t(`La partida ${formatCode(heading.code)} concentra ${heading.count} fracciones, más que cualquier otra.`, `Heading ${formatCode(heading.code)} holds ${heading.count} fractions, more than any other.`)]);
+    if (first) list.push([first.fractions, t(`El capítulo ${first.code} (${short(first.description)}) es el que tiene más fracciones.`, `Chapter ${first.code} (${short(first.description)}) has the most fractions.`)]);
+    if (heading.count) list.push([heading.count, t(`La partida ${formatCode(heading.code)} concentra ${heading.count} fracciones, más que cualquier otra.`, `Heading ${formatCode(heading.code)} holds ${heading.count} fractions, more than any other.`)]);
     if (stats.averageNico) list.push([stats.averageNico.toFixed(1), t(`NICO por fracción en promedio: ${number(stats.levels[10], language)} códigos de 10 dígitos sobre ${number(stats.levels[8], language)} fracciones.`, `NICO per fraction on average: ${number(stats.levels[10], language)} 10-digit codes over ${number(stats.levels[8], language)} fractions.`)]);
-    if (nico.count) list.push([number(nico.count, language), t(`La fracción ${formatCode(nico.code)} es la que se desglosa en más NICO.`, `Fraction ${formatCode(nico.code)} breaks down into the most NICO.`)]);
+    if (nico.count) list.push([nico.count, t(`La fracción ${formatCode(nico.code)} es la que se desglosa en más NICO.`, `Fraction ${formatCode(nico.code)} breaks down into the most NICO.`)]);
     if (wide) list.push([String(wide.chapters), t(`La Sección ${wide.roman} (${short(wide.name, 48)}) es la que agrupa más capítulos.`, `Section ${wide.roman} (${short(wide.name, 48)}) groups the most chapters.`)]);
     if (stats.emptyChapters.length) list.push([String(stats.emptyChapters.length), t(`capítulos no tienen fracciones en esta release: ${stats.emptyChapters.join(', ')}.`, `chapters have no fractions in this release: ${stats.emptyChapters.join(', ')}.`)]);
     return list;
@@ -69,9 +70,9 @@ export default function DataPage() {
     {state.kind === 'loading' && <><p className="status" role="status">{t('Calculando cifras de la release verificada…', 'Computing figures from the verified release…')}</p><div className="record-skeleton" aria-hidden="true"><div><span className="skeleton"/><span className="skeleton"/><span className="skeleton"/><span className="skeleton"/></div></div></>}
     {state.kind === 'error' && <section className="empty-state"><h2>{t('Las cifras no están disponibles temporalmente.', 'The figures are temporarily unavailable.')}</h2><button className="button primary" type="button" onClick={() => setAttempt((current) => current + 1)}>{t('Reintentar', 'Retry')}</button></section>}
     {stats && <>
-      <section className="stat-tiles" aria-label={t('Cifras principales', 'Key figures')}>{tiles.map(([tone, value, label]) => <article key={label} className={`metric-tile metric-tile--${tone}`}><strong>{number(value, language)}</strong><span>{label}</span></article>)}</section>
+      <section className="stat-tiles" aria-label={t('Cifras principales', 'Key figures')}>{tiles.map(([tone, value, label]) => <article key={label} className={`metric-tile metric-tile--${tone}`}><strong><CountUp value={value} language={language}/></strong><span>{label}</span></article>)}</section>
 
-      <section className="data-section" aria-labelledby="facts-title"><h2 id="facts-title">{t('¿Sabías que…?', 'Did you know…?')}</h2><div className="fact-grid">{facts.map(([value, text]) => <article key={text}><strong>{value}</strong><p>{text}</p></article>)}</div></section>
+      <section className="data-section" aria-labelledby="facts-title"><h2 id="facts-title">{t('¿Sabías que…?', 'Did you know…?')}</h2><div className="fact-grid">{facts.map(([value, text]) => <article key={text}><strong>{typeof value === 'number' ? <CountUp value={value} language={language}/> : value}</strong><p>{text}</p></article>)}</div></section>
 
       <section className="data-section" aria-labelledby="chapters-title"><h2 id="chapters-title">{t('Capítulos con más fracciones', 'Chapters with the most fractions')}</h2>
         <DataTable caption={t('Los 10 capítulos con más fracciones de 8 dígitos', 'The 10 chapters with the most 8-digit fractions')} columns={[{ key: 'chapter', label: t('Capítulo', 'Chapter') }, { key: 'description', label: t('Descripción', 'Description') }, { key: 'fractions', label: t('Fracciones', 'Fractions'), numeric: true }, { key: 'nico', label: 'NICO', numeric: true }, { key: 'bar', label: t('Proporción', 'Share') }]}

@@ -12,6 +12,8 @@ export default defineConfig({
     : [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: 'http://127.0.0.1:8000',
+    // Spring animations and view transitions are skipped in tests so clicks never wait on motion.
+    reducedMotion: 'reduce',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
