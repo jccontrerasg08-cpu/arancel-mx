@@ -191,3 +191,21 @@ input { width:min(100%,38rem); min-height:2.8rem; border:1px solid var(--line); 
 @keyframes skeleton-shimmer { from { background-position:200% 0; } to { background-position:-200% 0; } }
 @media (max-width:900px) { .search-trigger { width:2.4rem; justify-content:center; padding:0; }.search-trigger__label,.search-trigger kbd { display:none; } }
 @media (max-width:600px) { .palette li code { flex-basis:5.6rem; }.palette__hint { display:none; } }
+
+/* Ficha: tarjetas de tasas por color, esqueleto de carga y jerarquía plegable. */
+.record-metrics { gap:.9rem; overflow:visible; border:0; background:transparent; }
+.record-metrics article { border:1px solid var(--line); border-radius:1.2rem; background:var(--tile-bg,var(--panel)); }
+.record-metrics .metric-tile strong { color:var(--ink); font-family:var(--display); font-size:1.6rem; font-weight:600; }
+.record-metrics .metric-tile span { color:color-mix(in srgb,var(--ink) 80%,var(--tile-bg,var(--panel))); }
+.metric-tile--explore { --tile-bg:var(--tile-explore-bg); }
+.metric-tile--data { --tile-bg:var(--tile-data-bg); }
+.metric-tile--learn { --tile-bg:var(--tile-learn-bg); }
+.metric-tile--trust { --tile-bg:var(--tile-trust-bg); }
+.hierarchy li .is-clamped { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; overflow:hidden; }
+.hierarchy li>.text-button { display:block; margin-top:.25rem; min-height:2.75rem; }
+.record-skeleton { display:grid; gap:1rem; max-width:70rem; margin-top:1rem; }
+.record-skeleton>span:first-child { width:min(22rem,60%); height:3.2rem; }
+.record-skeleton>span:nth-child(2) { width:min(34rem,90%); height:1.2rem; }
+.record-skeleton>div { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.9rem; }
+.record-skeleton>div span { height:6rem; border-radius:1.2rem; }
+@media (max-width:600px) { .record-skeleton>div { grid-template-columns:repeat(2,minmax(0,1fr)); } }
