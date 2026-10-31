@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { BrowserRouter, Link, Route, Routes, useLocation } from 'react-router-dom';
 
 import { EDITORIAL_PAGES, NAV_GROUPS, NAVIGATION, OFFICIAL_LINKS } from './content.js';
+import { CommandPalette, OPEN_SEARCH_EVENT, shortcutLabel } from './command-palette.jsx';
 import { LocaleProvider, useLocale } from './locale.jsx';
 import { PAGE_COMPONENTS } from './pages.jsx';
 import brandLogo from '../../src/arancel_mx/api/static/site/assets/arancel-mx-logo.svg';
@@ -80,7 +81,7 @@ function SiteHeader() {
   const groups = compact
     ? <>{NAV_GROUPS.map((group) => group.href ? link(group.href, copy.navGroups[group.id]) : <div className="nav-section" key={group.id}><p className="nav-section__label">{copy.navGroups[group.id]}</p>{group.items.map((href) => link(href, copy.navigation[href]))}</div>)}{link('/records', copy.navigation['/records'])}</>
     : <>{NAV_GROUPS.map((group) => group.href ? link(group.href, copy.navGroups[group.id]) : <NavMenu key={group.id} group={group} pathname={location.pathname}/>)}</>;
-  return <><a className="skip-link" href="#main-content">{copy.header.skip}</a><header className="site-header"><div className="site-header__inner"><Link className="brand-lockup" to="/" aria-label="arancel.mx"><img src={brandLogo} alt=""/></Link><button ref={toggleRef} className="nav-toggle" type="button" aria-label={open ? copy.header.close : copy.header.open} aria-expanded={open} aria-controls="site-navigation" onClick={() => setOpen((current) => !current)}><span aria-hidden="true">{open ? '×' : '☰'}</span></button><nav id="site-navigation" className={open ? 'site-nav is-open' : 'site-nav'} aria-label={copy.header.navigation}>{groups}</nav><div className="site-header__actions"><Link className="records-link" to="/records">{copy.navigation['/records']}</Link><LanguageToggle/><ThemeToggle/><a className="github-link" href={OFFICIAL_LINKS.github} target="_blank" rel="noreferrer">GitHub</a></div></div></header></>;
+  return <><a className="skip-link" href="#main-content">{copy.header.skip}</a><header className="site-header"><div className="site-header__inner"><Link className="brand-lockup" to="/" aria-label="arancel.mx"><img src={brandLogo} alt=""/></Link><button ref={toggleRef} className="nav-toggle" type="button" aria-label={open ? copy.header.close : copy.header.open} aria-expanded={open} aria-controls="site-navigation" onClick={() => setOpen((current) => !current)}><span aria-hidden="true">{open ? '×' : '☰'}</span></button><nav id="site-navigation" className={open ? 'site-nav is-open' : 'site-nav'} aria-label={copy.header.navigation}>{groups}</nav><div className="site-header__actions"><button className="search-trigger" type="button" aria-label={copy.header.searchOpen} onClick={() => window.dispatchEvent(new CustomEvent(OPEN_SEARCH_EVENT))}><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span className="search-trigger__label" aria-hidden="true">{copy.header.search}</span><kbd aria-hidden="true">{shortcutLabel()}</kbd></button><Link className="records-link" to="/records">{copy.navigation['/records']}</Link><LanguageToggle/><ThemeToggle/><a className="github-link" href={OFFICIAL_LINKS.github} target="_blank" rel="noreferrer">GitHub</a></div></div></header></>;
 }
 function SiteFooter() {
   const { copy } = useLocale();
@@ -110,5 +111,5 @@ function RoutedPage({ Component }) {
 }
 
 export function App() {
-  return <LocaleProvider><BrowserRouter><SiteHeader/><Routes>{Object.entries(PAGE_COMPONENTS).map(([path, Component]) => <Route key={path} path={path} element={<RoutedPage Component={Component} />} />)}<Route path="/glossary" element={<RoutedPage Component={DeferredGlossaryPage} />}/><Route path="/product" element={<RoutedPage Component={PAGE_COMPONENTS['/app']} />}/><Route path="/app/chapter/:code" element={<RoutedPage Component={PAGE_COMPONENTS['/app/record/:code']} />}/><Route path="*" element={<RoutedPage Component={NotFoundPage} />}/></Routes><SiteFooter/></BrowserRouter></LocaleProvider>;
+  return <LocaleProvider><BrowserRouter><SiteHeader/><CommandPalette/><Routes>{Object.entries(PAGE_COMPONENTS).map(([path, Component]) => <Route key={path} path={path} element={<RoutedPage Component={Component} />} />)}<Route path="/glossary" element={<RoutedPage Component={DeferredGlossaryPage} />}/><Route path="/product" element={<RoutedPage Component={PAGE_COMPONENTS['/app']} />}/><Route path="/app/chapter/:code" element={<RoutedPage Component={PAGE_COMPONENTS['/app/record/:code']} />}/><Route path="*" element={<RoutedPage Component={NotFoundPage} />}/></Routes><SiteFooter/></BrowserRouter></LocaleProvider>;
 }

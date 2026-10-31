@@ -396,3 +396,27 @@ test('narrows the glossary with the alphabetical index', async ({ page }) => {
   await expect(rail.getByRole('button', { name: /^N$/ })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByRole('status')).toContainText(/^1 de 189/);
 });
+
+test('opens the quick search with Ctrl+K, offers verified paths and opens a record', async ({ page }) => {
+  await serveStaticRecords(page, [{ code: '85171301', description: 'Teléfonos inteligentes', level: 'fraccion8', dataset_version: '2026.08.15' }]);
+  await page.goto('/');
+  await page.keyboard.press('Control+k');
+  const dialog = page.getByRole('dialog', { name: /búsqueda rápida/i });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole('combobox')).toBeFocused();
+  await expect(dialog.getByRole('option').first()).toBeVisible();
+  await dialog.getByRole('combobox').fill('teléfonos');
+  await dialog.getByRole('option', { name: /85\.17\.13\.01/ }).click();
+  await expect(page).toHaveURL(/\/app\/record\/85171301$/);
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+});
+
+test('closes the quick search with Escape and returns focus to its trigger', async ({ page }) => {
+  await page.goto('/');
+  const trigger = page.getByRole('button', { name: /abrir búsqueda rápida/i });
+  await trigger.click();
+  await expect(page.getByRole('dialog', { name: /búsqueda rápida/i })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+});
