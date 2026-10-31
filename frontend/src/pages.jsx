@@ -294,24 +294,39 @@ export function ChaptersPage() {
   const [openChapters, setOpenChapters] = useState(new Set());
   const [query, setQuery] = useState('');
   const [indexState, setIndexState] = useState('loading');
+  const [loadedFamilies, setLoadedFamilies] = useState({});
   useEffect(() => {
     let active = true;
     setIndexState('loading');
     Promise.all([api('/v1/sections'), api('/v1/chapters')])
       .then(([nextSections, nextChapters]) => {
         if (!active) return;
-        // The fallback includes the public family navigation; preserve its DOM
-        // while it is populated instead of replacing focused controls with the
-        // flatter API chapter list during an interaction.
-        if (!sections.length && nextSections.length) setSections(nextSections);
-        if (!chapters.length && nextChapters.length) setChapters(nextChapters);
+        // Rows are keyed by section and chapter code, so replacing the packaged
+        // fallback keeps the controls a person already focused.
+        if (nextSections.length) setSections(nextSections.map((section) => ({ ...section, roman: /^sección/i.test(section.roman) ? section.roman : `Sección ${section.roman}` })));
+        if (nextChapters.length) setChapters(nextChapters);
         setIndexState('ready');
       })
       .catch(() => {
         if (active) setIndexState('fallback');
       });
     return () => { active = false; };
-  }, [chapters.length, sections.length]);
+  }, []);
+  // HS4 families come from each chapter's data file the first time it is opened.
+  useEffect(() => {
+    const pending = [...openChapters].filter((code) => !loadedFamilies[code]);
+    if (!pending.length) return undefined;
+    let active = true;
+    pending.forEach((code) => {
+      fetch(chapterDataUrl(code))
+        .then((response) => (response.ok ? response.json() : Promise.reject(new Error('families unavailable'))))
+        .then((records) => {
+          if (active) setLoadedFamilies((current) => ({ ...current, [code]: records.filter((record) => record.level === 'hs4').map((record) => ({ code: formatCode(record.code), description: record.description })) }));
+        })
+        .catch(() => {});
+    });
+    return () => { active = false; };
+  }, [loadedFamilies, openChapters]);
   const filtered = useMemo(() => chapters.filter((chapter) => `${chapter.code} ${chapter.description}`.toLowerCase().includes(query.toLowerCase())), [chapters, query]);
   useEffect(() => {
     if (!query.trim()) return;
@@ -320,7 +335,7 @@ export function ChaptersPage() {
     setOpenChapters(new Set(filtered.slice(0, 8).map((chapter) => chapter.code)));
   }, [filtered, query, sections]);
   const toggle = (setter, key) => setter((current) => { const next = new Set(current); next.has(key) ? next.delete(key) : next.add(key); return next; });
-  return <><PageHero page={EDITORIAL_PAGES['/chapters']}><Link className="button" to="/changes">Ver evidencia de fracciones</Link></PageHero><section className="workspace"><label htmlFor="chapter-query">Buscar capítulo, código o descripción</label><input id="chapter-query" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar capítulo, código o descripción"/><p className="status" role="status">{query.trim() ? `${filtered.length} capítulos coinciden y se expandieron mientras escribes.` : indexState === 'loading' ? 'Cargando el índice verificado de capítulos…' : indexState === 'fallback' ? 'Índice verificado no disponible. Se muestra la navegación incluida en el paquete.' : 'Índice verificado de capítulos cargado.'}</p><div className="accordion">{sections.map((section) => { const isOpen = openSections.has(section.roman); const rows = filtered.filter((chapter) => Number(chapter.code) >= section.chapter_from && Number(chapter.code) <= section.chapter_to); return <article key={section.roman}><button aria-expanded={isOpen} onClick={() => toggle(setOpenSections, section.roman)}><span>{section.roman} · {section.name}</span><span>{section.chapter_from}–{section.chapter_to} · {rows.length} visibles</span></button>{isOpen && <div className="accordion-panel">{rows.length ? rows.map((chapter) => { const isChapterOpen = openChapters.has(chapter.code); const families = chapter.families || [{ code: `${chapter.code}.01`, description: 'Consultar familia HS4 en la release verificada' }]; return <article key={chapter.code}><button aria-expanded={isChapterOpen} onClick={() => toggle(setOpenChapters, chapter.code)}>Capítulo {chapter.code} · {chapter.description}</button>{isChapterOpen && <div className="accordion-panel">{families.map((family) => <button key={family.code} className="family-action" onClick={() => navigate(`/app?q=${encodeURIComponent(family.code)}`)}>Partida · familia HS4 {family.code} · {family.description}</button>)}</div>}</article>; }) : <p>Ningún capítulo verificado coincide con este filtro.</p>}</div>}</article>; })}</div></section></>;
+  return <><PageHero page={EDITORIAL_PAGES['/chapters']}><Link className="button" to="/changes">Ver evidencia de fracciones</Link></PageHero><section className="workspace"><label htmlFor="chapter-query">Buscar capítulo, código o descripción</label><input id="chapter-query" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar capítulo, código o descripción"/><p className="status" role="status">{query.trim() ? `${filtered.length} capítulos coinciden y se expandieron mientras escribes.` : indexState === 'loading' ? 'Cargando el índice verificado de capítulos…' : indexState === 'fallback' ? 'Índice verificado no disponible. Se muestra la navegación incluida en el paquete.' : 'Índice verificado de capítulos cargado.'}</p><div className="accordion">{sections.map((section) => { const isOpen = openSections.has(section.roman); const rows = filtered.filter((chapter) => Number(chapter.code) >= section.chapter_from && Number(chapter.code) <= section.chapter_to); return <article key={section.roman}><button aria-expanded={isOpen} onClick={() => toggle(setOpenSections, section.roman)}><span>{section.roman} · {section.name}</span><span>{section.chapter_from}–{section.chapter_to} · {rows.length} visibles</span></button>{isOpen && <div className="accordion-panel">{rows.length ? rows.map((chapter) => { const isChapterOpen = openChapters.has(chapter.code); const families = loadedFamilies[chapter.code] || chapter.families || [{ code: `${chapter.code}.01`, description: 'Consultar familia HS4 en la release verificada' }]; return <article key={chapter.code}><button aria-expanded={isChapterOpen} onClick={() => toggle(setOpenChapters, chapter.code)}>Capítulo {chapter.code} · {chapter.description}</button>{isChapterOpen && <div className="accordion-panel">{families.map((family) => <button key={family.code} className="family-action" onClick={() => navigate(`/app?q=${encodeURIComponent(family.code)}`)}>Partida · familia HS4 {family.code} · {family.description}</button>)}</div>}</article>; }) : <p>Ningún capítulo verificado coincide con este filtro.</p>}</div>}</article>; })}</div></section></>;
 }
 
 export function ChangesPage() {
