@@ -11,6 +11,16 @@ export const NAVIGATION = [
   ['My records', '/records'],
 ];
 
+// The header keeps four items. A group with `href` opens its page; one with
+// `items` holds the remaining destinations. `/records` lives in the header
+// actions, so every other NAVIGATION entry belongs to exactly one group.
+export const NAV_GROUPS = [
+  { id: 'explore', href: '/app' },
+  { id: 'learn', items: ['/glossary', '/wiki', '/moa', '/trade-context'] },
+  { id: 'data', items: ['/chapters', '/changes', '/documentation'] },
+  { id: 'trust', href: '/trust' },
+];
+
 export const OFFICIAL_LINKS = {
   anamMoa: 'https://www.anam.gob.mx/manual-de-operacion-aduanera-moa/',
   anamMoaPdf: 'https://www.anam.gob.mx/wp-content/uploads/2022/05/Manual-de-Operacion-Aduanera-MOA-may2022.pdf',
@@ -57,22 +67,25 @@ export const EDITORIAL_PAGES = {
     disclaimer: 'El contexto histórico no determina una fracción ni una operación individual.',
   },
   '/documentation': {
-    eyebrow: 'DOCUMENTATION HUB',
-    title: 'Start with the contract, then write the integration.',
+    eyebrow: 'CENTRO DE DOCUMENTACIÓN',
+    title: 'Empieza por el contrato y luego escribe la integración.',
     description: 'Guías técnicas para consumir releases verificables, API y artefactos de verificación.',
     disclaimer: 'Cada integración debe usar una release inmutable y verificarla localmente.',
+    en: { eyebrow: 'DOCUMENTATION HUB', title: 'Start with the contract, then write the integration.', description: 'Technical guides to consume verifiable releases, the API and verification artifacts.', disclaimer: 'Every integration should use an immutable release and verify it locally.' },
   },
   '/trust': {
-    eyebrow: 'OPEN-SOURCE TRUST',
-    title: 'When evidence is incomplete, the release stops.',
+    eyebrow: 'CONFIANZA EN CÓDIGO ABIERTO',
+    title: 'Si la evidencia está incompleta, la release se detiene.',
     description: 'El modelo de confianza conecta fuentes, reconciliación, build fail-closed y verificación independiente.',
     disclaimer: 'La publicación sólo continúa cuando los controles de evidencia necesarios están completos.',
+    en: { eyebrow: 'OPEN-SOURCE TRUST', title: 'When evidence is incomplete, the release stops.', description: 'The trust model connects sources, reconciliation, a fail-closed build and independent verification.', disclaimer: 'Publication continues only when the required evidence controls are complete.' },
   },
   '/records': {
-    eyebrow: 'LOCAL RESEARCH RECORDS · THIS DEVICE ONLY',
-    title: 'Save evidence you can return to.',
-    description: 'Stored only in this browser. Prepare research records from verified codes without an account or server storage.',
+    eyebrow: 'REGISTROS LOCALES DE INVESTIGACIÓN · SOLO EN ESTE DISPOSITIVO',
+    title: 'Guarda evidencia a la que puedas volver.',
+    description: 'Se guardan solo en este navegador. Prepara registros de investigación a partir de códigos verificados, sin cuenta ni almacenamiento en un servidor.',
     disclaimer: 'Los registros no son clasificación, opinión legal ni un pedimento; borrar datos del navegador elimina la lista.',
+    en: { eyebrow: 'LOCAL RESEARCH RECORDS · THIS DEVICE ONLY', title: 'Save evidence you can return to.', description: 'Stored only in this browser. Prepare research records from verified codes without an account or server storage.', disclaimer: 'Records are not a classification, legal opinion or customs entry; clearing browser data removes the list.' },
   },
   '/chapters': {
     eyebrow: 'Estructura verificada · versión vigente',
@@ -81,11 +94,18 @@ export const EDITORIAL_PAGES = {
     disclaimer: 'Esta es una superficie de consulta, no una herramienta de clasificación.',
   },
   '/changes': {
-    eyebrow: 'RELEASE SIGNALS · EVIDENCE FIRST',
-    title: 'Find what a verified fraction shows now.',
+    eyebrow: 'SEÑALES DE RELEASE · PRIMERO LA EVIDENCIA',
+    title: 'Consulta qué muestra hoy una fracción verificada.',
     description: 'Inspecciona campos de release, jerarquía, vigencia y procedencia antes de interpretar una diferencia.',
     disclaimer: 'La evidencia documentada no afirma que una reforma legal aplique a una operación individual.',
+    en: { eyebrow: 'RELEASE SIGNALS · EVIDENCE FIRST', title: 'Find what a verified fraction shows now.', description: 'Inspect release fields, hierarchy, validity and provenance before interpreting a difference.', disclaimer: 'Documented evidence does not state that a legal reform applies to an individual operation.' },
   },
+};
+
+// Editorial copy is Spanish by default; a page with an `en` entry has an English version.
+export const editorialPage = (path, language) => {
+  const page = EDITORIAL_PAGES[path];
+  return page && language === 'en' && page.en ? { ...page, ...page.en } : page;
 };
 
 export const FALLBACK_SECTIONS = [

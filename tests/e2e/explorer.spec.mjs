@@ -6,9 +6,9 @@ import { failStaticFile, serveStaticRecords } from './static-data.mjs';
 
 test('serves the public marketing root and preserves the explorer handoff', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: /inteligencia arancelaria/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /consulta el arancel de méxico/i })).toBeVisible();
   await expect(page.getByText(/Apache-2\.0/i).first()).toBeVisible();
-  await expect(page.getByRole('button', { name: /abrir explorador/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^buscar$/i })).toBeVisible();
 });
 
 test('serves the canonical favicon and renders one lockup in the public header', async ({ page }) => {
@@ -25,8 +25,8 @@ test('defaults the public hero to Spanish and keeps English as an explicit optio
   const language = page.getByLabel(/idioma de la interfaz/i);
   await expect(language).toHaveValue('es');
   await language.selectOption('en');
-  await expect(page.getByRole('heading', { name: /tariff intelligence/i })).toBeVisible();
-  await expect(page.getByRole('button', { name: /open explorer/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /look up mexico/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^search$/i })).toBeVisible();
 });
 
 test('keeps Spanish document semantics on routes that are not yet localized', async ({ page }) => {
@@ -59,28 +59,10 @@ test('keeps the mobile header controls inside a 320 pixel viewport', async ({ pa
   await expect(page.getByRole('button', { name: /abrir menú de navegación/i })).toBeVisible();
 });
 
-test('keeps evidence cards controllable and backed by a loaded topical visual', async ({ page }) => {
-  await page.goto('/');
-  const evidence = page.getByTestId('example-rotator');
-  await expect(evidence.getByRole('button', { name: /pausar fichas/i })).toHaveAttribute('aria-pressed', 'false');
-  await evidence.getByRole('button', { name: /pausar fichas/i }).click();
-  await expect(evidence.getByRole('button', { name: /continuar fichas/i })).toHaveAttribute('aria-pressed', 'true');
-  expect(await evidence.locator('.evidence-card__image').evaluate((image) => image.complete && image.naturalWidth > 0)).toBe(true);
-});
-
-test('uses the public metadata release in the evidence card when it is available', async ({ page }) => {
+test('uses the public metadata release in the release badge when it is available', async ({ page }) => {
   await page.route('**/data/v1/meta.json', (route) => route.fulfill({ json: { dataset_version: '2026.08.24' } }));
   await page.goto('/');
-  await expect(page.getByTestId('example-rotator')).toContainText('2026.08.24');
-});
-
-test('does not rotate evidence cards when reduced motion is requested', async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/');
-  const evidence = page.getByTestId('example-rotator');
-  const initial = await evidence.locator('.evidence-card__record strong').textContent();
-  await page.waitForTimeout(5800);
-  await expect(evidence.locator('.evidence-card__record strong')).toHaveText(initial || '');
+  await expect(page.getByTestId('release-pill')).toContainText('2026.08.24');
 });
 
 test('keeps the global navigation state and skip link accessible', async ({ page }) => {
@@ -102,32 +84,43 @@ test('keeps the global navigation state and skip link accessible', async ({ page
   await expect(page.getByRole('button', { name: /abrir menú de navegación/i })).toBeFocused();
 });
 
-test('keeps all established public destinations visible in desktop navigation', async ({ page }) => {
+test('groups the header into four destinations and keeps every page reachable', async ({ page }) => {
   await page.goto('/');
   const navigation = page.getByLabel('Navegación principal');
   await expect(navigation.getByRole('link', { name: /^explorar$/i })).toBeVisible();
+  await expect(navigation.getByRole('link', { name: /^confianza$/i })).toHaveAttribute('href', '/trust');
+  const learn = navigation.getByRole('button', { name: /^aprender$/i });
+  await expect(learn).toHaveAttribute('aria-expanded', 'false');
+  await learn.click();
+  await expect(learn).toHaveAttribute('aria-expanded', 'true');
   await expect(navigation.getByRole('link', { name: /^contexto comercial$/i })).toHaveAttribute('href', '/trade-context');
-  await expect(navigation.getByRole('link', { name: /^mis registros$/i })).toBeVisible();
-  await navigation.getByRole('link', { name: /^mis registros$/i }).click();
+  await page.keyboard.press('Escape');
+  await expect(learn).toHaveAttribute('aria-expanded', 'false');
+  await expect(learn).toBeFocused();
+  await page.getByRole('link', { name: /^mis registros$/i }).click();
   await expect(page).toHaveURL(/\/records$/);
 });
 
-test('rotates verified examples and lets the visitor choose a concrete path', async ({ page }) => {
+test('lists every destination, grouped, in the mobile menu', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
-  const examples = page.getByTestId('example-rotator');
-  await expect(examples).toContainText(/85/);
-  await examples.getByRole('button', { name: /mostrar 01\.01\.21\.01\.00/i }).click();
-  await expect(examples).toContainText(/01\.01\.21\.01\.00/);
-  await examples.getByRole('button', { name: /inspeccionar ficha/i }).click();
+  await page.getByRole('button', { name: /abrir menú de navegación/i }).click();
+  const navigation = page.getByLabel('Navegación principal');
+  await expect(navigation.getByRole('link', { name: /^glosario$/i })).toBeVisible();
+  await expect(navigation.getByRole('link', { name: /^capítulos$/i })).toBeVisible();
+  await expect(navigation.getByRole('link', { name: /^mis registros$/i })).toBeVisible();
+});
+test('offers verified examples as shortcuts into the explorer', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('link', { name: '01.01.21.01.00' }).click();
   await expect(page).toHaveURL(/\/app\?q=01.01.21.01.00/);
 });
-
 test('updates editorial metadata when the route changes', async ({ page }) => {
   await page.goto('/documentation');
-  await expect(page).toHaveTitle(/start with the contract, then write the integration/i);
+  await expect(page).toHaveTitle(/empieza por el contrato y luego escribe la integración/i);
   await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /guías técnicas/i);
   await page.goto('/trust');
-  await expect(page).toHaveTitle(/when evidence is incomplete, the release stops/i);
+  await expect(page).toHaveTitle(/si la evidencia está incompleta, la release se detiene/i);
   await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /modelo de confianza/i);
 });
 
@@ -143,17 +136,17 @@ test('recovers from an unknown route with a clear Explorer destination', async (
 
 test('serves the local research records page without an account boundary', async ({ page }) => {
   await page.goto('/records');
-  await expect(page.getByRole('heading', { name: /save evidence you can return to/i })).toBeVisible();
-  await expect(page.getByText(/stored only in this browser/i)).toBeVisible();
-  await expect(page.getByRole('button', { name: /check verified record/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /guarda evidencia a la que puedas volver/i })).toBeVisible();
+  await expect(page.getByText(/se guardan solo en este navegador/i)).toBeVisible();
+  await expect(page.getByRole('button', { name: /comprobar registro verificado/i })).toBeVisible();
 });
 
 test('serves verified chapter and fraction-change discovery routes', async ({ page }) => {
   await page.goto('/chapters');
   await expect(page.getByRole('heading', { name: /capítulos, familias y jerarquía/i })).toBeVisible();
   await page.goto('/changes');
-  await expect(page.getByRole('heading', { name: /find what a verified fraction shows now/i })).toBeVisible();
-  await expect(page.getByRole('button', { name: /inspect release/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /consulta qué muestra hoy una fracción verificada/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /consultar release/i })).toBeVisible();
 });
 
 test('shows a bounded history of immutable data releases', async ({ page }) => {
@@ -169,7 +162,7 @@ test('shows a bounded history of immutable data releases', async ({ page }) => {
   }));
   await page.goto('/changes');
 
-  await expect(page.getByRole('heading', { name: /verified release history/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /historial de releases verificadas/i })).toBeVisible();
   await expect(page.getByRole('link', { name: /data-2026\.08\.22/i })).toHaveAttribute(
     'href',
     'https://github.com/jccontrerasg08-cpu/arancel-mx/releases/tag/data-2026.08.22',
@@ -181,7 +174,7 @@ test('identifies the chapter fallback when verified indexes are unavailable', as
   await failStaticFile(page, 'sections.json');
   await failStaticFile(page, 'chapters.json');
   await page.goto('/chapters');
-  await expect(page.getByRole('status')).toContainText(/index unavailable.*packaged navigation/i);
+  await expect(page.getByRole('status')).toContainText(/índice verificado no disponible.*navegación incluida/i);
   await expect(page.getByRole('button', { name: /^sección I /i })).toBeVisible();
 });
 
@@ -200,7 +193,7 @@ test('opens a verified chapter section and family hierarchy from the keyboard', 
 test('opens matching chapter paths while a person filters the visual tree', async ({ page }) => {
   await page.goto('/chapters');
   await page.getByRole('searchbox', { name: /buscar capítulo/i }).fill('01');
-  await expect(page.getByRole('status')).toContainText(/matching chapters expanded/i);
+  await expect(page.getByRole('status')).toContainText(/capítulos coinciden/i);
   await expect(page.getByRole('button', { name: /capítulo 01/i })).toBeVisible();
 });
 
@@ -382,4 +375,61 @@ test('keeps integrated research controls keyboard-reachable and announced', asyn
   await page.getByTestId('search-input').focus();
   await expect(page.getByTestId('search-input')).toBeFocused();
   await expect(page.getByRole('button', { name: /apply filter/i })).toHaveCount(0);
+});
+
+test('shows a breadcrumb and copies the code of a verified record', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.goto('/app/record/85171301');
+  const crumbs = page.getByRole('navigation', { name: /ruta de navegación/i });
+  await expect(crumbs.getByRole('link', { name: /partida 85\.17$/i })).toHaveAttribute('href', '/app/record/8517');
+  await expect(crumbs.locator('[aria-current="page"]')).toHaveText('8517.13.01');
+  await page.getByRole('button', { name: /copiar código/i }).click();
+  await expect(page.getByRole('button', { name: /^copiado$/i })).toBeVisible();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('8517.13.01');
+});
+
+test('narrows the glossary with the alphabetical index', async ({ page }) => {
+  await page.goto('/glossary');
+  const rail = page.getByRole('navigation', { name: /índice alfabético/i });
+  await expect(rail.getByRole('button', { name: /^H$/ })).toBeDisabled();
+  await rail.getByRole('button', { name: /^N$/ }).click();
+  await expect(rail.getByRole('button', { name: /^N$/ })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('status')).toContainText(/^1 de 189/);
+});
+
+test('opens the quick search with Ctrl+K, offers verified paths and opens a record', async ({ page }) => {
+  await serveStaticRecords(page, [{ code: '85171301', description: 'Teléfonos inteligentes', level: 'fraccion8', dataset_version: '2026.08.15' }]);
+  await page.goto('/');
+  await page.keyboard.press('Control+k');
+  const dialog = page.getByRole('dialog', { name: /búsqueda rápida/i });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole('combobox')).toBeFocused();
+  await expect(dialog.getByRole('option').first()).toBeVisible();
+  await dialog.getByRole('combobox').fill('teléfonos');
+  await dialog.getByRole('option', { name: /85\.17\.13\.01/ }).click();
+  await expect(page).toHaveURL(/\/app\/record\/85171301$/);
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+});
+
+test('closes the quick search with Escape and returns focus to its trigger', async ({ page }) => {
+  await page.goto('/');
+  const trigger = page.getByRole('button', { name: /abrir búsqueda rápida/i });
+  await trigger.click();
+  await expect(page.getByRole('dialog', { name: /búsqueda rápida/i })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+});
+
+test('shows the trust, records and changes pages in English when the language is switched', async ({ page }) => {
+  await page.goto('/');
+  await page.getByLabel(/idioma de la interfaz/i).selectOption('en');
+  await page.goto('/trust');
+  await expect(page).toHaveTitle(/when evidence is incomplete, the release stops/i);
+  await expect(page.getByRole('heading', { name: /when evidence is incomplete/i })).toBeVisible();
+  await page.goto('/records');
+  await expect(page.getByRole('heading', { name: /save evidence you can return to/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /check verified record/i })).toBeVisible();
+  await page.goto('/changes');
+  await expect(page.getByRole('button', { name: /inspect release/i })).toBeVisible();
 });
