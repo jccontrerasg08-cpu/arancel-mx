@@ -449,4 +449,11 @@ test('reaches the figures page from the Datos menu', async ({ page }) => {
   await navigation.getByRole('button', { name: /^datos$/i }).click();
   await navigation.getByRole('link', { name: /^cifras$/i }).click();
   await expect(page).toHaveURL(/\/data$/);
+test('lists every HS section and loads the families of a chapter when it opens', async ({ page }) => {
+  await page.goto('/chapters');
+  const section = page.getByRole('button', { name: /^sección XVI /i });
+  await expect(section).toBeVisible();
+  await section.click();
+  await page.getByRole('button', { name: /capítulo 85/i }).click();
+  await expect(page.getByRole('button', { name: /partida · familia HS4 85\.17 · teléfonos/i })).toBeVisible();
 });
