@@ -428,6 +428,8 @@ test('reaches the figures page from the Datos menu', async ({ page }) => {
   await navigation.getByRole('button', { name: /^datos$/i }).click();
   await navigation.getByRole('link', { name: /^cifras$/i }).click();
   await expect(page).toHaveURL(/\/data$/);
+});
+
 test('lists every HS section and loads the families of a chapter when it opens', async ({ page }) => {
   await page.goto('/chapters');
   const section = page.getByRole('button', { name: /^sección XVI /i });
