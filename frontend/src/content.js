@@ -11,6 +11,16 @@ export const NAVIGATION = [
   ['My records', '/records'],
 ];
 
+// The header keeps four items. A group with `href` opens its page; one with
+// `items` holds the remaining destinations. `/records` lives in the header
+// actions, so every other NAVIGATION entry belongs to exactly one group.
+export const NAV_GROUPS = [
+  { id: 'explore', href: '/app' },
+  { id: 'learn', items: ['/glossary', '/wiki', '/moa', '/trade-context'] },
+  { id: 'data', items: ['/chapters', '/changes', '/documentation'] },
+  { id: 'trust', href: '/trust' },
+];
+
 export const OFFICIAL_LINKS = {
   anamMoa: 'https://www.anam.gob.mx/manual-de-operacion-aduanera-moa/',
   anamMoaPdf: 'https://www.anam.gob.mx/wp-content/uploads/2022/05/Manual-de-Operacion-Aduanera-MOA-may2022.pdf',
