@@ -442,6 +442,7 @@ test('lists every HS section and loads the families of a chapter when it opens',
 test('lists the DOF publications that changed the tariff and filters them by type', async ({ page }) => {
   await page.goto('/changes');
   const items = page.getByTestId('dof-timeline').locator(':scope > li');
+  await expect(items.first()).toBeVisible();
   expect(await items.count()).toBeGreaterThan(20);
   const before = await items.count();
   await page.getByRole('button', { name: /^acuerdos$/i }).click();
