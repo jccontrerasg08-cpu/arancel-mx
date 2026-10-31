@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "test:e2e": "playwright test",
+    "build:dof-changes": "node scripts/build-dof-changes.mjs",
     "build:frontend": "node scripts/build-frontend.mjs && node scripts/sync-frontend-static.mjs",
     "dev:frontend": "vite"
   },

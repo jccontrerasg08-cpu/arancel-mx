@@ -101,11 +101,11 @@ export const EDITORIAL_PAGES = {
     disclaimer: 'Esta es una superficie de consulta, no una herramienta de clasificación.',
   },
   '/changes': {
-    eyebrow: 'SEÑALES DE RELEASE · PRIMERO LA EVIDENCIA',
-    title: 'Consulta qué muestra hoy una fracción verificada.',
-    description: 'Inspecciona campos de release, jerarquía, vigencia y procedencia antes de interpretar una diferencia.',
-    disclaimer: 'La evidencia documentada no afirma que una reforma legal aplique a una operación individual.',
-    en: { eyebrow: 'RELEASE SIGNALS · EVIDENCE FIRST', title: 'Find what a verified fraction shows now.', description: 'Inspect release fields, hierarchy, validity and provenance before interpreting a difference.', disclaimer: 'Documented evidence does not state that a legal reform applies to an individual operation.' },
+    eyebrow: 'CAMBIOS EN EL DOF · CÓDIGOS ARANCELARIOS',
+    title: 'Cambios del DOF a los códigos arancelarios.',
+    description: 'Cada decreto o acuerdo publicado en el Diario Oficial que modifica la tarifa: cuándo salió, qué fracciones tocó y dónde leer el documento original.',
+    disclaimer: 'La publicación de un cambio no determina cómo se aplica a una operación individual; verifica su vigencia en la fuente oficial.',
+    en: { eyebrow: 'DOF CHANGES · TARIFF CODES', title: 'DOF changes to tariff codes.', description: 'Every decree or agreement published in the Diario Oficial that changes the tariff: when it came out, which fractions it touched and where to read the original document.', disclaimer: 'The publication of a change does not determine how it applies to an individual operation; check its validity in the official source.' },
   },
 };
 
