@@ -382,10 +382,10 @@ test('shows a breadcrumb and copies the code of a verified record', async ({ pag
   await page.goto('/app/record/85171301');
   const crumbs = page.getByRole('navigation', { name: /ruta de navegación/i });
   await expect(crumbs.getByRole('link', { name: /partida 85\.17$/i })).toHaveAttribute('href', '/app/record/8517');
-  await expect(crumbs.locator('[aria-current="page"]')).toHaveText('85.17.13.01');
+  await expect(crumbs.locator('[aria-current="page"]')).toHaveText('8517.13.01');
   await page.getByRole('button', { name: /copiar código/i }).click();
   await expect(page.getByRole('button', { name: /^copiado$/i })).toBeVisible();
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('85.17.13.01');
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('8517.13.01');
 });
 
 test('narrows the glossary with the alphabetical index', async ({ page }) => {
