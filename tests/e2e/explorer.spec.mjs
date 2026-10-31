@@ -117,10 +117,10 @@ test('offers verified examples as shortcuts into the explorer', async ({ page })
 });
 test('updates editorial metadata when the route changes', async ({ page }) => {
   await page.goto('/documentation');
-  await expect(page).toHaveTitle(/start with the contract, then write the integration/i);
+  await expect(page).toHaveTitle(/empieza por el contrato y luego escribe la integración/i);
   await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /guías técnicas/i);
   await page.goto('/trust');
-  await expect(page).toHaveTitle(/when evidence is incomplete, the release stops/i);
+  await expect(page).toHaveTitle(/si la evidencia está incompleta, la release se detiene/i);
   await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /modelo de confianza/i);
 });
 
@@ -136,17 +136,17 @@ test('recovers from an unknown route with a clear Explorer destination', async (
 
 test('serves the local research records page without an account boundary', async ({ page }) => {
   await page.goto('/records');
-  await expect(page.getByRole('heading', { name: /save evidence you can return to/i })).toBeVisible();
-  await expect(page.getByText(/stored only in this browser/i)).toBeVisible();
-  await expect(page.getByRole('button', { name: /check verified record/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /guarda evidencia a la que puedas volver/i })).toBeVisible();
+  await expect(page.getByText(/se guardan solo en este navegador/i)).toBeVisible();
+  await expect(page.getByRole('button', { name: /comprobar registro verificado/i })).toBeVisible();
 });
 
 test('serves verified chapter and fraction-change discovery routes', async ({ page }) => {
   await page.goto('/chapters');
   await expect(page.getByRole('heading', { name: /capítulos, familias y jerarquía/i })).toBeVisible();
   await page.goto('/changes');
-  await expect(page.getByRole('heading', { name: /find what a verified fraction shows now/i })).toBeVisible();
-  await expect(page.getByRole('button', { name: /inspect release/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /consulta qué muestra hoy una fracción verificada/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /consultar release/i })).toBeVisible();
 });
 
 test('shows a bounded history of immutable data releases', async ({ page }) => {
@@ -162,7 +162,7 @@ test('shows a bounded history of immutable data releases', async ({ page }) => {
   }));
   await page.goto('/changes');
 
-  await expect(page.getByRole('heading', { name: /verified release history/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /historial de releases verificadas/i })).toBeVisible();
   await expect(page.getByRole('link', { name: /data-2026\.08\.22/i })).toHaveAttribute(
     'href',
     'https://github.com/jccontrerasg08-cpu/arancel-mx/releases/tag/data-2026.08.22',
@@ -174,7 +174,7 @@ test('identifies the chapter fallback when verified indexes are unavailable', as
   await failStaticFile(page, 'sections.json');
   await failStaticFile(page, 'chapters.json');
   await page.goto('/chapters');
-  await expect(page.getByRole('status')).toContainText(/index unavailable.*packaged navigation/i);
+  await expect(page.getByRole('status')).toContainText(/índice verificado no disponible.*navegación incluida/i);
   await expect(page.getByRole('button', { name: /^sección I /i })).toBeVisible();
 });
 
@@ -193,7 +193,7 @@ test('opens a verified chapter section and family hierarchy from the keyboard', 
 test('opens matching chapter paths while a person filters the visual tree', async ({ page }) => {
   await page.goto('/chapters');
   await page.getByRole('searchbox', { name: /buscar capítulo/i }).fill('01');
-  await expect(page.getByRole('status')).toContainText(/matching chapters expanded/i);
+  await expect(page.getByRole('status')).toContainText(/capítulos coinciden/i);
   await expect(page.getByRole('button', { name: /capítulo 01/i })).toBeVisible();
 });
 
@@ -419,4 +419,17 @@ test('closes the quick search with Escape and returns focus to its trigger', asy
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(trigger).toBeFocused();
+});
+
+test('shows the trust, records and changes pages in English when the language is switched', async ({ page }) => {
+  await page.goto('/');
+  await page.getByLabel(/idioma de la interfaz/i).selectOption('en');
+  await page.goto('/trust');
+  await expect(page).toHaveTitle(/when evidence is incomplete, the release stops/i);
+  await expect(page.getByRole('heading', { name: /when evidence is incomplete/i })).toBeVisible();
+  await page.goto('/records');
+  await expect(page.getByRole('heading', { name: /save evidence you can return to/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /check verified record/i })).toBeVisible();
+  await page.goto('/changes');
+  await expect(page.getByRole('button', { name: /inspect release/i })).toBeVisible();
 });

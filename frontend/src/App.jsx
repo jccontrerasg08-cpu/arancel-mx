@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { BrowserRouter, Link, Route, Routes, useLocation } from 'react-router-dom';
 
-import { EDITORIAL_PAGES, NAV_GROUPS, NAVIGATION, OFFICIAL_LINKS } from './content.js';
+import { editorialPage, NAV_GROUPS, NAVIGATION, OFFICIAL_LINKS } from './content.js';
 import { CommandPalette, OPEN_SEARCH_EVENT, shortcutLabel } from './command-palette.jsx';
 import { LocaleProvider, useLocale } from './locale.jsx';
 import { PAGE_COMPONENTS } from './pages.jsx';
@@ -100,9 +100,9 @@ function RoutedPage({ Component }) {
   const location = useLocation();
   const { language, copy } = useLocale();
   useEffect(() => {
-    const localizedRoute = ['/', '/app', '/product', '/documentation'].includes(location.pathname) || location.pathname.startsWith('/app/record/') || location.pathname.startsWith('/app/chapter/');
+    const localizedRoute = ['/', '/app', '/product', '/documentation', '/trust', '/records', '/changes'].includes(location.pathname) || location.pathname.startsWith('/app/record/') || location.pathname.startsWith('/app/chapter/');
     document.documentElement.lang = localizedRoute && language === 'en' ? 'en' : 'es-MX';
-    const page = EDITORIAL_PAGES[location.pathname];
+    const page = editorialPage(location.pathname, language);
     document.title = `arancel-mx — ${location.pathname === '/' ? `${copy.home.title}${copy.home.titleEmphasis}` : page?.title || 'Datos arancelarios mexicanos verificables.'}`;
     const description = document.querySelector('meta[name="description"]');
     if (description) description.setAttribute('content', page?.description || 'Datos arancelarios mexicanos verificables.');
