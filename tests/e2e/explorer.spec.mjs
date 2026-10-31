@@ -433,3 +433,20 @@ test('shows the trust, records and changes pages in English when the language is
   await page.goto('/changes');
   await expect(page.getByRole('button', { name: /inspect release/i })).toBeVisible();
 });
+
+test('shows figures, fun facts and tables computed from the verified release', async ({ page }) => {
+  await page.goto('/data');
+  await expect(page.getByRole('heading', { name: /el arancel de méxico en cifras/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /sabías que/i })).toBeVisible();
+  await expect(page.getByRole('table', { name: /10 capítulos con más fracciones/i })).toBeVisible();
+  await expect(page.getByRole('table', { name: /registros tiene cada nivel/i })).toBeVisible();
+  await expect(page.getByTestId('data-source')).toContainText(/release/i);
+});
+
+test('reaches the figures page from the Datos menu', async ({ page }) => {
+  await page.goto('/');
+  const navigation = page.getByLabel('Navegación principal');
+  await navigation.getByRole('button', { name: /^datos$/i }).click();
+  await navigation.getByRole('link', { name: /^cifras$/i }).click();
+  await expect(page).toHaveURL(/\/data$/);
+});

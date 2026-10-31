@@ -2,6 +2,7 @@ export const NAVIGATION = [
   ['Explorer', '/app'],
   ['Chapters', '/chapters'],
   ['Changes', '/changes'],
+  ['Figures', '/data'],
   ['MOA guide', '/moa'],
   ['Wiki', '/wiki'],
   ['Glossary', '/glossary'],
@@ -17,7 +18,7 @@ export const NAVIGATION = [
 export const NAV_GROUPS = [
   { id: 'explore', href: '/app' },
   { id: 'learn', items: ['/glossary', '/wiki', '/moa', '/trade-context'] },
-  { id: 'data', items: ['/chapters', '/changes', '/documentation'] },
+  { id: 'data', items: ['/data', '/chapters', '/changes', '/documentation'] },
   { id: 'trust', href: '/trust' },
 ];
 
@@ -66,7 +67,13 @@ export const EDITORIAL_PAGES = {
     description: 'Explicación y series oficiales para importaciones, exportaciones, balanza, entidades y socios.',
     disclaimer: 'El contexto histórico no determina una fracción ni una operación individual.',
   },
-  '/documentation': {
+  '/data': {
+    eyebrow: 'DATOS · CIFRAS DE LA RELEASE',
+    title: 'El arancel de México en cifras.',
+    description: 'Estadísticas, tablas y datos curiosos calculados a partir de la release verificada, con su fuente a la vista.',
+    disclaimer: 'Son cifras descriptivas del dataset; no determinan la clasificación ni el tratamiento arancelario de una mercancía.',
+    en: { eyebrow: 'DATA · RELEASE FIGURES', title: 'Mexico’s tariff in figures.', description: 'Statistics, tables and fun facts computed from the verified release, with its source in view.', disclaimer: 'These are descriptive dataset figures; they do not determine how a good is classified or taxed.' },
+  },  '/documentation': {
     eyebrow: 'CENTRO DE DOCUMENTACIÓN',
     title: 'Empieza por el contrato y luego escribe la integración.',
     description: 'Guías técnicas para consumir releases verificables, API y artefactos de verificación.',

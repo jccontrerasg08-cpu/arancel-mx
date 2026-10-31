@@ -8,6 +8,7 @@ import { PAGE_COMPONENTS } from './pages.jsx';
 import brandLogo from '../../src/arancel_mx/api/static/site/assets/arancel-mx-logo.svg';
 
 const GlossaryPage = lazy(() => import('./glossary-page.jsx'));
+const DataPage = lazy(() => import('./data-page.jsx'));
 
 function ThemeToggle() {
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
@@ -85,7 +86,7 @@ function SiteHeader() {
 }
 function SiteFooter() {
   const { copy } = useLocale();
-  return <footer className="site-footer"><div><strong>arancel.mx</strong><p>{copy.footer.description}</p></div><nav aria-label="Footer navigation">{NAVIGATION.slice(0, 8).map(([, href]) => <Link key={href} to={href}>{copy.navigation[href] || href}</Link>)}</nav><div><a href={OFFICIAL_LINKS.github} target="_blank" rel="noreferrer">GitHub</a><a href={OFFICIAL_LINKS.pypi} target="_blank" rel="noreferrer">PyPI · latest</a><p>© 2026 arancel-mx · Apache-2.0</p></div></footer>;
+  return <footer className="site-footer"><div><strong>arancel.mx</strong><p>{copy.footer.description}</p></div><nav aria-label="Footer navigation">{NAVIGATION.slice(0, 9).map(([, href]) => <Link key={href} to={href}>{copy.navigation[href] || href}</Link>)}</nav><div><a href={OFFICIAL_LINKS.github} target="_blank" rel="noreferrer">GitHub</a><a href={OFFICIAL_LINKS.pypi} target="_blank" rel="noreferrer">PyPI · latest</a><p>© 2026 arancel-mx · Apache-2.0</p></div></footer>;
 }
 
 function NotFoundPage() {
@@ -96,11 +97,15 @@ function DeferredGlossaryPage() {
   return <Suspense fallback={<p className="status" role="status">Loading glossary…</p>}><GlossaryPage /></Suspense>;
 }
 
+function DeferredDataPage() {
+  return <Suspense fallback={<p className="status" role="status">Cargando cifras…</p>}><DataPage /></Suspense>;
+}
+
 function RoutedPage({ Component }) {
   const location = useLocation();
   const { language, copy } = useLocale();
   useEffect(() => {
-    const localizedRoute = ['/', '/app', '/product', '/documentation', '/trust', '/records', '/changes'].includes(location.pathname) || location.pathname.startsWith('/app/record/') || location.pathname.startsWith('/app/chapter/');
+    const localizedRoute = ['/', '/app', '/product', '/documentation', '/trust', '/records', '/changes', '/data'].includes(location.pathname) || location.pathname.startsWith('/app/record/') || location.pathname.startsWith('/app/chapter/');
     document.documentElement.lang = localizedRoute && language === 'en' ? 'en' : 'es-MX';
     const page = editorialPage(location.pathname, language);
     document.title = `arancel-mx — ${location.pathname === '/' ? `${copy.home.title}${copy.home.titleEmphasis}` : page?.title || 'Datos arancelarios mexicanos verificables.'}`;
@@ -111,5 +116,5 @@ function RoutedPage({ Component }) {
 }
 
 export function App() {
-  return <LocaleProvider><BrowserRouter><SiteHeader/><CommandPalette/><Routes>{Object.entries(PAGE_COMPONENTS).map(([path, Component]) => <Route key={path} path={path} element={<RoutedPage Component={Component} />} />)}<Route path="/glossary" element={<RoutedPage Component={DeferredGlossaryPage} />}/><Route path="/product" element={<RoutedPage Component={PAGE_COMPONENTS['/app']} />}/><Route path="/app/chapter/:code" element={<RoutedPage Component={PAGE_COMPONENTS['/app/record/:code']} />}/><Route path="*" element={<RoutedPage Component={NotFoundPage} />}/></Routes><SiteFooter/></BrowserRouter></LocaleProvider>;
+  return <LocaleProvider><BrowserRouter><SiteHeader/><CommandPalette/><Routes>{Object.entries(PAGE_COMPONENTS).map(([path, Component]) => <Route key={path} path={path} element={<RoutedPage Component={Component} />} />)}<Route path="/glossary" element={<RoutedPage Component={DeferredGlossaryPage} />}/><Route path="/data" element={<RoutedPage Component={DeferredDataPage} />}/><Route path="/product" element={<RoutedPage Component={PAGE_COMPONENTS['/app']} />}/><Route path="/app/chapter/:code" element={<RoutedPage Component={PAGE_COMPONENTS['/app/record/:code']} />}/><Route path="*" element={<RoutedPage Component={NotFoundPage} />}/></Routes><SiteFooter/></BrowserRouter></LocaleProvider>;
 }
