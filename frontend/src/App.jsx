@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { BrowserRouter, Link, Route, Routes, useLocation } from 'react-router-dom';
 
-import { EDITORIAL_PAGES, NAVIGATION, OFFICIAL_LINKS } from './content.js';
+import { EDITORIAL_PAGES, NAV_GROUPS, NAVIGATION, OFFICIAL_LINKS } from './content.js';
 import { LocaleProvider, useLocale } from './locale.jsx';
 import { PAGE_COMPONENTS } from './pages.jsx';
 import brandLogo from '../../src/arancel_mx/api/static/site/assets/arancel-mx-logo.svg';
@@ -23,11 +23,50 @@ function LanguageToggle() {
   return <label className="language-toggle"><span className="sr-only">{copy.header.language}</span><select aria-label={copy.header.language} value={language} onChange={(event) => setLanguage(event.target.value)}><option value="es">ES</option><option value="en">EN</option></select></label>;
 }
 
+function useMediaQuery(query) {
+  const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    const update = () => setMatches(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, [query]);
+  return matches;
+}
+
+function NavMenu({ group, pathname }) {
+  const { copy } = useLocale();
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef(null);
+  const buttonRef = useRef(null);
+  const id = `nav-menu-${group.id}`;
+  useEffect(() => setOpen(false), [pathname]);
+  useEffect(() => {
+    if (!open) return undefined;
+    const closeOutside = (event) => { if (!rootRef.current?.contains(event.target)) setOpen(false); };
+    const closeWithEscape = (event) => {
+      if (event.key !== 'Escape') return;
+      setOpen(false);
+      buttonRef.current?.focus();
+    };
+    document.addEventListener('pointerdown', closeOutside);
+    document.addEventListener('keydown', closeWithEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOutside);
+      document.removeEventListener('keydown', closeWithEscape);
+    };
+  }, [open]);
+  return <div className="nav-menu" ref={rootRef}><button ref={buttonRef} type="button" className={group.items.includes(pathname) ? 'is-active' : ''} aria-expanded={open} aria-controls={id} onClick={() => setOpen((current) => !current)}>{copy.navGroups[group.id]}<span className="nav-menu__chevron" aria-hidden="true"/></button>{open && <ul id={id} className="nav-menu__panel">{group.items.map((href) => <li key={href}><Link to={href} className={pathname === href ? 'is-active' : ''} aria-current={pathname === href ? 'page' : undefined}>{copy.navigation[href]}</Link></li>)}</ul>}</div>;
+}
+
 function SiteHeader() {
   const [open, setOpen] = useState(false);
   const toggleRef = useRef(null);
   const location = useLocation();
   const { copy } = useLocale();
+  const compact = useMediaQuery('(max-width: 900px)');
+  const link = (href, label) => <Link key={href} className={location.pathname === href || (href === '/app' && location.pathname.startsWith('/app')) ? 'is-active' : ''} to={href}>{label}</Link>;
   useEffect(() => setOpen(false), [location.pathname]);
   useEffect(() => {
     const closeWithEscape = (event) => {
@@ -38,9 +77,11 @@ function SiteHeader() {
     window.addEventListener('keydown', closeWithEscape);
     return () => window.removeEventListener('keydown', closeWithEscape);
   }, []);
-  return <><a className="skip-link" href="#main-content">{copy.header.skip}</a><header className="site-header"><div className="site-header__inner"><Link className="brand-lockup" to="/" aria-label="arancel.mx"><img src={brandLogo} alt=""/></Link><button ref={toggleRef} className="nav-toggle" type="button" aria-label={open ? copy.header.close : copy.header.open} aria-expanded={open} aria-controls="site-navigation" onClick={() => setOpen((current) => !current)}><span aria-hidden="true">{open ? '×' : '☰'}</span></button><nav id="site-navigation" className={open ? 'site-nav is-open' : 'site-nav'} aria-label={copy.header.navigation}>{NAVIGATION.map(([, href]) => <Link key={href} className={location.pathname === href ? 'is-active' : ''} to={href}>{copy.navigation[href] || href}</Link>)}</nav><div className="site-header__actions"><LanguageToggle/><ThemeToggle/><a className="github-link" href={OFFICIAL_LINKS.github} target="_blank" rel="noreferrer">GitHub <span aria-label="open issues">0</span></a></div></div></header></>;
+  const groups = compact
+    ? <>{NAV_GROUPS.map((group) => group.href ? link(group.href, copy.navGroups[group.id]) : <div className="nav-section" key={group.id}><p className="nav-section__label">{copy.navGroups[group.id]}</p>{group.items.map((href) => link(href, copy.navigation[href]))}</div>)}{link('/records', copy.navigation['/records'])}</>
+    : <>{NAV_GROUPS.map((group) => group.href ? link(group.href, copy.navGroups[group.id]) : <NavMenu key={group.id} group={group} pathname={location.pathname}/>)}</>;
+  return <><a className="skip-link" href="#main-content">{copy.header.skip}</a><header className="site-header"><div className="site-header__inner"><Link className="brand-lockup" to="/" aria-label="arancel.mx"><img src={brandLogo} alt=""/></Link><button ref={toggleRef} className="nav-toggle" type="button" aria-label={open ? copy.header.close : copy.header.open} aria-expanded={open} aria-controls="site-navigation" onClick={() => setOpen((current) => !current)}><span aria-hidden="true">{open ? '×' : '☰'}</span></button><nav id="site-navigation" className={open ? 'site-nav is-open' : 'site-nav'} aria-label={copy.header.navigation}>{groups}</nav><div className="site-header__actions"><Link className="records-link" to="/records">{copy.navigation['/records']}</Link><LanguageToggle/><ThemeToggle/><a className="github-link" href={OFFICIAL_LINKS.github} target="_blank" rel="noreferrer">GitHub</a></div></div></header></>;
 }
-
 function SiteFooter() {
   const { copy } = useLocale();
   return <footer className="site-footer"><div><strong>arancel.mx</strong><p>{copy.footer.description}</p></div><nav aria-label="Footer navigation">{NAVIGATION.slice(0, 8).map(([, href]) => <Link key={href} to={href}>{copy.navigation[href] || href}</Link>)}</nav><div><a href={OFFICIAL_LINKS.github} target="_blank" rel="noreferrer">GitHub</a><a href={OFFICIAL_LINKS.pypi} target="_blank" rel="noreferrer">PyPI · latest</a><p>© 2026 arancel-mx · Apache-2.0</p></div></footer>;
