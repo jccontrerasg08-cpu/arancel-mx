@@ -58,9 +58,9 @@ export default function DofChangesPage() {
           return <li key={item.id}>
             <time dateTime={item.dof_date}>{formatDate(item.dof_date, language)}</time>
             <div>
-              <h3><Link to={`/changes/${item.id}`}>{item.title}</Link></h3>
+              <h3 style={{ viewTransitionName: `dof-${item.id}` }}><Link to={`/changes/${item.id}`} viewTransition>{item.title}</Link></h3>
               <p className="dof-chips"><span>{SECTION_LABELS[language === 'en' ? 'en' : 'es'][item.section]}</span>{item.operations.slice(0, 3).map((operation) => <span key={operation}>{operationLabel(operation, language)}</span>)}{fractions > 0 && item.section !== 'original' && <span>{fractions === 1 ? t('1 fracción', '1 fraction') : t(`${fractions.toLocaleString('es-MX')} fracciones`, `${fractions.toLocaleString('en-US')} fractions`)}</span>}{chapters.length > 0 && item.section !== 'original' && <span>{t('Cap.', 'Ch.')} {chapters.slice(0, 6).join(', ')}{chapters.length > 6 ? '…' : ''}</span>}</p>
-              <p className="dof-actions"><Link className="button" to={`/changes/${item.id}`}>{fractions > 0 && item.section !== 'original' ? t('Ver los cambios por fracción', 'See changes by fraction') : t('Ver detalle', 'See details')}</Link><a className="button" href={dofEditionUrl(item.dof_date)} target="_blank" rel="noreferrer">{t('Ver en el DOF', 'See in the DOF')} <span aria-hidden="true">↗</span></a></p>
+              <p className="dof-actions"><Link className="button" to={`/changes/${item.id}`} viewTransition>{fractions > 0 && item.section !== 'original' ? t('Ver los cambios por fracción', 'See changes by fraction') : t('Ver detalle', 'See details')}</Link><a className="button" href={dofEditionUrl(item.dof_date)} target="_blank" rel="noreferrer">{t('Ver en el DOF', 'See in the DOF')} <span aria-hidden="true">↗</span></a></p>
             </div>
           </li>;
         })}</ol>

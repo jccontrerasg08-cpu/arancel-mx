@@ -253,3 +253,35 @@ input { width:min(100%,38rem); min-height:2.8rem; border:1px solid var(--line); 
 .dof-pager { display:flex; justify-content:space-between; gap:1rem; margin-top:2rem; border-top:1px solid var(--line); padding-top:1rem; }
 .code-chips { display:flex; flex-wrap:wrap; gap:.4rem; }
 @media (max-width:700px) { .dof-timeline>li { grid-template-columns:1fr; gap:.4rem; } }
+
+/* Movimiento: resortes al estilo SwiftUI (response 0.45 s, damping 0.72), entradas escalonadas,
+   revelado al desplazarse y transiciones de vista. Todo queda detrás de prefers-reduced-motion. */
+:root { --spring:linear(0, 0.016, 0.057, 0.117, 0.19, 0.269, 0.352, 0.435, 0.516, 0.592, 0.663, 0.727, 0.784, 0.835, 0.878, 0.915, 0.946, 0.971, 0.992, 1.007, 1.019, 1.028, 1.033, 1.037, 1.038, 1.038, 1.037, 1.035, 1.032, 1.03, 1.026, 1.023, 1.02, 1.017, 1.014, 1.012, 1.009, 1.007, 1.005, 1.004, 1); --spring-fast:420ms; --spring-base:530ms; }
+@keyframes pop-in { from { opacity:0; transform:translateY(-.4rem) scale(.96); } to { opacity:1; transform:none; } }
+@keyframes rise-in { from { opacity:0; transform:translateY(1rem); } to { opacity:1; transform:none; } }
+@keyframes fade-in { from { opacity:0; } to { opacity:1; } }
+@keyframes reveal { from { opacity:0; transform:translateY(1.5rem); } to { opacity:1; transform:none; } }
+@keyframes pop { 0% { transform:scale(1); } 40% { transform:scale(1.08); } 100% { transform:scale(1); } }
+.home-hero>:nth-child(2),.home-tile:nth-child(2),.stat-tiles article:nth-child(2),.fact-grid article:nth-child(2),.dof-timeline>li:nth-child(2) { --n:1; }
+.home-hero>:nth-child(3),.home-tile:nth-child(3),.stat-tiles article:nth-child(3),.fact-grid article:nth-child(3),.dof-timeline>li:nth-child(3) { --n:2; }
+.home-hero>:nth-child(4),.home-tile:nth-child(4),.stat-tiles article:nth-child(4),.fact-grid article:nth-child(4),.dof-timeline>li:nth-child(4) { --n:3; }
+.home-hero>:nth-child(5),.stat-tiles article:nth-child(5),.fact-grid article:nth-child(5),.dof-timeline>li:nth-child(5) { --n:4; }
+.home-hero>:nth-child(6),.stat-tiles article:nth-child(6),.fact-grid article:nth-child(6),.dof-timeline>li:nth-child(6) { --n:5; }
+.dof-timeline>li:nth-child(n+7) { --n:6; }
+@media (prefers-reduced-motion:no-preference) {
+  .nav-menu__panel,.palette { animation:pop-in var(--spring-fast) var(--spring) both; }
+  .palette-backdrop { animation:fade-in 160ms ease-out both; }
+  .home-hero>*,.home-tile,.stat-tiles article,.fact-grid article,.dof-timeline>li { animation:rise-in var(--spring-base) var(--spring) both; animation-delay:calc(var(--n,0) * 55ms); }
+  .home-tile__badge { transition:transform var(--spring-base) var(--spring); }
+  .home-tile:active .home-tile__badge { transform:rotate(0deg) scale(.94); }
+  .button,.chip,.search-trigger { transition-property:transform,background-color,border-color,color; transition-duration:var(--spring-fast),140ms,140ms,140ms; transition-timing-function:var(--spring),ease-out,ease-out,ease-out; }
+  .button:active:not(:disabled),.chip:active,.search-trigger:active { transform:scale(.96); }
+  .is-copied { animation:pop var(--spring-fast) var(--spring); }
+  ::view-transition-old(root),::view-transition-new(root) { animation-duration:240ms; }
+}
+@supports (animation-timeline:view()) {
+  @media (prefers-reduced-motion:no-preference) {
+    .data-section,.home-start { animation:reveal linear both; animation-timeline:view(); animation-range:entry 0% entry 35%; }
+  }
+}
+@media (prefers-reduced-motion:reduce) { ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*) { animation:none !important; } }

@@ -50,7 +50,7 @@ export default function DofChangeDetail() {
   return <article className="record-page dof-detail" data-testid="dof-detail">
     <nav className="breadcrumb" aria-label={t('Ruta de navegación', 'Breadcrumb')}><ol><li><Link to="/">{t('Inicio', 'Home')}</Link></li><li><Link to="/changes">{t('Cambios en el DOF', 'DOF changes')}</Link></li><li aria-current="page">{formatDate(item.dof_date, language)}</li></ol></nav>
     <p className="eyebrow">{sectionLabel} · DOF {item.dof_date}</p>
-    <h1 className="dof-title" lang="es-MX">{item.title}</h1>
+    <h1 className="dof-title" lang="es-MX" style={{ viewTransitionName: `dof-${item.id}` }}>{item.title}</h1>
     <p className="dof-chips">{item.operations.map((operation) => <span key={operation}>{operationLabel(operation, language)}</span>)}</p>
 
     <dl className="dof-facts">
