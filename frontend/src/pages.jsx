@@ -379,8 +379,21 @@ export function RecordsPage() {
 }
 export function TradeDeskPage() { return <section className="empty-state"><h1>Mesa de comercio exterior</h1><p>Esta ruta conserva una superficie independiente con simulación orientativa, T-MEC, RRNA y trazabilidad local.</p><a className="button primary" href="/trade">Abrir mesa</a></section>; }
 
-function MarketingPage({ eyebrow, title, description, action }) {
-  return <><PageHero page={{ eyebrow, title, description, disclaimer: 'Consulta la release, el repositorio y la documentación antes de basar una integración en estos materiales.' }}><Link className="button primary" to={action.href}>{action.label}</Link></PageHero><section className="card-grid"><article><h2>Release evidence</h2><p>Inspecciona artefactos versionados, manifest y checksums.</p><External href={OFFICIAL_LINKS.releases}>Open releases</External></article><article><h2>Source contract</h2><p>Revisa los límites de la API pública y de los datos verificados.</p><Link to="/documentation">Read documentation</Link></article><article><h2>Open participation</h2><p>El trabajo se organiza en el repositorio público y sus discusiones.</p><External href={OFFICIAL_LINKS.github}>Open GitHub</External></article></section></>;
+// Secondary entry points (kept as routes for old links); each one points at the real pages.
+const MARKETING_COPY = {
+  '/features': { eyebrow: ['SUPERFICIES DEL PRODUCTO', 'PRODUCT SURFACES'], title: ['Construye sobre datos arancelarios verificables.', 'Build on verifiable tariff data.'], description: ['Explora las superficies públicas del producto, sus límites documentados y los artefactos de cada release.', 'Explore the public product surfaces, documented limits and release artifacts.'], action: ['/documentation', 'Leer la documentación', 'Read documentation'] },
+  '/pricing': { eyebrow: ['RELEASES ABIERTOS', 'OPEN DATA RELEASES'], title: ['Releases públicos, artefactos inspeccionables.', 'Public releases, inspectable artifacts.'], description: ['Los datos centrales y los materiales de verificación se pueden revisar abiertamente.', 'The core data and verification materials remain openly inspectable.'], action: ['/trust', 'Leer el modelo de confianza', 'Read trust model'] },
+  '/analytics': { eyebrow: ['CONTEXTO DEL RELEASE', 'RELEASE ANALYTICS'], title: ['Contexto del release sin puntajes opacos.', 'Release context without opaque scoring.'], description: ['Revisa un release a través de evidencia visible y del rol de cada fuente.', 'Inspect a release through visible evidence and source roles.'], action: ['/changes', 'Ver los cambios del DOF', 'Inspect release evidence'] },
+  '/community': { eyebrow: ['COMUNIDAD ABIERTA', 'OPEN COMMUNITY'], title: ['Contribuye con evidencia visible.', 'Contribute through visible evidence.'], description: ['Usa el repositorio público para revisar, discutir y mejorar el contrato de datos abiertos.', 'Use the public repository to review, discuss and improve the open data contract.'], action: ['/documentation', 'Abrir la documentación', 'Open documentation'] },
+};
+
+function MarketingPage({ path }) {
+  const { language } = useLocale();
+  const t = (spanish, english) => localize(language, spanish, english);
+  const page = MARKETING_COPY[path];
+  const [href, actionEs, actionEn] = page.action;
+  const disclaimer = t('Consulta la release, el repositorio y la documentación antes de basar una integración en estos materiales.', 'Check the release, the repository and the documentation before basing an integration on these materials.');
+  return <><PageHero page={{ eyebrow: t(...page.eyebrow), title: t(...page.title), description: t(...page.description), disclaimer }}><Link className="button primary" to={href}>{t(actionEs, actionEn)}</Link></PageHero><section className="card-grid"><article><h2>{t('Evidencia del release', 'Release evidence')}</h2><p>{t('Inspecciona artefactos versionados, manifest y checksums.', 'Inspect versioned artifacts, the manifest and checksums.')}</p><External href={OFFICIAL_LINKS.releases}>{t('Abrir releases', 'Open releases')}</External></article><article><h2>{t('Contrato de fuentes', 'Source contract')}</h2><p>{t('Revisa los límites de la API pública y de los datos verificados.', 'Review the limits of the public API and of the verified data.')}</p><Link to="/documentation">{t('Leer la documentación', 'Read documentation')}</Link></article><article><h2>{t('Participación abierta', 'Open participation')}</h2><p>{t('El trabajo se organiza en el repositorio público y sus discusiones.', 'The work is organised in the public repository and its discussions.')}</p><External href={OFFICIAL_LINKS.github}>{t('Abrir GitHub', 'Open GitHub')}</External></article></section></>;
 }
 
 export const PAGE_COMPONENTS = {
@@ -397,8 +410,8 @@ export const PAGE_COMPONENTS = {
   '/trust': TrustPage,
   '/records': RecordsPage,
   '/trade': TradeDeskPage,
-  '/features': () => <MarketingPage eyebrow="PRODUCT SURFACES" title="Build on verifiable tariff data." description="Explore the public product surfaces, documented limits and release artifacts." action={{ href: '/documentation', label: 'Read documentation' }} />,
-  '/pricing': () => <MarketingPage eyebrow="OPEN DATA RELEASES" title="Public releases, inspectable artifacts." description="The core data and verification materials remain openly inspectable." action={{ href: '/trust', label: 'Read trust model' }} />,
-  '/analytics': () => <MarketingPage eyebrow="RELEASE ANALYTICS" title="Release context without opaque scoring." description="Inspect a release through visible evidence and source roles." action={{ href: '/changes', label: 'Inspect release evidence' }} />,
-  '/community': () => <MarketingPage eyebrow="OPEN COMMUNITY" title="Contribute through visible evidence." description="Use the public repository to review, discuss and improve the open data contract." action={{ href: '/documentation', label: 'Open documentation' }} />,
+  '/features': () => <MarketingPage path="/features" />,
+  '/pricing': () => <MarketingPage path="/pricing" />,
+  '/analytics': () => <MarketingPage path="/analytics" />,
+  '/community': () => <MarketingPage path="/community" />,
 };
