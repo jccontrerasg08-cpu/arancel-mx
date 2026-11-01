@@ -101,6 +101,20 @@ test('groups the header into four destinations and keeps every page reachable', 
   await expect(page).toHaveURL(/\/records$/);
 });
 
+test('teaches how to read a code from the Learn menu', async ({ page }) => {
+  await page.goto('/');
+  const navigation = page.getByLabel('Navegación principal');
+  await navigation.getByRole('button', { name: /^aprender$/i }).click();
+  await navigation.getByRole('link', { name: /^guía para empezar$/i }).click();
+  await expect(page).toHaveURL(/[/]learn$/);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(/aprende a leer el arancel de méxico/i);
+  await expect(page.getByRole('status').filter({ hasText: 'Capítulo' })).toContainText('2 dígitos');
+  await page.getByRole('button', { name: /^13[ ]*subpartida$/i }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Subpartida' })).toContainText(/sistema armonizado/i);
+  await page.getByText('¿Qué es la LIGIE y qué es la TIGIE?').click();
+  await expect(page.getByText(/12 de diciembre de 2022/)).toBeVisible();
+});
+
 test('lists every destination, grouped, in the mobile menu', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');

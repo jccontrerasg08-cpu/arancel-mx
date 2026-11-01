@@ -2,14 +2,14 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 const LOCALES = {
   es: {
-    navigation: { '/app': 'Explorar', '/chapters': 'Capítulos', '/changes': 'Cambios en el DOF', '/data': 'Cifras', '/moa': 'Guía MOA', '/wiki': 'Wiki', '/glossary': 'Glosario', '/trade-context': 'Contexto comercial', '/documentation': 'Documentación', '/trust': 'Confianza', '/records': 'Mis registros' },
+    navigation: { '/app': 'Explorar', '/chapters': 'Capítulos', '/changes': 'Cambios en el DOF', '/data': 'Cifras', '/learn': 'Guía para empezar', '/moa': 'Guía MOA', '/wiki': 'Wiki', '/glossary': 'Glosario', '/trade-context': 'Contexto comercial', '/documentation': 'Documentación', '/trust': 'Confianza', '/records': 'Mis registros' },
     navGroups: { explore: 'Explorar', learn: 'Aprender', data: 'Datos', trust: 'Confianza' },
     header: { search: 'Búsqueda rápida', searchOpen: 'Abrir búsqueda rápida', skip: 'Saltar al contenido', open: 'Abrir menú de navegación', close: 'Cerrar menú de navegación', navigation: 'Navegación principal', language: 'Idioma de la interfaz', themeLight: 'Usar tema claro', themeDark: 'Usar tema oscuro' },
     footer: { description: 'Datos arancelarios mexicanos verificables con evidencia de release visible.' },
     home: { verified: 'verificada', title: 'Consulta el arancel de México, ', titleEmphasis: 'con su evidencia.', description: 'Busca por código o por nombre. Cada resultado muestra su release, su jerarquía y su fuente oficial.', searchLabel: 'Busca un código o descripción', searchPlaceholder: 'p. ej. 8517.13.01 o teléfonos', submit: 'Buscar', tryWith: 'Prueba con', metrics: [['8,183', 'Fracciones mexicanas'], ['11,507', 'Códigos NICO'], ['Diario', 'verificación de release'], ['Apache-2.0', 'núcleo abierto']], startTitle: 'Elige por dónde empezar', tiles: [['Busca un código y recorre su jerarquía.', '/app', 'explore'], ['Glosario, wiki y guía MOA, con índice A–Z.', '/glossary', 'learn'], ['Cifras del arancel, releases y cambios.', '/data', 'data'], ['De dónde sale cada dato y cómo se verifica.', '/trust', 'trust']] },
   },
   en: {
-    navigation: { '/app': 'Explorer', '/chapters': 'Chapters', '/changes': 'DOF changes', '/data': 'Figures', '/moa': 'MOA guide', '/wiki': 'Wiki', '/glossary': 'Glossary', '/trade-context': 'Trade context', '/documentation': 'Documentation', '/trust': 'Trust', '/records': 'My records' },
+    navigation: { '/app': 'Explorer', '/chapters': 'Chapters', '/changes': 'DOF changes', '/data': 'Figures', '/learn': 'Start here', '/moa': 'MOA guide', '/wiki': 'Wiki', '/glossary': 'Glossary', '/trade-context': 'Trade context', '/documentation': 'Documentation', '/trust': 'Trust', '/records': 'My records' },
     navGroups: { explore: 'Explore', learn: 'Learn', data: 'Data', trust: 'Trust' },
     header: { search: 'Quick search', searchOpen: 'Open quick search', skip: 'Skip to content', open: 'Open navigation menu', close: 'Close navigation menu', navigation: 'Primary navigation', language: 'Interface language', themeLight: 'Use light theme', themeDark: 'Use dark theme' },
     footer: { description: 'Verified Mexican tariff data with visible release evidence.' },

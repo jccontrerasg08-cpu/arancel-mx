@@ -44,3 +44,21 @@ test('a record has a section navigation whose targets all exist', async () => {
     assert.ok(css.includes(`#${id}`), `#${id} keeps room for the sticky header`);
   }
 });
+
+test('the Learn group opens with a start-here guide that every layer knows about', async () => {
+  const [content, app, routes, locale, api, vercel] = await Promise.all(['frontend/src/content.js', 'frontend/src/App.jsx', 'frontend/src/routes.js', 'frontend/src/locale.jsx', 'src/arancel_mx/api/app.py', 'vercel.json'].map(read));
+  assert.match(content, /id: 'learn', items: \['\/learn',/);
+  assert.ok(content.includes("'/learn': {"), 'editorial copy exists in both languages');
+  assert.ok(app.includes('path="/learn"'));
+  assert.ok(routes.includes("path: '/learn'"));
+  assert.ok(locale.includes("'/learn': 'Guía para empezar'") && locale.includes("'/learn': 'Start here'"));
+  assert.ok(api.includes('"/learn",'));
+  assert.ok(JSON.parse(vercel).rewrites.at(-1).source.includes('|learn|'));
+});
+
+test('the Learn guide explains the five code levels and cites official sources', async () => {
+  const page = await read('frontend/src/learn-page.jsx');
+  for (const level of ["'Capítulo'", "'Partida'", "'Subpartida'", "'Fracción arancelaria'", "'NICO'"]) assert.ok(page.includes(level), `${level} is explained`);
+  assert.ok(page.includes('snice.gob.mx') && page.includes('diputados.gob.mx'), 'cites the SNICE page and the LIGIE text');
+  assert.ok(page.includes('12 de diciembre de 2022') && page.includes('12 December 2022'), 'states the LIGIE entry into force');
+});

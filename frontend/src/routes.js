@@ -6,6 +6,7 @@ export const PUBLIC_ROUTES = Object.freeze([
   { path: '/chapters', label: 'Chapters' },
   { path: '/changes', label: 'Changes' },
   { path: '/data', label: 'Data figures' },
+  { path: '/learn', label: 'Start here' },
   { path: '/moa', label: 'MOA guide' },
   { path: '/moa-guide', label: 'MOA guide alias' },
   { path: '/wiki', label: 'Wiki' },

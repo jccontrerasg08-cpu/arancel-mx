@@ -53,6 +53,7 @@ _MARKETING_PAGES = (
     "/chapters",
     "/changes",
     "/data",
+    "/learn",
     "/moa",
     "/moa-guide",
     "/wiki",
