@@ -3,6 +3,7 @@ export const NAVIGATION = [
   ['Chapters', '/chapters'],
   ['Changes', '/changes'],
   ['Figures', '/data'],
+  ['Start here', '/learn'],
   ['MOA guide', '/moa'],
   ['Wiki', '/wiki'],
   ['Glossary', '/glossary'],
@@ -17,7 +18,7 @@ export const NAVIGATION = [
 // actions, so every other NAVIGATION entry belongs to exactly one group.
 export const NAV_GROUPS = [
   { id: 'explore', href: '/app' },
-  { id: 'learn', items: ['/glossary', '/wiki', '/moa', '/trade-context'] },
+  { id: 'learn', items: ['/learn', '/glossary', '/wiki', '/moa', '/trade-context'] },
   { id: 'data', items: ['/data', '/chapters', '/changes', '/documentation'] },
   { id: 'trust', href: '/trust' },
 ];
@@ -66,6 +67,13 @@ export const EDITORIAL_PAGES = {
     title: 'Comercio exterior: datos para entender el contexto.',
     description: 'Explicación y series oficiales para importaciones, exportaciones, balanza, entidades y socios.',
     disclaimer: 'El contexto histórico no determina una fracción ni una operación individual.',
+  },
+  '/learn': {
+    eyebrow: 'APRENDER · GUÍA PARA EMPEZAR',
+    title: 'Aprende a leer el arancel de México.',
+    description: 'De qué está hecho un código, qué ley lo define y dónde seguir leyendo, con la fuente oficial a la vista.',
+    disclaimer: 'Es material educativo: no clasifica mercancías ni sustituye la consulta a la autoridad.',
+    en: { eyebrow: 'LEARN · START HERE', title: 'Learn to read Mexico’s tariff.', description: 'What a code is made of, which law defines it and where to keep reading, with the official source in view.', disclaimer: 'This is educational material: it does not classify goods or replace asking the authority.' },
   },
   '/data': {
     eyebrow: 'DATOS · CIFRAS DE LA RELEASE',

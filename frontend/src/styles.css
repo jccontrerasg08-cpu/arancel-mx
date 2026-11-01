@@ -308,3 +308,21 @@ h1,h2,h3 { text-wrap:balance; }
 .record-jump a { border-radius:999px; color:var(--muted); padding:.3rem .8rem; font-size:.85rem; font-weight:600; text-decoration:none; }
 .record-jump a:hover,.record-jump a:focus-visible { background:color-mix(in srgb,var(--brand) 11%, transparent); color:var(--brand); }
 #record-summary,#record-hierarchy,#record-provenance { scroll-margin-top:9.5rem; }
+
+/* Aprender: anatomía interactiva de un código y preguntas frecuentes. */
+.learn-anatomy { display:grid; gap:.9rem; margin-bottom:2.4rem; }
+.learn-code { display:flex; flex-wrap:wrap; gap:.6rem; }
+.learn-code__part { display:grid; gap:.1rem; min-width:5.5rem; border:1px solid var(--line); border-radius:.8rem; background:var(--panel); color:var(--ink); padding:.7rem .9rem; text-align:center; cursor:pointer; transition:transform 140ms var(--ease-out),border-color 140ms var(--ease-out),background-color 140ms var(--ease-out); }
+.learn-code__part strong { color:var(--brand); font:500 1.7rem 'DM Mono',monospace; letter-spacing:-.04em; line-height:1.1; }
+.learn-code__part span { color:var(--muted); font-size:.78rem; font-weight:600; }
+.learn-code__part:hover { transform:translateY(-2px); border-color:var(--brand); }
+.learn-code__part.is-active { border-color:var(--brand); background:color-mix(in srgb,var(--brand) 12%,var(--panel)); box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 16%,transparent); }
+.learn-code__detail { max-width:46rem; margin:0; border-left:3px solid var(--brand); padding:.2rem 0 .2rem .9rem; }
+.learn-faq { display:grid; gap:.6rem; max-width:52rem; margin-bottom:2.4rem; }
+.learn-faq details { border:1px solid var(--line); border-radius:.7rem; background:var(--panel); padding:.8rem 1rem; }
+.learn-faq summary { cursor:pointer; font-weight:700; }
+.learn-faq details[open] summary { margin-bottom:.5rem; color:var(--brand); }
+.learn-faq p { margin:0; color:var(--muted); }
+.learn-paths { margin-bottom:2.4rem; }
+.learn-paths h3 { margin:0 0 .3rem; font-size:1.15rem; }
+@media (prefers-reduced-motion: reduce) { .learn-code__part { transition:none; } .learn-code__part:hover { transform:none; } }
