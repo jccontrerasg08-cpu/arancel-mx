@@ -228,6 +228,17 @@ test('looks up a complete tariff fraction with evidence and a decision tree', as
   await expect(page.getByRole('link', { name: /API JSON/i })).toHaveAttribute('href', /\/data\/v1\/records\/85\.json$/);
 });
 
+test('jumps between the sections of a record from its own navigation', async ({ page }) => {
+  await page.goto('/app/record/85171301');
+  const jump = page.getByRole('navigation', { name: /secciones de la ficha/i });
+  await expect(jump.getByRole('link')).toHaveText(['Resumen', 'Jerarquía', 'Procedencia']);
+  await jump.getByRole('link', { name: 'Procedencia' }).click();
+  await expect(page).toHaveURL(/#record-provenance$/);
+  await expect(page.locator('#record-provenance')).toBeInViewport();
+  await jump.getByRole('link', { name: 'Jerarquía' }).click();
+  await expect(page.getByTestId('hierarchy-card')).toBeInViewport();
+});
+
 test('retries a direct record request without leaving the record route', async ({ page }) => {
   const failures = await failStaticFile(page, 'records/99.json');
   await page.goto('/app/record/99999999');

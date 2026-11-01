@@ -302,3 +302,9 @@ h1,h2,h3 { text-wrap:balance; }
 .record-metrics { grid-template-columns:repeat(auto-fit,minmax(9.5rem,1fr)); }
 .record-metrics--compact { grid-template-columns:repeat(2,minmax(9.5rem,16rem)); }
 .record-metrics .metric-tile--trust strong { font-size:1.2rem; line-height:1.5; }
+
+/* Ficha: salto directo a cada sección sin perder el encabezado fijo. */
+.record-jump { position:sticky; z-index:5; top:5.4rem; display:flex; flex-wrap:wrap; gap:.4rem; width:fit-content; border:1px solid var(--line); border-radius:999px; background:color-mix(in srgb,var(--panel) 92%, transparent); backdrop-filter:blur(10px); padding:.25rem; }
+.record-jump a { border-radius:999px; color:var(--muted); padding:.3rem .8rem; font-size:.85rem; font-weight:600; text-decoration:none; }
+.record-jump a:hover,.record-jump a:focus-visible { background:color-mix(in srgb,var(--brand) 11%, transparent); color:var(--brand); }
+#record-summary,#record-hierarchy,#record-provenance { scroll-margin-top:9.5rem; }

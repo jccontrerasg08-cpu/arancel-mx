@@ -35,3 +35,12 @@ test('the trade desk uses the same header, logo and palette as the explorer', as
   assert.match(css, /--trade-teal: #008a5b;/);
   assert.match(css, /--trade-ink: #102a43;/);
 });
+
+test('a record has a section navigation whose targets all exist', async () => {
+  const [pages, css] = await Promise.all([read('frontend/src/pages.jsx'), read('frontend/src/styles.css')]);
+  for (const id of ['record-summary', 'record-hierarchy', 'record-provenance']) {
+    assert.ok(pages.includes(`href="#${id}"`), `the navigation links to #${id}`);
+    assert.ok(pages.includes(`id="${id}"`), `#${id} exists on the page`);
+    assert.ok(css.includes(`#${id}`), `#${id} keeps room for the sticky header`);
+  }
+});
