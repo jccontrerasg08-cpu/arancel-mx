@@ -228,6 +228,14 @@ test('looks up a complete tariff fraction with evidence and a decision tree', as
   await expect(page.getByRole('link', { name: /API JSON/i })).toHaveAttribute('href', /\/data\/v1\/records\/85\.json$/);
 });
 
+test('names the fraction in the tab title and the share metadata of a record', async ({ page }) => {
+  await page.goto('/app/record/85171301');
+  await expect(page).toHaveTitle(/8517[.]13[.]01 · Teléfonos inteligentes/);
+  await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', /8517[.]13[.]01/);
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /^Ficha verificada 8517[.]13[.]01/);
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://arancel-mx.vercel.app/app/record/85171301');
+});
+
 test('jumps between the sections of a record from its own navigation', async ({ page }) => {
   await page.goto('/app/record/85171301');
   const jump = page.getByRole('navigation', { name: /secciones de la ficha/i });

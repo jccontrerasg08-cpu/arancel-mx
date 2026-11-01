@@ -13,6 +13,7 @@ import {
   WIKI_REFERENCES,
 } from './content.js';
 import { useLocale } from './locale.jsx';
+import { applyPageMeta, describeRecord, setRecordMeta } from './page-meta.js';
 import { asExampleFicha, exampleRecordFor, formatCode, searchExampleRecords, VERIFIED_EXAMPLES } from './verified-examples.js';
 import { displayRate, selectPrimarySearchResults } from './tariff.js';
 import { createStaticApi } from './static-api.js';
@@ -229,6 +230,7 @@ function HierarchyItem({ label, description, language }) {
 }
 export function RecordPage() {
   const { code } = useParams();
+  const { pathname } = useLocation();
   const { language } = useLocale();
   const [state, setState] = useState({ kind: 'loading' });
   const [retry, setRetry] = useState(0);
@@ -252,6 +254,16 @@ export function RecordPage() {
       });
     return () => controller.abort();
   }, [code, retry]);
+  // Once the record is known, the tab title and the shared preview name the fraction.
+  useEffect(() => {
+    if (state.kind !== 'ready') return;
+    const loaded = state.ficha.record || state.ficha;
+    const digits = String(loaded.code || '').replace(/[.\s-]/g, '');
+    const withRates = loaded.level === 'fraccion8' || digits.length === 8;
+    const meta = { path: pathname, ...describeRecord({ code: state.ficha.formatted_code || formatCode(loaded.code), description: loaded.description, rates: withRates ? `IGI ${localizedRate(loaded.igi, language)} · IGE ${localizedRate(loaded.ige, language)}` : '', language }) };
+    setRecordMeta(meta);
+    applyPageMeta({ pathname, title: meta.title, summary: meta.summary, locale: language === 'en' ? 'en_US' : 'es_MX' });
+  }, [state, language, pathname]);
   if (state.kind === 'loading') return <><p className="status" role="status">{copy.loading}</p><div className="record-skeleton" aria-hidden="true"><span className="skeleton"/><span className="skeleton"/><div><span className="skeleton"/><span className="skeleton"/><span className="skeleton"/><span className="skeleton"/></div></div></>;
   if (state.kind === 'error') return <section className="empty-state"><h1>{copy.unavailable}</h1><button className="button primary" type="button" onClick={() => setRetry((current) => current + 1)}>{copy.retry}</button><Link to="/app">{copy.explorer}</Link></section>;
   const { ficha, provenance } = state;
