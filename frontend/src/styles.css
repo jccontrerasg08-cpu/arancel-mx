@@ -96,6 +96,15 @@ input { width:min(100%,38rem); min-height:2.8rem; border:1px solid var(--line); 
 .accordion button { display:flex; width:100%; align-items:center; justify-content:space-between; gap:1rem; border:0; background:transparent; color:var(--ink); padding:1rem; text-align:left; font-weight:700; }
 .accordion-panel { display:grid; gap:.45rem; border-top:1px solid var(--line); padding:1rem; }
 .accordion-panel a { border-radius:.35rem; padding:.35rem; }
+.tree, .tree ul { display:grid; gap:.35rem; margin:0; padding:0; list-style:none; }
+.tree li { margin-left:calc(min(var(--depth,0),3)*.7rem); }
+.tree-row { display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:.15rem .75rem; border-left:2px solid var(--line); padding-left:.6rem; }
+.tree-row>button, .tree-row>span { flex:1 1 14rem; min-width:0; text-align:left; font-weight:500; overflow-wrap:anywhere; }
+.accordion .tree-row>button { width:auto; padding:.35rem .5rem; align-items:flex-start; justify-content:flex-start; gap:.5rem; border-radius:.35rem; }
+.accordion .tree-row>button::before { content:'▸'; color:var(--brand); transition:transform .14s var(--ease-out); }
+.accordion .tree-row>button[aria-expanded=true]::before { transform:rotate(90deg); }
+.tree-row>a { flex:0 0 auto; margin-left:auto; padding:.2rem .5rem; font-size:.85rem; font-weight:600; white-space:nowrap; }
+@media (max-width:600px) { .tree li { margin-left:calc(min(var(--depth,0),3)*.4rem); } .accordion-panel { padding:.75rem .6rem; } }
 .flow-diagram { display:flex; align-items:stretch; justify-content:center; gap:.75rem; margin:1.5rem 0 3rem; }
 .flow-diagram article { display:grid; align-content:center; min-width:10rem; border:1px solid var(--line); border-radius:.8rem; background:var(--panel); padding:1.25rem; text-align:center; }
 .flow-diagram strong { color:var(--brand); font-size:1.1rem; }.flow-diagram>span { align-self:center; font-size:1.8rem; color:var(--accent); }

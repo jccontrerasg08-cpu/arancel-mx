@@ -286,15 +286,48 @@ export function RecordPage() {
   return <section data-testid="result-card" className="record-page"><p className="sr-only" role="status" aria-live="polite">{copy.ready}</p><nav className="breadcrumb" aria-label={copy.breadcrumb}><ol><li><Link to="/">{copy.home}</Link></li><li><Link to="/app">{copy.explore}</Link></li>{ancestors.map((entryCode) => <li key={entryCode}><Link to={`/app/record/${entryCode}`}>{copy.levels[levelByLength[entryCode.length]]} {formatCode(entryCode)}</Link></li>)}<li aria-current="page">{formattedCode}</li></ol></nav><p className="eyebrow">{copy.eyebrow}</p><div className="record-heading"><h1>{formattedCode}</h1><button type="button" className={copied ? 'button is-copied' : 'button'} onClick={copyCode}>{copied ? copy.copied : copy.copyCode}</button><span className="sr-only" aria-live="polite">{copied ? copy.copied : ''}</span></div><p lang={language === 'en' ? 'es-MX' : undefined}>{record.description}</p><nav className="record-jump" aria-label={copy.jumpLabel}><a href="#record-summary">{copy.jumpSummary}</a><a href="#record-hierarchy">{copy.jumpTree}</a><a href="#record-provenance">{copy.jumpProvenance}</a></nav><h2 id="record-summary">{copy.context}</h2>{state.fallback && <p className="example-note">{copy.fallback}</p>}<div className={`metric-grid record-metrics${hasRates ? '' : ' record-metrics--compact'}`}>{hasRates && <><article className="metric-tile metric-tile--explore"><strong>{localizedRate(record.igi, language)}</strong><span>IGI</span></article><article className="metric-tile metric-tile--data"><strong>{localizedRate(record.ige, language)}</strong><span>IGE</span></article></>}<article className="metric-tile metric-tile--learn"><strong>{record.unit_name || '—'}</strong><span>{copy.unit}</span></article>{hasRates && <article data-testid="rate-validity" className="metric-tile metric-tile--trust"><strong>{record.effective_from ? `${copy.validitySince} ${record.effective_from}${record.effective_to ? ` ${copy.validityUntil} ${record.effective_to}` : ''}` : copy.validityUnknown}</strong><span>{copy.validity}</span></article>}<article className="metric-tile"><strong>{record.dataset_version || '—'}</strong><span>{copy.release}</span></article></div><div className="record-actions">{hasSupportedEstimateCode ? <a data-testid="open-estimate" className="button primary" href={`/trade?code=${encodeURIComponent(record.code)}`}>{copy.estimate}</a> : <aside data-testid="estimate-guidance" className="estimate-guidance"><strong>{copy.estimateTitle}</strong><p>{copy.estimateDescription}</p><Link className="button" to={`/app?q=${encodeURIComponent(record.code)}`}>{copy.compatible}</Link></aside>}<div className="record-actions__secondary"><button className="button" onClick={save}>{saved ? copy.saved : copy.save}</button><button data-testid="export-snapshots" className="button" type="button" onClick={exportSnapshots} disabled={!snapshots.length}>{copy.export}</button><a className="button" href={chapterDataUrl(record.code)} target="_blank" rel="noreferrer">API JSON</a></div></div><ul data-testid="snapshot-list" aria-live="polite" className="snapshot-list">{snapshots.map((snapshot) => <li key={snapshot.code}>{formatCode(snapshot.code)} · {snapshot.dataset_version}</li>)}</ul><section data-testid="hierarchy-card" id="record-hierarchy"><h2>{copy.tree}</h2><label htmlFor="tree-query">{copy.filter}</label><p className="field-hint">{copy.filterHint}</p><div className="inline-form"><input data-testid="search-input" id="tree-query" type="search" value={treeFilter} onChange={(event) => setTreeFilter(event.target.value)} placeholder="p. ej. 8517"/></div><p data-testid="tree-filter-status">{formatCode(treeFilter || record.code)}</p><ol className="hierarchy">{visibleHierarchy.map((entry, depth) => { const entryCode = String(entry.code || entry); const label = entryCode.length === 2 ? 'Capítulo HS2' : entryCode.length === 4 ? 'Partida · familia HS4' : entryCode.length === 6 ? 'Subpartida · HS6' : entryCode.length === 8 ? 'Fracción' : 'NICO'; return <HierarchyItem key={entryCode} label={`${label} · ${formatCode(entryCode)}`} description={entry.description || ''} language={language} depth={depth}/>; })}</ol></section><section id="record-provenance"><h2>{copy.provenance}</h2>{provenance.length ? <ul>{provenance.map((entry, index) => <li key={entry.source_url || index}><External href={entry.source_url || '#'}>{entry.source_name || copy.source}</External></li>)}</ul> : <p>{copy.noProvenance}</p>}</section></section>;
 }
 
+const TREE_LABELS = { hs4: 'Partida · familia HS4', hs6: 'Subpartida · HS6', fraccion8: 'Fracción', nico10: 'NICO' };
+const TREE_PARENT_LENGTH = { hs6: 4, fraccion8: 6, nico10: 8 };
+
+// A chapter's data file lists every level; nest it by code prefix (HS4 > HS6 > fraction > NICO).
+function buildChapterTree(records) {
+  const nodes = new Map();
+  records
+    .filter((record) => TREE_LABELS[record.level] && record.is_current !== false)
+    .sort((a, b) => (a.code < b.code ? -1 : a.code > b.code ? 1 : 0))
+    .forEach((record) => nodes.set(record.code, { record, children: [] }));
+  const roots = [];
+  nodes.forEach((node) => {
+    const length = TREE_PARENT_LENGTH[node.record.level];
+    const parent = length ? nodes.get(node.record.code.slice(0, length)) : null;
+    (parent ? parent.children : roots).push(node);
+  });
+  return roots;
+}
+
+function TreeNode({ node, depth, openNodes, onToggle }) {
+  const { record, children } = node;
+  const text = `${TREE_LABELS[record.level]} ${formatCode(record.code)} · ${record.description}`;
+  const open = openNodes.has(record.code);
+  return <li style={{ '--depth': depth }}>
+    <div className="tree-row">
+      {children.length ? <button type="button" aria-expanded={open} onClick={() => onToggle(record.code)}>{text}</button> : <span>{text}</span>}
+      <Link to={`/app/record/${record.code}`} aria-label={`Ver ficha ${formatCode(record.code)}`}>Ver ficha</Link>
+    </div>
+    {children.length > 0 && open && <ul className="tree">{children.map((child) => <TreeNode key={child.record.code} node={child} depth={depth + 1} openNodes={openNodes} onToggle={onToggle}/>)}</ul>}
+  </li>;
+}
+
 export function ChaptersPage() {
-  const navigate = useNavigate();
   const [sections, setSections] = useState(FALLBACK_SECTIONS);
   const [chapters, setChapters] = useState(FALLBACK_CHAPTERS);
   const [openSections, setOpenSections] = useState(new Set());
   const [openChapters, setOpenChapters] = useState(new Set());
   const [query, setQuery] = useState('');
   const [indexState, setIndexState] = useState('loading');
-  const [loadedFamilies, setLoadedFamilies] = useState({});
+  const [chapterTrees, setChapterTrees] = useState({});
+  const [openNodes, setOpenNodes] = useState(new Set());
+  const requestedChapters = useRef(new Set());
   useEffect(() => {
     let active = true;
     setIndexState('loading');
@@ -312,21 +345,23 @@ export function ChaptersPage() {
       });
     return () => { active = false; };
   }, []);
-  // HS4 families come from each chapter's data file the first time it is opened.
+  // Each chapter's data file is fetched the first time the chapter opens and holds every level of its tree.
   useEffect(() => {
-    const pending = [...openChapters].filter((code) => !loadedFamilies[code]);
-    if (!pending.length) return undefined;
-    let active = true;
-    pending.forEach((code) => {
+    openChapters.forEach((code) => {
+      if (requestedChapters.current.has(code)) return;
+      requestedChapters.current.add(code);
+      setChapterTrees((current) => ({ ...current, [code]: { status: 'loading' } }));
       fetch(chapterDataUrl(code))
-        .then((response) => (response.ok ? response.json() : Promise.reject(new Error('families unavailable'))))
-        .then((records) => {
-          if (active) setLoadedFamilies((current) => ({ ...current, [code]: records.filter((record) => record.level === 'hs4').map((record) => ({ code: formatCode(record.code), description: record.description })) }));
-        })
-        .catch(() => {});
+        .then((response) => (response.ok ? response.json() : Promise.reject(new Error('chapter unavailable'))))
+        .then((records) => setChapterTrees((current) => ({ ...current, [code]: { status: 'ready', roots: buildChapterTree(records) } })))
+        .catch(() => setChapterTrees((current) => ({ ...current, [code]: { status: 'error' } })));
     });
-    return () => { active = false; };
-  }, [loadedFamilies, openChapters]);
+  }, [openChapters]);
+  const retryChapter = (code) => {
+    requestedChapters.current.delete(code);
+    setOpenChapters((current) => new Set(current));
+  };
+  const toggleNode = (code) => setOpenNodes((current) => { const next = new Set(current); next.has(code) ? next.delete(code) : next.add(code); return next; });
   const filtered = useMemo(() => chapters.filter((chapter) => `${chapter.code} ${chapter.description}`.toLowerCase().includes(query.toLowerCase())), [chapters, query]);
   useEffect(() => {
     if (!query.trim()) return;
@@ -335,7 +370,7 @@ export function ChaptersPage() {
     setOpenChapters(new Set(filtered.slice(0, 8).map((chapter) => chapter.code)));
   }, [filtered, query, sections]);
   const toggle = (setter, key) => setter((current) => { const next = new Set(current); next.has(key) ? next.delete(key) : next.add(key); return next; });
-  return <><PageHero page={EDITORIAL_PAGES['/chapters']}><Link className="button" to="/changes">Ver evidencia de fracciones</Link></PageHero><section className="workspace"><label htmlFor="chapter-query">Buscar capítulo, código o descripción</label><input id="chapter-query" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar capítulo, código o descripción"/><p className="status" role="status">{query.trim() ? `${filtered.length} capítulos coinciden y se expandieron mientras escribes.` : indexState === 'loading' ? 'Cargando el índice verificado de capítulos…' : indexState === 'fallback' ? 'Índice verificado no disponible. Se muestra la navegación incluida en el paquete.' : 'Índice verificado de capítulos cargado.'}</p><div className="accordion">{sections.map((section) => { const isOpen = openSections.has(section.roman); const rows = filtered.filter((chapter) => Number(chapter.code) >= section.chapter_from && Number(chapter.code) <= section.chapter_to); return <article key={section.roman}><button aria-expanded={isOpen} onClick={() => toggle(setOpenSections, section.roman)}><span>{section.roman} · {section.name}</span><span><span>{section.chapter_from === section.chapter_to ? section.chapter_from : `${section.chapter_from}–${section.chapter_to}`}</span><span>{rows.length} {rows.length === 1 ? 'visible' : 'visibles'}</span></span></button>{isOpen && <div className="accordion-panel">{rows.length ? rows.map((chapter) => { const isChapterOpen = openChapters.has(chapter.code); const families = loadedFamilies[chapter.code] || chapter.families || [{ code: `${chapter.code}.01`, description: 'Consultar familia HS4 en la release verificada' }]; return <article key={chapter.code}><button aria-expanded={isChapterOpen} onClick={() => toggle(setOpenChapters, chapter.code)}>Capítulo {chapter.code} · {chapter.description}</button>{isChapterOpen && <div className="accordion-panel">{families.map((family) => <button key={family.code} className="family-action" onClick={() => navigate(`/app?q=${encodeURIComponent(family.code)}`)}>Partida · familia HS4 {family.code} · {family.description}</button>)}</div>}</article>; }) : <p>Ningún capítulo verificado coincide con este filtro.</p>}</div>}</article>; })}</div></section></>;
+  return <><PageHero page={EDITORIAL_PAGES['/chapters']}><Link className="button" to="/changes">Ver evidencia de fracciones</Link></PageHero><section className="workspace"><label htmlFor="chapter-query">Buscar capítulo, código o descripción</label><input id="chapter-query" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar capítulo, código o descripción"/><p className="status" role="status">{query.trim() ? `${filtered.length} capítulos coinciden y se expandieron mientras escribes.` : indexState === 'loading' ? 'Cargando el índice verificado de capítulos…' : indexState === 'fallback' ? 'Índice verificado no disponible. Se muestra la navegación incluida en el paquete.' : 'Índice verificado de capítulos cargado.'}</p><div className="accordion">{sections.map((section) => { const isOpen = openSections.has(section.roman); const rows = filtered.filter((chapter) => Number(chapter.code) >= section.chapter_from && Number(chapter.code) <= section.chapter_to); return <article key={section.roman}><button aria-expanded={isOpen} onClick={() => toggle(setOpenSections, section.roman)}><span>{section.roman} · {section.name}</span><span><span>{section.chapter_from === section.chapter_to ? section.chapter_from : `${section.chapter_from}–${section.chapter_to}`}</span><span>{rows.length} {rows.length === 1 ? 'visible' : 'visibles'}</span></span></button>{isOpen && <div className="accordion-panel">{rows.length ? rows.map((chapter) => { const isChapterOpen = openChapters.has(chapter.code); const treeState = chapterTrees[chapter.code]; return <article key={chapter.code}><button aria-expanded={isChapterOpen} onClick={() => toggle(setOpenChapters, chapter.code)}>Capítulo {chapter.code} · {chapter.description}</button>{isChapterOpen && <div className="accordion-panel">{!treeState || treeState.status === 'loading' ? <p className="status" role="status">Cargando las partidas del capítulo {chapter.code}…</p> : treeState.status === 'error' ? <><p className="status" role="status">No se pudo cargar el detalle del capítulo {chapter.code}.</p>{(chapter.families || []).map((family) => <Link key={family.code} to={`/app?q=${encodeURIComponent(family.code)}`}>Partida · familia HS4 {family.code} · {family.description}</Link>)}<button type="button" onClick={() => retryChapter(chapter.code)}>Reintentar</button></> : <ul className="tree">{treeState.roots.map((node) => <TreeNode key={node.record.code} node={node} depth={0} openNodes={openNodes} onToggle={toggleNode}/>)}</ul>}</div>}</article>; }) : <p>Ningún capítulo verificado coincide con este filtro.</p>}</div>}</article>; })}</div></section></>;
 }
 
 const DofChangesPage = lazy(() => import('./dof-changes-page.jsx'));

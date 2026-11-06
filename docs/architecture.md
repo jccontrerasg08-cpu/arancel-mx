@@ -66,7 +66,7 @@ Cada permiso de escritura vive sólo en el job que lo necesita. `tests/test_work
 | Archivo | Contenido |
 |---|---|
 | `meta.json` | Identidad del dataset, versión del exportador y `release_verified`. |
-| `sections.json`, `chapters.json` | Secciones HS y capítulos HS2. |
+| `sections.json`, `chapters.json` | 22 secciones (las 21 del SA más la XXII «Operaciones especiales», capítulo 98 de la LIGIE) y capítulos HS2. |
 | `records/{hs2}.json` | Todos los registros vigentes del capítulo, con el mismo modelo que `/v1/lookup`. Resuelve `lookup`, `ficha`, `parent` y `children`. |
 | `provenance/{hs2}.json` | Fuentes del capítulo y enlaces código → fuente. |
 | `national-notes/{hs2}.json` | Notas nacionales del capítulo. |

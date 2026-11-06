@@ -169,6 +169,32 @@ test('opens a verified chapter section and family hierarchy from the keyboard', 
   await expect(page.getByRole('button', { name: /partida · familia HS4.*01\.01/i })).toBeVisible();
 });
 
+test('lists chapter 98 under its own section and expands the tree down to the NICO', async ({ page }) => {
+  await page.goto('/chapters');
+  const section = page.getByRole('button', { name: /^sección XXII /i });
+  await expect(section).toBeVisible();
+  await expect(section).toContainText('98');
+  await page.getByRole('button', { name: /^sección I /i }).click();
+  await page.getByRole('button', { name: /capítulo 01/i }).click();
+  const tree = page.locator('.tree').first();
+  await tree.getByRole('button', { name: /partida · familia HS4 01\.01/i }).click();
+  await tree.getByRole('button', { name: /subpartida · HS6 0101\.21/i }).click();
+  await tree.getByRole('button', { name: /fracción 0101\.21\.01 ·/i }).click();
+  const nico = tree.locator('li', { hasText: 'NICO 0101.21.01 00' }).last();
+  await expect(nico).toBeVisible();
+  await expect(nico.getByRole('link', { name: /ver ficha 0101\.21\.01 00/i })).toHaveAttribute('href', '/app/record/0101210100');
+});
+
+test('never invents a family code when a chapter file cannot be loaded', async ({ page }) => {
+  await failStaticFile(page, 'records/85.json');
+  await page.goto('/chapters');
+  await page.getByRole('button', { name: /^sección XVI /i }).click();
+  await page.getByRole('button', { name: /capítulo 85/i }).click();
+  await expect(page.getByText(/no se pudo cargar el detalle del capítulo 85/i)).toBeVisible();
+  await expect(page.getByRole('button', { name: /reintentar/i })).toBeVisible();
+  await expect(page.getByText('85.01')).toHaveCount(0);
+});
+
 test('opens matching chapter paths while a person filters the visual tree', async ({ page }) => {
   await page.goto('/chapters');
   await page.getByRole('searchbox', { name: /buscar capítulo/i }).fill('01');
