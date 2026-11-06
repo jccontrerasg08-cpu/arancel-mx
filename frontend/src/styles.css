@@ -82,7 +82,9 @@ input { width:min(100%,38rem); min-height:2.8rem; border:1px solid var(--line); 
 .result-list .result-context { color:var(--muted); font-size:.85rem; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; overflow:hidden; }
 .result-list span,.result-list small { color:var(--muted); font-family:'DM Mono',monospace; font-size:.75rem; }
 .hierarchy { display:grid; gap:.6rem; padding-left:1.3rem; }
-.hierarchy li { border-left:2px solid var(--line); padding-left:.75rem; }
+.accordion>article>button>span:last-child { text-align:right; }
+.accordion>article>button>span:last-child>span { display:block; white-space:nowrap; }
+.hierarchy li { margin-left:calc(min(var(--depth,0),4)*.8rem); border-left:2px solid var(--line); padding-left:.75rem; }
 .record-page { display:grid; gap:1.4rem; max-width:70rem; }
 .record-metrics { grid-template-columns:repeat(4,1fr); }
 .record-actions { display:grid; justify-items:start; gap:.7rem; }
