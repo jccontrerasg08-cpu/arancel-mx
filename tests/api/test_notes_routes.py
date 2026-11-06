@@ -90,7 +90,7 @@ def test_sections_return_canonical_hs_ligie_ranges(valid_settings) -> None:
         "chapter_to": "05",
         "source": "hs_section_grouping",
     }
-    assert payload[-1]["roman"] == "XXI"
+    assert payload[-1]["roman"] == "XXII"
 
 
 def test_national_notes_return_only_requested_two_digit_chapter(valid_settings) -> None:
