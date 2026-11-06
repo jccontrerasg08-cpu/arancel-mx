@@ -42,6 +42,10 @@ El repositorio incluye el método [Ponytail](https://github.com/dietrichgebert/p
 
 Estas herramientas no sustituyen la revisión de corrección, seguridad ni datos oficiales.
 
+## Desarrollo guiado por especificaciones
+
+El repositorio incluye [Spec Kit](https://github.com/github/spec-kit) para cambios que conviene especificar antes de programar. En Claude Code, los skills `speckit-*` de `.claude/skills/` llevan el cambio por especificación, plan, tareas e implementación (`/speckit-specify`, `/speckit-plan`, `/speckit-tasks`, `/speckit-implement`); `/speckit-clarify` y `/speckit-analyze` son opcionales. Cada especificación vive en `specs/NNN-nombre/` y debe cumplir la [constitución](.specify/memory/constitution.md), que resume las reglas de este documento y de la arquitectura. Para una corrección pequeña no hace falta.
+
 ## Revisión en GitHub
 
 arancel-mx no reimplementa la UI de GitHub. Para revisar PRs, instala en el navegador:
