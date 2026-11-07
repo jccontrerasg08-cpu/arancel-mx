@@ -1,10 +1,11 @@
 const formatCode = (code) => {
   const clean = code.replace(/\D/g, '');
   if (clean.length === 2) return clean;
+  // Same notation as the published formatted_code: 85 / 85.17 / 8517.13 / 8517.13.01 / 8517.13.01 00.
   if (clean.length === 4) return `${clean.slice(0, 2)}.${clean.slice(2)}`;
-  if (clean.length === 6) return `${clean.slice(0, 2)}.${clean.slice(2, 4)}.${clean.slice(4)}`;
-  if (clean.length === 8) return `${clean.slice(0, 2)}.${clean.slice(2, 4)}.${clean.slice(4, 6)}.${clean.slice(6)}`;
-  if (clean.length === 10) return `${clean.slice(0, 2)}.${clean.slice(2, 4)}.${clean.slice(4, 6)}.${clean.slice(6, 8)}.${clean.slice(8)}`;
+  if (clean.length === 6) return `${clean.slice(0, 4)}.${clean.slice(4)}`;
+  if (clean.length === 8) return `${clean.slice(0, 4)}.${clean.slice(4, 6)}.${clean.slice(6)}`;
+  if (clean.length === 10) return `${clean.slice(0, 4)}.${clean.slice(4, 6)}.${clean.slice(6, 8)} ${clean.slice(8)}`;
   return clean;
 };
 
