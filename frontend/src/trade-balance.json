@@ -1,0 +1,17 @@
+{
+  "source": "INEGI · Balanza Comercial de Mercancías de México (BCMM), cifras acumuladas anuales",
+  "source_url": "https://www.inegi.org.mx/temas/balanza/",
+  "unit": "millones de dólares",
+  "years": [
+    { "year": 2016, "exports": 373953.6, "imports": 387087.5, "balance": -13133.9 },
+    { "year": 2017, "exports": 409432.6, "imports": 420393.6, "balance": -10961.0 },
+    { "year": 2018, "exports": 450712.7, "imports": 464302.4, "balance": -13589.6 },
+    { "year": 2019, "exports": 460603.9, "imports": 455241.6, "balance": 5362.3 },
+    { "year": 2020, "exports": 417170.7, "imports": 382985.9, "balance": 34184.8 },
+    { "year": 2021, "exports": 494949.0, "imports": 505703.1, "balance": -10754.1 },
+    { "year": 2022, "exports": 577697.5, "imports": 605805.4, "balance": -28107.9 },
+    { "year": 2023, "exports": 593001.2, "imports": 605280.0, "balance": -12278.7, "adjusted": true },
+    { "year": 2024, "exports": 617770.7, "imports": 636218.0, "balance": -18447.3, "adjusted": true },
+    { "year": 2025, "exports": 664266.7, "imports": 664057.3, "balance": 209.4, "adjusted": true }
+  ]
+}

@@ -202,6 +202,15 @@ test('opens matching chapter paths while a person filters the visual tree', asyn
   await expect(page.getByRole('button', { name: /capítulo 01/i })).toBeVisible();
 });
 
+test('shows INEGI’s annual trade balance on the trade context page', async ({ page }) => {
+  await page.goto('/trade-context');
+  const balance = page.getByTestId('trade-balance');
+  await expect(balance.getByRole('heading', { level: 2 })).toHaveText('Exportaciones e importaciones, 2016–2025');
+  await expect(balance.getByRole('row', { name: /^2025/ })).toContainText('+209.4');
+  await expect(balance.getByRole('row', { name: /^2022/ })).toContainText('−28,107.9');
+  await expect(balance.getByRole('link', { name: /INEGI/ })).toHaveAttribute('href', 'https://www.inegi.org.mx/temas/balanza/');
+});
+
 test('serves the source-cited trade-context and ANAM MOA routes', async ({ page }) => {
   await page.goto('/trade-context');
   await expect(page.getByRole('heading', { name: /comercio exterior: datos para entender el contexto/i })).toBeVisible();
