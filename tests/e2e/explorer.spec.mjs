@@ -126,8 +126,8 @@ test('lists every destination, grouped, in the mobile menu', async ({ page }) =>
 });
 test('offers verified examples as shortcuts into the explorer', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('link', { name: '01.01.21.01.00' }).click();
-  await expect(page).toHaveURL(/\/app\?q=01.01.21.01.00/);
+  await page.getByRole('link', { name: '0101.21.01 00' }).click();
+  await expect(page).toHaveURL(/\/app\?q=0101\.21\.01(%20|\+| )00/);
 });
 test('updates editorial metadata when the route changes', async ({ page }) => {
   await page.goto('/documentation');
@@ -183,6 +183,32 @@ test('opens a verified chapter section and family hierarchy from the keyboard', 
   await expect(page.getByRole('button', { name: /partida · familia HS4.*01\.01/i })).toBeVisible();
 });
 
+test('lists chapter 98 under its own section and expands the tree down to the NICO', async ({ page }) => {
+  await page.goto('/chapters');
+  const section = page.getByRole('button', { name: /^sección XXII /i });
+  await expect(section).toBeVisible();
+  await expect(section).toContainText('98');
+  await page.getByRole('button', { name: /^sección I /i }).click();
+  await page.getByRole('button', { name: /capítulo 01/i }).click();
+  const tree = page.locator('.tree').first();
+  await tree.getByRole('button', { name: /partida · familia HS4 01\.01/i }).click();
+  await tree.getByRole('button', { name: /subpartida · HS6 0101\.21/i }).click();
+  await tree.getByRole('button', { name: /fracción 0101\.21\.01 ·/i }).click();
+  const nico = tree.locator('li', { hasText: 'NICO 0101.21.01 00' }).last();
+  await expect(nico).toBeVisible();
+  await expect(nico.getByRole('link', { name: /ver ficha 0101\.21\.01 00/i })).toHaveAttribute('href', '/app/record/0101210100');
+});
+
+test('never invents a family code when a chapter file cannot be loaded', async ({ page }) => {
+  await failStaticFile(page, 'records/85.json');
+  await page.goto('/chapters');
+  await page.getByRole('button', { name: /^sección XVI /i }).click();
+  await page.getByRole('button', { name: /capítulo 85/i }).click();
+  await expect(page.getByText(/no se pudo cargar el detalle del capítulo 85/i)).toBeVisible();
+  await expect(page.getByRole('button', { name: /reintentar/i })).toBeVisible();
+  await expect(page.getByText('85.01')).toHaveCount(0);
+});
+
 test('opens matching chapter paths while a person filters the visual tree', async ({ page }) => {
   await page.goto('/chapters');
   await page.getByRole('searchbox', { name: /buscar capítulo/i }).fill('01');
@@ -224,8 +250,8 @@ test('shows possible verified paths while a person types without requiring a sub
   await page.getByTestId('search-input').fill('teléfonos');
   const suggestions = page.getByTestId('live-suggestions');
   await expect(suggestions).toContainText(/rutas verificadas posibles/i);
-  await expect(suggestions.getByRole('option', { name: /85\.17\.13\.01/i })).toBeVisible();
-  await suggestions.getByRole('option', { name: /85\.17\.13\.01/i }).click();
+  await expect(suggestions.getByRole('option', { name: /8517\.13\.01/i })).toBeVisible();
+  await suggestions.getByRole('option', { name: /8517\.13\.01/i }).click();
   await expect(page).toHaveURL(/\/app\/record\/85171301$/);
 });
 
@@ -234,10 +260,10 @@ test('looks up a complete tariff fraction with evidence and a decision tree', as
   await page.getByTestId('search-input').fill('8517.13.01');
   await page.getByTestId('search-submit').click();
   const card = page.getByTestId('result-card').first();
-  await expect(card).toContainText('85.17.13.01');
+  await expect(card).toContainText('8517.13.01');
   await expect(card).toContainText(/teléfonos inteligentes/i);
   await expect(page.getByTestId('hierarchy-card')).toContainText(/árbol de decisión progresivo/i);
-  await expect(page.getByTestId('tree-filter-status')).toContainText('85.17.13.01');
+  await expect(page.getByTestId('tree-filter-status')).toContainText('8517.13.01');
   await expect(page.getByRole('status')).toHaveText(/registro verificado listo/i);
   await expect(page.getByRole('link', { name: /API JSON/i })).toHaveAttribute('href', /\/data\/v1\/records\/85\.json$/);
 });
@@ -265,14 +291,14 @@ test('retries a direct record request without leaving the record route', async (
 test('exposes rates only on fraction cards', async ({ page }) => {
   await page.goto('/app/record/01012101');
   const fractionCard = page.getByTestId('result-card');
-  await expect(fractionCard).toContainText('01.01.21.01');
+  await expect(fractionCard).toContainText('0101.21.01');
   await expect(fractionCard).toContainText('IGI');
   await expect(fractionCard).toContainText('IGE');
   await expect(fractionCard.getByTestId('open-estimate')).toHaveAttribute('href', '/trade?code=01012101');
 
   await page.goto('/app/record/0101210100');
   const nicoCard = page.getByTestId('result-card');
-  await expect(nicoCard).toContainText('01.01.21.01.00');
+  await expect(nicoCard).toContainText('0101.21.01 00');
   await expect(nicoCard).not.toContainText('IGI');
   await expect(nicoCard).not.toContainText('IGE');
   await expect(nicoCard.getByTestId('open-estimate')).toHaveAttribute('href', '/trade?code=0101210100');
@@ -287,8 +313,8 @@ test('renders every non-fraction direct record without rate fields or a page err
   for (const { code, formatted } of [
     { code: '01', formatted: '01' },
     { code: '0101', formatted: '01.01' },
-    { code: '010121', formatted: '01.01.21' },
-    { code: '0101210100', formatted: '01.01.21.01.00' },
+    { code: '010121', formatted: '0101.21' },
+    { code: '0101210100', formatted: '0101.21.01 00' },
   ]) {
     await page.goto(`/app/record/${code}`);
     await expect(page.getByText(/an unexpected error occurred/i)).toHaveCount(0);
@@ -349,19 +375,36 @@ test('shows the heading path of a generic "Los demás." search result', async ({
   await expect(card.getByTestId('result-context')).toContainText(/^Teléfonos, incluidos los teléfonos inteligentes.* › Los demás$/);
 });
 
+test('labels each hierarchy level with the official code notation and indents it by depth', async ({ page }) => {
+  await page.goto('/app/record/0101210100');
+  const tree = page.getByTestId('hierarchy-card').locator('ol.hierarchy > li');
+  await expect(tree).toHaveCount(5);
+  const rows = await tree.evaluateAll((items) => items.map((item) => ({ label: item.querySelector('strong').textContent, margin: parseFloat(getComputedStyle(item).marginLeft) })));
+  expect(rows.map((row) => row.label)).toEqual([
+    'Capítulo HS2 · 01',
+    'Partida · familia HS4 · 01.01',
+    'Subpartida · HS6 · 0101.21',
+    'Fracción · 0101.21.01',
+    'NICO · 0101.21.01 00',
+  ]);
+  const margins = rows.map((row) => row.margin);
+  expect(margins).toEqual([...margins].sort((a, b) => a - b));
+  expect(new Set(margins).size).toBe(margins.length);
+});
+
 test('opens the visual tree from the explorer and keeps its selected hierarchy inspectable', async ({ page }) => {
   await page.goto('/app');
   await page.getByRole('link', { name: /explorar árbol visual/i }).click();
   await expect(page).toHaveURL(/\/chapters$/);
   await expect(page.getByRole('button', { name: /^sección I /i })).toBeVisible();
   await page.goto('/app/record/85171301');
-  await expect(page.getByTestId('hierarchy-card')).toContainText('85.17.13.01');
+  await expect(page.getByTestId('hierarchy-card')).toContainText('8517.13.01');
 });
 
 test('saves and exports a browser-local research snapshot', async ({ page }) => {
   await page.goto('/app/record/85171301');
   await page.getByRole('button', { name: /guardar localmente/i }).click();
-  await expect(page.getByTestId('snapshot-list')).toContainText('85.17.13.01');
+  await expect(page.getByTestId('snapshot-list')).toContainText('8517.13.01');
   const download = page.waitForEvent('download');
   await page.getByTestId('export-snapshots').click();
   const backup = await download;
@@ -410,7 +453,7 @@ test('opens the quick search with Ctrl+K, offers verified paths and opens a reco
   await expect(dialog.getByRole('combobox')).toBeFocused();
   await expect(dialog.getByRole('option').first()).toBeVisible();
   await dialog.getByRole('combobox').fill('teléfonos');
-  await dialog.getByRole('option', { name: /85\.17\.13\.01/ }).click();
+  await dialog.getByRole('option', { name: /8517\.13\.01/ }).click();
   await expect(page).toHaveURL(/\/app\/record\/85171301$/);
   await expect(page.getByRole('dialog')).toHaveCount(0);
 });
