@@ -10,6 +10,7 @@ import brandLogo from '../../src/arancel_mx/api/static/site/assets/arancel-mx-lo
 
 const GlossaryPage = lazy(() => import('./glossary-page.jsx'));
 const DataPage = lazy(() => import('./data-page.jsx'));
+const LearnPage = lazy(() => import('./learn-page.jsx'));
 const DofChangeDetail = lazy(() => import('./dof-change-detail.jsx'));
 
 function ThemeToggle() {
@@ -99,6 +100,10 @@ function DeferredGlossaryPage() {
   return <Suspense fallback={<p className="status" role="status">Loading glossary…</p>}><GlossaryPage /></Suspense>;
 }
 
+function DeferredLearnPage() {
+  return <Suspense fallback={<p className="status" role="status">Cargando la guía…</p>}><LearnPage /></Suspense>;
+}
+
 function DeferredDataPage() {
   return <Suspense fallback={<p className="status" role="status">Cargando cifras…</p>}><DataPage /></Suspense>;
 }
@@ -111,7 +116,7 @@ function RoutedPage({ Component }) {
   const location = useLocation();
   const { language, copy } = useLocale();
   useEffect(() => {
-    const localizedRoute = ['/', '/app', '/product', '/documentation', '/trust', '/records', '/changes', '/data'].includes(location.pathname) || location.pathname.startsWith('/changes/') || location.pathname.startsWith('/app/record/') || location.pathname.startsWith('/app/chapter/');
+    const localizedRoute = ['/', '/app', '/product', '/documentation', '/trust', '/records', '/changes', '/data', '/learn'].includes(location.pathname) || location.pathname.startsWith('/changes/') || location.pathname.startsWith('/app/record/') || location.pathname.startsWith('/app/chapter/');
     document.documentElement.lang = localizedRoute && language === 'en' ? 'en' : 'es-MX';
     const page = editorialPage(location.pathname, language);
     const record = recordMetaFor(location.pathname);
@@ -130,7 +135,7 @@ function SiteLayout() {
   return <><SiteHeader/><CommandPalette/><Outlet/><SiteFooter/></>;
 }
 
-const router = createBrowserRouter(createRoutesFromElements(<Route element={<SiteLayout/>}>{Object.entries(PAGE_COMPONENTS).map(([path, Component]) => <Route key={path} path={path} element={<RoutedPage Component={Component} />} />)}<Route path="/glossary" element={<RoutedPage Component={DeferredGlossaryPage} />}/><Route path="/data" element={<RoutedPage Component={DeferredDataPage} />}/><Route path="/changes/:id" element={<RoutedPage Component={DeferredChangeDetail} />}/><Route path="/product" element={<RoutedPage Component={PAGE_COMPONENTS['/app']} />}/><Route path="/app/chapter/:code" element={<RoutedPage Component={PAGE_COMPONENTS['/app/record/:code']} />}/><Route path="*" element={<RoutedPage Component={NotFoundPage} />}/></Route>));
+const router = createBrowserRouter(createRoutesFromElements(<Route element={<SiteLayout/>}>{Object.entries(PAGE_COMPONENTS).map(([path, Component]) => <Route key={path} path={path} element={<RoutedPage Component={Component} />} />)}<Route path="/glossary" element={<RoutedPage Component={DeferredGlossaryPage} />}/><Route path="/data" element={<RoutedPage Component={DeferredDataPage} />}/><Route path="/learn" element={<RoutedPage Component={DeferredLearnPage} />}/><Route path="/changes/:id" element={<RoutedPage Component={DeferredChangeDetail} />}/><Route path="/product" element={<RoutedPage Component={PAGE_COMPONENTS['/app']} />}/><Route path="/app/chapter/:code" element={<RoutedPage Component={PAGE_COMPONENTS['/app/record/:code']} />}/><Route path="*" element={<RoutedPage Component={NotFoundPage} />}/></Route>));
 
 export function App() {
   return <LocaleProvider><RouterProvider router={router}/></LocaleProvider>;

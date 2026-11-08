@@ -216,7 +216,7 @@ def test_new_marketing_deep_links_serve_the_public_shell(valid_settings, fake_da
     with _client(valid_settings, fake_dataset) as client:
         responses = [
             client.get(path)
-            for path in ("/records", "/chapters", "/changes", "/changes/tarifa15", "/data", "/moa", "/wiki", "/glossary", "/trade-context")
+            for path in ("/records", "/chapters", "/changes", "/changes/tarifa15", "/data", "/learn", "/moa", "/wiki", "/glossary", "/trade-context")
         ]
 
     assert all(response.status_code == 200 for response in responses)
