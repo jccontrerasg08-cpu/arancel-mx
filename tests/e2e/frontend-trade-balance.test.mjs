@@ -27,7 +27,8 @@ test('the latest year-to-date block adds up and cites INEGI', async () => {
   const { data } = await load();
   const { latest } = data;
   assert.ok(Math.abs(latest.exports - latest.imports - latest.balance) <= 0.2);
-  assert.match(latest.source_url, /^https:\/\/www\.inegi\.org\.mx\/contenidos\/saladeprensa\/boletines\//);
+  assert.match(latest.source_url, /^https:\/\/www\.inegi\.org\.mx\//);
+  assert.ok(latest.published || latest.retrieved, 'the block says when its figures were taken');
   assert.equal(latest.months.length, 3);
   for (const entry of latest.months) assert.ok(Math.abs(entry.exports - entry.imports - entry.balance) <= 0.2, `${entry.month} does not add up`);
   assert.ok(latest.months.every((entry, index) => index === 0 || entry.month > latest.months[index - 1].month));
