@@ -8,6 +8,8 @@ export function TradeBalance() {
   const summary = summarizeBalance(data.years);
   const { first, last, largestSurplus, largestDeficit } = summary;
   const { latest } = data;
+  const previousYear = Number(latest.months.at(-1).month.slice(0, 4)) - 1;
+  const change = (percent, up, down) => `${percent >= 0 ? up : down} ${Math.abs(percent).toLocaleString(language === 'en' ? 'en-US' : 'es-MX', { maximumFractionDigits: 1 })} %`;
   const nearBalance = Math.abs(last.balance) < last.exports * 0.01;
   const money = (value, options) => formatMillions(value, language, options);
   const facts = [
@@ -57,7 +59,7 @@ export function TradeBalance() {
       </div>
       <div className="trade-balance__latest" data-testid="trade-balance-latest">
         <h3>{t(latest.label, latest.label_en)} <span>{t(latest.note, 'Preliminary figures')}</span></h3>
-        <p>{t(`Lo que va del año: exportaciones ${money(latest.exports)}, importaciones ${money(latest.imports)} y una balanza de ${money(latest.balance, { sign: true })} millones de dólares. Las exportaciones crecieron ${latest.exports_growth} % y las importaciones ${latest.imports_growth} % frente al mismo periodo de 2025.`, `Year to date: exports ${money(latest.exports)}, imports ${money(latest.imports)} and a balance of ${money(latest.balance, { sign: true })} million dollars. Exports grew ${latest.exports_growth}% and imports ${latest.imports_growth}% against the same period of 2025.`)}</p>
+        <p>{t(`Lo que va del año: exportaciones ${money(latest.exports)}, importaciones ${money(latest.imports)} y una balanza de ${money(latest.balance, { sign: true })} millones de dólares. Frente al mismo periodo de ${previousYear}, las exportaciones ${change(latest.exports_growth, 'crecieron', 'cayeron')} y las importaciones ${change(latest.imports_growth, 'crecieron', 'cayeron')}.`, `Year to date: exports ${money(latest.exports)}, imports ${money(latest.imports)} and a balance of ${money(latest.balance, { sign: true })} million dollars. Against the same period of ${previousYear}, exports ${change(latest.exports_growth, 'grew', 'fell')} and imports ${change(latest.imports_growth, 'grew', 'fell')}.`)}</p>
         <div className="data-table-wrap">
           <table className="data-table">
             <caption>{t('Últimos meses publicados, millones de dólares', 'Latest published months, millions of US dollars')}</caption>
@@ -74,7 +76,7 @@ export function TradeBalance() {
             </tbody>
           </table>
         </div>
-        <p className="trade-balance__source">{t('Boletín INEGI del ', 'INEGI bulletin of ')}<time dateTime={latest.published}>{new Date(`${latest.published}T12:00:00Z`).toLocaleDateString(language === 'en' ? 'en-US' : 'es-MX', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}</time>. <a href={latest.source_url} target="_blank" rel="noreferrer">{t('Ver boletín', 'View bulletin')} <span aria-hidden="true">↗</span></a></p>
+        <p className="trade-balance__source">{latest.published ? t('Boletín INEGI del ', 'INEGI bulletin of ') : t('Consultado en la API del INEGI el ', 'Retrieved from the INEGI API on ')}<time dateTime={latest.published || latest.retrieved}>{new Date(`${latest.published || latest.retrieved}T12:00:00Z`).toLocaleDateString(language === 'en' ? 'en-US' : 'es-MX', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}</time>. <a href={latest.source_url} target="_blank" rel="noreferrer">{latest.published ? t('Ver boletín', 'View bulletin') : t('Ver en INEGI', 'View at INEGI')} <span aria-hidden="true">↗</span></a></p>
       </div>
       <p className="trade-balance__source">{t('Fuente: ', 'Source: ')}<a href={data.source_url} target="_blank" rel="noreferrer">{data.source} <span aria-hidden="true">↗</span></a>. {t('A = cifras ajustadas por INEGI. Una balanza positiva es superávit; negativa, déficit. Es contexto histórico y no determina una fracción ni una operación.', 'A = figures adjusted by INEGI. A positive balance is a surplus; a negative one, a deficit. This is historical context and does not determine a fraction or an operation.')}</p>
     </section>
