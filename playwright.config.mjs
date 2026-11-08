@@ -20,7 +20,7 @@ export default defineConfig({
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    // Firefox and WebKit (Safari's engine) run only the cross-browser smoke tests; see .github/workflows/cross-browser.yml.
+    // Firefox and WebKit (Safari's engine) run only the cross-browser smoke tests; see the cross-browser job in .github/workflows/ci.yml.
     { name: 'firefox', testMatch: /cross-browser[.]spec[.]mjs/, use: { ...devices['Desktop Firefox'] } },
     { name: 'webkit', testMatch: /cross-browser[.]spec[.]mjs/, use: { ...devices['Desktop Safari'] } },
   ],
