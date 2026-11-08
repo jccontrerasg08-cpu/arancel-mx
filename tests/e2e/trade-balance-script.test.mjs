@@ -39,6 +39,17 @@ test('the latest block sums the year to date, compares it with the same months o
   assert.match(latest.source_url, /^https:\/\/www\.inegi\.org\.mx\//);
 });
 
+test('a certificate error explains the system-store fix for the Node version and never suggests disabling checks', async () => {
+  const { explainFetchError } = await load();
+  const tls = Object.assign(new TypeError('fetch failed'), { cause: { code: 'UNABLE_TO_VERIFY_LEAF_SIGNATURE' } });
+  const old = explainFetchError(tls, 'v22.14.0');
+  assert.match(old, /Update to Node 22\.15 or newer/);
+  assert.match(old, /--use-system-ca/);
+  assert.match(explainFetchError(tls, 'v22.15.0'), /^TLS certificate not trusted[^]*set NODE_OPTIONS=--use-system-ca/);
+  assert.ok(!/REJECT_UNAUTHORIZED/.test(old) && /Do not disable certificate checks/.test(old));
+  assert.match(explainFetchError(new TypeError('fetch failed'), 'v22.15.0'), /Could not reach the INEGI API \(unknown\)/);
+});
+
 test('a January-only year is labelled as that month and a response with a missing indicator is rejected', async () => {
   const { buildLatest, parseSeries } = await load();
   const january = payload();

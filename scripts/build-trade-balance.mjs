@@ -11,7 +11,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { buildLatest, buildUrl, parseSeries } from './trade-balance-lib.mjs';
+import { buildLatest, buildUrl, explainFetchError, parseSeries } from './trade-balance-lib.mjs';
 
 const target = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../frontend/src/trade-balance.json');
 const dryRun = process.argv.includes('--dry-run');
@@ -22,7 +22,13 @@ if (!token) {
   process.exit(1);
 }
 
-const response = await fetch(buildUrl(token), { headers: { accept: 'application/json' } });
+let response;
+try {
+  response = await fetch(buildUrl(token), { headers: { accept: 'application/json' } });
+} catch (error) {
+  console.error(explainFetchError(error, process.version));
+  process.exit(1);
+}
 if (!response.ok) {
   console.error(`INEGI API answered HTTP ${response.status}. Check the token and try again.`);
   process.exit(1);

@@ -13,6 +13,22 @@ export const API_BASE = 'https://www.inegi.org.mx/app/api/indicadores/desarrolla
 // The token goes in the URL path, so this is the only place that builds the URL and callers must never log it.
 export const buildUrl = (token) => `${API_BASE}/${Object.values(INDICATORS).join(',')}/es/00/false/BIE/2.0/${encodeURIComponent(token)}?type=json`;
 
+const TLS_CODES = new Set(['UNABLE_TO_VERIFY_LEAF_SIGNATURE', 'SELF_SIGNED_CERT_IN_CHAIN', 'DEPTH_ZERO_SELF_SIGNED_CERT', 'UNABLE_TO_GET_ISSUER_CERT_LOCALLY', 'CERT_UNTRUSTED']);
+
+// Node ships its own certificate list and ignores the Windows store, so an antivirus or proxy that re-signs HTTPS
+// breaks fetch. `--use-system-ca` (Node 22.15+ and 23.8+) makes Node trust the system store. Never suggest turning
+// verification off: the token travels in the URL. The message never includes the request URL.
+export function explainFetchError(error, nodeVersion = process.version) {
+  const code = error?.cause?.code || error?.code || 'unknown';
+  if (!TLS_CODES.has(code)) return `Could not reach the INEGI API (${code}). Check your connection and try again.`;
+  const [major, minor] = nodeVersion.replace(/^v/, '').split('.').map(Number);
+  const supportsSystemCa = major > 23 || (major === 23 && minor >= 8) || (major === 22 && minor >= 15);
+  const fix = supportsSystemCa
+    ? 'Run it again with the system certificate store: set NODE_OPTIONS=--use-system-ca (PowerShell: $env:NODE_OPTIONS = "--use-system-ca").'
+    : `This Node (${nodeVersion}) cannot use the system certificate store. Update to Node 22.15 or newer, then set NODE_OPTIONS=--use-system-ca (PowerShell: $env:NODE_OPTIONS = "--use-system-ca").`;
+  return `TLS certificate not trusted (${code}). Something on this machine (antivirus, proxy) re-signs HTTPS traffic and Node does not trust its certificate. ${fix} Do not disable certificate checks: the token is sent in the URL.`;
+}
+
 const round1 = (value) => Math.round(value * 10) / 10;
 
 const MONTHS_ES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
