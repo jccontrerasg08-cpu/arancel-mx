@@ -24,6 +24,17 @@ test('the request names the three verified monthly indicators and keeps the toke
   assert.ok(url.startsWith('https://www.inegi.org.mx/app/api/indicadores/desarrolladores/jsonxml/INDICATOR/33860,33861,33229/es/00/false/BIE-BISE/2.0/abc123?type=json'));
 });
 
+test('the annual table is summed from complete years only, shows the last ten and flags adjusted years', async () => {
+  const { buildTradeBalance, parseSeries } = await load();
+  const only2025 = buildTradeBalance(parseSeries(payload()), '2026-11-08');
+  assert.deepEqual(only2025.years, [{ year: 2025, exports: 1200, imports: 1080, balance: 120, adjusted: true }], '2026 is incomplete, so it is not a year yet');
+  const long = (value) => [...Array(14 * 12)].map((_, index) => observation(2010 + Math.floor(index / 12), (index % 12) + 1, value));
+  const years = buildTradeBalance(parseSeries({ Series: [{ INDICADOR: '33860', OBSERVATIONS: long(2) }, { INDICADOR: '33861', OBSERVATIONS: long(1) }, { INDICADOR: '33229', OBSERVATIONS: long(1) }] }), '2026-01-31').years;
+  assert.deepEqual(years.map((entry) => entry.year), [2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023]);
+  assert.ok(years.filter((entry) => entry.adjusted).map((entry) => entry.year).join() === '2023', 'adjusted from 2023 on');
+  assert.equal(years[0].exports, 24);
+});
+
 test('the latest block sums the year to date, compares it with the same months of the year before and lists three months', async () => {
   const { buildLatest, parseSeries } = await load();
   const latest = buildLatest(parseSeries(payload()), '2026-11-08');

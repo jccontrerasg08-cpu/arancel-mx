@@ -1,5 +1,6 @@
-// Refreshes the `latest` block (year to date and last three months) of frontend/src/trade-balance.json
-// from INEGI's Indicators API. The annual table (`years`) is left untouched.
+// Rewrites the offline snapshot frontend/src/trade-balance.json (annual table, year to date and last three months)
+// from INEGI's Indicators API. The live site reads the same series through api/trade_balance.py and only falls back
+// to this snapshot when that function is unavailable.
 //
 //   $env:INEGI_TOKEN = "<your token>"        # PowerShell; export INEGI_TOKEN=... in bash
 //   node scripts/build-trade-balance.mjs --dry-run   # prints the block and writes nothing
@@ -7,12 +8,12 @@
 //   npm run build:frontend                           # then rebuild the committed site bundle
 //
 // The token is read only from the INEGI_TOKEN environment variable and is never printed or stored.
-import { readFile, writeFile } from 'node:fs/promises';
+import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { curlGet } from './curl-get.mjs';
-import { buildLatest, buildUrl, explainFetchError, isTlsError, parseSeries } from './trade-balance-lib.mjs';
+import { buildTradeBalance, buildUrl, explainFetchError, isTlsError, parseSeries } from './trade-balance-lib.mjs';
 
 const target = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../frontend/src/trade-balance.json');
 const dryRun = process.argv.includes('--dry-run');
@@ -52,12 +53,17 @@ try {
   process.exit(1);
 }
 
-const latest = buildLatest(parseSeries(payload), new Date().toISOString().slice(0, 10));
-console.log(JSON.stringify(latest, null, 2));
+const built = buildTradeBalance(parseSeries(payload), new Date().toISOString().slice(0, 10));
+const snapshot = {
+  source: 'INEGI · Balanza Comercial de Mercancías de México (BCMM), series mensuales del Banco de Información Económica',
+  source_url: 'https://www.inegi.org.mx/temas/balanza/',
+  unit: 'millones de dólares',
+  ...built,
+};
+console.log(JSON.stringify(snapshot, null, 2));
 if (dryRun) {
   console.log('\n--dry-run: nothing written.');
 } else {
-  const data = JSON.parse(await readFile(target, 'utf8'));
-  await writeFile(target, `${JSON.stringify({ ...data, latest }, null, 2)}\n`);
+  await writeFile(target, `${JSON.stringify(snapshot, null, 2)}\n`);
   console.log(`\nUpdated ${path.relative(process.cwd(), target)}. Run "npm run build:frontend" and commit the result.`);
 }

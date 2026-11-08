@@ -74,6 +74,27 @@ const sumMonths = (map, year, upToMonth) => {
   return total;
 };
 
+// INEGI marks the figures as adjusted ("A") from January 2023 (BIE metadata: "Cifras ajustadas a partir de: 2023 Ene").
+export const ADJUSTED_FROM_YEAR = 2023;
+export const YEARS_SHOWN = 10;
+
+// The last YEARS_SHOWN complete calendar years (all twelve months in the three series), summed from the monthly series.
+// For 2016-2025 these sums equal INEGI's published annual table to the decimal.
+export function buildYears(series) {
+  const complete = (year) => [...Array(12)].every((_, index) => {
+    const key = `${year}-${String(index + 1).padStart(2, '0')}`;
+    return series.exports.has(key) && series.imports.has(key) && series.balance.has(key);
+  });
+  const years = [...new Set([...series.exports.keys()].map((key) => Number(key.slice(0, 4))))].filter(complete).sort((a, b) => a - b).slice(-YEARS_SHOWN);
+  return years.map((year) => {
+    const entry = { year, exports: round1(sumMonths(series.exports, year, 12)), imports: round1(sumMonths(series.imports, year, 12)), balance: round1(sumMonths(series.balance, year, 12)) };
+    return year >= ADJUSTED_FROM_YEAR ? { ...entry, adjusted: true } : entry;
+  });
+}
+
+// Everything the trade balance section shows, from the three monthly series: no figure is typed by hand.
+export const buildTradeBalance = (series, retrieved) => ({ years: buildYears(series), latest: buildLatest(series, retrieved) });
+
 // The `latest` block of frontend/src/trade-balance.json: year to date, growth against the same months of the
 // previous year, and the last three months. `retrieved` is the day the API was queried (YYYY-MM-DD).
 export function buildLatest(series, retrieved) {
