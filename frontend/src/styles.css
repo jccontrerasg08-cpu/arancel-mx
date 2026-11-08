@@ -341,3 +341,8 @@ h1,h2,h3 { text-wrap:balance; }
 .is-deficit { color:#b4472f; }
 :root[data-theme='dark'] .is-deficit { color:#ff9b82; }
 .trade-balance__source { color:var(--muted); font-size:.85rem; }
+.trade-balance__latest { display:grid; gap:.7rem; border:1px solid var(--line); border-radius:.8rem; background:var(--panel); padding:1rem 1.1rem; }
+.trade-balance__latest h3 { margin:0; font-size:1.05rem; }
+.trade-balance__latest h3 span { margin-left:.4rem; color:var(--muted); font-size:.78rem; font-weight:500; }
+.trade-balance__latest p { margin:0; }
+.trade-balance__latest th[scope='row']::first-letter { text-transform:uppercase; }

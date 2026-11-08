@@ -23,6 +23,17 @@ test('every year balances: exports minus imports equals the published balance wi
   assert.match(data.source_url, /^https:\/\/www\.inegi\.org\.mx\//);
 });
 
+test('the latest year-to-date block adds up and cites an INEGI bulletin', async () => {
+  const { data } = await load();
+  const { latest } = data;
+  assert.ok(Math.abs(latest.exports - latest.imports - latest.balance) <= 0.2);
+  assert.match(latest.source_url, /^https:\/\/www\.inegi\.org\.mx\/contenidos\/saladeprensa\/boletines\//);
+  assert.equal(latest.months.length, 3);
+  for (const entry of latest.months) assert.ok(Math.abs(entry.exports - entry.imports - entry.balance) <= 0.2, `${entry.month} does not add up`);
+  assert.ok(latest.months.every((entry, index) => index === 0 || entry.month > latest.months[index - 1].month));
+  assert.equal(latest.months.at(-1).month, '2026-09');
+});
+
 test('the summary finds the extremes and the growth from the data itself', async () => {
   const { data, summarizeBalance } = await load();
   const summary = summarizeBalance(data.years);

@@ -7,6 +7,7 @@ export function TradeBalance() {
   const t = (spanish, english) => (language === 'en' ? english : spanish);
   const summary = summarizeBalance(data.years);
   const { first, last, largestSurplus, largestDeficit } = summary;
+  const { latest } = data;
   const nearBalance = Math.abs(last.balance) < last.exports * 0.01;
   const money = (value, options) => formatMillions(value, language, options);
   const facts = [
@@ -53,6 +54,27 @@ export function TradeBalance() {
             ))}
           </tbody>
         </table>
+      </div>
+      <div className="trade-balance__latest" data-testid="trade-balance-latest">
+        <h3>{t(latest.label, latest.label_en)} <span>{t(latest.note, 'Preliminary figures')}</span></h3>
+        <p>{t(`Lo que va del año: exportaciones ${money(latest.exports)}, importaciones ${money(latest.imports)} y una balanza de ${money(latest.balance, { sign: true })} millones de dólares. Las exportaciones crecieron ${latest.exports_growth} % y las importaciones ${latest.imports_growth} % frente al mismo periodo de 2025.`, `Year to date: exports ${money(latest.exports)}, imports ${money(latest.imports)} and a balance of ${money(latest.balance, { sign: true })} million dollars. Exports grew ${latest.exports_growth}% and imports ${latest.imports_growth}% against the same period of 2025.`)}</p>
+        <div className="data-table-wrap">
+          <table className="data-table">
+            <caption>{t('Últimos meses publicados, millones de dólares', 'Latest published months, millions of US dollars')}</caption>
+            <thead><tr><th scope="col">{t('Mes', 'Month')}</th><th scope="col" className="is-numeric">{t('Exportaciones', 'Exports')}</th><th scope="col" className="is-numeric">{t('Importaciones', 'Imports')}</th><th scope="col" className="is-numeric">{t('Balanza', 'Balance')}</th></tr></thead>
+            <tbody>
+              {[...latest.months].reverse().map((entry) => (
+                <tr key={entry.month}>
+                  <th scope="row">{new Date(`${entry.month}-15T12:00:00Z`).toLocaleDateString(language === 'en' ? 'en-US' : 'es-MX', { month: 'long', year: 'numeric', timeZone: 'UTC' })}</th>
+                  <td className="is-numeric">{money(entry.exports)}</td>
+                  <td className="is-numeric">{money(entry.imports)}</td>
+                  <td className={entry.balance >= 0 ? 'is-numeric is-surplus' : 'is-numeric is-deficit'}>{money(entry.balance, { sign: true })}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="trade-balance__source">{t('Boletín INEGI del ', 'INEGI bulletin of ')}<time dateTime={latest.published}>{new Date(`${latest.published}T12:00:00Z`).toLocaleDateString(language === 'en' ? 'en-US' : 'es-MX', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}</time>. <a href={latest.source_url} target="_blank" rel="noreferrer">{t('Ver boletín', 'View bulletin')} <span aria-hidden="true">↗</span></a></p>
       </div>
       <p className="trade-balance__source">{t('Fuente: ', 'Source: ')}<a href={data.source_url} target="_blank" rel="noreferrer">{data.source} <span aria-hidden="true">↗</span></a>. {t('A = cifras ajustadas por INEGI. Una balanza positiva es superávit; negativa, déficit. Es contexto histórico y no determina una fracción ni una operación.', 'A = figures adjusted by INEGI. A positive balance is a surplus; a negative one, a deficit. This is historical context and does not determine a fraction or an operation.')}</p>
     </section>
