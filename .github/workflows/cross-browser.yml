@@ -1,0 +1,80 @@
+name: Cross-browser smoke
+
+# Firefox and WebKit (the engine behind Safari) run the smoke tests in tests/e2e/cross-browser.spec.mjs.
+# This is separate from the required CI checks: browser engines other than Chromium need system libraries
+# (installed with --with-deps), and that apt step must not be able to stall the required job.
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/cross-browser.yml"
+      - "frontend/**"
+      - "tests/e2e/**"
+      - "playwright.config.mjs"
+  schedule:
+    - cron: "17 14 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cross-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version-file: ".python-version"
+          cache: pip
+          cache-dependency-path: requirements/production-build.txt
+
+      - name: Install application
+        run: |
+          python -m pip install pip==26.2.2
+          python -m pip install -c requirements/production-build.txt -e .
+
+      - name: Seed verified browser-test dataset
+        env:
+          ARANCEL_MX_CACHE_DIR: /tmp/arancel-mx-playwright-cache
+          ARANCEL_MX_DATASET: data-2026.08.15
+          ARANCEL_MX_GITHUB_TOKEN: ${{ github.token }}
+        run: arancel-mx data download
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install browser test dependencies
+        run: npm ci
+
+      - name: Install Firefox and WebKit
+        run: npx playwright install --with-deps firefox webkit
+
+      - name: Run cross-browser smoke tests
+        run: npm run test:e2e:cross-browser
+
+      - name: Upload browser-test diagnostics
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: cross-browser-report-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7

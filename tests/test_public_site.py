@@ -302,3 +302,15 @@ def test_maintained_architecture_docs_describe_the_local_public_surface() -> Non
         assert "runtime FastAPI" not in text
         assert "FastAPI reusable" not in text
         assert "fastapicloud.dev" not in text
+
+
+def test_trade_desk_follows_the_saved_theme_and_has_dark_styles() -> None:
+    html = (SITE / "trade.html").read_text(encoding="utf-8")
+    css = (SITE / "assets" / "trade-desk.css").read_text(encoding="utf-8")
+
+    assert html.index("localStorage.getItem('theme')") < html.index("/assets/trade-desk.css"), "the theme is applied before the styles paint"
+    assert "dataset.theme" in html
+    assert ":root[data-theme='dark']" in css
+    for token in ("--trade-paper", "--trade-panel", "--trade-ink", "--trade-line"):
+        dark_block = css.split(":root[data-theme='dark'] {", 1)[1].split("}", 1)[0]
+        assert token in dark_block, f"{token} has a dark value"

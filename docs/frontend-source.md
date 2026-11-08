@@ -13,7 +13,8 @@ El repositorio usa npm con `package-lock.json`.
 | Compilar y sincronizar | `npm run build:frontend` | Ejecuta `scripts/build-frontend.mjs` y `scripts/sync-frontend-static.mjs`: genera la salida de Vite y la copia a `src/arancel_mx/api/static/site/`, el único directorio publicado: Vercel lo sirve, FastAPI lo monta y el wheel lo incluye. |
 | Regenerar los cambios del DOF | `npm run build:dof-changes` | Reconstruye `frontend/src/dof-changes.json` desde `legal_instruments.json` y el inventario de instrumentos; un test de nodo falla si el archivo quedó desactualizado. |
 | Probar contratos fuente | `node --test tests/e2e/*.test.mjs` | Verifica rutas, contenido declarativo, build, glosario y normalización de códigos. |
-| Probar en navegador | `npm run test:e2e` | Ejecuta Playwright (`tests/e2e/*.spec.mjs`) contra el sitio servido por uvicorn. |
+| Probar en navegador | `npm run test:e2e` | Ejecuta Playwright en Chromium (`tests/e2e/*.spec.mjs`) contra el sitio servido por uvicorn. |
+| Probar en Firefox y Safari | `npm run test:e2e:cross-browser` | Corre `tests/e2e/cross-browser.spec.mjs` en Firefox y WebKit (el motor de Safari); requiere `npx playwright install --with-deps firefox webkit`. En CI lo hace el flujo `cross-browser.yml`. |
 
 `scripts/sync-frontend-static.mjs` conserva `trade.html`, sus estilos, scripts y activos. Al copiar la aplicación principal, asigna al bundle JavaScript un nombre derivado de su SHA-256 y elimina sólo los bundles principales obsoletos. Así se mantiene la caché inmutable sin borrar activos independientes.
 

@@ -424,3 +424,19 @@ test('reveals verified tariff matches from the primary search', async ({ page })
   await expect(page.locator('#classification-tab')).toHaveAttribute('aria-selected', 'true');
   await expect(page.locator('#classification-results')).toContainText('Teléfono inteligente');
 });
+
+test('follows the dark theme chosen on the rest of the site', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('theme', 'dark'));
+  await page.goto('/trade');
+
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(11, 27, 38)');
+  await expect(page.getByTestId('customs-value')).toHaveCSS('background-color', 'rgb(14, 35, 48)');
+});
+
+test('stays light when no theme was chosen', async ({ page }) => {
+  await page.goto('/trade');
+
+  await expect(page.locator('html')).not.toHaveAttribute('data-theme', 'dark');
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(251, 252, 253)');
+});

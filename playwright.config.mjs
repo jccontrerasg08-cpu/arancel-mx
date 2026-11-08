@@ -18,7 +18,12 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    // Firefox and WebKit (Safari's engine) run only the cross-browser smoke tests; see .github/workflows/cross-browser.yml.
+    { name: 'firefox', testMatch: /cross-browser[.]spec[.]mjs/, use: { ...devices['Desktop Firefox'] } },
+    { name: 'webkit', testMatch: /cross-browser[.]spec[.]mjs/, use: { ...devices['Desktop Safari'] } },
+  ],
   webServer: {
     command: 'python -m uvicorn arancel_mx.api.app:app --host 127.0.0.1 --port 8000',
     url: 'http://127.0.0.1:8000/healthz',
