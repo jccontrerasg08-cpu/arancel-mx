@@ -212,17 +212,33 @@ test('never invents a family code when a chapter file cannot be loaded', async (
 test('opens matching chapter paths while a person filters the visual tree', async ({ page }) => {
   await page.goto('/chapters');
   await page.getByRole('searchbox', { name: /buscar capítulo/i }).fill('01');
-  await expect(page.getByRole('status')).toContainText(/capítulos coinciden/i);
+  // The chapter families can announce their own loading status at the same moment, so pick the filter's one.
+  await expect(page.getByRole('status').filter({ hasText: /capítulos coinciden/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /capítulo 01/i })).toBeVisible();
 });
 
-test('shows INEGI’s annual trade balance on the trade context page', async ({ page }) => {
+test('shows INEGI’s trade balance from the saved copy when the live function is unavailable', async ({ page }) => {
+  await page.route('**/api/trade_balance', (route) => route.fulfill({ status: 502, json: { status: 'upstream_unavailable' } }));
   await page.goto('/trade-context');
   const balance = page.getByTestId('trade-balance');
-  await expect(balance.getByRole('heading', { level: 2 })).toHaveText('Exportaciones e importaciones, 2016–2025');
+  await expect(balance.getByRole('heading', { level: 2 })).toHaveText(/^Exportaciones e importaciones, \d{4}–\d{4}$/);
   await expect(balance.getByRole('row', { name: /^2025/ })).toContainText('+209.4');
   await expect(balance.getByRole('row', { name: /^2022/ })).toContainText('−28,107.9');
-  await expect(balance.getByRole('link', { name: /INEGI/ })).toHaveAttribute('href', 'https://www.inegi.org.mx/temas/balanza/');
+  await expect(balance.getByRole('link', { name: /^INEGI · Balanza Comercial/ })).toHaveAttribute('href', 'https://www.inegi.org.mx/temas/balanza/');
+  await expect(balance).toHaveAttribute('data-live', 'false');
+  await expect(balance).toContainText('Copia guardada de la API del INEGI');
+});
+
+test('replaces the saved copy with figures computed from the live INEGI series', async ({ page }) => {
+  const observation = (year, month, value) => ({ TIME_PERIOD: `${year}/${String(month).padStart(2, '0')}`, OBS_VALUE: String(value) });
+  const series = (id, value) => ({ INDICADOR: id, OBSERVATIONS: [...Array(12 * 12)].map((_, index) => observation(2014 + Math.floor(index / 12), (index % 12) + 1, value)) });
+  await page.route('**/api/trade_balance', (route) => route.fulfill({ json: { Series: [series('33860', 100), series('33861', 90), series('33229', 10)] } }));
+  await page.goto('/trade-context');
+  const balance = page.getByTestId('trade-balance');
+  await expect(balance).toHaveAttribute('data-live', 'true');
+  await expect(balance.getByRole('heading', { level: 2 })).toHaveText('Exportaciones e importaciones, 2016–2025');
+  await expect(balance.getByRole('row', { name: /^2025/ })).toContainText('1,200.0');
+  await expect(balance).toContainText('Datos en vivo de la API del INEGI');
 });
 
 test('serves the source-cited trade-context and ANAM MOA routes', async ({ page }) => {
