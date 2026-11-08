@@ -85,7 +85,7 @@ def test_vercel_deploys_the_standalone_public_site() -> None:
             "source": "/data/v1/:path*",
             "destination": "https://jccontrerasg08-cpu.github.io/arancel-mx/v1/:path*",
         },
-        {"source": "/(app(?:/.*)?|product|chapters|changes(?:/.*)?|data|moa|moa-guide|wiki|glossary|trade-context|documentation|trust|records|features|pricing|analytics|community)", "destination": "/"},
+        {"source": "/(app(?:/.*)?|product|chapters|changes(?:/.*)?|data|learn|moa|moa-guide|wiki|glossary|trade-context|documentation|trust|records|features|pricing|analytics|community)", "destination": "/"},
     ]
     assert config["redirects"] == [
         {"source": "/docs", "destination": "/documentation", "permanent": True},

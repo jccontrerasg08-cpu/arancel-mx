@@ -101,6 +101,20 @@ test('groups the header into four destinations and keeps every page reachable', 
   await expect(page).toHaveURL(/\/records$/);
 });
 
+test('teaches how to read a code from the Learn menu', async ({ page }) => {
+  await page.goto('/');
+  const navigation = page.getByLabel('Navegación principal');
+  await navigation.getByRole('button', { name: /^aprender$/i }).click();
+  await navigation.getByRole('link', { name: /^guía para empezar$/i }).click();
+  await expect(page).toHaveURL(/[/]learn$/);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(/aprende a leer el arancel de méxico/i);
+  await expect(page.getByRole('status').filter({ hasText: 'Capítulo' })).toContainText('2 dígitos');
+  await page.getByRole('button', { name: /^13[ ]*subpartida$/i }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Subpartida' })).toContainText(/sistema armonizado/i);
+  await page.getByText('¿Qué es la LIGIE y qué es la TIGIE?').click();
+  await expect(page.getByText(/12 de diciembre de 2022/)).toBeVisible();
+});
+
 test('lists every destination, grouped, in the mobile menu', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
@@ -261,6 +275,14 @@ test('looks up a complete tariff fraction with evidence and a decision tree', as
   await expect(page.getByTestId('tree-filter-status')).toContainText('8517.13.01');
   await expect(page.getByRole('status')).toHaveText(/registro verificado listo/i);
   await expect(page.getByRole('link', { name: /API JSON/i })).toHaveAttribute('href', /\/data\/v1\/records\/85\.json$/);
+});
+
+test('names the fraction in the tab title and the share metadata of a record', async ({ page }) => {
+  await page.goto('/app/record/85171301');
+  await expect(page).toHaveTitle(/8517[.]13[.]01 · Teléfonos inteligentes/);
+  await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', /8517[.]13[.]01/);
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /^Ficha verificada 8517[.]13[.]01/);
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://arancel-mx.vercel.app/app/record/85171301');
 });
 
 test('jumps between the sections of a record from its own navigation', async ({ page }) => {
