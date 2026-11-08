@@ -11,7 +11,8 @@ import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { buildLatest, buildUrl, explainFetchError, parseSeries } from './trade-balance-lib.mjs';
+import { curlGet } from './curl-get.mjs';
+import { buildLatest, buildUrl, explainFetchError, isTlsError, parseSeries } from './trade-balance-lib.mjs';
 
 const target = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../frontend/src/trade-balance.json');
 const dryRun = process.argv.includes('--dry-run');
@@ -22,20 +23,30 @@ if (!token) {
   process.exit(1);
 }
 
-let response;
+const url = buildUrl(token);
+let result;
 try {
-  response = await fetch(buildUrl(token), { headers: { accept: 'application/json' } });
+  const response = await fetch(url, { headers: { accept: 'application/json' } });
+  result = { ok: response.ok, status: response.status, text: await response.text() };
 } catch (error) {
-  console.error(explainFetchError(error, process.version));
-  process.exit(1);
+  if (!isTlsError(error)) {
+    console.error(explainFetchError(error, process.version));
+    process.exit(1);
+  }
+  console.error('Node cannot verify the certificate on this machine (antivirus or proxy); retrying through curl, which uses the Windows certificate store.');
+  result = curlGet(url);
+  if (result.error) {
+    console.error(`curl failed (${result.error}). ${explainFetchError(error, process.version)}`);
+    process.exit(1);
+  }
 }
-if (!response.ok) {
-  console.error(`INEGI API answered HTTP ${response.status}. Check the token and try again.`);
+if (!result.ok) {
+  console.error(`INEGI API answered HTTP ${result.status}. Check the token and try again.`);
   process.exit(1);
 }
 let payload;
 try {
-  payload = await response.json();
+  payload = JSON.parse(result.text);
 } catch {
   console.error('INEGI API did not return JSON (an invalid token usually answers with an error page).');
   process.exit(1);

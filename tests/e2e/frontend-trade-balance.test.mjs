@@ -23,7 +23,7 @@ test('every year balances: exports minus imports equals the published balance wi
   assert.match(data.source_url, /^https:\/\/www\.inegi\.org\.mx\//);
 });
 
-test('the latest year-to-date block adds up and cites an INEGI bulletin', async () => {
+test('the latest year-to-date block adds up and cites INEGI', async () => {
   const { data } = await load();
   const { latest } = data;
   assert.ok(Math.abs(latest.exports - latest.imports - latest.balance) <= 0.2);

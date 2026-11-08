@@ -11,13 +11,15 @@ export const INDICATORS = { exports: '33860', imports: '33861', balance: '33229'
 export const API_BASE = 'https://www.inegi.org.mx/app/api/indicadores/desarrolladores/jsonxml/INDICATOR';
 
 // The token goes in the URL path, so this is the only place that builds the URL and callers must never log it.
-export const buildUrl = (token) => `${API_BASE}/${Object.values(INDICATORS).join(',')}/es/00/false/BIE/2.0/${encodeURIComponent(token)}?type=json`;
+export const buildUrl = (token) => `${API_BASE}/${Object.values(INDICATORS).join(',')}/es/00/false/BIE-BISE/2.0/${encodeURIComponent(token)}?type=json`;
 
 const TLS_CODES = new Set(['UNABLE_TO_VERIFY_LEAF_SIGNATURE', 'SELF_SIGNED_CERT_IN_CHAIN', 'DEPTH_ZERO_SELF_SIGNED_CERT', 'UNABLE_TO_GET_ISSUER_CERT_LOCALLY', 'CERT_UNTRUSTED']);
 
 // Node ships its own certificate list and ignores the Windows store, so an antivirus or proxy that re-signs HTTPS
 // breaks fetch. `--use-system-ca` (Node 22.15+ and 23.8+) makes Node trust the system store. Never suggest turning
 // verification off: the token travels in the URL. The message never includes the request URL.
+export const isTlsError = (error) => TLS_CODES.has(error?.cause?.code || error?.code);
+
 export function explainFetchError(error, nodeVersion = process.version) {
   const code = error?.cause?.code || error?.code || 'unknown';
   if (!TLS_CODES.has(code)) return `Could not reach the INEGI API (${code}). Check your connection and try again.`;
@@ -81,7 +83,7 @@ export function buildLatest(series, retrieved) {
   const ytd = (name) => sumMonths(series[name], year, month);
   const previous = (name) => sumMonths(series[name], year - 1, month);
   if (ytd('exports') === null || ytd('imports') === null || ytd('balance') === null) throw new Error(`Year ${year} is missing months before ${last}`);
-  const growth = (name) => (previous(name) ? round1((ytd(name) / previous(name) - 1) * 100) : null);
+  const growth = (name) => (previous(name) ? Math.round((ytd(name) / previous(name) - 1) * 100) : null);
   const months = [];
   for (let offset = 2; offset >= 0; offset -= 1) {
     const index = year * 12 + (month - 1) - offset;

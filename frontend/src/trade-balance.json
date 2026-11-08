@@ -3,33 +3,100 @@
   "source_url": "https://www.inegi.org.mx/temas/balanza/",
   "unit": "millones de dólares",
   "years": [
-    { "year": 2016, "exports": 373953.6, "imports": 387087.5, "balance": -13133.9 },
-    { "year": 2017, "exports": 409432.6, "imports": 420393.6, "balance": -10961.0 },
-    { "year": 2018, "exports": 450712.7, "imports": 464302.4, "balance": -13589.6 },
-    { "year": 2019, "exports": 460603.9, "imports": 455241.6, "balance": 5362.3 },
-    { "year": 2020, "exports": 417170.7, "imports": 382985.9, "balance": 34184.8 },
-    { "year": 2021, "exports": 494949.0, "imports": 505703.1, "balance": -10754.1 },
-    { "year": 2022, "exports": 577697.5, "imports": 605805.4, "balance": -28107.9 },
-    { "year": 2023, "exports": 593001.2, "imports": 605280.0, "balance": -12278.7, "adjusted": true },
-    { "year": 2024, "exports": 617770.7, "imports": 636218.0, "balance": -18447.3, "adjusted": true },
-    { "year": 2025, "exports": 664266.7, "imports": 664057.3, "balance": 209.4, "adjusted": true }
+    {
+      "year": 2016,
+      "exports": 373953.6,
+      "imports": 387087.5,
+      "balance": -13133.9
+    },
+    {
+      "year": 2017,
+      "exports": 409432.6,
+      "imports": 420393.6,
+      "balance": -10961
+    },
+    {
+      "year": 2018,
+      "exports": 450712.7,
+      "imports": 464302.4,
+      "balance": -13589.6
+    },
+    {
+      "year": 2019,
+      "exports": 460603.9,
+      "imports": 455241.6,
+      "balance": 5362.3
+    },
+    {
+      "year": 2020,
+      "exports": 417170.7,
+      "imports": 382985.9,
+      "balance": 34184.8
+    },
+    {
+      "year": 2021,
+      "exports": 494949,
+      "imports": 505703.1,
+      "balance": -10754.1
+    },
+    {
+      "year": 2022,
+      "exports": 577697.5,
+      "imports": 605805.4,
+      "balance": -28107.9
+    },
+    {
+      "year": 2023,
+      "exports": 593001.2,
+      "imports": 605280,
+      "balance": -12278.7,
+      "adjusted": true
+    },
+    {
+      "year": 2024,
+      "exports": 617770.7,
+      "imports": 636218,
+      "balance": -18447.3,
+      "adjusted": true
+    },
+    {
+      "year": 2025,
+      "exports": 664266.7,
+      "imports": 664057.3,
+      "balance": 209.4,
+      "adjusted": true
+    }
   ],
   "latest": {
     "label": "Enero–septiembre 2026",
     "label_en": "January–September 2026",
     "note": "Cifras oportunas",
-    "published": "2026-10-27",
-    "next_publication": "2026-11-27",
-    "source_url": "https://www.inegi.org.mx/contenidos/saladeprensa/boletines/2026/comext_o/balcom_o2026_10.pdf",
+    "retrieved": "2026-11-08",
+    "source_url": "https://www.inegi.org.mx/temas/balanza/",
     "exports": 627194.2,
-    "imports": 617940.0,
+    "imports": 617940,
     "balance": 9254.2,
-    "exports_growth": 30.4,
-    "imports_growth": 27.5,
+    "exports_growth": 30,
+    "imports_growth": 28,
     "months": [
-      { "month": "2026-07", "exports": 81420.0, "imports": 82267.6, "balance": -847.5 },
-      { "month": "2026-08", "exports": 78010.5, "imports": 77405.1, "balance": 605.4 },
-      { "month": "2026-09", "exports": 77796.6, "imports": 78402.7, "balance": -606.1 }
+      {
+        "month": "2026-07",
+        "exports": 81420,
+        "imports": 82267.6,
+        "balance": -847.5
+      },
+      {
+        "month": "2026-08",
+        "exports": 78010.5,
+        "imports": 77405.1,
+        "balance": 605.4
+      },
+      {
+        "month": "2026-09",
+        "exports": 77796.6,
+        "imports": 78402.7,
+        "balance": -606.1
+      }
     ]
   }
 }

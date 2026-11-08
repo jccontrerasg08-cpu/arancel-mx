@@ -21,7 +21,7 @@ test('the request names the three verified monthly indicators and keeps the toke
   const { INDICATORS, buildUrl } = await load();
   assert.deepEqual(INDICATORS, { exports: '33860', imports: '33861', balance: '33229' });
   const url = buildUrl('abc123');
-  assert.ok(url.startsWith('https://www.inegi.org.mx/app/api/indicadores/desarrolladores/jsonxml/INDICATOR/33860,33861,33229/es/00/false/BIE/2.0/abc123?type=json'));
+  assert.ok(url.startsWith('https://www.inegi.org.mx/app/api/indicadores/desarrolladores/jsonxml/INDICATOR/33860,33861,33229/es/00/false/BIE-BISE/2.0/abc123?type=json'));
 });
 
 test('the latest block sums the year to date, compares it with the same months of the year before and lists three months', async () => {
@@ -37,6 +37,32 @@ test('the latest block sums the year to date, compares it with the same months o
   assert.equal(latest.imports_growth, 30);
   assert.deepEqual(latest.months.map((entry) => entry.month), ['2026-07', '2026-08', '2026-09']);
   assert.match(latest.source_url, /^https:\/\/www\.inegi\.org\.mx\//);
+});
+
+test('the curl fallback returns status and body, and reports a failure without throwing', async () => {
+  const { spawn } = await import('node:child_process');
+  const { curlGet } = await import(pathToFileURL(path.join(root, 'scripts/curl-get.mjs')).href);
+  // curlGet blocks (spawnSync), so the test server must live in another process.
+  const server = spawn(process.execPath, ['-e', `
+    require('node:http').createServer((req, res) => {
+      res.writeHead(req.url.includes('missing') ? 404 : 200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ Series: [], path: req.url }));
+    }).listen(0, '127.0.0.1', function () { console.log(this.address().port); });
+  `], { stdio: ['ignore', 'pipe', 'ignore'] });
+  const port = await new Promise((resolve) => server.stdout.once('data', (chunk) => resolve(Number(String(chunk).trim()))));
+  const base = `http://127.0.0.1:${port}`;
+  try {
+    const found = curlGet(`${base}/INDICATOR/1/token-123?type=json`);
+    assert.equal(found.ok, true);
+    assert.equal(found.status, 200);
+    assert.equal(JSON.parse(found.text).path, '/INDICATOR/1/token-123?type=json');
+    const missing = curlGet(`${base}/missing`);
+    assert.equal(missing.ok, false);
+    assert.equal(missing.status, 404);
+  } finally {
+    server.kill();
+  }
+  assert.equal(curlGet('http://127.0.0.1:9/', { timeoutMs: 3000 }).ok, false);
 });
 
 test('a certificate error explains the system-store fix for the Node version and never suggests disabling checks', async () => {
