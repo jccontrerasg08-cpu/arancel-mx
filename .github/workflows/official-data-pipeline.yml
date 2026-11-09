@@ -307,12 +307,14 @@ jobs:
           set -euo pipefail
           tag="$(python -c 'import json; print(json.load(open("out/pages-build.json"))["dataset_tag"])')"
           message="data: static API for ${tag}"
-          current=""
+          # Compare content, not the tag: an exporter change rebuilds different
+          # files for the same release and must still reach gh-pages.
+          rm -f out/deployed-manifest.json
           if git fetch --quiet --depth=1 "https://github.com/${GITHUB_REPOSITORY}.git" gh-pages; then
-            current="$(git log -1 --format=%s FETCH_HEAD)"
+            git show FETCH_HEAD:v1/manifest.json > out/deployed-manifest.json 2>/dev/null || rm -f out/deployed-manifest.json
           fi
-          if [ "$current" = "$message" ]; then
-            echo "gh-pages already serves ${tag}."
+          if python -m scripts.static_pages_unchanged out/deployed-manifest.json out/pages/v1/manifest.json; then
+            echo "gh-pages already serves ${tag} with identical content."
             exit 0
           fi
           cd out/pages
