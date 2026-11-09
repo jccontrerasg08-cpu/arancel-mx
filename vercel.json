@@ -90,7 +90,7 @@
       "destination": "https://jccontrerasg08-cpu.github.io/arancel-mx/v1/:path*"
     },
     {
-      "source": "/(app(?:/.*)?|product|chapters|changes(?:/.*)?|data|learn|moa|moa-guide|wiki|glossary|trade-context|documentation|trust|records|features|pricing|analytics|community)",
+      "source": "/(app(?:/.*)?|product|chapters|changes(?:/.*)?|data|learn|moa|moa-guide|wiki|glossary|trade-context|documentation|trust|records|features|releases|release-analytics|community)",
       "destination": "/"
     }
   ],
@@ -103,6 +103,16 @@
     {
       "source": "/docs/:path*",
       "destination": "/documentation",
+      "permanent": true
+    },
+    {
+      "source": "/pricing",
+      "destination": "/releases",
+      "permanent": true
+    },
+    {
+      "source": "/analytics",
+      "destination": "/release-analytics",
       "permanent": true
     }
   ],

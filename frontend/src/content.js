@@ -11,8 +11,8 @@ export const NAVIGATION = [
   ['Documentation', '/documentation'],
   ['Trust', '/trust'],
   ['My records', '/records'],
-  ['Releases', '/pricing'],
-  ['Release analytics', '/analytics'],
+  ['Releases', '/releases'],
+  ['Release analytics', '/release-analytics'],
   ['Features', '/features'],
   ['Community', '/community'],
   ['Import estimator', '/trade'],
@@ -25,7 +25,7 @@ export const NAVIGATION = [
 export const NAV_GROUPS = [
   { id: 'explore', href: '/app' },
   { id: 'learn', items: ['/learn', '/glossary', '/wiki', '/moa', '/trade-context'] },
-  { id: 'data', items: ['/data', '/chapters', '/changes', '/pricing', '/analytics', '/documentation'] },
+  { id: 'data', items: ['/data', '/chapters', '/changes', '/releases', '/release-analytics', '/documentation'] },
   { id: 'trust', href: '/trust' },
 ];
 export const HEADER_ACTIONS = ['/records', '/trade'];
@@ -35,7 +35,7 @@ export const FOOTER_ONLY = ['/features', '/community'];
 export const FOOTER_GROUPS = [
   { id: 'explore', items: ['/app', '/chapters', '/trade', '/records'] },
   { id: 'learn', items: ['/learn', '/glossary', '/wiki', '/moa', '/trade-context'] },
-  { id: 'data', items: ['/data', '/changes', '/pricing', '/analytics', '/documentation'] },
+  { id: 'data', items: ['/data', '/changes', '/releases', '/release-analytics', '/documentation'] },
   { id: 'project', items: ['/trust', '/features', '/community'] },
 ];
 

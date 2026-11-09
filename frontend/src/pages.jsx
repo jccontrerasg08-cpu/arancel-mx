@@ -430,8 +430,8 @@ export function TradeDeskPage() { return <section className="empty-state"><h1>Me
 // Secondary entry points (kept as routes for old links); each one points at the real pages.
 const MARKETING_COPY = {
   '/features': { eyebrow: ['SUPERFICIES DEL PRODUCTO', 'PRODUCT SURFACES'], title: ['Construye sobre datos arancelarios verificables.', 'Build on verifiable tariff data.'], description: ['Explora las superficies públicas del producto, sus límites documentados y los artefactos de cada release.', 'Explore the public product surfaces, documented limits and release artifacts.'], action: ['/documentation', 'Leer la documentación', 'Read documentation'] },
-  '/pricing': { eyebrow: ['RELEASES ABIERTOS', 'OPEN DATA RELEASES'], title: ['Releases públicos, artefactos inspeccionables.', 'Public releases, inspectable artifacts.'], description: ['Los datos centrales y los materiales de verificación se pueden revisar abiertamente.', 'The core data and verification materials remain openly inspectable.'], action: ['/trust', 'Leer el modelo de confianza', 'Read trust model'] },
-  '/analytics': { eyebrow: ['CONTEXTO DEL RELEASE', 'RELEASE ANALYTICS'], title: ['Contexto del release sin puntajes opacos.', 'Release context without opaque scoring.'], description: ['Revisa un release a través de evidencia visible y del rol de cada fuente.', 'Inspect a release through visible evidence and source roles.'], action: ['/changes', 'Ver los cambios del DOF', 'Inspect release evidence'] },
+  '/releases': { eyebrow: ['RELEASES ABIERTOS', 'OPEN DATA RELEASES'], title: ['Releases públicos, artefactos inspeccionables.', 'Public releases, inspectable artifacts.'], description: ['Los datos centrales y los materiales de verificación se pueden revisar abiertamente.', 'The core data and verification materials remain openly inspectable.'], action: ['/trust', 'Leer el modelo de confianza', 'Read trust model'] },
+  '/release-analytics': { eyebrow: ['CONTEXTO DEL RELEASE', 'RELEASE ANALYTICS'], title: ['Contexto del release sin puntajes opacos.', 'Release context without opaque scoring.'], description: ['Revisa un release a través de evidencia visible y del rol de cada fuente.', 'Inspect a release through visible evidence and source roles.'], action: ['/changes', 'Ver los cambios del DOF', 'Inspect release evidence'] },
   '/community': { eyebrow: ['COMUNIDAD ABIERTA', 'OPEN COMMUNITY'], title: ['Contribuye con evidencia visible.', 'Contribute through visible evidence.'], description: ['Usa el repositorio público para revisar, discutir y mejorar el contrato de datos abiertos.', 'Use the public repository to review, discuss and improve the open data contract.'], action: ['/documentation', 'Abrir la documentación', 'Open documentation'] },
 };
 
@@ -459,7 +459,7 @@ export const PAGE_COMPONENTS = {
   '/records': RecordsPage,
   '/trade': TradeDeskPage,
   '/features': () => <MarketingPage path="/features" />,
-  '/pricing': () => <MarketingPage path="/pricing" />,
-  '/analytics': () => <MarketingPage path="/analytics" />,
+  '/releases': () => <MarketingPage path="/releases" />,
+  '/release-analytics': () => <MarketingPage path="/release-analytics" />,
   '/community': () => <MarketingPage path="/community" />,
 };

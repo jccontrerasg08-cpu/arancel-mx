@@ -17,7 +17,7 @@ export const PUBLIC_ROUTES = Object.freeze([
   { path: '/records', label: 'My records' },
   { path: '/trade', label: 'Trade desk' },
   { path: '/features', label: 'Product features' },
-  { path: '/pricing', label: 'Data releases' },
-  { path: '/analytics', label: 'Release analytics' },
+  { path: '/releases', label: 'Data releases' },
+  { path: '/release-analytics', label: 'Release analytics' },
   { path: '/community', label: 'Community' },
 ]);

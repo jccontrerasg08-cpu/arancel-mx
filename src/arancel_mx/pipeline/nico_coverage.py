@@ -7,7 +7,7 @@ from typing import Any
 
 
 _POLICY_VERSION = "nico-coverage-v1"
-_TOTOABA_DOF_URL = "https://www.dof.gob.mx/nota_detalle.php?codigo=5763398&fecha=21/07/2025"
+_TOTOABA_DOF_URL = "https://dof.gob.mx/nota_detalle.php?codigo=5763398&fecha=21/07/2025"
 _TOTOABA_DOI_DATE = "2025-07-21"
 _KNOWN_UPSTREAM_LAG_CODES = frozenset(
     {
