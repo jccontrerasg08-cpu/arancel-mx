@@ -304,6 +304,18 @@ def test_maintained_architecture_docs_describe_the_local_public_surface() -> Non
         assert "fastapicloud.dev" not in text
 
 
+def test_trade_desk_follows_the_saved_theme_and_has_dark_styles() -> None:
+    html = (SITE / "trade.html").read_text(encoding="utf-8")
+    css = (SITE / "assets" / "trade-desk.css").read_text(encoding="utf-8")
+
+    assert html.index("localStorage.getItem('theme')") < html.index("/assets/trade-desk.css"), "the theme is applied before the styles paint"
+    assert "dataset.theme" in html
+    assert ":root[data-theme='dark']" in css
+    for token in ("--trade-paper", "--trade-panel", "--trade-ink", "--trade-line"):
+        dark_block = css.split(":root[data-theme='dark'] {", 1)[1].split("}", 1)[0]
+        assert token in dark_block, f"{token} has a dark value"
+
+
 _ROUTE_ALIASES = {"/product", "/moa-guide"}
 
 
@@ -340,3 +352,22 @@ def test_sitemap_lists_each_canonical_route_once_and_no_alias() -> None:
     assert sorted(listed) == sorted("/" if route == "/" else route for route in expected)
     assert len(listed) == len(set(listed))
     assert "Sitemap: https://arancel-mx.vercel.app/sitemap.xml" in robots
+
+
+def test_every_static_page_declares_the_svg_icon_so_browsers_do_not_request_favicon_ico() -> None:
+    for page in ("index.html", "trade.html", "404.html"):
+        html = (SITE / page).read_text(encoding="utf-8")
+        assert re.search(r'<link rel="icon"[^>]*href="/favicon\.svg"', html), f"{page} has no icon link"
+
+
+def test_trade_desk_links_only_real_pages_and_shares_the_site_groups() -> None:
+    html = (SITE / "trade.html").read_text(encoding="utf-8")
+    hrefs = re.findall(r'href="(/[^"#?]*)"', html)
+
+    assert '"/docs"' not in html, "/docs is Swagger in the local app and a redirect on Vercel; link /documentation"
+    nav = html.split('class="trade-nav__actions"', 1)[1].split("</div>", 1)[0]
+    assert re.findall(r'href="(/[a-z-]+)"', nav) == ["/app", "/learn", "/data", "/trust", "/trade"]
+    for href in hrefs:
+        if href.startswith("/assets/") or href in {"/favicon.svg"}:
+            continue
+        assert href in {"/", "/app", "/learn", "/data", "/trust", "/trade", "/documentation", "/trade-context", "/moa", "/wiki", "/glossary", "/records", "/changes"}, f"unexpected internal link {href}"

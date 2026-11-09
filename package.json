@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --project=chromium",
+    "test:e2e:cross-browser": "playwright test --project=firefox --project=webkit",
     "build:dof-changes": "node scripts/build-dof-changes.mjs",
     "build:trade-balance": "node scripts/build-trade-balance.mjs",
     "build:frontend": "node scripts/build-frontend.mjs && node scripts/sync-frontend-static.mjs",

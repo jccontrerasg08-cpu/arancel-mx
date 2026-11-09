@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Estimador orientativo de contribuciones de importación con tasas LIGIE/NICO verificables y evidencia visible." />
     <title>arancel-mx — Estimador de importación</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="canonical" href="https://arancel-mx.vercel.app/trade" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="arancel.mx" />
@@ -17,6 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Fredoka:wght@500;600&display=swap" rel="stylesheet" />
+    <script>try{var t=localStorage.getItem('theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t}catch(e){}</script>
     <link rel="stylesheet" href="/assets/trade-desk.css" />
     <script type="module" src="/assets/trade-desk.js"></script>
   </head>
@@ -25,7 +27,7 @@
       <div class="trade-header">
         <nav class="trade-nav" aria-label="Navegación de arancel-mx">
           <a class="trade-brand" href="/" aria-label="arancel.mx"><img src="/assets/arancel-mx-logo.svg" alt="" /></a>
-          <div class="trade-nav__actions"><a class="trade-nav__link" href="/app">Explorar</a><a class="trade-nav__link" href="/data">Datos</a><a class="trade-nav__link" href="/changes">Cambios</a><a class="trade-nav__link" href="/trade-context">Contexto oficial</a><a class="trade-nav__link" href="/documentation">Documentación</a><a class="trade-nav__link" href="/trade" aria-current="page">Estimador</a></div>
+          <div class="trade-nav__actions"><a class="trade-nav__link" href="/app">Explorar</a><a class="trade-nav__link" href="/learn">Aprender</a><a class="trade-nav__link" href="/data">Datos</a><a class="trade-nav__link" href="/trust">Confianza</a><a class="trade-nav__link" href="/trade" aria-current="page">Estimador</a></div>
         </nav>
       </div>
 
@@ -67,7 +69,7 @@
         <details class="trade-secondary-tools"><summary>Fuentes y próximos pasos</summary><div class="trade-resource-grid"><article class="trade-resource"><span class="trade-resource__number">01 · Tarifa</span><h3>LIGIE y NICO</h3><p>Consulta fracción, tasas publicadas, vigencia y procedencia verificable.</p><a href="/app">Abrir explorador →</a></article><article class="trade-resource"><span class="trade-resource__number">02 · Regla</span><h3>Origen y T-MEC</h3><p>Contrasta reglas de origen y procedimientos en su fuente oficial.</p><a href="https://www.gob.mx/t-mec/acciones-y-programas/textos-finales-del-tratado-entre-mexico-estados-unidos-y-canada-t-mec-202730" target="_blank" rel="noreferrer">Abrir fuente →</a></article><article class="trade-resource"><span class="trade-resource__number">03 · Regulación</span><h3>RRNA y trámites</h3><p>Consulta avisos, permisos, cupos, origen, cuotas y NOM en SNICE.</p><a href="https://www.snice.gob.mx/cs/avi/snice/drrnas.avisosypermisos.html" target="_blank" rel="noreferrer">Abrir avisos y permisos →</a></article></div></details>
         <p id="trade-status" role="status" aria-live="polite" class="trade-empty" style="margin-top:22px">Estimador listo. Los datos permanecen en este navegador salvo que abras una fuente oficial.</p>
       </main>
-      <footer class="trade-footer"><div class="trade-footer__inner"><span>arancel-mx · orientación con fuentes oficiales y releases verificables.</span><a href="/docs">Ver documentación de fuentes y límites</a></div></footer>
+      <footer class="trade-footer"><div class="trade-footer__inner"><span>arancel-mx · orientación con fuentes oficiales y releases verificables.</span><a href="/documentation">Ver documentación de fuentes y límites</a></div></footer>
     </div>
   </body>
 </html>
