@@ -31,7 +31,7 @@ export const operationLabel = (operation, language) => OPERATION_LABELS[language
 // The DOF day edition: the exact note needs a code the dataset does not hold yet.
 export const dofEditionUrl = (isoDate) => {
   const [year, month, day] = isoDate.split('-');
-  return `https://www.dof.gob.mx/index.php?year=${year}&month=${month}&day=${day}`;
+  return `https://dof.gob.mx/index.php?year=${year}&month=${month}&day=${day}`;
 };
 
 export const formatDate = (isoDate, language) => {

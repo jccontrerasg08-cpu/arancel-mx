@@ -42,7 +42,7 @@ for source in catalog.provenance("8517130100"):
 
 ## Qué hacer cuando no existe una coincidencia
 
-Un código que no aparece en una release no demuestra que el producto carezca de tratamiento legal ni autoriza a inventar una fracción. Revisa el contexto de la LIGIE, las Reglas Generales y Complementarias, las Notas Nacionales aplicables, y las fuentes oficiales pertinentes. Para una consulta interactiva oficial, usa el [Buscador de fracciones de VUCEM](https://www.ventanillaunica.gob.mx/vucem/Clasificador.html). Para localizar el texto publicado, usa el [DOF](https://www.dof.gob.mx/).
+Un código que no aparece en una release no demuestra que el producto carezca de tratamiento legal ni autoriza a inventar una fracción. Revisa el contexto de la LIGIE, las Reglas Generales y Complementarias, las Notas Nacionales aplicables, y las fuentes oficiales pertinentes. Para una consulta interactiva oficial, usa el [Buscador de fracciones de VUCEM](https://www.ventanillaunica.gob.mx/vucem/Clasificador.html). Para localizar el texto publicado, usa el [DOF](https://dof.gob.mx/).
 
 `search` y `suggest` ofrecen resultados retrieve-only. Son ayudas para recuperar evidencia documental dentro de la release y no sustituyen una clasificación humana respaldada por las fuentes aplicables.
 

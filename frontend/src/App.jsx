@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { createBrowserRouter, createRoutesFromElements, Link, Outlet, Route, RouterProvider, useLocation } from 'react-router-dom';
 
-import { editorialPage, NAV_GROUPS, NAVIGATION, OFFICIAL_LINKS } from './content.js';
+import { editorialPage, FOOTER_GROUPS, NAV_GROUPS, OFFICIAL_LINKS } from './content.js';
 import { CommandPalette, OPEN_SEARCH_EVENT, shortcutLabel } from './command-palette.jsx';
 import { LocaleProvider, useLocale } from './locale.jsx';
 import { applyPageMeta, DEFAULT_SUMMARY, recordMetaFor } from './page-meta.js';
@@ -83,13 +83,17 @@ function SiteHeader() {
     return () => window.removeEventListener('keydown', closeWithEscape);
   }, []);
   const groups = compact
-    ? <>{NAV_GROUPS.map((group) => group.href ? link(group.href, copy.navGroups[group.id]) : <div className="nav-section" key={group.id}><p className="nav-section__label">{copy.navGroups[group.id]}</p>{group.items.map((href) => link(href, copy.navigation[href]))}</div>)}{link('/records', copy.navigation['/records'])}</>
+    ? <>{NAV_GROUPS.map((group) => group.href ? link(group.href, copy.navGroups[group.id]) : <div className="nav-section" key={group.id}><p className="nav-section__label">{copy.navGroups[group.id]}</p>{group.items.map((href) => link(href, copy.navigation[href]))}</div>)}{link('/records', copy.navigation['/records'])}<a href="/trade">{copy.navigation['/trade']}</a></>
     : <>{NAV_GROUPS.map((group) => group.href ? link(group.href, copy.navGroups[group.id]) : <NavMenu key={group.id} group={group} pathname={location.pathname}/>)}</>;
-  return <><a className="skip-link" href="#main-content">{copy.header.skip}</a><header className="site-header"><div className="site-header__inner"><Link className="brand-lockup" to="/" aria-label="arancel.mx" viewTransition><img src={brandLogo} alt=""/></Link><button ref={toggleRef} className="nav-toggle" type="button" aria-label={open ? copy.header.close : copy.header.open} aria-expanded={open} aria-controls="site-navigation" onClick={() => setOpen((current) => !current)}><span aria-hidden="true">{open ? '×' : '☰'}</span></button><nav id="site-navigation" className={open ? 'site-nav is-open' : 'site-nav'} aria-label={copy.header.navigation}>{groups}</nav><div className="site-header__actions"><button className="search-trigger" type="button" aria-label={copy.header.searchOpen} onClick={() => window.dispatchEvent(new CustomEvent(OPEN_SEARCH_EVENT))}><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span className="search-trigger__label" aria-hidden="true">{copy.header.search}</span><kbd aria-hidden="true">{shortcutLabel()}</kbd></button><Link className="records-link" to="/records">{copy.navigation['/records']}</Link><LanguageToggle/><ThemeToggle/><a className="github-link" href={OFFICIAL_LINKS.github} target="_blank" rel="noreferrer">GitHub</a></div></div></header></>;
+  return <><a className="skip-link" href="#main-content">{copy.header.skip}</a><header className="site-header"><div className="site-header__inner"><Link className="brand-lockup" to="/" aria-label="arancel.mx" viewTransition><img src={brandLogo} alt=""/></Link><button ref={toggleRef} className="nav-toggle" type="button" aria-label={open ? copy.header.close : copy.header.open} aria-expanded={open} aria-controls="site-navigation" onClick={() => setOpen((current) => !current)}><span aria-hidden="true">{open ? '×' : '☰'}</span></button><nav id="site-navigation" className={open ? 'site-nav is-open' : 'site-nav'} aria-label={copy.header.navigation}>{groups}</nav><div className="site-header__actions"><button className="search-trigger" type="button" aria-label={copy.header.searchOpen} onClick={() => window.dispatchEvent(new CustomEvent(OPEN_SEARCH_EVENT))}><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span className="search-trigger__label" aria-hidden="true">{copy.header.search}</span><kbd aria-hidden="true">{shortcutLabel()}</kbd></button><a className="records-link" href="/trade">{copy.navigation['/trade']}</a><Link className="records-link" to="/records">{copy.navigation['/records']}</Link><LanguageToggle/><ThemeToggle/><a className="github-link" href={OFFICIAL_LINKS.github} target="_blank" rel="noreferrer">GitHub</a></div></div></header></>;
 }
+// /trade is a standalone page (trade.html), not a route of this router, so it needs a plain anchor.
+const STATIC_PAGES = new Set(['/trade']);
+
 function SiteFooter() {
   const { copy } = useLocale();
-  return <footer className="site-footer"><div><strong>arancel.mx</strong><p>{copy.footer.description}</p></div><nav aria-label="Footer navigation">{NAVIGATION.slice(0, 9).map(([, href]) => <Link key={href} to={href}>{copy.navigation[href] || href}</Link>)}</nav><div><a href={OFFICIAL_LINKS.github} target="_blank" rel="noreferrer">GitHub</a><a href={OFFICIAL_LINKS.pypi} target="_blank" rel="noreferrer">PyPI · latest</a><p>© 2026 arancel-mx · Apache-2.0</p></div></footer>;
+  const link = (href) => STATIC_PAGES.has(href) ? <a key={href} href={href}>{copy.navigation[href]}</a> : <Link key={href} to={href}>{copy.navigation[href]}</Link>;
+  return <footer className="site-footer"><div className="site-footer__brand"><strong>arancel.mx</strong><p>{copy.footer.description}</p><p className="site-footer__legal">© 2026 arancel-mx · Apache-2.0</p></div>{FOOTER_GROUPS.map((group) => <nav key={group.id} aria-label={`${copy.navGroups[group.id]} · footer`}><p className="site-footer__title">{copy.navGroups[group.id]}</p>{group.items.map(link)}{group.id === 'project' && <><a href={OFFICIAL_LINKS.github} target="_blank" rel="noreferrer">GitHub</a><a href={OFFICIAL_LINKS.pypi} target="_blank" rel="noreferrer">PyPI · latest</a></>}</nav>)}</footer>;
 }
 
 function NotFoundPage() {

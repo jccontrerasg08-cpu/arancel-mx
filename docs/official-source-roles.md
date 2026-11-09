@@ -6,7 +6,7 @@
 
 | Necesidad | Fuente o herramienta principal | Rol de `arancel-mx` |
 |---|---|---|
-| Confirmar el texto jurídico publicado | [DOF](https://www.dof.gob.mx/) y la publicación concreta aplicable | Preserva la procedencia de los documentos capturados; no reemplaza el texto oficial. |
+| Confirmar el texto jurídico publicado | [DOF](https://dof.gob.mx/) y la publicación concreta aplicable | Preserva la procedencia de los documentos capturados; no reemplaza el texto oficial. |
 | Entender la LIGIE, NICO, cambios y archivos de referencia | [SNICE](https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html) | Expone una captura reproducible con identidad de fuente y una release inmutable. |
 | Realizar una consulta oficial interactiva de fracciones | [VUCEM — Buscador de fracciones](https://www.ventanillaunica.gob.mx/vucem/Clasificador.html) | Permite recuperar registros, jerarquía, notas y procedencia desde artefactos verificables. |
 | Integrar datos en Python, CLI, DuckDB o HTTP | La release `data-YYYY.MM.DD` de este proyecto | Verifica manifiesto, SHA-256 y estructura antes de servir resultados. |
@@ -32,6 +32,6 @@ Las respuestas de `lookup`, `ficha`, `search`, `suggest`, `national_notes` y `pr
 
 ## Referencias
 
-[1]: https://www.dof.gob.mx/ "Diario Oficial de la Federación"
+[1]: https://dof.gob.mx/ "Diario Oficial de la Federación"
 [2]: https://www.snice.gob.mx/cs/avi/snice/ligie.info22.html "SNICE — LIGIE: Acerca de"
 [3]: https://www.ventanillaunica.gob.mx/vucem/Clasificador.html "VUCEM — Buscador de fracciones arancelarias"
