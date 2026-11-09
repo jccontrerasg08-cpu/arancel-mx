@@ -5,7 +5,7 @@ import { editorialPage, FOOTER_GROUPS, NAV_GROUPS, OFFICIAL_LINKS } from './cont
 import { CommandPalette, OPEN_SEARCH_EVENT, shortcutLabel } from './command-palette.jsx';
 import { LocaleProvider, useLocale } from './locale.jsx';
 import { applyPageMeta, DEFAULT_SUMMARY, recordMetaFor } from './page-meta.js';
-import { PAGE_COMPONENTS } from './pages.jsx';
+import { PAGE_COMPONENTS, routeMeta } from './pages.jsx';
 import brandLogo from '../../src/arancel_mx/api/static/site/assets/arancel-mx-logo.svg';
 
 const GlossaryPage = lazy(() => import('./glossary-page.jsx'));
@@ -122,7 +122,7 @@ function RoutedPage({ Component }) {
   useEffect(() => {
     const localizedRoute = ['/', '/app', '/product', '/documentation', '/trust', '/records', '/changes', '/data', '/learn'].includes(location.pathname) || location.pathname.startsWith('/changes/') || location.pathname.startsWith('/app/record/') || location.pathname.startsWith('/app/chapter/');
     document.documentElement.lang = localizedRoute && language === 'en' ? 'en' : 'es-MX';
-    const page = editorialPage(location.pathname, language);
+    const page = editorialPage(location.pathname, language) || routeMeta(location.pathname, language);
     const record = recordMetaFor(location.pathname);
     applyPageMeta({
       pathname: location.pathname,

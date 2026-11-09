@@ -435,6 +435,17 @@ const MARKETING_COPY = {
   '/community': { eyebrow: ['COMUNIDAD ABIERTA', 'OPEN COMMUNITY'], title: ['Contribuye con evidencia visible.', 'Contribute through visible evidence.'], description: ['Usa el repositorio público para revisar, discutir y mejorar el contrato de datos abiertos.', 'Use the public repository to review, discuss and improve the open data contract.'], action: ['/documentation', 'Abrir la documentación', 'Open documentation'] },
 };
 
+// Tab title and description for the routes that have no EDITORIAL_PAGES entry: the explorer (same words as its hero)
+// and the four secondary pages (same words as their hero, from MARKETING_COPY).
+const EXPLORER_META = { title: ['Explora una referencia arancelaria sin perder su camino.', 'Explore a tariff reference without losing its path.'], description: ['Revisa jerarquía, contexto de release y evidencia registrada sin tratar un resultado de búsqueda como una determinación legal.', 'Inspect hierarchy, release context and recorded evidence without treating a search result as a legal determination.'] };
+const ROUTE_META = { '/app': EXPLORER_META, '/product': EXPLORER_META };
+
+export function routeMeta(path, language) {
+  const entry = ROUTE_META[path] || MARKETING_COPY[path];
+  const index = language === 'en' ? 1 : 0;
+  return entry ? { title: entry.title[index], description: entry.description[index] } : undefined;
+}
+
 function MarketingPage({ path }) {
   const { language } = useLocale();
   const t = (spanish, english) => localize(language, spanish, english);
