@@ -56,6 +56,7 @@ _MARKETING_PAGES = (
     "/learn",
     "/moa",
     "/moa-guide",
+    "/product",
     "/wiki",
     "/glossary",
     "/trade-context",
