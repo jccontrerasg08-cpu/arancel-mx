@@ -14,7 +14,10 @@ def test_vercel_promotes_api_discovery_and_keeps_robots_outside_the_spa_rewrite(
 
     assert {"source": "/v1", "destination": "/api/operational?resource=api"} in rewrites
     assert not re.fullmatch(rewrites[-1]["source"], "/robots.txt"), "robots.txt must stay outside the SPA rewrite"
-    assert (ROOT / "src" / "arancel_mx" / "api" / "static" / "site" / "robots.txt").read_text(encoding="utf-8") == "User-agent: *\nAllow: /\n"
+    assert not re.fullmatch(rewrites[-1]["source"], "/sitemap.xml"), "sitemap.xml must stay outside the SPA rewrite"
+    assert (ROOT / "src" / "arancel_mx" / "api" / "static" / "site" / "robots.txt").read_text(encoding="utf-8") == (
+        "User-agent: *\nAllow: /\n\nSitemap: https://arancel-mx.vercel.app/sitemap.xml\n"
+    )
 
 
 def test_vercel_serves_the_static_data_api_from_github_pages() -> None:
