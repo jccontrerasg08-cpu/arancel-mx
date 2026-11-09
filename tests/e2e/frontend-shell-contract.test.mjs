@@ -81,3 +81,22 @@ test('the trade desk carries canonical and share metadata like the other pages',
   assert.match(html, /<meta property="og:title" content="arancel-mx — Estimador de importación"/);
   assert.match(html, /<meta property="og:url" content="https:\/\/arancel-mx\.vercel\.app\/trade"/);
 });
+
+test('every public page has its own tab title and description, not the site default', async () => {
+  const [pages, content, { PUBLIC_ROUTES }] = await Promise.all([
+    read('frontend/src/pages.jsx'),
+    read('frontend/src/content.js'),
+    import(pathToFileURL(path.join(root, 'frontend/src/routes.js')).href),
+  ]);
+  const editorial = content.split('export const EDITORIAL_PAGES = {')[1].split('export const editorialPage')[0];
+  const marketing = pages.split('const MARKETING_COPY = {')[1].split('};')[0];
+  const exempt = new Set(['/', '/trade', '/app/record/:code', '/moa-guide']); // home has its own title, the desk is a static page, records build theirs
+  for (const { path: route } of PUBLIC_ROUTES) {
+    if (exempt.has(route)) continue;
+    const covered = editorial.includes(`'${route}': {`) || marketing.includes(`'${route}': {`) || pages.includes(`'${route}': EXPLORER_META`);
+    assert.ok(covered, `${route} has no page title`);
+  }
+  for (const phrase of ['Explora una referencia arancelaria sin perder su camino.', 'Explore a tariff reference without losing its path.']) {
+    assert.equal(pages.split(phrase).length - 1, 2, `the explorer hero and its tab title say the same thing (${phrase})`);
+  }
+});

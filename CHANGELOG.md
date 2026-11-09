@@ -6,6 +6,8 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Changed
 
+- The explorer (`/app`) and the Features, Releases, Release analytics and Community pages now have their own tab title and search description, in both languages, taken from the words of their own page. They all shared the site-wide default, so five different pages looked identical in the tab bar and in search results. A contract test fails when a public page has no title of its own.
+
 - The two release pages have descriptive addresses: `/pricing` is now `/releases` and `/analytics` is now `/release-analytics`. The old addresses redirect permanently (301) on Vercel and in the local app, and the sitemap lists the new ones.
 - Every public page is now reachable from the navigation. The import estimator (`/trade`) has a header action next to "My records", Releases and Release analytics join the Data menu, and the footer is a four-column site map (Explore, Learn, Data, Project) that also lists Features and Community, which had no inbound link. A contract test fails when a public route or a navigation page has no link.
 - DOF links now use `dof.gob.mx`. `www.dof.gob.mx` presents a certificate for another name, so browsers warned on every edition link of the changes page and on the source documents; the apex host has a valid certificate. The NICO coverage evidence URL in release metadata and the research capture script's daily-index request use the apex host too (the allowed-host lists still accept both).

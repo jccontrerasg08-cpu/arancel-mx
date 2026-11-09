@@ -594,3 +594,15 @@ test('finds which DOF publications touched a fraction', async ({ page }) => {
   await expect(page.getByRole('status').filter({ hasText: /publicaciones del DOF tocan/i })).toBeVisible();
   await expect(page.locator('.change-matches li').first()).toContainText(/IGI 35%/);
 });
+
+test('gives the explorer and the secondary pages their own tab title', async ({ page }) => {
+  const expected = { '/app': /explora una referencia arancelaria/i, '/features': /construye sobre datos arancelarios verificables/i, '/releases': /releases públicos/i, '/release-analytics': /contexto del release/i, '/community': /contribuye con evidencia visible/i };
+  const titles = new Set();
+  for (const [route, pattern] of Object.entries(expected)) {
+    await page.goto(route);
+    await expect(page).toHaveTitle(pattern);
+    await expect(page.locator('meta[name="description"]')).not.toHaveAttribute('content', /^Datos arancelarios mexicanos verificables\.$/);
+    titles.add(await page.title());
+  }
+  expect(titles.size).toBe(Object.keys(expected).length);
+});
