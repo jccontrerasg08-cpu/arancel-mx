@@ -223,6 +223,18 @@ def test_new_marketing_deep_links_serve_the_public_shell(valid_settings, fake_da
     assert all('<div id="root"></div>' in response.text for response in responses)
 
 
+def test_renamed_release_pages_serve_the_shell_and_the_old_addresses_redirect_permanently(valid_settings, fake_dataset) -> None:
+    with _client(valid_settings, fake_dataset) as client:
+        pages = [client.get(path) for path in ("/releases", "/release-analytics")]
+        moved = {path: client.get(path, follow_redirects=False) for path in ("/pricing", "/analytics")}
+
+    assert all(response.status_code == 200 and '<div id="root"></div>' in response.text for response in pages)
+    assert {path: (response.status_code, response.headers["location"]) for path, response in moved.items()} == {
+        "/pricing": (301, "/releases"),
+        "/analytics": (301, "/release-analytics"),
+    }
+
+
 def test_vercel_entrypoint_resolves_the_public_application() -> None:
     from src.arancel_mx.api.app import app as vercel_app
 

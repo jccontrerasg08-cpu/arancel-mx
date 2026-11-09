@@ -63,4 +63,6 @@ def test_vercel_routes_retrieval_and_evidence_to_the_active_release_function() -
     assert config["redirects"] == [
         {"source": "/docs", "destination": "/documentation", "permanent": True},
         {"source": "/docs/:path*", "destination": "/documentation", "permanent": True},
+        {"source": "/pricing", "destination": "/releases", "permanent": True},
+        {"source": "/analytics", "destination": "/release-analytics", "permanent": True},
     ]

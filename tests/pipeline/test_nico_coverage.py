@@ -41,7 +41,7 @@ def test_nico_coverage_separates_confirmed_totoaba_lag_from_unclassified_gaps():
         "unclassified_missing": 1,
     }
     assert report["known_upstream_lag"] == {
-        "evidence_url": "https://www.dof.gob.mx/nota_detalle.php?codigo=5763398&fecha=21/07/2025",
+        "evidence_url": "https://dof.gob.mx/nota_detalle.php?codigo=5763398&fecha=21/07/2025",
         "published_at": "2025-07-21",
         "codes": ("03028902", "03029904"),
     }

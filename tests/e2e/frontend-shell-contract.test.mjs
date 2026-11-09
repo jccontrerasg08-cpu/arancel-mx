@@ -21,7 +21,7 @@ test('the static page ships the canonical and share metadata that each route the
 test('the secondary routes are written in both languages instead of English only', async () => {
   const pages = await read('frontend/src/pages.jsx');
   const copy = pages.slice(pages.indexOf('const MARKETING_COPY'), pages.indexOf('function MarketingPage'));
-  for (const path of ['/features', '/pricing', '/analytics', '/community']) {
+  for (const path of ['/features', '/releases', '/release-analytics', '/community']) {
     const line = copy.split('\n').find((entry) => entry.includes(`'${path}'`));
     assert.ok(line, `${path} has copy`);
     assert.equal((line.match(/\['[^']*', '[^']*'\]/g) || []).length >= 3, true, `${path} carries Spanish and English`);
