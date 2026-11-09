@@ -314,3 +314,41 @@ def test_trade_desk_follows_the_saved_theme_and_has_dark_styles() -> None:
     for token in ("--trade-paper", "--trade-panel", "--trade-ink", "--trade-line"):
         dark_block = css.split(":root[data-theme='dark'] {", 1)[1].split("}", 1)[0]
         assert token in dark_block, f"{token} has a dark value"
+
+
+_ROUTE_ALIASES = {"/product", "/moa-guide"}
+
+
+def _public_routes() -> list[str]:
+    source = (ROOT / "frontend" / "src" / "routes.js").read_text(encoding="utf-8")
+    return re.findall(r"path: '([^']+)'", source)
+
+
+def test_every_public_route_is_served_by_vercel_and_the_local_app() -> None:
+    from arancel_mx.api.app import _MARKETING_PAGES
+
+    rewrites = json.loads((ROOT / "vercel.json").read_text(encoding="utf-8"))["rewrites"]
+    shell = next(item["source"] for item in rewrites if item["destination"] == "/")
+    shell_pattern = re.compile(f"^{shell}$")
+    dedicated = {item["source"] for item in rewrites}
+    served_locally = set(_MARKETING_PAGES) | {"/app", "/trade"}
+
+    for route in _public_routes():
+        concrete = re.sub(r":[A-Za-z]+", "x", route)
+        assert concrete == "/" or concrete in dedicated or shell_pattern.fullmatch(concrete), route
+        assert concrete.split("/x")[0] in served_locally or concrete.startswith("/app/"), route
+
+
+def test_sitemap_lists_each_canonical_route_once_and_no_alias() -> None:
+    sitemap = (SITE / "sitemap.xml").read_text(encoding="utf-8")
+    robots = (SITE / "robots.txt").read_text(encoding="utf-8")
+    listed = re.findall(r"<loc>https://arancel-mx\.vercel\.app([^<]*)</loc>", sitemap)
+    expected = [
+        route
+        for route in _public_routes()
+        if ":" not in route and route not in _ROUTE_ALIASES
+    ]
+
+    assert sorted(listed) == sorted("/" if route == "/" else route for route in expected)
+    assert len(listed) == len(set(listed))
+    assert "Sitemap: https://arancel-mx.vercel.app/sitemap.xml" in robots
