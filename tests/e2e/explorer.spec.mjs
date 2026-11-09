@@ -97,8 +97,33 @@ test('groups the header into four destinations and keeps every page reachable', 
   await page.keyboard.press('Escape');
   await expect(learn).toHaveAttribute('aria-expanded', 'false');
   await expect(learn).toBeFocused();
-  await page.getByRole('link', { name: /^mis registros$/i }).click();
+  await page.getByRole('banner').getByRole('link', { name: /^mis registros$/i }).click();
   await expect(page).toHaveURL(/\/records$/);
+});
+
+test('reaches the import estimator from the header and every page from the footer', async ({ page }) => {
+  await page.goto('/');
+  const estimator = page.getByRole('banner').getByRole('link', { name: /^estimador$/i });
+  await expect(estimator).toHaveAttribute('href', '/trade');
+
+  const footer = page.getByRole('contentinfo');
+  const expected = { Explorar: '/app', Capítulos: '/chapters', Estimador: '/trade', 'Mis registros': '/records', 'Guía para empezar': '/learn', Glosario: '/glossary', Wiki: '/wiki', 'Guía MOA': '/moa', 'Contexto comercial': '/trade-context', Cifras: '/data', 'Cambios en el DOF': '/changes', Releases: '/pricing', 'Análisis de releases': '/analytics', Documentación: '/documentation', Confianza: '/trust', Funciones: '/features', Comunidad: '/community' };
+  for (const [name, href] of Object.entries(expected)) {
+    await expect(footer.getByRole('link', { name, exact: true }), name).toHaveAttribute('href', href);
+  }
+  await footer.getByRole('link', { name: 'Releases', exact: true }).click();
+  await expect(page).toHaveURL(/\/pricing$/);
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(/releases públicos/i);
+});
+
+test('lists the estimator and the data pages in the mobile menu', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await page.getByRole('button', { name: /abrir menú de navegación/i }).click();
+  const navigation = page.getByLabel('Navegación principal');
+  await expect(navigation.getByRole('link', { name: /^estimador$/i })).toHaveAttribute('href', '/trade');
+  await expect(navigation.getByRole('link', { name: /^releases$/i })).toHaveAttribute('href', '/pricing');
+  await expect(navigation.getByRole('link', { name: /^análisis de releases$/i })).toHaveAttribute('href', '/analytics');
 });
 
 test('teaches how to read a code from the Learn menu', async ({ page }) => {
