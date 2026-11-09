@@ -62,7 +62,7 @@ function NavMenu({ group, pathname }) {
       document.removeEventListener('keydown', closeWithEscape);
     };
   }, [open]);
-  return <div className="nav-menu" ref={rootRef}><button ref={buttonRef} type="button" className={group.items.includes(pathname) ? 'is-active' : ''} aria-expanded={open} aria-controls={id} onClick={() => setOpen((current) => !current)}>{copy.navGroups[group.id]}<span className="nav-menu__chevron" aria-hidden="true"/></button>{open && <ul id={id} className="nav-menu__panel">{group.items.map((href) => <li key={href}><Link to={href} viewTransition className={pathname === href ? 'is-active' : ''} aria-current={pathname === href ? 'page' : undefined}>{copy.navigation[href]}</Link></li>)}</ul>}</div>;
+  return <div className="nav-menu" ref={rootRef}><button ref={buttonRef} type="button" className={group.items.includes(pathname) ? 'is-active' : ''} aria-expanded={open} aria-controls={id} onClick={() => setOpen((current) => !current)}>{copy.navGroups[group.id]}<span className="nav-menu__chevron" aria-hidden="true"/></button><ul id={id} className="nav-menu__panel" data-open={open}>{group.items.map((href) => <li key={href}><Link to={href} viewTransition className={pathname === href ? 'is-active' : ''} aria-current={pathname === href ? 'page' : undefined}>{copy.navigation[href]}</Link></li>)}</ul></div>;
 }
 
 function SiteHeader() {
