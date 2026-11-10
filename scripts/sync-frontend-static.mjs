@@ -3,6 +3,8 @@ import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { GENERATED_MARKER, renderRoutePage, routePageFile, routePageRoutes } from './route-pages.mjs';
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const source = path.join(root, 'frontend-dist');
 const sourceAssets = path.join(source, 'assets');
@@ -45,6 +47,16 @@ for (const existing of await readdir(destinationAssets)) {
   }
 }
 await cp(sourceIndex, path.join(destination, 'index.html'));
+
+// One HTML file per public route with its own title, description and canonical (see scripts/route-pages.mjs).
+// Only files carrying the generated marker are ever removed, so trade.html and 404.html are never touched.
+const publishedIndex = await readFile(path.join(destination, 'index.html'), 'utf8');
+const routeFiles = new Map(routePageRoutes().map((route) => [routePageFile(route), route]));
+for (const existing of await readdir(destination)) {
+  if (!existing.endsWith('.html') || routeFiles.has(existing)) continue;
+  if ((await readFile(path.join(destination, existing), 'utf8')).includes(GENERATED_MARKER)) await unlink(path.join(destination, existing));
+}
+for (const [file, route] of routeFiles) await writeFile(path.join(destination, file), renderRoutePage(publishedIndex, route));
 await cp(sourceFavicon, path.join(destination, 'favicon.svg'));
 await cp(sourceAssets, destinationAssets, {
   recursive: true,

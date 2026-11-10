@@ -55,8 +55,6 @@ _MARKETING_PAGES = (
     "/data",
     "/learn",
     "/moa",
-    "/moa-guide",
-    "/product",
     "/wiki",
     "/glossary",
     "/trade-context",
@@ -65,6 +63,8 @@ _MARKETING_PAGES = (
 _MOVED_PAGES = {
     "/pricing": "/releases",
     "/analytics": "/release-analytics",
+    "/product": "/app",
+    "/moa-guide": "/moa",
 }
 _API_DESCRIPTION = """
 Public, read-only HTTP access to the verified `arancel-mx` dataset through the
@@ -334,9 +334,10 @@ def create_app(
     for public_path in _MARKETING_PAGES:
         application.add_api_route(public_path, marketing_page, include_in_schema=False)
 
-    def moved_page(destination: str) -> Callable[[], RedirectResponse]:
-        def redirect() -> RedirectResponse:
-            return RedirectResponse(destination, status_code=301)
+    def moved_page(destination: str) -> Callable[[Request], RedirectResponse]:
+        def redirect(request: Request) -> RedirectResponse:
+            query = request.url.query
+            return RedirectResponse(f"{destination}?{query}" if query else destination, status_code=301)
 
         return redirect
 

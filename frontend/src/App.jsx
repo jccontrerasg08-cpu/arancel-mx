@@ -5,7 +5,8 @@ import { editorialPage, FOOTER_GROUPS, NAV_GROUPS, OFFICIAL_LINKS } from './cont
 import { CommandPalette, OPEN_SEARCH_EVENT, shortcutLabel } from './command-palette.jsx';
 import { LocaleProvider, useLocale } from './locale.jsx';
 import { applyPageMeta, DEFAULT_SUMMARY, recordMetaFor } from './page-meta.js';
-import { PAGE_COMPONENTS, routeMeta } from './pages.jsx';
+import { routeMeta } from './marketing-copy.js';
+import { PAGE_COMPONENTS } from './pages.jsx';
 import brandLogo from '../../src/arancel_mx/api/static/site/assets/arancel-mx-logo.svg';
 
 const GlossaryPage = lazy(() => import('./glossary-page.jsx'));

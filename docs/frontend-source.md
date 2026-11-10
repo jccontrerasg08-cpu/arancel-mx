@@ -18,6 +18,8 @@ El repositorio usa npm con `package-lock.json`.
 
 `scripts/sync-frontend-static.mjs` conserva `trade.html`, sus estilos, scripts y activos. Al copiar la aplicación principal, asigna al bundle JavaScript un nombre derivado de su SHA-256 y elimina sólo los bundles principales obsoletos. Así se mantiene la caché inmutable sin borrar activos independientes.
 
+Además genera un archivo HTML por ruta pública (`app.html`, `learn.html`, `releases.html`…) con `scripts/route-pages.mjs`: es `index.html` con el título, la descripción, la canónica y los metadatos para compartir de esa página, tomados de `EDITORIAL_PAGES` y de `frontend/src/marketing-copy.js`. Vercel sirve `<ruta>.html` antes que cualquier reescritura, de modo que un rastreador o una vista previa que no ejecuta JavaScript lee los datos propios de la página y no los de la portada; las fichas, capítulos y publicaciones del DOF siguen entrando por `index.html`. Estos archivos solo se publican en Vercel: `pyproject.toml` no los incluye en el wheel y la app local los sirve como la aplicación de una sola página. Sólo se borran archivos con la marca `generated route page`, así que `trade.html` y `404.html` no se tocan.
+
 ## Fuente de las rutas
 
 El manifiesto central está en `frontend/src/routes.js`; `frontend/src/App.jsx` lo convierte en rutas React. El contenido editorial vive en `frontend/src/content.js` y `frontend/src/pages.jsx` contiene los componentes de cada superficie. El glosario se publica como módulo declarativo de 189 entradas en `frontend/src/glossary-data.js`.
