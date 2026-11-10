@@ -11,6 +11,8 @@ All notable changes to the Python package are documented here. Dataset releases 
 - Example script `examples/quickstart_duckdb.py`: verified `Dataset` lookup, hierarchy, search, and a citation built from `DatasetInfo` (`dataset_version`, `release_verified`, `schema_version`, `path`).
 - Example script `examples/sql_chapter_audit.py`: read-only DuckDB audit of one HS chapter (level counts, undated fractions, fractions without a current NICO). It reports gaps and does not repair them.
 - README: current-status table (package + dataset versions) and citation guidance for reproducible references.
+- `docs/2026-reform-status.md` lists the packaged 2026 rate instruments (`ref02`, `ref01`, `tarifa15`, `tarifa16`, and the temporary rates that end on 2026-04-23) with dates and row counts taken from `legal_instruments.json`. `tests/docs/test_2026_reform_status.py` fails if those facts drift.
+- Notebook `examples/audit_and_coverage.ipynb` uses `DatasetInfo`, `lookup`, `ficha`, and `search` without inventing NICO codes or preferential rates.
 
 ### Changed
 
