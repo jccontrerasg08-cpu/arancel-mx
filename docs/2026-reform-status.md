@@ -1,38 +1,50 @@
 # Estado de las reformas arancelarias 2026
 
-Este documento resume el alcance de las modificaciones a la Tarifa (LIGIE/TIGIE) que entraron en vigor en 2026 y cómo se reflejan en `arancel-mx`.
+Resumen de los instrumentos de tasa general que el registro empaquetado
+[`legal_instruments.json`](../src/arancel_mx/sources/legal_instruments.json)
+(`version: 2026-10-30`) usa para fechar el IGI/IGE. Las cifras de filas son
+el número de fracciones en ese instrumento, no una estimación.
 
-## Instrumentos principales
+La release verificada sigue siendo la fuente de las tasas vigentes. Este
+documento no sustituye al DOF ni al SNICE.
 
-| Instrumento | Publicación DOF | Vigencia | Alcance aproximado |
-|---|---|---|---|
-| Reforma LIGIE (Congreso) | 29 de diciembre de 2025 | 1 de enero de 2026 | ~1.463 fracciones (tasas 5 %–50 %) |
-| Decreto de modificaciones | 23 de abril de 2026 | 24 de abril de 2026 | ~185 fracciones (tasas 5 %–35 %) |
+## Instrumentos con efecto en 2026
 
-Las cifras exactas y la lista de fracciones afectadas viven en el inventario de instrumentos y en la release verificada. Consulta siempre el DOF y el SNICE como fuentes primarias.
+| Id | DOF | Entrada en vigor | Fin | Filas | Qué es |
+|---|---|---|---|---:|---|
+| `ref02` | 2025-12-29 | 2026-01-01 | — | 1,463 | Reforma de diversas fracciones de la Tarifa de la LIGIE |
+| `ref01` | 2025-07-21 | 2026-01-17 | — | 11 | Reforma LIGIE (totoaba). El NICO oficial puede no traer descendientes de estas fracciones |
+| `tarifa15` | 2026-04-23 | 2026-04-24 | — | 185 | Modificación de la Tarifa y del Decreto PROSEC |
+| `tarifa16` | 2026-10-13 | 2026-10-14 | 2031-10-14 | 1 | Tasa temporal de `9803.00.01` (partes para ensamble automotriz) |
 
-## Cómo comprobarlo en arancel-mx
+Tasas temporales que el registro da por terminadas el 2026-04-23:
+
+| Id | DOF | Entrada en vigor | Fin | Filas |
+|---|---|---|---|---:|
+| `tarifa09` | 2024-04-22 | 2024-04-23 | 2026-04-23 | 544 |
+| `tarifa11` | 2024-12-19 | 2024-12-20 | 2026-04-23 | 155 |
+
+`tests/docs/test_2026_reform_status.py` falla si esos identificadores, fechas
+o conteos dejan de coincidir con el registro.
+
+## Cómo comprobar una fracción
 
 ```bash
-# Descarga y verifica la release actual
 arancel-mx data download
 arancel-mx data verify
-
-# Busca una fracción y revisa su tasa e historia
 arancel-mx ficha 85171301
 arancel-mx provenance 85171301
-
-# Cobertura NICO (lag upstream conocido)
-arancel-mx data nico-coverage
 ```
 
-La página de cambios del hub (`/changes`) lista los instrumentos del DOF que tocan la Tarifa. Cada publicación incluye enlace al DOF y las fracciones afectadas.
+`ficha` muestra el IGI/IGE oficial del dataset verificado. No calcula un
+arancel preferencial ni decide si una mercancía califica.
 
-## Notas importantes
+La página de cambios del hub (`/changes`) lista instrumentos del DOF. Cada
+publicación enlaza la edición y las fracciones que el registro asocia.
 
-- `arancel-mx` no interpreta ni clasifica. Reproduce la Tarifa verificada con procedencia.
-- El lag de NICO (fuente oficial aún en material de abril 2024 para algunas fracciones nuevas) se documenta explícitamente; no se inventan códigos.
-- Cita siempre el tag `data-YYYY.MM.DD` y el SHA-256 de la release.
+## Qué no hace este documento
 
-**Última revisión de este documento:** 2026-11-09  
-**Dataset de referencia:** data-2026.11.09
+- No interpreta reglas de origen ni tratados.
+- No rellena NICO que la fuente oficial no publicó.
+- No afirma que cada fila de un instrumento sea un alza de tasa: una fila es
+  una fracción mencionada por ese instrumento.

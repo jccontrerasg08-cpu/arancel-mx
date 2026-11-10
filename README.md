@@ -89,12 +89,10 @@ Profundiza en [roles de fuentes oficiales](docs/official-source-roles.md), [fuen
 
 ## Documentación
 
-| Reformas 2026 y verificación | [Estado de reformas 2026](docs/2026-reform-status.md) |
-
-
 | Necesidad | Documento |
 |---|---|
 | Instalar, descargar y consultar | [Inicio rápido](docs/consumer-quickstart.md) · [CLI](docs/consumer-cli.md) |
+| Reformas de tasa con efecto en 2026 | [Estado de reformas 2026](docs/2026-reform-status.md) |
 | Integrar archivos, Python o HTTP | [Consumo externo](docs/external-consumption.md) |
 | Entender HS → fracción MX → NICO | [Guía NICO/LIGIE](docs/nico-ligie-guide.md) |
 | Entender procedencia y promoción de fuentes | [Roles oficiales](docs/official-source-roles.md) · [Fuentes](docs/sources.md) · [Promoción SNICE_DOCS](docs/source-promotion.md) |

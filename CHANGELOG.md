@@ -6,8 +6,8 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Added
 
-- Notebook `examples/audit_and_coverage.ipynb`: verified Dataset lookup, hierarchy, and search example.
-- `docs/2026-reform-status.md`: summary of the December 2025 and April 2026 tariff modifications with verification commands.
+- `docs/2026-reform-status.md` lists the packaged 2026 rate instruments (`ref02`, `ref01`, `tarifa15`, `tarifa16`, and the temporary rates that end on 2026-04-23) with dates and row counts taken from `legal_instruments.json`. `tests/docs/test_2026_reform_status.py` fails if those facts drift.
+- Notebook `examples/audit_and_coverage.ipynb` uses `DatasetInfo`, `lookup`, `ficha`, and `search` without inventing NICO codes or preferential rates.
 
 ### Changed
 
