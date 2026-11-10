@@ -65,4 +65,6 @@ def test_vercel_routes_retrieval_and_evidence_to_the_active_release_function() -
         {"source": "/docs/:path*", "destination": "/documentation", "permanent": True},
         {"source": "/pricing", "destination": "/releases", "permanent": True},
         {"source": "/analytics", "destination": "/release-analytics", "permanent": True},
+        {"source": "/product", "destination": "/app", "permanent": True},
+        {"source": "/moa-guide", "destination": "/moa", "permanent": True},
     ]

@@ -235,6 +235,17 @@ def test_renamed_release_pages_serve_the_shell_and_the_old_addresses_redirect_pe
     }
 
 
+def test_old_product_and_moa_guide_addresses_redirect_permanently_and_keep_the_query(valid_settings, fake_dataset) -> None:
+    with _client(valid_settings, fake_dataset) as client:
+        product = client.get("/product?q=85171301", follow_redirects=False)
+        moa = client.get("/moa-guide", follow_redirects=False)
+        landed = client.get("/product?q=85171301")
+
+    assert (product.status_code, product.headers["location"]) == (301, "/app?q=85171301")
+    assert (moa.status_code, moa.headers["location"]) == (301, "/moa")
+    assert landed.status_code == 200 and '<div id="root"></div>' in landed.text
+
+
 def test_vercel_entrypoint_resolves_the_public_application() -> None:
     from src.arancel_mx.api.app import app as vercel_app
 

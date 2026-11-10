@@ -21,3 +21,6 @@ export const PUBLIC_ROUTES = Object.freeze([
   { path: '/release-analytics', label: 'Release analytics' },
   { path: '/community', label: 'Community' },
 ]);
+
+// Old addresses that now redirect permanently (vercel.json and the local app) to the page that replaced them.
+export const ROUTE_ALIASES = Object.freeze({ '/product': '/app', '/moa-guide': '/moa' });

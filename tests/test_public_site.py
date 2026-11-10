@@ -85,13 +85,15 @@ def test_vercel_deploys_the_standalone_public_site() -> None:
             "source": "/data/v1/:path*",
             "destination": "https://jccontrerasg08-cpu.github.io/arancel-mx/v1/:path*",
         },
-        {"source": "/(app(?:/.*)?|product|chapters|changes(?:/.*)?|data|learn|moa|moa-guide|wiki|glossary|trade-context|documentation|trust|records|features|releases|release-analytics|community)", "destination": "/"},
+        {"source": "/(app(?:/.*)?|chapters|changes(?:/.*)?|data|learn|moa|wiki|glossary|trade-context|documentation|trust|records|features|releases|release-analytics|community)", "destination": "/"},
     ]
     assert config["redirects"] == [
         {"source": "/docs", "destination": "/documentation", "permanent": True},
         {"source": "/docs/:path*", "destination": "/documentation", "permanent": True},
         {"source": "/pricing", "destination": "/releases", "permanent": True},
         {"source": "/analytics", "destination": "/release-analytics", "permanent": True},
+        {"source": "/product", "destination": "/app", "permanent": True},
+        {"source": "/moa-guide", "destination": "/moa", "permanent": True},
     ]
     assert "fastapicloud.dev" not in json.dumps(config)
 
@@ -327,15 +329,21 @@ def _public_routes() -> list[str]:
 
 
 def test_every_public_route_is_served_by_vercel_and_the_local_app() -> None:
-    from arancel_mx.api.app import _MARKETING_PAGES
+    from arancel_mx.api.app import _MARKETING_PAGES, _MOVED_PAGES
 
-    rewrites = json.loads((ROOT / "vercel.json").read_text(encoding="utf-8"))["rewrites"]
+    config = json.loads((ROOT / "vercel.json").read_text(encoding="utf-8"))
+    rewrites = config["rewrites"]
     shell = next(item["source"] for item in rewrites if item["destination"] == "/")
     shell_pattern = re.compile(f"^{shell}$")
     dedicated = {item["source"] for item in rewrites}
     served_locally = set(_MARKETING_PAGES) | {"/app", "/trade"}
+    redirected = {item["source"]: item["destination"] for item in config["redirects"]}
 
     for route in _public_routes():
+        if route in _ROUTE_ALIASES:
+            assert route in redirected, f"{route} is an alias and must redirect on Vercel"
+            assert route in _MOVED_PAGES, f"{route} is an alias and must redirect in the local app"
+            continue
         concrete = re.sub(r":[A-Za-z]+", "x", route)
         assert concrete == "/" or concrete in dedicated or shell_pattern.fullmatch(concrete), route
         assert concrete.split("/x")[0] in served_locally or concrete.startswith("/app/"), route

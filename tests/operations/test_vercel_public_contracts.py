@@ -54,8 +54,10 @@ def test_vercel_serves_a_real_404_for_paths_that_are_not_site_routes() -> None:
     assert "/documentation" in pages
     for page in (page for page in pages if page != "/"):
         assert spa.fullmatch(page), f"{page} is a public route and must reach the SPA"
-    for path in ("/app", "/app/record/8517", "/app/chapter/85", "/changes/tarifa15", "/product"):
+    for path in ("/app", "/app/record/8517", "/app/chapter/85", "/changes/tarifa15"):
         assert spa.fullmatch(path), f"{path} is a client route and must reach the SPA"
+    for path in ("/product", "/moa-guide"):
+        assert not spa.fullmatch(path), f"{path} is an old address: it redirects instead of reaching the SPA"
     for path in ("/no-such-page", "/wp-admin", "/app2", "/records/extra", "/assets/missing.js", "/robots.txt"):
         assert not spa.fullmatch(path), f"{path} must answer 404"
     not_found = ROOT / "src" / "arancel_mx" / "api" / "static" / "site" / "404.html"
