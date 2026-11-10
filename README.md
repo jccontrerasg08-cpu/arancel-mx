@@ -89,6 +89,9 @@ Profundiza en [roles de fuentes oficiales](docs/official-source-roles.md), [fuen
 
 ## Documentación
 
+| Reformas 2026 y verificación | [Estado de reformas 2026](docs/2026-reform-status.md) |
+
+
 | Necesidad | Documento |
 |---|---|
 | Instalar, descargar y consultar | [Inicio rápido](docs/consumer-quickstart.md) · [CLI](docs/consumer-cli.md) |
