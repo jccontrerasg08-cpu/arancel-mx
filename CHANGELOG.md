@@ -6,7 +6,8 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Added
 
-- Example script `examples/quickstart_duckdb.py`: minimal verified Dataset usage (lookup, hierarchy, search).
+- Example script `examples/quickstart_duckdb.py`: verified `Dataset` lookup, hierarchy, search, and a citation built from `DatasetInfo` (`dataset_version`, `release_verified`, `schema_version`, `path`).
+- Example script `examples/sql_chapter_audit.py`: read-only DuckDB audit of one HS chapter (level counts, undated fractions, fractions without a current NICO). It reports gaps and does not repair them.
 - README: current-status table (package + dataset versions) and citation guidance for reproducible references.
 
 ### Changed

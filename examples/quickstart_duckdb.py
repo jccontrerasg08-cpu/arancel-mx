@@ -1,40 +1,42 @@
 #!/usr/bin/env python3
-"""Minimal example: load the latest verified arancel-mx dataset and query it.
+"""Load the latest verified dataset and print a citable lookup.
 
-Requires: pip install arancel-mx duckdb
+Requires: pip install arancel-mx
 """
 
 from arancel_mx import Dataset
 
 
+def citation(info) -> str:
+    verified = "release-verified" if info.release_verified else "structural-only"
+    return (
+        f"arancel-mx dataset {info.dataset_version} ({verified}, {info.source})\n"
+        f"schema {info.schema_version}\n"
+        f"local file {info.path}"
+    )
+
+
 def main() -> None:
-    # Downloads and verifies the latest immutable data-YYYY.MM.DD release
-    ds = Dataset.latest()
-    print(f"Dataset: {ds.info.dataset_tag} (verified={ds.info.release_verified})")
+    dataset = Dataset.latest()
+    print(citation(dataset.info))
 
-    # Exact lookup
-    record = ds.lookup("85171301")
-    print(f"\n{record.code} — {record.description}")
-    print(f"  IGI: {record.igi_text}  |  IGE: {record.ige_text}")
-    print(f"  Level: {record.level}  |  Unit: {record.unit_name}")
+    record = dataset.lookup("85171301")
+    print(f"\n{record.code} [{record.level}] {record.description}")
+    print(f"IGI {record.igi_text} | IGE {record.ige_text} | unit {record.unit_name}")
+    print(
+        f"rate basis {record.validity_basis} | "
+        f"effective {record.effective_from} .. {record.effective_to}"
+    )
 
-    # Hierarchy
-    print("\nParents:")
-    parent = ds.parent(record.code)
-    while parent:
-        print(f"  {parent.level}: {parent.code} — {parent.description[:60]}...")
-        parent = ds.parent(parent.code)
+    print("\nHierarchy:")
+    parent = dataset.parent(record.code)
+    while parent is not None:
+        print(f"  {parent.level} {parent.code}")
+        parent = dataset.parent(parent.code)
 
-    # Search
-    print("\nSearch for 'teléfono':")
-    for hit in ds.search("teléfono", limit=3):
-        print(f"  {hit.record.code}  {hit.record.description[:50]}")
-
-    # NICO coverage diagnostic (new in 0.3.8+)
-    print("\n--- NICO coverage ---")
-    # Note: after the CLI lands, users can also run:
-    #   arancel-mx data nico-coverage --format json
-    print("Use the CLI: arancel-mx data nico-coverage")
+    print("\nSearch:")
+    for hit in dataset.search("telefono", limit=3):
+        print(f"  {hit.match_kind} {hit.record.code} {hit.record.description[:60]}")
 
 
 if __name__ == "__main__":

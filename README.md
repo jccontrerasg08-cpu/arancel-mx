@@ -48,7 +48,7 @@ El paquete Python y el dataset se versionan por separado. Una versión del paque
 | Paquete Python | **0.3.7** (PyPI) |
 | Dataset público | **data-2026.11.09** (release verificada) |
 | Hub web | [arancel-mx.vercel.app](https://arancel-mx.vercel.app/) |
-| Cobertura NICO | Lag upstream conocido documentado; usa `arancel-mx data nico-coverage` |
+| Cobertura NICO | El dataset no inventa NICO. Si el código no está publicado, `lookup` y `ficha` fallan cerrado. |
 
 > Los datos provienen de fuentes oficiales (SNICE, DOF, Diputados) y se publican con SHA-256, manifest y cadena de procedencia. No constituyen clasificación oficial ni asesoría legal.
 
@@ -67,6 +67,8 @@ arancel-mx data download --dataset data-2026.11.09
 arancel-mx data verify --dataset data-2026.11.09
 arancel-mx lookup 85171301 --dataset data-2026.11.09
 ```
+
+Ejemplos en el repositorio: [examples/quickstart_duckdb.py](examples/quickstart_duckdb.py) (API Python) y [examples/sql_chapter_audit.py](examples/sql_chapter_audit.py) (SQL de sólo lectura sobre el DuckDB local).
 
 
 **Descargas directas:** [DuckDB](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/arancel_mx.duckdb) · [CSV](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/arancel_mx.csv) · [JSON](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/arancel_mx.json) · [Manifest](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/manifest.json) · [SHA256SUMS](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/SHA256SUMS)
