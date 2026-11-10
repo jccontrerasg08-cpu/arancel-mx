@@ -8,6 +8,9 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 - CLI: `arancel-mx data nico-coverage` reports current fractions without published NICO descendants. The known Totoaba lag (DOF 2025-07-21) and any other gaps come from one shared policy in `arancel_mx.domain.nico_lag`, also used by the pipeline. No synthetic NICO codes are created.
 - CLI: `arancel-mx data rate-validity` counts current fractions whose published `rate_effective_from` is present or absent, grouped by `validity_basis`. It does not invent dates.
+- Example script `examples/quickstart_duckdb.py`: verified `Dataset` lookup, hierarchy, search, and a citation built from `DatasetInfo` (`dataset_version`, `release_verified`, `schema_version`, `path`).
+- Example script `examples/sql_chapter_audit.py`: read-only DuckDB audit of one HS chapter (level counts, undated fractions, fractions without a current NICO). It reports gaps and does not repair them.
+- README: current-status table (package + dataset versions) and citation guidance for reproducible references.
 
 ### Changed
 
