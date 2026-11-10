@@ -36,6 +36,9 @@ La experiencia interactiva vive en **[arancel-mx.vercel.app](https://arancel-mx.
 | Consumir una interfaz GET-only/read-only | **HTTP / API** | `GET /data/v1/meta.json`, `/data/v1/records/85.json` |
 | Comprobar cómo se produjo un resultado | **Auditoría y reproducción** | `manifest.json`, `SHA256SUMS`, `provenance`, `data verify` |
 
+
+> **Cobertura NICO**: algunas fracciones recientes pueden no tener descendientes NICO publicados porque la fuente oficial de NICO aún no los incluye. Usa `arancel-mx data nico-coverage` para ver el detalle (incluyendo el lag conocido de las fracciones Totoaba).
+
 La **API HTTP pública** es **GET-only**, **read-only** y funciona **sin API key**: son archivos JSON estáticos que GitHub Pages publica con cada release y que el hub sirve en `/data/v1`. El hub de rutas y límites vive en `/documentation`.
 
 El paquete Python y el dataset se versionan por separado. Una versión del paquete no fija los datos: las releases del dataset usan tags inmutables `data-YYYY.MM.DD`.
