@@ -1,30 +1,46 @@
 # Treaty preferences research spike
 
-**Status:** exploratory — not yet part of the verified core dataset.
+**Status:** exploratory. Not implemented. Not part of the verified core dataset.
 
-## Goal
+## Boundary
 
-Assess the feasibility of adding a clearly labeled, provenance-tracked layer for preferential tariff rates under Mexico’s free-trade agreements (T-MEC, EU, CPTPP, etc.) without contaminating the core LIGIE/NICO verified tariff.
+The public view `arancel_mx` and `/data/v1` publish the general IGI/IGE from the verified LIGIE snapshot. A preferential rate under T-MEC, the EU agreement, CPTPP, or any other treaty is a different legal fact: it applies only when origin is proved. It must not be written into `igi_text`, `igi_kind`, or `igi_value`.
 
-## Current boundary
+If an official source does not list a preference for a fraction, the dataset must not invent one.
 
-The public `arancel_mx` view and the static API expose only the general IGI/IGE rates from the verified LIGIE snapshot. Preferential rates, PROSEC, IMMEX, and non-tariff regulations are intentionally out of the core contract (see project overview and research coverage map).
+## Proposed side asset (not built)
 
-## Spike questions
+If this is pursued, publish a separate release asset, for example `preferences.json`, with its own SHA-256 line in `SHA256SUMS`. Do not add columns to `PUBLIC_COLUMNS` in the first iteration.
 
-1. Which official instruments publish the preferential rate schedules (DOF decrees, SNICE annexes, treaty annexes)?
-2. Can each preferential rate be tied to a fraction, an origin rule, and a validity interval with the same SHA-256 / instrument-identity discipline used for general rates?
-3. What is the expected cardinality and update frequency?
-4. How should the consumer surface distinguish “general rate” from “preferential rate (requires origin proof)”?
+One row would need at least:
 
-## Recommended next step (if pursued)
+| Field | Required meaning |
+|---|---|
+| `code` | Current `fraccion8` that already exists in the verified dataset |
+| `treaty_id` | Stable id of the agreement, not a display name alone |
+| `preferential_igi_text` | Rate text as published. Not a rewritten percent |
+| `origin_rule_ref` | Pointer to the rule of origin, or an explicit `unknown` |
+| `proof_required` | Always `true` for a preferential rate |
+| `effective_from` / `effective_to` | Only when the instrument states them |
+| `source_url` | Official instrument |
+| `source_sha256` | Bytes that were read |
+| `instrument_id` | Id inside a versioned registry, same discipline as `legal_instruments.json` |
 
-- Produce a small, versioned inventory of 2–3 treaties (T-MEC + one other) with source URLs, hashes, and a proposed schema that lives **beside** the core dataset (separate table or separate release asset).
-- Do **not** merge preferential rates into the existing `igi_text` column.
-- Keep the fail-closed rule: if the official source does not list a preference for a fraction, the dataset must not invent one.
+Rejected designs:
+
+- Overloading `igi_text` with the preferential rate and hiding the general rate.
+- A boolean `has_treaty` with no instrument.
+- Filling a missing schedule with `0%` because a treaty exists in general.
+
+## Open questions before any schema is accepted
+
+1. Which DOF or SNICE annex is the authority for each treaty’s rate list, and which URL stays stable enough to hash?
+2. Are preferences expressed on `fraccion8`, on HS6, or on both?
+3. How often the annexes change relative to the daily LIGIE pipeline.
+4. Whether PROSEC stays a third asset. It is not a treaty preference and should not share this table.
 
 ## Non-goals
 
-- Automatic classification of origin.
-- Legal advice on whether a particular shipment qualifies.
-- Replacing the official SNICE or VUCEM tools.
+- Deciding whether a shipment qualifies.
+- Classifying origin.
+- Replacing SNICE or VUCEM.

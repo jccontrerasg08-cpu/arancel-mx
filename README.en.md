@@ -48,7 +48,7 @@ The Python package and the dataset have separate version cycles. A package versi
 | Python package | **0.3.7** (PyPI) |
 | Public dataset | **data-2026.11.09** (verified release) |
 | Web hub | [arancel-mx.vercel.app](https://arancel-mx.vercel.app/) |
-| NICO coverage | Known upstream lag documented; use `arancel-mx data nico-coverage` |
+| NICO coverage | Missing published NICO codes are not filled in. `lookup` and `ficha` fail closed when the code is absent. |
 
 > Data comes from official sources (SNICE, DOF, Chamber of Deputies) and is published with SHA-256, a manifest, and a provenance chain. It is not an official classification or legal advice.
 

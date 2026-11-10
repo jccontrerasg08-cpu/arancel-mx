@@ -6,9 +6,10 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Added
 
-- English README parity: current-status table and citation guidance.
-- `docs/hub-citation-guidance.md`: how to cite a hub result using the visible release tag + SHA-256.
-- `docs/research/treaty-preferences-spike.md`: exploratory notes on a future preferential-rate layer (kept separate from the core verified tariff).
+- English README parity: current-status table and citation guidance. It does not advertise commands that are not on this branch.
+- `docs/hub-citation-guidance.md`: cite `dataset_tag`, `schema_version`, `release_verified`, and the SHA-256 from `SHA256SUMS`. Says what not to cite.
+- `docs/static-api-parity.md`: the three readers and the test that locks them together.
+- `docs/research/treaty-preferences-spike.md`: a side-asset schema for preferential rates. Not implemented, and forbidden from writing into `igi_text`.
 - Richer `ficha` and `compare` examples in the CLI reference.
 
 ### Changed

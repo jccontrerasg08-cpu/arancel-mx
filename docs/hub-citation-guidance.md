@@ -1,31 +1,52 @@
 # Hub citation and release-tag guidance
 
-The web hub at [arancel-mx.vercel.app](https://arancel-mx.vercel.app/) displays the current verified release tag (for example `2026.11.09`).
+The hub at [arancel-mx.vercel.app](https://arancel-mx.vercel.app/) is a projection of one immutable GitHub Release. Cite that release, not “the website today”.
 
-## Recommended citation
+## What identifies the dataset
 
-When you use a result from the hub or from the static API, cite:
+`GET /data/v1/meta.json` is the machine-readable identity. The fields to record are:
 
-1. The exact dataset tag (`data-YYYY.MM.DD`)
-2. The release URL
-3. The SHA-256 of the asset you actually consumed (from `SHA256SUMS`)
+| Field | Use in a citation |
+|---|---|
+| `dataset_tag` | Release name, shaped `data-YYYY.MM.DD` |
+| `dataset_version` | Same calendar version without the `data-` prefix |
+| `schema_version` | Manifest schema. Current public releases use `"2"` |
+| `release_verified` | Must be `true` before the result is cited as a verified release |
+| `package_version` | Python package that exported the files. It does not pin the data |
+
+Example citation:
 
 ```text
 arancel-mx dataset data-2026.11.09
+schema 2, release_verified true
 https://github.com/jccontrerasg08-cpu/arancel-mx/releases/tag/data-2026.11.09
+SHA-256 of the consumed asset, from that release's SHA256SUMS
+code consulted, and the consultation date
 ```
 
-## Copy-citation pattern (manual)
+Fetch the identity before copying a number from the page:
 
-On a record page the hub shows the release badge. A practical workflow is:
+```bash
+curl -fsS "https://arancel-mx.vercel.app/data/v1/meta.json"
+```
 
-1. Note the release tag visible in the header or footer.
-2. Open the corresponding GitHub Release.
-3. Copy the SHA-256 of `arancel_mx.duckdb` (or CSV/JSON) from `SHA256SUMS`.
-4. Record the code you looked up and the date of consultation.
+If `release_verified` is not `true`, do not describe the result as a verified release.
 
-Future hub improvements can add a one-click “Copy citation” button that assembles this string. Until then the pattern above is deterministic and sufficient for audit trails.
+## Manual copy-citation
 
-## Mobile notes
+1. Read `dataset_tag` from `meta.json` or from the release badge in the hub header or footer.
+2. Open `https://github.com/jccontrerasg08-cpu/arancel-mx/releases/tag/<dataset_tag>`.
+3. Copy the SHA-256 line for the asset you used (`arancel_mx.duckdb`, `arancel_mx.csv`, or `arancel_mx.json`) from `SHA256SUMS`.
+4. Record the code and the consultation date next to that tag.
 
-The hub is responsive. On narrow screens the navigation collapses into a menu; the search box and release badge remain accessible. Hierarchy breadcrumbs and the record summary stay readable without horizontal scrolling for typical fraction codes.
+There is no one-click “Copy citation” control yet. The steps above are deterministic. A future control should assemble only these fields and must not invent a SHA-256.
+
+## Mobile
+
+The header collapses into a menu on narrow screens. The release badge and the search box stay reachable. A fraction code and its IGI/IGE summary are meant to be readable without horizontal scrolling. Prefer the static JSON for anything you will archive; the page layout is not the citation.
+
+## What not to cite as the tariff
+
+- A search suggestion. `suggest` is retrieve-only and says so.
+- A VUCEM comparison. `compare` is informational and is not the legal identity.
+- A preferential rate, PROSEC rate, or RRNA that the core dataset does not publish.
