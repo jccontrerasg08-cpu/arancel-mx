@@ -28,6 +28,13 @@ _QUERY_CSV_SCHEMAS: dict[str, CsvSchema] = {
     "compare": "compare",
 }
 
+# Known upstream NICO lag codes (Totoaba fractions from DOF 2025-07-21).
+# Kept in sync with arancel_mx.pipeline.nico_coverage._KNOWN_UPSTREAM_LAG_CODES.
+_KNOWN_NICO_LAG = frozenset({
+    "03028902", "03029904", "03038902", "03039904", "03048901", "03048902",
+})
+_TOTOABA_EVIDENCE = "https://dof.gob.mx/nota_detalle.php?codigo=5763398&fecha=21/07/2025"
+
 
 def _positive_int(value: str) -> int:
     try:
@@ -156,6 +163,14 @@ def register_consumer_commands(
         help="Download and verify all six public release assets temporarily",
     )
     verify.set_defaults(consumer_action="data_verify")
+
+    nico_cov = data_subparsers.add_parser(
+        "nico-coverage",
+        help="Reporta fracciones sin descendientes NICO y lag upstream conocido",
+    )
+    _add_dataset_selection(nico_cov)
+    _add_output_format(nico_cov)
+    nico_cov.set_defaults(consumer_action="data_nico_coverage")
 
     _add_query_command(
         subparsers,
@@ -421,6 +436,48 @@ def _run_data_verify(namespace: argparse.Namespace) -> int:
     return 0
 
 
+
+def _run_data_nico_coverage(namespace: argparse.Namespace) -> int:
+    """Report fractions without published NICO descendants.
+
+    Distinguishes the known upstream lag (Totoaba fractions) from any other gaps.
+    Does not invent or synthesize missing NICO codes.
+    """
+    dataset = _selected_dataset(namespace)
+    with dataset.connect() as con:
+        rows = con.execute("""
+            SELECT f.code
+            FROM arancel_mx f
+            WHERE f.level = 'fraccion8'
+              AND NOT EXISTS (
+                SELECT 1 FROM arancel_mx n
+                WHERE n.level = 'nico10' AND n.fraccion8 = f.code
+              )
+            ORDER BY f.code
+        """).fetchall()
+    missing = [r[0] for r in rows]
+    known = [c for c in missing if c in _KNOWN_NICO_LAG]
+    other = [c for c in missing if c not in _KNOWN_NICO_LAG]
+    report = {
+        "policy": "nico-coverage-v1",
+        "dataset": getattr(dataset.info, "dataset_tag", None) or getattr(dataset.info, "version", None),
+        "counts": {
+            "missing_nico_descendant": len(missing),
+            "known_upstream_lag": len(known),
+            "unclassified_missing": len(other),
+        },
+        "known_upstream_lag": {
+            "evidence_url": _TOTOABA_EVIDENCE,
+            "published_at": "2025-07-21",
+            "codes": known,
+        },
+        "unclassified_missing": other,
+        "note": "Missing NICO descendants reflect the published official NICO source. No synthetic codes are created.",
+    }
+    _emit(report, format_name=namespace.format)
+    return 0
+
+
 def _run_doctor(namespace: argparse.Namespace) -> int:
     result = run_doctor(_consumer_config(namespace))
     if namespace.json:
@@ -485,6 +542,8 @@ def run_consumer(namespace: argparse.Namespace) -> int:
         return _run_data_update(namespace)
     if action == "data_verify":
         return _run_data_verify(namespace)
+    if action == "data_nico_coverage":
+        return _run_data_nico_coverage(namespace)
     if action == "doctor":
         return _run_doctor(namespace)
     if action == "wco_cite":

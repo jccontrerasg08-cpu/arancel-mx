@@ -70,6 +70,17 @@ arancel-mx search "refrigeradores" --format csv
 arancel-mx data status --format json
 arancel-mx data list --format csv
 arancel-mx data verify --format json
+
+### Cobertura NICO
+
+```bash
+arancel-mx data nico-coverage
+arancel-mx data nico-coverage --format json
+arancel-mx data nico-coverage --dataset data-2026.11.09 --offline
+```
+
+Lista las fracciones que no tienen descendientes NICO en el dataset publicado y separa el lag upstream conocido (fracciones Totoaba del DOF del 21 de julio de 2025) de cualquier otro caso. No inventa códigos NICO.
+
 ```
 
 Usa `--format json` para automatización estructurada y `--format csv` para intercambio por filas. `data path` imprime a propósito sólo la ruta del DuckDB local seleccionado, para que los scripts la consuman directamente.
