@@ -23,6 +23,8 @@ La portada del repositorio explica **qué es** `arancel-mx` y cómo empezar. Est
 | Migrar desde la API dinámica `/v1` alojada | [Retiro de `/v1`](operations/v1-sunset.md) | Equivalencias con `/data/v1` y calendario de retiro (2027-01-31). |
 | Explorar rutas, límites y contratos públicos | [Centro de documentación](https://arancel-mx.vercel.app/documentation) | Rutas GET-only, documentación mantenida y límites de integración. |
 | Identificar la release que sirve el hub | [`/data/v1/meta.json`](https://arancel-mx.vercel.app/data/v1/meta.json) | Identidad del dataset servido por la API estática. |
+| Citar un resultado del hub | [Guía de cita](hub-citation-guidance.md) | Tag, `release_verified`, SHA-256 y qué no citar. |
+| Saber por qué el cliente web y Python deben coincidir | [Paridad de la API estática](static-api-parity.md) | Los tres lectores y el test que los ata. |
 | Entender tablas, vigencia y manifest | [Modelo de datos](data-model.md) | Semántica del DuckDB y de una release verificable. |
 
 ## Entender y verificar
@@ -36,6 +38,7 @@ La portada del repositorio explica **qué es** `arancel-mx` y cómo empezar. Est
 | Revisar las fuentes del glosario y la normatividad ANAM | [Mapa de normatividad y glosario ANAM](research/anam-normativity-glossary-source-map.md) | Recursos normativos 2022 y glosario oficial con fechas de consulta. |
 | Ver cada instrumento del DOF que creó o modificó la LIGIE | [Inventario de instrumentos](research/ligie-instrument-inventory.md) | Decretos, acuerdos NICO, fechas y verificación contra la release. |
 | Ubicar la fuente oficial para una categoría de comercio exterior | [Mapa de cobertura de comercio exterior](research/external-trade-coverage-map.md) | Cobertura LIGIE/NICO y referencias oficiales para leyes, RGCE, tratados, RRNA, VUCEM, padrones y programas. |
+| Ver el límite de un arancel preferencial futuro | [Spike de preferencias](research/treaty-preferences-spike.md) | Esquema lateral propuesto. No está implementado y no entra en `igi_text`. |
 | Auditar variables, fórmulas y límites de la mesa | [Plan de fuentes de la mesa](research/trade-assistant-source-plan.md) | Fuentes primarias confirmadas y separación entre datos declarados, resultados orientativos y determinaciones de autoridad. |
 
 ## Mantener y contribuir

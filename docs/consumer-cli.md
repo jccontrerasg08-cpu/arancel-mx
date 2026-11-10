@@ -202,3 +202,26 @@ El contrato de seis assets y las atestaciones del lado de la publicación están
 - [Modelo de datos](data-model.md)
 - [Proceso de release](release-process.md)
 - [Release del paquete de Python](package-release.md)
+
+
+## Richer `ficha` and `compare` examples
+
+```bash
+# Full hierarchical card for a smartphone fraction
+arancel-mx ficha 85171301
+arancel-mx ficha 85171301 --format json
+
+# Compare a fraction against the VUCEM classifier sheet (informational)
+arancel-mx compare 85171301
+arancel-mx compare 85171301 --format json
+
+# Offline compare (skips the third-party fetch)
+arancel-mx compare 85171301 --offline
+
+# Bulk-style recipe: list children then compare each (shell)
+arancel-mx children 8517 --format csv | head
+```
+
+`ficha` reconstructs the path chapter → heading → subheading → fraction/NICO and shows the official `igi_text` / `ige_text` values.  
+`compare` is a verification aid against VUCEM; it is **not** a classifier and does not override the verified GitHub dataset.
+
