@@ -35,6 +35,7 @@ La portada del repositorio explica **qué es** `arancel-mx` y cómo empezar. Est
 | Revisar el mapa especializado del MOA | [Mapa ANAM / MOA](research/anam-moa-source-map.md) | Índice de navegación y procedencia hacia fuentes oficiales ANAM. |
 | Revisar las fuentes del glosario y la normatividad ANAM | [Mapa de normatividad y glosario ANAM](research/anam-normativity-glossary-source-map.md) | Recursos normativos 2022 y glosario oficial con fechas de consulta. |
 | Ver cada instrumento del DOF que creó o modificó la LIGIE | [Inventario de instrumentos](research/ligie-instrument-inventory.md) | Decretos, acuerdos NICO, fechas y verificación contra la release. |
+| Priorizar una posible reforma detectada en DOF Intelligence Lab | [Triage entre proyectos](research/dof-triage-consumer-contract.md) | Señal de investigación sin efectos jurídicos; el watcher SIDOF y el pipeline oficial de arancel-mx siguen independientes. |
 | Ubicar la fuente oficial para una categoría de comercio exterior | [Mapa de cobertura de comercio exterior](research/external-trade-coverage-map.md) | Cobertura LIGIE/NICO y referencias oficiales para leyes, RGCE, tratados, RRNA, VUCEM, padrones y programas. |
 | Auditar variables, fórmulas y límites de la mesa | [Plan de fuentes de la mesa](research/trade-assistant-source-plan.md) | Fuentes primarias confirmadas y separación entre datos declarados, resultados orientativos y determinaciones de autoridad. |
 
