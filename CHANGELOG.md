@@ -6,7 +6,8 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Added
 
-- CLI: `arancel-mx data nico-coverage` reports fractions without published NICO descendants, separating the known upstream lag (Totoaba fractions from DOF 2025-07-21) from any other gaps. No synthetic NICO codes are created.
+- CLI: `arancel-mx data nico-coverage` reports current fractions without published NICO descendants. The known Totoaba lag (DOF 2025-07-21) and any other gaps come from one shared policy in `arancel_mx.domain.nico_lag`, also used by the pipeline. No synthetic NICO codes are created.
+- CLI: `arancel-mx data rate-validity` counts current fractions whose published `rate_effective_from` is present or absent, grouped by `validity_basis`. It does not invent dates.
 
 ### Changed
 

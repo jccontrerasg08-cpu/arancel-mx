@@ -79,9 +79,16 @@ arancel-mx data nico-coverage --format json
 arancel-mx data nico-coverage --dataset data-2026.11.09 --offline
 ```
 
-Lista las fracciones que no tienen descendientes NICO en el dataset publicado y separa el lag upstream conocido (fracciones Totoaba del DOF del 21 de julio de 2025) de cualquier otro caso. No inventa códigos NICO.
+Lista las fracciones **vigentes** (`is_current`) que no tienen descendientes NICO vigentes y separa el lag upstream conocido (fracciones Totoaba del DOF del 21 de julio de 2025) de cualquier otro caso. La lista vive en `arancel_mx.domain.nico_lag` y es la misma que usa el pipeline. No inventa códigos NICO.
 
+### Vigencia de tasa
+
+```bash
+arancel-mx data rate-validity
+arancel-mx data rate-validity --format json
 ```
+
+Cuenta fracciones vigentes con y sin `rate_effective_from`, agrupadas por `validity_basis`. No asigna fechas: sólo resume lo que la release ya publicó.
 
 Usa `--format json` para automatización estructurada y `--format csv` para intercambio por filas. `data path` imprime a propósito sólo la ruta del DuckDB local seleccionado, para que los scripts la consuman directamente.
 
