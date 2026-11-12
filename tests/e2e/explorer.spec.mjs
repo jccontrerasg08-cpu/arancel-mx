@@ -310,6 +310,10 @@ test('lists the other fractions of the heading with their IGI and links to them'
   const siblings = page.getByTestId('sibling-fractions');
   await expect(siblings).toContainText(/otras fracciones de la partida 85\.17/i);
   await expect(siblings.getByRole('link', { name: /8517\.13\.01/ })).toHaveCount(0);
+  const before = await siblings.locator('li').count();
+  await page.getByTestId('sibling-fractions-more').click();
+  expect(await siblings.locator('li').count()).toBeGreaterThan(before);
+  await expect(page.getByTestId('sibling-fractions-more')).toHaveCount(0);
   await siblings.getByRole('link', { name: /8517\.14\.91/ }).click();
   await expect(page).toHaveURL(/\/app\/record\/85171491$/);
 });
