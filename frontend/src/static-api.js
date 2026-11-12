@@ -106,6 +106,15 @@ export function createStaticApi({ base = DEFAULT_DATA_BASE, fetchImpl = globalTh
     };
   };
 
+  // Client-side derived resource (no /v1 counterpart): the other fractions of the same heading, from the cached chapter file.
+  const siblings = async (code, signal) => {
+    const record = await lookup(code, signal);
+    if (record.level !== 'fraccion8') return [];
+    return (await chapterRecords(record.code.slice(0, 2), signal)).filter(
+      (item) => item.level === 'fraccion8' && item.code !== record.code && item.code.startsWith(record.code.slice(0, 4)),
+    );
+  };
+
   const provenance = async (code, signal) => {
     const record = await lookup(code, signal);
     const data = (await json(`provenance/${record.code.slice(0, 2)}.json`, signal)) || { sources: {}, links: {} };
@@ -216,9 +225,10 @@ export function createStaticApi({ base = DEFAULT_DATA_BASE, fetchImpl = globalTh
     if (resource === 'codes' && value && sub === 'parent') return parent(value, signal);
     if (resource === 'codes' && value && sub === 'children') return children(value, signal);
     if (resource === 'codes' && value && sub === 'provenance') return provenance(value, signal);
+    if (resource === 'codes' && value && sub === 'siblings') return siblings(value, signal);
     if (resource === 'repository') return repository(signal);
     throw new StaticApiError(404, `unknown path: ${path}`);
   };
 
-  return { request, lookup, ficha, parent, children, provenance, nationalNotes, search, suggest };
+  return { request, lookup, ficha, parent, children, siblings, provenance, nationalNotes, search, suggest };
 }

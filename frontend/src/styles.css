@@ -376,3 +376,12 @@ h1,h2,h3 { text-wrap:balance; }
 .trade-balance__latest th[scope='row']::first-letter { text-transform:uppercase; }
 @media (max-width:900px) { .site-footer { grid-template-columns:repeat(2,minmax(0,1fr)); }.site-footer__brand { grid-column:1 / -1; } }
 @media (max-width:600px) { .site-footer { grid-template-columns:1fr; }.site-footer__brand { grid-column:auto; } }
+
+/* Fracciones hermanas de la partida: navegación lateral desde la ficha, con su IGI. */
+.sibling-list { display:grid; gap:.35rem; margin:0 0 .6rem; padding:0; list-style:none; }
+.sibling-list a { display:grid; grid-template-columns:7.2rem minmax(0,1fr) auto; align-items:baseline; gap:.2rem .8rem; border:1px solid var(--line); border-radius:.6rem; background:var(--panel); color:var(--ink); padding:.55rem .8rem; text-decoration:none; }
+.sibling-list a:hover { border-color:var(--brand); }
+.sibling-list code { color:var(--brand); font:600 .92rem 'DM Mono',monospace; }
+.sibling-list span { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; overflow:hidden; }
+.sibling-list strong { font:600 .85rem 'DM Mono',monospace; }
+@media (max-width:600px) { .sibling-list a { grid-template-columns:1fr auto; } .sibling-list span { grid-column:1 / -1; grid-row:2; } }

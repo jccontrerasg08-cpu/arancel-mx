@@ -305,6 +305,19 @@ test('shows possible verified paths while a person types without requiring a sub
   await expect(page).toHaveURL(/\/app\/record\/85171301$/);
 });
 
+test('lists the other fractions of the heading with their IGI and links to them', async ({ page }) => {
+  await page.goto('/app/record/85171301');
+  const siblings = page.getByTestId('sibling-fractions');
+  await expect(siblings).toContainText(/otras fracciones de la partida 85\.17/i);
+  await expect(siblings.getByRole('link', { name: /8517\.13\.01/ })).toHaveCount(0);
+  const before = await siblings.locator('li').count();
+  await page.getByTestId('sibling-fractions-more').click();
+  expect(await siblings.locator('li').count()).toBeGreaterThan(before);
+  await expect(page.getByTestId('sibling-fractions-more')).toHaveCount(0);
+  await siblings.getByRole('link', { name: /8517\.14\.91/ }).click();
+  await expect(page).toHaveURL(/\/app\/record\/85171491$/);
+});
+
 test('looks up a complete tariff fraction with evidence and a decision tree', async ({ page }) => {
   await page.goto('/app');
   await page.getByTestId('search-input').fill('8517.13.01');
