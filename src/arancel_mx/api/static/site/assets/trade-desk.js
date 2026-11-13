@@ -22,6 +22,7 @@ const DRAFT_STORAGE_KEY = 'arancel-mx-trade-draft';
 const LOCAL_FORM_FIELD_IDS = Object.freeze([
   'tariff-code', 'incoterm', 'product-value', 'freight-value', 'insurance-value',
   'incrementables-value', 'customs-value', 'igi-rate', 'dta-rate', 'iva-rate', 'ieps-rate',
+  'currency', 'exchange-rate', 'dta-mode', 'dta-fixed', 'ieps-fixed', 'compensatory-quota',
   'tmec-code', 'tmec-origin', 'tmec-vcr', 'tmec-vcr-required', 'tmec-suppliers', 'tmec-bom',
   'tmec-reference-url', 'tmec-reference-consulted-at', 'tmec-reference-note',
   'tmec-rule-reference', 'tmec-vcr-method', 'tmec-certification-reference',
@@ -130,7 +131,7 @@ function renderEstimate(estimate, customsValue) {
     <p class="trade-result__eyebrow">Escenario de contribuciones</p>
     <p class="trade-result__amount">${money.format(estimate.totalContributions)}</p>
     <p class="trade-result__caption">Contribuciones estimadas; costo orientativo total: <strong>${money.format(estimate.landedCost)}</strong></p>
-    <p class="trade-result__caption">Base ${customsValue.method === 'direct_value' ? 'directa declarada' : `por componentes ${customsValue.incoterm}`}: <strong>${money.format(customsValue.customsValueMxn)}</strong></p>
+    <p class="trade-result__caption">Base ${customsValue.method === 'direct_value' ? 'directa declarada' : `por componentes ${customsValue.incoterm}`}: <strong>${money.format(customsValue.customsValueMxn)}</strong>${customsValue.currency === 'USD' ? ` · capturada en USD a ${customsValue.exchangeRate} MXN por USD` : ''}</p>
     <div class="trade-breakdown">${rows}</div>
     <p class="trade-disclaimer">${estimate.disclaimer}</p>
   `;
@@ -138,6 +139,8 @@ function renderEstimate(estimate, customsValue) {
 
 function buildScenario() {
   const customsValue = calculateCustomsValue({
+    currency: value('currency') || 'MXN',
+    exchangeRate: numberValue('exchange-rate'),
     directValueMxn: value('customs-value'),
     incoterm: value('incoterm'),
     productValueMxn: numberValue('product-value'),
@@ -148,11 +151,27 @@ function buildScenario() {
   const estimate = calculateImportEstimate({
     customsValueMxn: customsValue.customsValueMxn,
     igiRatePercent: numberValue('igi-rate'),
+    dtaMode: value('dta-mode') || 'adValorem',
     dtaRatePercent: numberValue('dta-rate'),
+    dtaFixedMxn: numberValue('dta-fixed'),
     iepsRatePercent: numberValue('ieps-rate'),
+    iepsFixedMxn: numberValue('ieps-fixed'),
+    compensatoryQuotaMxn: numberValue('compensatory-quota'),
     ivaRatePercent: numberValue('iva-rate'),
   });
   return Object.freeze({ customsValue, estimate });
+}
+
+// Los importes de valor se capturan en la moneda elegida; el resultado siempre se expresa en MXN.
+const CURRENCY_LABELED_FIELDS = Object.freeze(['customs-value', 'product-value', 'freight-value', 'insurance-value', 'incrementables-value']);
+
+function syncCurrencyLabels() {
+  const currency = value('currency') === 'USD' ? 'USD' : 'MXN';
+  const other = currency === 'USD' ? 'MXN' : 'USD';
+  for (const id of CURRENCY_LABELED_FIELDS) {
+    const label = document.querySelector(`label[for="${id}"]`);
+    if (label) label.textContent = label.textContent.replace(`(${other})`, `(${currency})`);
+  }
 }
 
 function calculateEstimate() {
@@ -560,9 +579,11 @@ function restoreDraft() {
 function initialize() {
   bindTabs();
   restoreDraft();
+  syncCurrencyLabels();
   renderTmecResult();
   renderPedimentoChecklist();
   byId('calculate-import').addEventListener('click', calculateEstimate);
+  byId('currency')?.addEventListener('change', syncCurrencyLabels);
   byId('search-tariff').addEventListener('click', searchTariff);
   byId('classification-query').addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {

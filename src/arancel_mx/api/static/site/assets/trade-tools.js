@@ -97,13 +97,24 @@ function percentOf(base, rate) {
   return roundCurrency((base * rate) / 100);
 }
 
+function currencyConversion(input) {
+  const currency = String(input.currency || 'MXN').toUpperCase();
+  if (currency === 'MXN') return Object.freeze({ currency, exchangeRate: 1, convert: (amount) => amount });
+  if (currency !== 'USD') throw new Error('La moneda debe ser MXN o USD.');
+  const exchangeRate = positiveNumber(input.exchangeRate, 'El tipo de cambio');
+  return Object.freeze({ currency, exchangeRate, convert: (amount) => roundCurrency(amount * exchangeRate) });
+}
+
 export function calculateCustomsValue(input) {
+  const fx = currencyConversion(input);
   const directValue = String(input.directValueMxn ?? '').trim();
   if (directValue) {
     return Object.freeze({
       method: 'direct_value',
       incoterm: null,
-      customsValueMxn: positiveNumber(directValue, 'El valor en aduana directo'),
+      currency: fx.currency,
+      exchangeRate: fx.exchangeRate,
+      customsValueMxn: fx.convert(positiveNumber(directValue, 'El valor en aduana directo')),
       components: Object.freeze([]),
       disclaimer:
         'Base directa declarada. Confirma su integración y sustento documental para la operación concreta.',
@@ -117,14 +128,16 @@ export function calculateCustomsValue(input) {
     throw new Error('El Incoterm debe seleccionarse de la lista disponible.');
   }
 
-  const productValue = positiveNumber(input.productValueMxn, 'El precio de la mercancía');
-  const freight = numberOrZero(input.freightMxn, 'El flete declarado');
-  const insurance = numberOrZero(input.insuranceMxn, 'El seguro declarado');
-  const incrementables = numberOrZero(input.incrementablesMxn, 'Los incrementables declarados');
+  const productValue = fx.convert(positiveNumber(input.productValueMxn, 'El precio de la mercancía'));
+  const freight = fx.convert(numberOrZero(input.freightMxn, 'El flete declarado'));
+  const insurance = fx.convert(numberOrZero(input.insuranceMxn, 'El seguro declarado'));
+  const incrementables = fx.convert(numberOrZero(input.incrementablesMxn, 'Los incrementables declarados'));
 
   return Object.freeze({
     method: 'declared_components',
     incoterm,
+    currency: fx.currency,
+    exchangeRate: fx.exchangeRate,
     customsValueMxn: roundCurrency(productValue + freight + insurance + incrementables),
     components: Object.freeze([
       Object.freeze({ key: 'product', label: 'Precio de mercancía declarado', amount: productValue }),
@@ -141,26 +154,39 @@ export function calculateCustomsValue(input) {
 export function calculateImportEstimate(input) {
   const customsValue = positiveNumber(input.customsValueMxn, 'El valor en aduana');
   const igiRate = numberOrZero(input.igiRatePercent, 'La tasa IGI');
-  const dtaRate = numberOrZero(input.dtaRatePercent, 'La tasa DTA');
   const iepsRate = numberOrZero(input.iepsRatePercent, 'La tasa IEPS');
   const ivaRate = numberOrZero(input.ivaRatePercent ?? 16, 'La tasa IVA');
+  const dtaMode = input.dtaMode === 'fixed' ? 'fixed' : 'adValorem';
+  const iepsFixed = numberOrZero(input.iepsFixedMxn, 'El IEPS de cuota fija');
+  const compensatoryQuota = numberOrZero(input.compensatoryQuotaMxn, 'La cuota compensatoria');
 
   const igi = percentOf(customsValue, igiRate);
-  const dta = percentOf(customsValue, dtaRate);
-  const ieps = percentOf(customsValue, iepsRate);
-  const ivaBase = roundCurrency(customsValue + igi + dta + ieps);
+  const dta =
+    dtaMode === 'fixed'
+      ? roundCurrency(numberOrZero(input.dtaFixedMxn, 'El DTA de cuota fija'))
+      : percentOf(customsValue, numberOrZero(input.dtaRatePercent, 'La tasa DTA'));
+  const ieps = roundCurrency(percentOf(customsValue, iepsRate) + iepsFixed);
+  const ivaBase = roundCurrency(customsValue + igi + dta + ieps + compensatoryQuota);
   const iva = percentOf(ivaBase, ivaRate);
-  const totalContributions = roundCurrency(igi + dta + ieps + iva);
+  const totalContributions = roundCurrency(igi + dta + ieps + compensatoryQuota + iva);
+
+  const items = [
+    Object.freeze({ key: 'customs_value', label: 'Valor en aduana declarado', amount: customsValue }),
+    Object.freeze({ key: 'igi', label: 'IGI estimado', amount: igi }),
+    Object.freeze({ key: 'dta', label: 'DTA estimado', amount: dta }),
+    Object.freeze({ key: 'ieps', label: 'IEPS estimado', amount: ieps }),
+  ];
+  // La cuota compensatoria sólo se enumera cuando se declara: no altera el desglose de quien no la usa.
+  if (compensatoryQuota > 0) {
+    items.push(
+      Object.freeze({ key: 'compensatory_quota', label: 'Cuota compensatoria declarada', amount: compensatoryQuota }),
+    );
+  }
+  items.push(Object.freeze({ key: 'iva', label: 'IVA de importación estimado', amount: iva }));
 
   return Object.freeze({
     status: 'orientation_only',
-    items: Object.freeze([
-      Object.freeze({ key: 'customs_value', label: 'Valor en aduana declarado', amount: customsValue }),
-      Object.freeze({ key: 'igi', label: 'IGI estimado', amount: igi }),
-      Object.freeze({ key: 'dta', label: 'DTA estimado', amount: dta }),
-      Object.freeze({ key: 'ieps', label: 'IEPS estimado', amount: ieps }),
-      Object.freeze({ key: 'iva', label: 'IVA de importación estimado', amount: iva }),
-    ]),
+    items: Object.freeze(items),
     ivaBase,
     totalContributions,
     landedCost: roundCurrency(customsValue + totalContributions),
