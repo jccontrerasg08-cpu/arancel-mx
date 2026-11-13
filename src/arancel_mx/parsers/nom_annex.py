@@ -319,8 +319,10 @@ class _Reader:
         for item in _reading_order(band, self.rules):
             if _MARGIN_NOTE.match(item.text):
                 continue
-            if self.draft is None and self.numeral == 5:
-                # Numeral 5 (emergency NOM) has an empty table today, followed by explanatory paragraphs.
+            starts_row = item.column == _FRACTION_COL and bool(_FRACTION.match(item.text))
+            if self.draft is None and self.numeral == 5 and not starts_row:
+                # Numeral 5 (emergency NOM) has an empty table today, followed by explanatory paragraphs;
+                # a real fraction row there is parsed like any other, never dropped as prose.
                 self.free_text.append((number, item.text))
                 continue
             if item.column == _FRACTION_COL:

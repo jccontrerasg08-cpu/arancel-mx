@@ -149,3 +149,10 @@ def test_fraction_row_without_any_nom_fails() -> None:
     page.line(91, 120, "0101.21.01").line(161, 120, "Caballos")
     with pytest.raises(AnnexParseError, match="no NOM code"):
         parse_annex([page.page()])
+
+
+def test_numeral_five_fraction_row_is_parsed_not_dropped() -> None:
+    page = Page().line(91, 20, "5.-").header()
+    page.line(91, 120, "2710.12.99").line(161, 120, "Gasolinas").line(380, 120, "NOM-EM-001-CRE-2026")
+    (record,) = parse_annex([page.page()]).records
+    assert (record.numeral, [r.nom for r in record.requirements]) == (5, ["NOM-EM-001-CRE-2026"])
