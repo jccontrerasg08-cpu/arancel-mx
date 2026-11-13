@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
-import { chaptersOf, dofEditionUrl, formatDate, instrumentCodes, loadDofChanges, operationLabel, rateLabel, SECTION_LABELS } from './dof-changes.js';
+import { chapterSummary, chaptersOf, dofEditionUrl, formatDate, instrumentCodes, loadDofChanges, operationLabel, rateLabel, SECTION_LABELS } from './dof-changes.js';
 import { useLocale } from './locale.jsx';
 import { formatCode } from './verified-examples.js';
 
@@ -20,11 +20,13 @@ export default function DofChangeDetail() {
   const [state, setState] = useState({ kind: 'loading' });
   const [filter, setFilter] = useState('');
   const [limit, setLimit] = useState(PAGE_SIZE);
+  const [allChapters, setAllChapters] = useState(false);
   useEffect(() => {
     let active = true;
     setState({ kind: 'loading' });
     setFilter('');
     setLimit(PAGE_SIZE);
+    setAllChapters(false);
     loadDofChanges().then((data) => { if (active) setState({ kind: 'ready', data }); }).catch(() => { if (active) setState({ kind: 'error' }); });
     return () => { active = false; };
   }, [id]);
@@ -36,6 +38,7 @@ export default function DofChangeDetail() {
   }, [item, language]);
   const digits = filter.replace(/\D/g, '');
   const rows = useMemo(() => (item?.rate_rows || []).filter((row) => !digits || row[0].startsWith(digits)), [item, digits]);
+  const summary = useMemo(() => (item?.rate_rows ? chapterSummary(item) : []), [item]);
   const codes = useMemo(() => instrumentCodes(item || {}).filter((code) => !digits || code.startsWith(digits)), [item, digits]);
 
   if (state.kind === 'loading') return <p className="status" role="status">{t('Cargando la publicación…', 'Loading the publication…')}</p>;
@@ -61,6 +64,13 @@ export default function DofChangeDetail() {
     </dl>
 
     <p className="dof-actions"><External href={dofEditionUrl(item.dof_date)}>{t('Ver en el DOF', 'See in the DOF')}</External><External href={item.pdf}>{t('Documento de la publicación (PDF)', 'Publication document (PDF)')}</External></p>
+
+    {summary.length > 1 && <section className="data-section" aria-labelledby="chapters-title" data-testid="dof-chapter-summary">
+      <h2 id="chapters-title">{t('Capítulos que toca, del mayor al menor', 'Chapters it touches, largest first')}</h2>
+      <p className="field-hint">{t('Cuántas fracciones de cada capítulo fija esta publicación y con qué tasas de IGI. Resume el instrumento; no lo compara con la tasa anterior.', 'How many fractions of each chapter this publication sets and with which IGI rates. It summarizes the instrument; it does not compare with the earlier rate.')}</p>
+      <div className="data-table-wrap"><table className="data-table"><caption>{t(`${summary.length} capítulos`, `${summary.length} chapters`)}</caption><thead><tr><th scope="col">{t('Capítulo', 'Chapter')}</th><th scope="col" className="is-numeric">{t('Fracciones', 'Fractions')}</th><th scope="col">{t('Tasas de IGI (fracciones)', 'IGI rates (fractions)')}</th><th scope="col">{t('Detalle', 'Detail')}</th></tr></thead><tbody>{summary.slice(0, allChapters ? summary.length : 10).map((entry) => <tr key={entry.chapter}><th scope="row"><Link to={`/app/record/${entry.chapter}`}>{t('Capítulo', 'Chapter')} {entry.chapter}</Link></th><td className="is-numeric">{entry.count.toLocaleString(language === 'en' ? 'en-US' : 'es-MX')}</td><td>{entry.rates.slice(0, 3).map(([label, count]) => `${label} × ${count}`).join(' · ')}{entry.rates.length > 3 ? ` · +${entry.rates.length - 3}` : ''}</td><td><button className="text-button" type="button" aria-label={t(`Ver fracciones del capítulo ${entry.chapter}`, `See fractions of chapter ${entry.chapter}`)} onClick={() => { setFilter(entry.chapter); setLimit(PAGE_SIZE); document.getElementById('rows-title')?.scrollIntoView({ block: 'start' }); }}><span className="label-wide">{t('Ver fracciones', 'See fractions')}</span><span className="label-narrow" aria-hidden="true">{t('Ver', 'See')}</span></button></td></tr>)}</tbody></table></div>
+      {summary.length > 10 && !allChapters && <p><button className="button" type="button" data-testid="dof-chapter-summary-more" onClick={() => setAllChapters(true)}>{t(`Mostrar los ${summary.length - 10} capítulos restantes`, `Show the remaining ${summary.length - 10} chapters`)}</button></p>}
+    </section>}
 
     {item.rate_rows && <section className="data-section" aria-labelledby="rows-title">
       <h2 id="rows-title">{t('Fracciones y tasas que fija esta publicación', 'Fractions and rates this publication sets')}</h2>
