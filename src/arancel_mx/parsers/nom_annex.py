@@ -127,6 +127,8 @@ class AnnexRecord:
     requirements: tuple[NomRequirement, ...]
     nico: tuple[NicoLine, ...]
     page: int
+    # NOM that a numeral 3 heading names only as cancelled ("cancela a la NOM-…"); never a requirement.
+    superseded_noms: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -364,9 +366,17 @@ class _Reader:
 def _finish(draft: _Draft) -> AnnexRecord:
     text = _join(draft.nom_lines)
     requirements: list[NomRequirement] = []
+    superseded: tuple[str, ...] = ()
     if draft.numeral == 3:
         heading = draft.section_title or ""
-        noms = list(dict.fromkeys(_NOM_CODE.findall(heading)))
+        cancelled_at = re.search(r"\bcancela", heading)
+        operative = heading[: cancelled_at.start()] if cancelled_at else heading
+        noms = list(dict.fromkeys(_NOM_CODE.findall(operative)))
+        superseded = tuple(
+            code
+            for code in dict.fromkeys(_NOM_CODE.findall(heading[len(operative) :]))
+            if code not in noms
+        )
         if not noms:
             raise AnnexParseError(
                 f"no NOM named in the heading of the section of {draft.fraction}"
@@ -374,7 +384,7 @@ def _finish(draft: _Draft) -> AnnexRecord:
         requirements = [NomRequirement(nom, text or None) for nom in noms]
     else:
         starts = [match.start() for match in re.finditer(r"NOM-", text)]
-        if text and not starts:
+        if not starts:
             raise AnnexParseError(
                 f"no NOM code for {draft.fraction} on page {draft.page}: {text[:60]!r}"
             )
@@ -398,6 +408,7 @@ def _finish(draft: _Draft) -> AnnexRecord:
         requirements=tuple(requirements),
         nico=tuple(NicoLine(nico, _join(lines)) for nico, lines in draft.nico),
         page=draft.page,
+        superseded_noms=superseded,
     )
 
 

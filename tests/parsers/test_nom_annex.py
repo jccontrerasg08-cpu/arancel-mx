@@ -78,10 +78,8 @@ def test_numeral_three_takes_the_nom_from_the_section_heading() -> None:
     result = parse_annex([page.page()])
     (record,) = result.records
     assert record.section == "I"
-    assert [r.nom for r in record.requirements] == [
-        "NOM-004-SE-2021",
-        "NOM-004-SCFI-2006",
-    ]
+    assert [r.nom for r in record.requirements] == ["NOM-004-SE-2021"]
+    assert record.superseded_noms == ("NOM-004-SCFI-2006",)
 
 
 def test_wrapped_nom_code_is_joined() -> None:
@@ -144,3 +142,10 @@ def test_empty_numeral_five_keeps_its_text_apart() -> None:
     result = parse_annex([page.page()])
     assert result.records == ()
     assert any("Sin fracciones" in text for _, text in result.free_text)
+
+
+def test_fraction_row_without_any_nom_fails() -> None:
+    page = Page().line(91, 20, "1.-").header()
+    page.line(91, 120, "0101.21.01").line(161, 120, "Caballos")
+    with pytest.raises(AnnexParseError, match="no NOM code"):
+        parse_annex([page.page()])
