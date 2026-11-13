@@ -275,3 +275,70 @@ test('keeps the RRNA checklist incomplete without a declared specific official r
   assert.equal(checklist.status, 'incomplete');
   assert.ok(checklist.missing.includes('Referencia oficial específica de RRNA revisada'));
 });
+
+// Paridad con la antigua calculadora-aranceles-mx: mismos vectores numéricos, ahora en el Trade Desk.
+test('converts USD components at a declared exchange rate before building the customs value', () => {
+  const customsValue = calculateCustomsValue({
+    currency: 'USD',
+    exchangeRate: 20,
+    incoterm: 'CIF',
+    productValueMxn: 10_000,
+    incrementablesMxn: 1_000,
+  });
+
+  assert.equal(customsValue.customsValueMxn, 220_000);
+  assert.equal(customsValue.currency, 'USD');
+  assert.equal(customsValue.exchangeRate, 20);
+});
+
+test('reproduces the ad-valorem cascade with IVA over the full base from a USD capture', () => {
+  const customsValue = calculateCustomsValue({
+    currency: 'USD',
+    exchangeRate: 20,
+    productValueMxn: 10_000,
+    incrementablesMxn: 1_000,
+  });
+  const estimate = calculateImportEstimate({
+    customsValueMxn: customsValue.customsValueMxn,
+    igiRatePercent: 10,
+    dtaRatePercent: 0.8,
+    ivaRatePercent: 16,
+  });
+
+  assert.equal(estimate.items.find((item) => item.key === 'igi').amount, 22_000);
+  assert.equal(estimate.items.find((item) => item.key === 'dta').amount, 1_760);
+  assert.equal(estimate.ivaBase, 243_760);
+  assert.equal(estimate.items.find((item) => item.key === 'iva').amount, 39_001.6);
+  assert.equal(estimate.totalContributions, 62_761.6);
+});
+
+test('includes a fixed DTA, a fixed IEPS and a compensatory quota in the IVA base', () => {
+  const estimate = calculateImportEstimate({
+    customsValueMxn: 1_000,
+    igiRatePercent: 10,
+    dtaMode: 'fixed',
+    dtaFixedMxn: 10,
+    dtaRatePercent: 5,
+    iepsFixedMxn: 20,
+    compensatoryQuotaMxn: 30,
+    ivaRatePercent: 16,
+  });
+
+  assert.equal(estimate.items.find((item) => item.key === 'dta').amount, 10, 'fixed mode ignores the DTA rate');
+  assert.equal(estimate.items.find((item) => item.key === 'compensatory_quota').amount, 30);
+  assert.equal(estimate.ivaBase, 1_160);
+  assert.equal(estimate.items.find((item) => item.key === 'iva').amount, 185.6);
+  assert.equal(estimate.totalContributions, 345.6);
+});
+
+test('keeps the itemization unchanged when no compensatory quota is declared', () => {
+  const estimate = calculateImportEstimate({ customsValueMxn: 1_000, igiRatePercent: 10 });
+  assert.equal(estimate.items.some((item) => item.key === 'compensatory_quota'), false);
+});
+
+test('rejects invalid currency, missing exchange rate and negative additional amounts', () => {
+  assert.throws(() => calculateCustomsValue({ currency: 'EUR', productValueMxn: 1 }), /MXN o USD/);
+  assert.throws(() => calculateCustomsValue({ currency: 'USD', productValueMxn: 1 }), /tipo de cambio/i);
+  assert.throws(() => calculateImportEstimate({ customsValueMxn: 100, compensatoryQuotaMxn: -1 }), /cuota compensatoria/i);
+  assert.throws(() => calculateImportEstimate({ customsValueMxn: 100, dtaMode: 'fixed', dtaFixedMxn: -5 }), /DTA/);
+});
