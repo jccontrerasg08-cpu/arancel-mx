@@ -385,3 +385,10 @@ h1,h2,h3 { text-wrap:balance; }
 .sibling-list span { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; overflow:hidden; }
 .sibling-list strong { font:600 .85rem 'DM Mono',monospace; }
 @media (max-width:600px) { .sibling-list a { grid-template-columns:1fr auto; } .sibling-list span { grid-column:1 / -1; grid-row:2; } }
+
+/* Una tabla más ancha que la pantalla no debe ensanchar la página: las secciones de la ficha de una publicación
+   son elementos de una cuadrícula y su ancho mínimo automático tomaba el de la tabla. */
+.dof-detail>.data-section { min-width:0; }
+.dof-detail .label-narrow { display:none; }
+@media (max-width:600px) { .dof-detail .label-wide { display:none; } .dof-detail .label-narrow { display:inline; } }
+@media (max-width:600px) { .dof-detail .data-table th, .dof-detail .data-table td { padding-inline:.45rem; } }

@@ -305,6 +305,20 @@ test('shows possible verified paths while a person types without requiring a sub
   await expect(page).toHaveURL(/\/app\/record\/85171301$/);
 });
 
+test('summarizes a publication by chapter and narrows the fraction table from it', async ({ page }) => {
+  await page.goto('/changes/ref02');
+  const summary = page.getByTestId('dof-chapter-summary');
+  await expect(summary).toBeVisible();
+  const first = summary.locator('tbody tr').first();
+  await expect(first).toContainText('Capítulo 72');
+  await expect(first).toContainText('35% × 126');
+  await first.getByRole('button', { name: /ver fracciones/i }).click();
+  await expect(page.locator('#rows-filter')).toHaveValue('72');
+  await expect(page.getByTestId('dof-chapter-summary-more')).toBeVisible();
+  await page.getByTestId('dof-chapter-summary-more').click();
+  expect(await summary.locator('tbody tr').count()).toBeGreaterThan(10);
+});
+
 test('lists the other fractions of the heading with their IGI and links to them', async ({ page }) => {
   await page.goto('/app/record/85171301');
   const siblings = page.getByTestId('sibling-fractions');
@@ -595,8 +609,9 @@ test('opens a publication with its fractions, the DOF link and the original docu
   await page.getByRole('link', { name: /modifica la tarifa de la ligie y el decreto prosec/i }).first().click();
   await expect(page).toHaveURL(/\/changes\/tarifa15$/);
   const detail = page.getByTestId('dof-detail');
-  await expect(detail.getByRole('table')).toBeVisible();
-  expect(await detail.locator('tbody tr').count()).toBeGreaterThan(50);
+  const fractions = detail.getByRole('table', { name: /fracciones/i });
+  await expect(fractions).toBeVisible();
+  expect(await fractions.locator('tbody tr').count()).toBeGreaterThan(50);
   await expect(detail.getByRole('link', { name: /ver en el dof/i })).toHaveAttribute('href', /year=2026&month=04&day=23/);
   await expect(detail.getByRole('link', { name: /documento de la publicación/i })).toHaveAttribute('href', /LIGIE_2022_tarifa15_23abr26\.pdf$/);
 });
