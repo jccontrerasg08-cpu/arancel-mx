@@ -46,6 +46,7 @@ SOURCE_AUTHORITY = {
     "nico": ("Secretaría de Economía / SNICE", "SNICE"),
     "diputados_ligie": ("Cámara de Diputados", "Cámara de Diputados"),
     "national_notes": ("Secretaría de Economía / SHCP", "Diario Oficial de la Federación"),
+    "nom_annex": ("Secretaría de Economía", "Diario Oficial de la Federación"),
 }
 LEGAL_EVIDENCE_HOSTS = (
     "dof.gob.mx",
@@ -365,7 +366,7 @@ def capture_official_inputs(
         "national_notes",
     )
 
-    discovery_registry = {key: registry[key] for key in ("ligie", "nico")}
+    discovery_registry = {key: registry[key] for key in ("ligie", "nico", "nom_annex")}
     discovered = discover_registered_sources(
         discovery_registry,
         client,
@@ -373,6 +374,7 @@ def capture_official_inputs(
     )
     ligie_document = select_current_document(discovered, "ligie", "ligie_snapshot")
     nico_document = select_current_document(discovered, "nico", "nico_snapshot")
+    nom_annex_document = select_current_document(discovered, "nom_annex", "nom_annex_rules")
 
     sources = (
         _capture_source(
@@ -394,6 +396,17 @@ def capture_official_inputs(
             entry=registry["nico"],
             discovery_url=nico_document.discovery_url,
             discovery_kind=nico_document.discovery_kind,
+            config=config,
+            session=client,
+        ),
+        _capture_source(
+            dataset_key="nom_annex",
+            document_role="nom_annex_rules",
+            title=nom_annex_document.title or _filename(nom_annex_document.source_url),
+            url=nom_annex_document.source_url,
+            entry=registry["nom_annex"],
+            discovery_url=nom_annex_document.discovery_url,
+            discovery_kind=nom_annex_document.discovery_kind,
             config=config,
             session=client,
         ),
@@ -462,6 +475,8 @@ def write_release_sources(
             return "ligie-consolidated.pdf"
         if key == ("national_notes", "national_notes"):
             return "national-notes.html"
+        if key == ("nom_annex", "nom_annex_rules"):
+            return "nom-annex.pdf"
         if key == ("dof_law_reform", "law_reform"):
             return f"dof-law-reform{suffix}"
         if key == ("dof_tariff_decree", "tariff_decree"):

@@ -16,6 +16,7 @@ from arancel_mx.pipeline.official_dataset import (
     build_official_dataset,
 )
 from arancel_mx.sources.legal_evidence import RequiredDofEvidence
+from tests.pipeline.annex_fixture import ANNEX_URL, annex_pdf_bytes
 
 
 DIPUTADOS_LEDGER = (
@@ -146,7 +147,8 @@ class FakeSession:
 def fake_session():
     ligie_html = f'<a href="{LIGIE_URL}">Fracciones 20260810</a>'
     nico_html = f'<a href="{NICO_URL}">NICO 20260810</a>'
-    corpus_html = ligie_html + nico_html
+    annex_html = f'<a href="{ANNEX_URL}">Acuerdo reglas 20260520</a>'
+    corpus_html = ligie_html + nico_html + annex_html
     ligie_bytes, nico_bytes, pdf_bytes = fixture_bytes()
     responses = {
         DIPUTADOS_URL: Response(
@@ -176,6 +178,7 @@ def fake_session():
         ),
         LIGIE_URL: Response(LIGIE_URL, ligie_bytes, XLSX_TYPE),
         NICO_URL: Response(NICO_URL, nico_bytes, XLSX_TYPE),
+        ANNEX_URL: Response(ANNEX_URL, annex_pdf_bytes(), "application/pdf"),
         NOTES_URL: Response(
             NOTES_URL, NOTES_HTML.encode("utf-8"), "text/html; charset=utf-8", NOTES_HTML
         ),
@@ -209,7 +212,7 @@ def test_offline_build_produces_verified_release(tmp_path):
 
     assert summary["validation_status"] == "passed"
     assert summary["row_count"] == 5
-    assert summary["source_count"] == 7
+    assert summary["source_count"] == 8
     assert sorted(path.name for path in build_config.output_dir.iterdir()) == [
         "SHA256SUMS",
         "arancel_mx.csv",
@@ -228,6 +231,7 @@ def test_offline_build_produces_verified_release(tmp_path):
         SNICE_DOCS_INDEX,
         LIGIE_URL,
         NICO_URL,
+        ANNEX_URL,
         NOTES_URL,
     }
 
@@ -272,7 +276,7 @@ def test_offline_build_produces_verified_release(tmp_path):
         (build_config.output_dir / "manifest.json").read_text(encoding="utf-8")
     )
     assert manifest["validation_status"] == "passed"
-    assert len(manifest["source_documents"]) == 7
+    assert len(manifest["source_documents"]) == 8
     assert {
         (
             identity["dataset_key"],
@@ -287,6 +291,7 @@ def test_offline_build_produces_verified_release(tmp_path):
         ("dof_law_reform", "law_reform"),
         ("dof_tariff_decree", "tariff_decree"),
         ("national_notes", "national_notes"),
+        ("nom_annex", "nom_annex_rules"),
     }
     coverage = manifest["nico_coverage"]
     assert coverage["counts"] == {
@@ -457,8 +462,24 @@ def test_schema_v2_manifest_replay_returns_no_change_without_candidate(tmp_path)
         "schema_version": "2",
         "row_count": 5,
         "validation_status": "passed",
-        "source_count": 7,
+        "source_count": 8,
         "output_dir": None,
     }
     assert not second.output_dir.exists()
     assert not (second.work_dir / "candidate" / "arancel_mx.duckdb").exists()
+
+
+def test_offline_build_stores_nom_requirements_from_the_annex(tmp_path):
+    build_config = config(tmp_path, "annex")
+
+    build_official_dataset(build_config, session=fake_session())
+
+    with duckdb.connect(
+        str(build_config.output_dir / "arancel_mx.duckdb"), read_only=True
+    ) as connection:
+        rows = connection.execute(
+            "SELECT fraction8, numeral, numeral_meaning, nom, annex_page"
+            " FROM arancel_mx_nom_requirements"
+        ).fetchall()
+
+    assert rows == [("01012101", 1, "import_noms", "NOM-EM-004-SAG/ZOO-2020", 2)]

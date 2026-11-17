@@ -13,6 +13,12 @@ from arancel_mx.parsers.documents import (
     parse_ligie_pdf_hierarchy,
     parse_national_notes_html,
 )
+from arancel_mx.parsers.nom_annex import (
+    locate_annex_pages,
+    parse_annex,
+    read_annex_pages,
+    requirement_rows,
+)
 from arancel_mx.parsers.profiles import resolve_workbook_profile
 from arancel_mx.parsers.workbooks import (
     parse_ligie_workbook,
@@ -376,6 +382,16 @@ def build_official_dataset(
     classifications = assemble_classifications(hs_rows, fraction_rows, nico_rows)
     description_corrections = apply_description_corrections(classifications)
 
+    annex_source = _required_source(snapshot, "nom_annex", "nom_annex_rules")
+    first_page, last_page = locate_annex_pages(annex_source.capture.path)
+    nom_requirements = requirement_rows(
+        parse_annex(
+            read_annex_pages(annex_source.capture.path, first_page, last_page),
+            first_page=first_page,
+        ),
+        source_document_id=str(annex_source.source_document["source_document_id"]),
+    )
+
     source_documents = sorted(
         (item.source_document for item in snapshot.sources),
         key=lambda row: str(row["source_document_id"]),
@@ -406,6 +422,7 @@ def build_official_dataset(
             rate_rows,
             release,
             national_notes=national_notes,
+            nom_requirements=nom_requirements,
         )
         level_counts = dict(
             connection.execute(

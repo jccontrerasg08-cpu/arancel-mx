@@ -467,3 +467,28 @@ def requirement_rows(parse: AnnexParse, *, source_document_id: str) -> list[dict
         for record in parse.records
         for requirement in record.requirements
     ]
+
+_ANNEX_START = "ANEXO 2.4.1"
+_ANNEX_HEADING = re.compile(r"^ANEXO \d+\.\d+\.\d+$")
+
+
+def locate_annex_pages(pdf_path: Path) -> tuple[int, int]:
+    """First and last page (1-based) of Annex 2.4.1: from its heading to the page before the next annex."""
+    import pymupdf
+
+    first: int | None = None
+    with pymupdf.open(pdf_path) as document:
+        for number in range(1, len(document) + 1):
+            headings = [
+                line.strip()
+                for line in document[number - 1].get_text().splitlines()
+                if _ANNEX_HEADING.match(line.strip())
+            ]
+            if first is None:
+                if _ANNEX_START in headings:
+                    first = number
+            elif headings:
+                return first, number - 1
+    if first is None:
+        raise AnnexParseError("Annex 2.4.1 heading not found in the document")
+    raise AnnexParseError("the annex after 2.4.1 was not found, so its last page is unknown")
