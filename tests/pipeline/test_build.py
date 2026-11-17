@@ -416,3 +416,98 @@ def test_materialize_rejects_multiple_current_rows_for_the_same_code(tmp_path):
     with connect(path) as connection:
         with pytest.raises(ValueError, match="duplicate_current_records"):
             materialize_arancel(connection, [source], classifications, rates, release)
+
+
+def _nom_row(**overrides):
+    row = {
+        "fraction8": "01012101",
+        "numeral": 1,
+        "numeral_meaning": "import_noms",
+        "section": None,
+        "nom": "NOM-EM-004-SAG/ZOO-2020",
+        "scope": "Únicamente: para cría",
+        "nico": [{"nico": "00", "description": "Para reproducción"}],
+        "annex_page": 481,
+        "source_document_id": "doc-1",
+    }
+    row.update(overrides)
+    return row
+
+
+def test_build_materializes_nom_requirements_into_the_public_view(tmp_path):
+    path = init_tariff_db(tmp_path / "arancel.duckdb")
+    source, classification, release = note_build_inputs("01")
+
+    with connect(path) as connection:
+        materialize_arancel(
+            connection,
+            [source],
+            [classification],
+            [],
+            release,
+            nom_requirements=[
+                _nom_row(),
+                _nom_row(numeral=3, section="I", nom="NOM-050-SCFI-2004", scope=None),
+            ],
+        )
+        rows = connection.execute(
+            "SELECT fraction8, numeral, section, nom, scope FROM arancel_mx_nom_requirements"
+            " ORDER BY numeral"
+        ).fetchall()
+
+    assert rows == [
+        ("01012101", 1, None, "NOM-EM-004-SAG/ZOO-2020", "Únicamente: para cría"),
+        ("01012101", 3, "I", "NOM-050-SCFI-2004", None),
+    ]
+
+
+def test_build_clears_nom_requirements_when_next_materialization_has_none(tmp_path):
+    path = init_tariff_db(tmp_path / "arancel.duckdb")
+    source, classification, release = note_build_inputs("01")
+
+    with connect(path) as connection:
+        materialize_arancel(
+            connection, [source], [classification], [], release, nom_requirements=[_nom_row()]
+        )
+        materialize_arancel(connection, [source], [classification], [], release)
+        leftover = connection.execute(
+            "SELECT COUNT(*) FROM arancel_mx_nom_requirements"
+        ).fetchone()[0]
+
+    assert leftover == 0
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        {"fraction8": "0101"},
+        {"nom": ""},
+        {"numeral": 6},
+        {"source_document_id": "unknown-doc"},
+    ],
+)
+def test_build_rejects_malformed_nom_requirements(tmp_path, bad):
+    path = init_tariff_db(tmp_path / "arancel.duckdb")
+    source, classification, release = note_build_inputs("01")
+
+    with connect(path) as connection:
+        with pytest.raises(ValueError):
+            materialize_arancel(
+                connection, [source], [classification], [], release, nom_requirements=[_nom_row(**bad)]
+            )
+
+
+def test_build_rejects_duplicate_nom_requirements(tmp_path):
+    path = init_tariff_db(tmp_path / "arancel.duckdb")
+    source, classification, release = note_build_inputs("01")
+
+    with connect(path) as connection:
+        with pytest.raises(ValueError, match="duplicate"):
+            materialize_arancel(
+                connection,
+                [source],
+                [classification],
+                [],
+                release,
+                nom_requirements=[_nom_row(), _nom_row()],
+            )

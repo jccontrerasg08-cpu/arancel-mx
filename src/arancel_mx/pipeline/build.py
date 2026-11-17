@@ -37,6 +37,7 @@ PUBLIC_INTERNAL_TABLES = (
     "national_note_version",
     "national_note_amendment",
     "national_note_applicability",
+    "nom_requirement",
     "indicator_methodology",
     "weighted_tariff_indicator",
 )
@@ -110,6 +111,7 @@ def _validate_inputs(
     rates: Sequence[Mapping[str, object]],
     release: Mapping[str, object],
     national_notes: Sequence[Mapping[str, object]] = (),
+    nom_requirements: Sequence[Mapping[str, object]] = (),
 ) -> tuple[dict[str, Mapping[str, object]], dict[str, object]]:
     for field in (
         "dataset_version",
@@ -140,7 +142,7 @@ def _validate_inputs(
             _required(document.get(field), f"source_document.{field}")
         by_id[source_id] = document
 
-    for row in [*classifications, *rates, *national_notes]:
+    for row in [*classifications, *rates, *national_notes, *nom_requirements]:
         source_id = str(_required(row.get("source_document_id"), "row.source_document_id"))
         if source_id not in by_id:
             raise ValueError(f"Unknown source document: {source_id}")
@@ -283,6 +285,69 @@ def _insert_rates(
     )
 
 
+def _nico_lines(value: object) -> list[object]:
+    if value is None:
+        return []
+    if not isinstance(value, (list, tuple)):
+        raise ValueError("nom requirement nico must be a list")
+    return list(value)
+
+
+def _page_number(value: object) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+        raise ValueError("nom requirement annex_page must be a positive integer")
+    return value
+
+
+def _insert_nom_requirements(
+    conn: duckdb.DuckDBPyConnection,
+    rows: Sequence[Mapping[str, object]],
+) -> None:
+    """Store which fractions the SE annex 2.4.1 lists under which NOM, one row per NOM and fraction."""
+    seen: set[str] = set()
+    for row in rows:
+        fraction8 = str(row.get("fraction8") or "")
+        nom = str(row.get("nom") or "").strip()
+        meaning = str(row.get("numeral_meaning") or "").strip()
+        numeral = row.get("numeral")
+        source_id = str(row.get("source_document_id") or "").strip()
+        if (
+            len(fraction8) != 8
+            or not fraction8.isdigit()
+            or not nom
+            or not meaning
+            or numeral not in (1, 2, 3, 4, 5)
+            or not source_id
+        ):
+            raise ValueError(
+                "nom requirements need an 8-digit fraction8, nom, numeral 1-5, "
+                "numeral_meaning and source_document_id"
+            )
+        scope = str(row["scope"]).strip() if row.get("scope") else None
+        section = str(row["section"]) if row.get("section") else None
+        requirement_id = hashlib.sha256(
+            canonical_json([fraction8, numeral, section, nom, scope]).encode("utf-8")
+        ).hexdigest()
+        if requirement_id in seen:
+            raise ValueError(f"duplicate nom requirement for {fraction8}: {nom}")
+        seen.add(requirement_id)
+        conn.execute(
+            "INSERT INTO nom_requirement VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [
+                requirement_id,
+                fraction8,
+                numeral,
+                meaning,
+                section,
+                nom,
+                scope,
+                canonical_json(_nico_lines(row.get("nico"))),
+                _page_number(row.get("annex_page")),
+                source_id,
+            ],
+        )
+
+
 def _insert_national_notes(
     conn: duckdb.DuckDBPyConnection,
     notes: Sequence[Mapping[str, object]],
@@ -389,6 +454,10 @@ def _build_view(conn: duckdb.DuckDBPyConnection) -> None:
            FROM national_note n
            JOIN national_note_version v USING (national_note_id)
            JOIN national_note_applicability a USING (national_note_version_id)"""
+    )
+    conn.execute(
+        """CREATE OR REPLACE VIEW arancel_mx_nom_requirements AS
+           SELECT * FROM nom_requirement"""
     )
 
 
@@ -600,6 +669,7 @@ def materialize_arancel(
     rates: Sequence[Mapping[str, object]],
     release: Mapping[str, object],
     national_notes: Sequence[Mapping[str, object]] = (),
+    nom_requirements: Sequence[Mapping[str, object]] = (),
 ) -> dict[str, object]:
     """Replace canonical data only after the complete candidate validates."""
     documents_by_id, release_metadata = _validate_inputs(
@@ -608,6 +678,7 @@ def materialize_arancel(
         rates,
         release,
         national_notes,
+        nom_requirements,
     )
     records = consolidate_records(list(classifications), list(rates), release)
     rate_source_ids = {str(row["source_document_id"]) for row in rates}
@@ -622,12 +693,14 @@ def materialize_arancel(
         ensure_tariff_schema(conn)
         conn.execute("DROP VIEW IF EXISTS arancel_mx")
         conn.execute("DROP VIEW IF EXISTS arancel_mx_national_notes")
+        conn.execute("DROP VIEW IF EXISTS arancel_mx_nom_requirements")
         for table in reversed(PUBLIC_INTERNAL_TABLES):
             conn.execute(f"DELETE FROM {table}")  # noqa: S608 - table is drawn from the static internal-table allowlist.
         _insert_sources(conn, source_documents)
         _insert_classifications(conn, classifications)
         _insert_rates(conn, rates)
         _insert_national_notes(conn, national_notes)
+        _insert_nom_requirements(conn, nom_requirements)
 
         canonical_rows: list[list[object]] = []
         provenance_rows: list[list[object]] = []

@@ -448,3 +448,22 @@ def read_annex_pages(
             )
             pages.append(AnnexPage(words, rules))
     return pages
+
+
+def requirement_rows(parse: AnnexParse, *, source_document_id: str) -> list[dict[str, object]]:
+    """One row per NOM and fraction, ready for the ``nom_requirement`` table."""
+    return [
+        {
+            "fraction8": record.fraction,
+            "numeral": record.numeral,
+            "numeral_meaning": NUMERAL_MEANING[record.numeral],
+            "section": record.section,
+            "nom": requirement.nom,
+            "scope": requirement.scope,
+            "nico": [{"nico": line.nico, "description": line.description} for line in record.nico],
+            "annex_page": record.page,
+            "source_document_id": source_document_id,
+        }
+        for record in parse.records
+        for requirement in record.requirements
+    ]
