@@ -169,3 +169,25 @@ def test_requirement_rows_expand_one_row_per_nom_and_keep_numeral_and_scope() ->
         ("61091001", 3, "commercial_information_noms", "I", "NOM-050-SCFI-2004", "Excepto: usadas"),
     ]
     assert {r["source_document_id"] for r in rows} == {"doc-annex"}
+
+
+def test_locate_annex_pages_finds_the_heading_and_stops_before_the_next_annex(tmp_path) -> None:
+    from arancel_mx.parsers.nom_annex import locate_annex_pages
+    from tests.pipeline.annex_fixture import annex_pdf_bytes
+
+    pdf = tmp_path / "reglas.pdf"
+    pdf.write_bytes(annex_pdf_bytes())
+    assert locate_annex_pages(pdf) == (2, 2)
+
+
+def test_locate_annex_pages_fails_when_the_annex_is_missing(tmp_path) -> None:
+    import pymupdf
+
+    from arancel_mx.parsers.nom_annex import locate_annex_pages
+
+    document = pymupdf.open()
+    document.new_page().insert_text((91, 80), "ANEXO 2.5.1")
+    pdf = tmp_path / "sin-anexo.pdf"
+    document.save(pdf)
+    with pytest.raises(AnnexParseError, match="heading not found"):
+        locate_annex_pages(pdf)

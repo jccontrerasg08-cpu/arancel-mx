@@ -1,5 +1,5 @@
 {
-  "registry_version": "2026-08-17",
+  "registry_version": "2026-11-17",
   "sources": {
     "diputados_ligie": {
       "canonical_page": "https://www.diputados.gob.mx/LeyesBiblio/ref/ligie_2022.htm",
@@ -64,6 +64,17 @@
       },
       "source_role": "legal_classification_context",
       "authoritative_for_tariff": true,
+      "authoritative_for_discovery": true,
+      "authoritative_for_consolidated_text": false,
+      "legal_publication_authority": "DOF"
+    },
+    "nom_annex": {
+      "canonical_page": "https://www.snice.gob.mx/~oracle/SNICE_DOCS/",
+      "allowed_hosts": ["www.snice.gob.mx", "snice.gob.mx"],
+      "media_types": ["application/pdf"],
+      "families": {"nom_annex_rules": ["^ACUERDO-REGLAS-SE-.*BIBLIOTECA.*\\.PDF$"]},
+      "source_role": "regulatory_context",
+      "authoritative_for_tariff": false,
       "authoritative_for_discovery": true,
       "authoritative_for_consolidated_text": false,
       "legal_publication_authority": "DOF"
