@@ -2,7 +2,7 @@
 
 import pytest
 
-from arancel_mx.parsers.nom_annex import AnnexPage, AnnexParseError, parse_annex
+from arancel_mx.parsers.nom_annex import AnnexPage, AnnexParseError, parse_annex, requirement_rows
 
 RULE = (375.8, 100.0, 700.0)
 
@@ -156,3 +156,16 @@ def test_numeral_five_fraction_row_is_parsed_not_dropped() -> None:
     page.line(91, 120, "2710.12.99").line(161, 120, "Gasolinas").line(380, 120, "NOM-EM-001-CRE-2026")
     (record,) = parse_annex([page.page()]).records
     assert (record.numeral, [r.nom for r in record.requirements]) == (5, ["NOM-EM-001-CRE-2026"])
+
+
+def test_requirement_rows_expand_one_row_per_nom_and_keep_numeral_and_scope() -> None:
+    page = Page().line(91, 20, "3.-").line(299, 40, "I.")
+    page.line(91, 52, "Norma Oficial Mexicana NOM-004-SE-2021 y NOM-050-SCFI-2004:")
+    page.header(80)
+    page.line(91, 130, "6109.10.01").line(161, 130, "Playeras").line(380, 130, "Excepto: usadas")
+    rows = requirement_rows(parse_annex([page.page()]), source_document_id="doc-annex")
+    assert [(r["fraction8"], r["numeral"], r["numeral_meaning"], r["section"], r["nom"], r["scope"]) for r in rows] == [
+        ("61091001", 3, "commercial_information_noms", "I", "NOM-004-SE-2021", "Excepto: usadas"),
+        ("61091001", 3, "commercial_information_noms", "I", "NOM-050-SCFI-2004", "Excepto: usadas"),
+    ]
+    assert {r["source_document_id"] for r in rows} == {"doc-annex"}
