@@ -60,6 +60,10 @@ jobs:
           python -m pip install -c requirements/production-build.txt -e ".[dev]"
 
       - name: Run offline tests before source access
+        env:
+          # Live probes of official URLs run in CI's `official-sources` job; an outage of an
+          # official host (DOF answered 504) must not stop the scheduled data build.
+          ARANCEL_MX_SKIP_URL_CHECKS: "1"
         run: python -m pytest -q
 
       - name: Resolve UTC dataset version and provenance
@@ -289,6 +293,8 @@ jobs:
         env:
           # Empty on no_change, which builds the latest published release.
           DATASET_VERSION: ${{ needs.build-and-verify.outputs.status == 'built' && needs.build-and-verify.outputs.dataset_version || '' }}
+          # Unauthenticated release lookups share a 60/hour limit per runner IP and fail with 403.
+          ARANCEL_MX_GITHUB_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
