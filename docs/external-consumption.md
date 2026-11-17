@@ -154,6 +154,7 @@ curl "$ARANCEL_MX_API_URL/data/v1/manifest.json"
 | `records/{hs2}.json` | `/v1/lookup/{code}`, `/v1/ficha/{code}`, padre e hijos: todos los registros del capítulo, con el mismo modelo de respuesta. |
 | `provenance/{hs2}.json` | `/v1/codes/{code}/provenance`. |
 | `national-notes/{hs2}.json` | `/v1/chapters/{chapter}/national-notes`. |
+| `regulations/{hs2}.json` | Sin equivalente en `/v1`. NOM por fracción del Anexo 2.4.1: `{"sources": {…}, "requirements": [{"fraction8", "numeral", "numeral_meaning", "section", "nom", "scope", "nico", "annex_page", "source_document_id"}]}`. `scope` es la acotación literal del anexo («Únicamente:», «Excepto:») y limita a qué productos aplica la NOM; indica qué revisar y no determina si un producto está sujeto. |
 | `sections.json`, `chapters.json` | `/v1/sections`, `/v1/chapters`. |
 | `search-index.json` | `/v1/search` y `/v1/suggest`, evaluados por el cliente. |
 | `manifest.json` | SHA-256 y tamaño de cada archivo, más la release de origen. |
