@@ -378,6 +378,12 @@ h1,h2,h3 { text-wrap:balance; }
 @media (max-width:600px) { .site-footer { grid-template-columns:1fr; }.site-footer__brand { grid-column:auto; } }
 
 /* Fracciones hermanas de la partida: navegación lateral desde la ficha, con su IGI. */
+.nom-list { display:grid; gap:.5rem; margin:0 0 .8rem; padding:0; list-style:none; }
+.nom-list li { border:1px solid var(--line); border-radius:.6rem; background:var(--panel); padding:.6rem .8rem; overflow-wrap:anywhere; }
+.nom-list p { margin:.25rem 0 0; }
+.nom-list__section { color:var(--muted); }
+.nom-list__scope { color:var(--ink); }
+.nom-list__source { font-size:.85rem; color:var(--muted); }
 .sibling-list { display:grid; gap:.35rem; margin:0 0 .6rem; padding:0; list-style:none; }
 .sibling-list a { display:grid; grid-template-columns:7.2rem minmax(0,1fr) auto; align-items:baseline; gap:.2rem .8rem; border:1px solid var(--line); border-radius:.6rem; background:var(--panel); color:var(--ink); padding:.55rem .8rem; text-decoration:none; }
 .sibling-list a:hover { border-color:var(--brand); }
