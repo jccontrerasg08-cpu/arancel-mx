@@ -58,6 +58,7 @@ def test_manifest_lists_every_file_with_matching_hashes(
         "national-notes/01.json",
         "provenance/01.json",
         "records/01.json",
+        "regulations/01.json",
         "search-index.json",
         "sections.json",
     }
@@ -142,7 +143,7 @@ def test_cli_builds_and_verifies(tmp_path: Path, capsys) -> None:
     )
     assert json.loads(capsys.readouterr().out) == {
         "dataset_tag": "data-2026.08.11",
-        "files": 7,
+        "files": 8,
         "record_count": 5,
     }
     assert main(["static-api", "verify", "--root", str(out)]) == 0
@@ -199,3 +200,62 @@ def test_browser_client_matches_python_reference(exported, tmp_path: Path) -> No
         check=False,
     )
     assert result.returncode == 0, result.stderr
+
+
+def test_regulations_file_is_empty_for_a_release_without_nom_requirements(exported, tmp_path: Path) -> None:
+    payload = json.loads((tmp_path / "static/regulations/01.json").read_text(encoding="utf-8"))
+    assert payload == {"sources": {}, "requirements": []}
+
+
+def test_regulations_file_carries_requirements_scope_and_source(tmp_path: Path) -> None:
+    import duckdb
+
+    duckdb_path = create_consumer_duckdb(tmp_path / "fixture.duckdb")
+    with duckdb.connect(str(duckdb_path)) as connection:
+        source_id = connection.execute("SELECT source_document_id FROM source_document LIMIT 1").fetchone()[0]
+        connection.execute(
+            """CREATE TABLE arancel_mx_nom_requirements (
+                   fraction8 VARCHAR, numeral INTEGER, numeral_meaning VARCHAR, section VARCHAR,
+                   nom VARCHAR, scope VARCHAR, nico_json VARCHAR, annex_page INTEGER,
+                   source_document_id VARCHAR)"""
+        )
+        connection.execute(
+            "INSERT INTO arancel_mx_nom_requirements VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [
+                "01012101",
+                1,
+                "import_noms",
+                None,
+                "NOM-EM-004-SAG/ZOO-2020",
+                "Únicamente: para cría",
+                json.dumps([{"nico": "00", "description": "Para reproducción"}]),
+                481,
+                source_id,
+            ],
+        )
+    build_static_api(
+        duckdb_path,
+        tmp_path / "static",
+        dataset_tag="data-2026.08.11",
+        release_verified=True,
+        generated_at=datetime(2026, 8, 11, tzinfo=timezone.utc),
+    )
+
+    payload = json.loads((tmp_path / "static/regulations/01.json").read_text(encoding="utf-8"))
+
+    assert payload["requirements"] == [
+        {
+            "fraction8": "01012101",
+            "numeral": 1,
+            "numeral_meaning": "import_noms",
+            "section": None,
+            "nom": "NOM-EM-004-SAG/ZOO-2020",
+            "scope": "Únicamente: para cría",
+            "nico": [{"nico": "00", "description": "Para reproducción"}],
+            "annex_page": 481,
+            "source_document_id": source_id,
+        }
+    ]
+    assert set(payload["sources"]) == {source_id}
+    assert payload["sources"][source_id]["sha256"]
+    assert verify_static_api(tmp_path / "static") == []
