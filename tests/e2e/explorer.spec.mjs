@@ -362,7 +362,7 @@ test('shows no NOM block when the release has no regulations file or the fractio
   await page.route('**/data/v1/regulations/85.json', (route) => route.fulfill({ json: { sources: {}, requirements: [] } }));
   await page.goto('/app/record/85171301');
   await expect(page.getByTestId('result-card')).toBeVisible();
-  await expect(page.getByText('Teléfonos móviles.')).toBeVisible();
+  await expect(page.getByRole('paragraph').filter({ hasText: 'Teléfonos móviles.' })).toBeVisible();
   await expect(page.getByTestId('nom-requirements')).toHaveCount(0);
 });
 
