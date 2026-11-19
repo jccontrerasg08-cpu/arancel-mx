@@ -381,3 +381,20 @@ def test_trade_desk_links_only_real_pages_and_shares_the_site_groups() -> None:
         if href.startswith("/assets/") or href in {"/favicon.svg"}:
             continue
         assert href in {"/", "/app", "/learn", "/data", "/trust", "/trade", "/documentation", "/trade-context", "/moa", "/wiki", "/glossary", "/records", "/changes"}, f"unexpected internal link {href}"
+
+
+def test_every_public_page_shares_with_a_png_card_that_exists() -> None:
+    card = SITE / "assets" / "arancel-mx-social.png"
+    data = card.read_bytes()
+    assert data[:8] == b"\x89PNG\r\n\x1a\n"
+    assert int.from_bytes(data[16:20], "big") == 1280 and int.from_bytes(data[20:24], "big") == 640
+
+    pages = sorted(path for path in SITE.glob("*.html") if path.name != "404.html")
+    assert pages
+    for page in pages:
+        html = page.read_text(encoding="utf-8")
+        assert (
+            '<meta property="og:image" content="https://arancel-mx.vercel.app/assets/arancel-mx-social.png"' in html
+        ), page.name
+        assert '<meta name="twitter:card" content="summary_large_image"' in html, page.name
+        assert '<meta name="twitter:image" content="https://arancel-mx.vercel.app/assets/arancel-mx-social.png"' in html, page.name
