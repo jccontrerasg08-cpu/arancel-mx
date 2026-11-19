@@ -571,3 +571,18 @@ def test_an_annex_that_stops_working_does_not_hide_a_real_source_change(tmp_path
     assert result["status"] == "built"
     manifest = json.loads((second.output_dir / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["nom_annex"]["status"] == "unavailable"
+
+
+def test_an_annex_that_becomes_readable_again_rebuilds_even_if_no_source_changed(tmp_path, monkeypatch):
+    degraded = config(tmp_path, "degraded-first")
+    build_official_dataset(degraded, session=fake_session())
+    previous_manifest = json.loads((degraded.output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert previous_manifest["nom_annex"]["status"] == "unavailable"
+    relax_annex_floors(monkeypatch)
+    recovered = config(tmp_path, "recovered")
+
+    result = build_official_dataset(recovered, session=fake_session(), previous_manifest=previous_manifest)
+
+    assert result["status"] == "built"
+    manifest = json.loads((recovered.output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["nom_annex"]["status"] == "available"

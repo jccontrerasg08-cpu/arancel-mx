@@ -367,9 +367,17 @@ def build_official_dataset(
             # previous release when nothing else moved. The canary reports the failure.
             current_identity = tuple(_without_annex(current_identity))
             previous_identity = tuple(_without_annex(previous_identity))
-        if not source_identity_changed(
-            current_identity, previous_identity
-        ) and not _rate_registry_changed(previous_manifest):
+        previous_annex = previous_manifest.get("nom_annex")
+        annex_recovered = (
+            nom_annex_status["status"] == "available"
+            and isinstance(previous_annex, Mapping)
+            and previous_annex.get("status") == "unavailable"
+        )
+        if (
+            not source_identity_changed(current_identity, previous_identity)
+            and not _rate_registry_changed(previous_manifest)
+            and not annex_recovered
+        ):
             return _no_change_result(
                 config,
                 previous_manifest,
