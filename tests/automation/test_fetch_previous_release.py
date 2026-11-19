@@ -213,3 +213,34 @@ def test_fetch_previous_nom_refuses_a_database_that_does_not_match_the_manifest(
     with pytest.raises(ValueError, match="SHA-256"):
         fetch_previous_nom(client, manifest, tmp_path / "previous-nom.json")
     assert not (tmp_path / "previous-nom.json").exists()
+
+
+def test_a_previous_database_without_nom_never_fails_the_fetch(tmp_path, monkeypatch, capsys):
+    import duckdb
+
+    import scripts.fetch_previous_release as fetch
+
+    database = tmp_path / "old.duckdb"
+    with duckdb.connect(str(database)) as connection:
+        connection.execute("CREATE TABLE unrelated (x INTEGER)")
+    raw = database.read_bytes()
+    import hashlib
+
+    manifest = valid_manifest()
+    manifest["nom_annex"] = {"status": "available"}
+    manifest["artifact_sha256"] = {"arancel_mx.duckdb": hashlib.sha256(raw).hexdigest()}
+    asset = {"id": 7, "name": "arancel_mx.duckdb", "url": "https://api.github.com/repos/o/r/releases/assets/7"}
+    manifest_asset_ = manifest_asset(5)
+    client = FakeClient(
+        [release("data-2026.08.10", assets=[asset, manifest_asset_])],
+        downloads={asset["url"]: raw, manifest_asset_["url"]: json.dumps(manifest).encode()},
+    )
+    monkeypatch.setattr(fetch, "GitHubApi", lambda *args, **kwargs: client)
+
+    code = fetch.main(
+        ["--output", str(tmp_path / "m.json"), "--nom-output", str(tmp_path / "n.json"), "--repository", "o/r", "--token", "t"]
+    )
+
+    assert code == 0
+    assert (tmp_path / "m.json").exists() and not (tmp_path / "n.json").exists()
+    assert "previous NOM rows not saved" in capsys.readouterr().err

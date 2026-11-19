@@ -209,11 +209,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     if manifest is None:
         print(json.dumps({"status": "none"}, sort_keys=True))
         return 0
-    if args.nom_output is not None:
+    annex = manifest.get("nom_annex")
+    carryable = isinstance(annex, Mapping) and annex.get("status") in {"available", "carried_forward"}
+    if args.nom_output is not None and carryable:
         try:
             count = fetch_previous_nom(client, manifest, args.nom_output)
             print(json.dumps({"nom_rows": count}, sort_keys=True))
-        except (ValueError, OSError, RuntimeError) as exc:
+        except Exception as exc:  # noqa: BLE001 - optional step: no failure here may stop the tariff update
             # Best effort: without these rows a day with an unreadable annex simply carries nothing.
             print(f"warning: previous NOM rows not saved: {exc}", file=sys.stderr)
     print(
