@@ -85,7 +85,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           mkdir -p out
-          python -m scripts.fetch_previous_release --output out/previous-manifest.json
+          python -m scripts.fetch_previous_release --output out/previous-manifest.json --nom-output out/previous-nom.json
 
       - name: Record previous-release lookup failure
         if: steps.previous.outcome == 'failure'
@@ -111,6 +111,7 @@ jobs:
             --dataset-version "$DATASET_VERSION" \
             --generated-at "$GENERATED_AT" \
             --previous-manifest out/previous-manifest.json \
+            --previous-nom out/previous-nom.json \
             --result-path out/pipeline-result.json
 
       - name: Extract bounded pipeline diagnostics

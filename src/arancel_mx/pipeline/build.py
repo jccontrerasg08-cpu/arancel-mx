@@ -96,7 +96,7 @@ def _validated_release_metadata(release: Mapping[str, object]) -> dict[str, obje
         raise ValueError("release.release_metadata.nico_coverage must be an object")
     nom_annex = metadata.get("nom_annex")
     if nom_annex is not None and (
-        not isinstance(nom_annex, Mapping) or nom_annex.get("status") not in {"available", "unavailable"}
+        not isinstance(nom_annex, Mapping) or nom_annex.get("status") not in {"available", "unavailable", "carried_forward"}
     ):
         raise ValueError("release.release_metadata.nom_annex must be an object with a known status")
     rate_validity = metadata.get("rate_validity")

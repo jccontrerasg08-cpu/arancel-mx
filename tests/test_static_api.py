@@ -266,6 +266,10 @@ def test_regulations_file_carries_requirements_scope_and_source(tmp_path: Path) 
     [
         ({"nom_annex": {"status": "available"}}, "available"),
         ({"nom_annex": {"status": "unavailable", "reason": "x"}}, "unavailable"),
+        (
+            {"nom_annex": {"status": "carried_forward", "carried_from": "2026.11.19"}},
+            "carried_forward",
+        ),
         ({}, "not_included"),
         ({"nom_annex": {"status": "weird"}}, "not_included"),
     ],
@@ -284,4 +288,7 @@ def test_regulations_file_reports_whether_the_release_carries_the_annex(tmp_path
         generated_at=datetime(2026, 8, 11, tzinfo=timezone.utc),
     )
     payload = json.loads((tmp_path / "static/regulations/01.json").read_text(encoding="utf-8"))
-    assert payload["annex"] == {"status": expected}
+    expected_annex = {"status": expected}
+    if expected == "carried_forward":
+        expected_annex["carried_from"] = "2026.11.19"
+    assert payload["annex"] == expected_annex
