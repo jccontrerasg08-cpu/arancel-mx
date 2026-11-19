@@ -158,3 +158,58 @@ def test_manifest_without_source_identity_is_rejected_without_output(tmp_path):
         fetch_previous_manifest(client, output)
 
     assert not output.exists()
+
+
+def _database_with_nom(path):
+    import duckdb
+
+    from arancel_mx.storage.duckdb import init_tariff_db
+
+    init_tariff_db(path)
+    with duckdb.connect(str(path)) as connection:
+        connection.execute(
+            "INSERT INTO source_document VALUES ('annex', 'SE', 'SNICE', 'Annex', 'https://example.test/a.pdf',"
+            " 'application/pdf', ?, NULL, NULL, NULL, NULL, DATE '2026-01-01', TIMESTAMP '2026-01-01 00:00:00')",
+            ["b" * 64],
+        )
+        connection.execute(
+            "INSERT INTO nom_requirement VALUES ('r1', '01012101', 1, 'import_noms', NULL, 'NOM-X', NULL, '[]', 3, 'annex')"
+        )
+
+
+def _release_with_database(tmp_path, *, digest=None):
+    import hashlib
+
+    database = tmp_path / "arancel_mx.duckdb"
+    _database_with_nom(database)
+    raw = database.read_bytes()
+    manifest = valid_manifest()
+    manifest["artifact_sha256"] = {"arancel_mx.duckdb": digest or hashlib.sha256(raw).hexdigest()}
+    asset = {"id": 7, "name": "arancel_mx.duckdb", "url": "https://api.github.com/repos/o/r/releases/assets/7"}
+    client = FakeClient([release("data-2026.08.10", assets=[asset])], downloads={asset["url"]: raw})
+    return client, manifest
+
+
+def test_fetch_previous_nom_saves_the_rows_of_the_verified_published_database(tmp_path):
+    from scripts.fetch_previous_release import fetch_previous_nom
+
+    client, manifest = _release_with_database(tmp_path)
+    output = tmp_path / "out" / "previous-nom.json"
+
+    count = fetch_previous_nom(client, manifest, output)
+
+    saved = json.loads(output.read_text(encoding="utf-8"))
+    assert count == 1
+    assert saved["dataset_version"] == "2026.08.10"
+    assert saved["rows"][0]["nom"] == "NOM-X"
+    assert saved["source_documents"][0]["source_document_id"] == "annex"
+
+
+def test_fetch_previous_nom_refuses_a_database_that_does_not_match_the_manifest(tmp_path):
+    from scripts.fetch_previous_release import fetch_previous_nom
+
+    client, manifest = _release_with_database(tmp_path, digest="0" * 64)
+
+    with pytest.raises(ValueError, match="SHA-256"):
+        fetch_previous_nom(client, manifest, tmp_path / "previous-nom.json")
+    assert not (tmp_path / "previous-nom.json").exists()

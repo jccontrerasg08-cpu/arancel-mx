@@ -356,6 +356,21 @@ test('shows the NOM the annex lists for a fraction with its limit, source and th
   await expect(nom).toContainText(/página 600/);
 });
 
+test('keeps showing the NOM, and says which release they come from, when the annex could not be read today', async ({ page }) => {
+  await serveStaticRecords(page, [{ code: '85171301', description: 'Teléfonos móviles.', igi: 'Ex.' }]);
+  await page.route('**/data/v1/sections.json', (route) => route.fulfill({ json: [{ numeral: 'XVI', title: 'Máquinas y aparatos', chapter_from: '84', chapter_to: '85' }] }));
+  await page.route('**/data/v1/regulations/85.json', (route) => route.fulfill({
+    json: {
+      annex: { status: 'carried_forward', carried_from: '2026.11.19' },
+      sources: { annex: { source_url: 'https://www.snice.gob.mx/~oracle/SNICE_DOCS/anexo.pdf', sha256: 'a'.repeat(64) } },
+      requirements: [{ fraction8: '85171301', numeral: 1, numeral_meaning: 'import_noms', section: null, nom: 'NOM-208-SCFI-2016', scope: null, nico: [], annex_page: 600, source_document_id: 'annex' }],
+    },
+  }));
+  await page.goto('/app/record/85171301');
+  await expect(page.getByTestId('nom-requirements')).toContainText('NOM-208-SCFI-2016');
+  await expect(page.getByTestId('nom-carried')).toContainText(/no se pudo leer el Anexo 2\.4\.1 vigente.*2026\.11\.19/i);
+});
+
 test('shows no NOM block when the release has no regulations file or the fraction is not listed', async ({ page }) => {
   await serveStaticRecords(page, [{ code: '85171301', description: 'Teléfonos móviles.', igi: 'Ex.' }]);
   await page.route('**/data/v1/sections.json', (route) => route.fulfill({ json: [{ numeral: 'XVI', title: 'Máquinas y aparatos', chapter_from: '84', chapter_to: '85' }] }));

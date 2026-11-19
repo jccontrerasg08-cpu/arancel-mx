@@ -38,6 +38,7 @@ from arancel_mx.pipeline.rate_corrections import (
     load_rate_corrections,
 )
 from arancel_mx.pipeline.nico_coverage import nico_coverage_report
+from arancel_mx.pipeline.nom_carry import carry_forward
 from arancel_mx.pipeline.official_sources import (
     OfficialInputSnapshot,
     capture_official_inputs,
@@ -234,9 +235,11 @@ def _read_nom_annex(
             "reason": f"{type(exc).__name__}: {exc}"[:300],
             "source_document_id": source_id,
         }
-    return requirement_rows(parsed, source_document_id=source_id), {
+    rows = requirement_rows(parsed, source_document_id=source_id)
+    return rows, {
         "status": "available",
         "source_document_id": source_id,
+        "rows": len(rows),
         "first_page": span.first_page,
         "last_page": span.last_page,
         **summary,
@@ -348,6 +351,7 @@ def build_official_dataset(
     config: OfficialDatasetConfig,
     session: Any | None = None,
     previous_manifest: Mapping[str, object] | None = None,
+    previous_nom: Mapping[str, object] | None = None,
 ) -> dict[str, object]:
     """Build one verified release, or stop after a reconciled no-change check."""
     if config.timeout_s <= 0:
@@ -377,7 +381,7 @@ def build_official_dataset(
         annex_recovered = (
             nom_annex_status["status"] == "available"
             and isinstance(previous_annex, Mapping)
-            and previous_annex.get("status") == "unavailable"
+            and previous_annex.get("status") in {"unavailable", "carried_forward"}
         )
         if (
             not source_identity_changed(current_identity, previous_identity)
@@ -450,10 +454,23 @@ def build_official_dataset(
     classifications = assemble_classifications(hs_rows, fraction_rows, nico_rows)
     description_corrections = apply_description_corrections(classifications)
 
-    source_documents = sorted(
-        (item.source_document for item in snapshot.sources),
-        key=lambda row: str(row["source_document_id"]),
-    )
+    source_documents = [item.source_document for item in snapshot.sources]
+    if nom_annex_status["status"] != "available":
+        # Decision 0004, option 2: keep the previous release's NOM, unchanged and still attributed to the
+        # annex edition they were read from, rather than dropping them for a day the annex is unreadable.
+        carried = carry_forward(
+            previous_nom,
+            None if legacy_baseline else previous_manifest,
+            {str(row["code"]) for row in fraction_rows},
+            str(nom_annex_status.get("reason", "")),
+        )
+        if carried is not None:
+            nom_requirements, carried_documents, nom_annex_status = carried
+            known_ids = {str(row["source_document_id"]) for row in source_documents}
+            source_documents.extend(
+                row for row in carried_documents if str(row["source_document_id"]) not in known_ids
+            )
+    source_documents = sorted(source_documents, key=lambda row: str(row["source_document_id"]))
     release = {
         "dataset_version": config.dataset_version,
         "schema_version": config.schema_version,

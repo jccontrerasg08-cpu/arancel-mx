@@ -96,9 +96,16 @@ def _annex_status(connection: Any) -> dict[str, Any]:
     except ValueError:
         metadata = {}
     annex = metadata.get("nom_annex") if isinstance(metadata, dict) else None
-    if not isinstance(annex, dict) or annex.get("status") not in {"available", "unavailable"}:
+    if not isinstance(annex, dict) or annex.get("status") not in {
+        "available",
+        "unavailable",
+        "carried_forward",
+    }:
         return {"status": "not_included"}
-    return {"status": annex["status"]}
+    status: dict[str, Any] = {"status": annex["status"]}
+    if annex["status"] == "carried_forward" and annex.get("carried_from"):
+        status["carried_from"] = str(annex["carried_from"])
+    return status
 
 
 def _regulations(connection: Any, chapter: str, annex: dict[str, Any]) -> dict[str, Any]:

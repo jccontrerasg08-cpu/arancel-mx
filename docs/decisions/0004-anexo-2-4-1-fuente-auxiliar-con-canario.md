@@ -23,12 +23,15 @@ La 0003 hizo del anexo una fuente obligatoria: si SNICE cambiaba el archivo o su
 - Se acepta que, con el arancel cambiando y el anexo roto, un release salga sin NOM por unos días. Es visible, está marcado y es reversible al corregir el lector.
 - El lector sigue siendo la única puerta: ninguna fila de NOM entra al release sin pasar la validación.
 
-## Limitación conocida y opciones (pendiente de decisión del propietario)
+## Arrastre de las NOM del release anterior (opción 2, decidida por el propietario)
 
-Si el anexo no se puede leer **el mismo día en que cambia otra fuente** (una edición nueva de LIGIE o NICO, o el registro de tasas), el release sale sin NOM aunque el anterior sí las tuviera, y la ficha muestra el aviso de «no disponible» hasta que el anexo vuelva a leerse. Opciones:
+Si el anexo no se puede leer **el mismo día en que cambia otra fuente**, el release no pierde las NOM: se copian las del release anterior y se marca `nom_annex.status = "carried_forward"` con `carried_from` (la versión del release de donde se leyeron). Reglas para que no se muevan ni se inventen:
 
-1. **Aceptarlo** (lo implementado). Simple y visible; el costo es que la ficha pierde las NOM por unos días en ese caso. El canario avisa con un día de ventaja.
-2. **Arrastrar las NOM del release anterior** cuando el anexo falle: el pipeline descargaría el DuckDB anterior (≈38 MB), copiaría sus filas de `nom_requirement` con su fuente original y lo marcaría `carried_forward` con la fecha de origen. La ficha seguiría mostrando NOM, indicando de qué edición vienen. Es más robusto, pero añade una descarga y un nuevo estado a la superficie pública.
-3. **Retener el release** hasta que el anexo se lea. Descartada: frena la actualización del arancel.
+- **Prueba de procedencia.** El pipeline descarga el `arancel_mx.duckdb` del último release y lo **rechaza** si su SHA-256 no es el de `manifest.json`, o si la versión no coincide. Sin esa prueba no se arrastra nada y el release sale `unavailable`.
+- **Filas sin tocar.** Se copian tal cual (fracción, numeral, sección, NOM, acotación, NICO, página) con su documento fuente original, que se incluye en el release; la ficha y el API siguen citando la edición del anexo de la que vienen.
+- **Sólo fracciones vigentes.** Si una fracción ya no existe en la LIGIE nueva, su fila se descarta y se cuenta en `dropped_rows`; no queda ninguna fila huérfana.
+- **Sin cadena infinita de engaños.** Un release que arrastra conserva el `carried_from` original; si el anexo vuelve a leerse (`available`) se reconstruye y se sustituyen las filas por las recién leídas.
+- **Mejor esfuerzo.** Si la descarga del release anterior falla, el release se construye igual (`unavailable`); la descarga ocurre en un paso aparte que no puede frenar el pipeline.
+- **Visible.** `regulations/{hs2}.json` lleva `annex.status = carried_forward` y `annex.carried_from`; la ficha lo dice («Hoy no se pudo leer el Anexo 2.4.1 vigente, así que esta lista viene del anexo tal como se leyó en la release …»). El canario sigue en rojo mientras el anexo no se pueda leer.
 
-Recomendación: la opción 2 si se esperan muchas visitas y se quiere que la NOM no desaparezca nunca; requiere validar el cambio en el contrato público (`annex.status = carried_forward`).
+Costo: una descarga diaria de ≈38 MB (tolerante a fallos) y un estado más en el contrato público. Reversión: revertir el commit; los releases ya publicados con `carried_forward` siguen siendo válidos (son un estado de metadatos).
