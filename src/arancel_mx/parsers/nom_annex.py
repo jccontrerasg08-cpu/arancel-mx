@@ -424,9 +424,18 @@ def parse_annex(pages: Sequence[AnnexPage], *, first_page: int = 1) -> AnnexPars
 
 
 def read_annex_pages(
-    pdf_path: Path, first_page: int, last_page: int
+    pdf_path: Path,
+    first_page: int,
+    last_page: int,
+    *,
+    start_y: float = 0.0,
+    end_y: float | None = None,
 ) -> list[AnnexPage]:
-    """Words and table rules of the annex pages (1-based, inclusive) of the registered PDF."""
+    """Words and table rules of the annex pages (1-based, inclusive) of the registered PDF.
+
+    On the first page words above ``start_y`` are dropped, and on the last page words from ``end_y`` down:
+    they belong to the annex before or after.
+    """
     import pymupdf
 
     pages = []
@@ -436,6 +445,8 @@ def read_annex_pages(
             words = tuple(
                 (w[0], w[1], w[2], w[3], w[4], w[5], w[6], w[7])
                 for w in page.get_text("words")
+                if (number != first_page or w[1] >= start_y - 1.0)
+                and (end_y is None or number != last_page or w[1] < end_y - 1.0)
             )
             rules = tuple(
                 (
@@ -451,47 +462,102 @@ def read_annex_pages(
 
 
 def requirement_rows(parse: AnnexParse, *, source_document_id: str) -> list[dict[str, object]]:
-    """One row per NOM and fraction, ready for the ``nom_requirement`` table."""
-    return [
-        {
-            "fraction8": record.fraction,
-            "numeral": record.numeral,
-            "numeral_meaning": NUMERAL_MEANING[record.numeral],
-            "section": record.section,
-            "nom": requirement.nom,
-            "scope": requirement.scope,
-            "nico": [{"nico": line.nico, "description": line.description} for line in record.nico],
-            "annex_page": record.page,
-            "source_document_id": source_document_id,
-        }
-        for record in parse.records
-        for requirement in record.requirements
-    ]
+    """One row per NOM and fraction, ready for the ``nom_requirement`` table.
+
+    A row repeated in the annex (same fraction, numeral, section, NOM and limit) is one requirement:
+    it is kept once, with the NICO lines of every repetition.
+    """
+    rows: dict[tuple[object, ...], dict[str, object]] = {}
+    for record in parse.records:
+        nico = [{"nico": line.nico, "description": line.description} for line in record.nico]
+        for requirement in record.requirements:
+            key = (record.fraction, record.numeral, record.section, requirement.nom, requirement.scope)
+            existing = rows.get(key)
+            if existing is None:
+                rows[key] = {
+                    "fraction8": record.fraction,
+                    "numeral": record.numeral,
+                    "numeral_meaning": NUMERAL_MEANING[record.numeral],
+                    "section": record.section,
+                    "nom": requirement.nom,
+                    "scope": requirement.scope,
+                    "nico": list(nico),
+                    "annex_page": record.page,
+                    "source_document_id": source_document_id,
+                }
+                continue
+            seen = existing["nico"]
+            if isinstance(seen, list):
+                seen.extend(line for line in nico if line not in seen)
+    return list(rows.values())
+
 
 _ANNEX_START = "ANEXO 2.4.1"
 _ANNEX_HEADING = re.compile(r"^ANEXO \d+\.\d+\.\d+$")
 
 
-def locate_annex_pages(pdf_path: Path) -> tuple[int, int]:
-    """First and last page (1-based) of Annex 2.4.1: from its heading to the page before the next annex."""
+@dataclass(frozen=True)
+class AnnexSpan:
+    """Where Annex 2.4.1 lies in the document, down to the line.
+
+    ``start_y`` and ``end_y`` trim the first and last page when the annex begins or ends in the middle of
+    one; ``end_y`` is None when the next annex starts at the top of its page (that page is left out).
+    """
+
+    first_page: int
+    last_page: int
+    start_y: float
+    end_y: float | None
+
+
+_PAGE_TOP = 100.0
+
+
+def _heading_lines(page: object) -> list[tuple[str, float]]:
+    """Standalone "ANEXO n.n.n" lines of a page with their vertical position."""
+    words = page.get_text("words")  # type: ignore[attr-defined]
+    lines: dict[tuple[int, int], list[tuple[float, str]]] = {}
+    for word in words:
+        lines.setdefault((word[5], word[6]), []).append((word[0], word[4]))
+    found = []
+    for (block, line), parts in lines.items():
+        text = " ".join(token for _, token in sorted(parts))
+        if _ANNEX_HEADING.match(text.strip()):
+            top = min(word[1] for word in words if (word[5], word[6]) == (block, line))
+            found.append((text.strip(), float(top)))
+    return found
+
+
+def locate_annex_span(pdf_path: Path) -> AnnexSpan:
+    """Find Annex 2.4.1 from its heading to the heading of the next annex, including partial pages."""
     import pymupdf
 
-    first: int | None = None
+    start: tuple[int, float] | None = None
     with pymupdf.open(pdf_path) as document:
         for number in range(1, len(document) + 1):
-            headings = [
-                line.strip()
-                for line in document[number - 1].get_text().splitlines()
-                if _ANNEX_HEADING.match(line.strip())
-            ]
-            if first is None:
-                if _ANNEX_START in headings:
-                    first = number
-            elif headings:
-                return first, number - 1
-    if first is None:
+            headings = _heading_lines(document[number - 1])
+            if start is None:
+                match = next((top for text, top in headings if text == _ANNEX_START), None)
+                if match is not None:
+                    start = (number, match)
+                    headings = [item for item in headings if item[0] != _ANNEX_START]
+            if start is None:
+                continue
+            following = [top for text, top in sorted(headings, key=lambda item: item[1]) if text != _ANNEX_START]
+            if following:
+                top = following[0]
+                if top < _PAGE_TOP and number > start[0]:
+                    return AnnexSpan(start[0], number - 1, start[1], None)
+                return AnnexSpan(start[0], number, start[1], top)
+    if start is None:
         raise AnnexParseError("Annex 2.4.1 heading not found in the document")
     raise AnnexParseError("the annex after 2.4.1 was not found, so its last page is unknown")
+
+
+def locate_annex_pages(pdf_path: Path) -> tuple[int, int]:
+    """First and last page (1-based) that hold any of Annex 2.4.1."""
+    span = locate_annex_span(pdf_path)
+    return span.first_page, span.last_page
 
 
 # Floors well below the edition of 2 April 2026 (3,085 records, 2,530 fractions, 14 sections in

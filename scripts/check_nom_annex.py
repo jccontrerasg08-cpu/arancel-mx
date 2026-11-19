@@ -15,11 +15,8 @@ import sys
 import tempfile
 from typing import Any, Sequence
 
-import requests
-
 from arancel_mx.parsers.nom_annex import (
-    AnnexParseError,
-    locate_annex_pages,
+    locate_annex_span,
     parse_annex,
     read_annex_pages,
     validate_annex_structure,
@@ -42,15 +39,18 @@ def check(timeout_s: float = 60.0, session: Any | None = None) -> dict[str, obje
     with tempfile.TemporaryDirectory() as directory:
         path = Path(directory) / "annex.pdf"
         path.write_bytes(fetched.content)
-        first_page, last_page = locate_annex_pages(path)
-        parsed = parse_annex(read_annex_pages(path, first_page, last_page), first_page=first_page)
+        span = locate_annex_span(path)
+        parsed = parse_annex(
+            read_annex_pages(path, span.first_page, span.last_page, start_y=span.start_y, end_y=span.end_y),
+            first_page=span.first_page,
+        )
         summary = validate_annex_structure(parsed)
     return {
         "status": "ok",
         "source_url": fetched.final_url,
         "sha256": hashlib.sha256(fetched.content).hexdigest(),
-        "first_page": first_page,
-        "last_page": last_page,
+        "first_page": span.first_page,
+        "last_page": span.last_page,
         **summary,
     }
 
@@ -61,7 +61,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(list(argv) if argv is not None else None)
     try:
         result = check(args.timeout)
-    except (AnnexParseError, ValueError, OSError, requests.RequestException) as error:
+    except Exception as error:  # noqa: BLE001 - the canary reports any failure, whatever its type
         print(json.dumps({"status": "failed", "error": f"{type(error).__name__}: {error}"[:500]}))
         return 1
     print(json.dumps(result, sort_keys=True))

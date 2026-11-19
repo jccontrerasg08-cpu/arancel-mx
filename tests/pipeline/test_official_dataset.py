@@ -586,3 +586,28 @@ def test_an_annex_that_becomes_readable_again_rebuilds_even_if_no_source_changed
     assert result["status"] == "built"
     manifest = json.loads((recovered.output_dir / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["nom_annex"]["status"] == "available"
+
+
+def test_a_corrupt_annex_pdf_does_not_stop_the_release(tmp_path):
+    session = fake_session()
+    session.responses[ANNEX_URL] = Response(ANNEX_URL, b"%PDF-1.7\nnot really a pdf", "application/pdf")
+    degraded = config(tmp_path, "corrupt")
+
+    summary = build_official_dataset(degraded, session=session)
+
+    manifest = json.loads((degraded.output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert summary["status"] == "built"
+    assert manifest["nom_annex"]["status"] == "unavailable"
+
+
+def test_an_unexpected_error_while_capturing_the_annex_does_not_stop_the_release(tmp_path):
+    session = fake_session()
+    del session.responses[ANNEX_URL]  # the fake raises AssertionError, a type no handler lists by name
+    degraded = config(tmp_path, "capture-error")
+
+    summary = build_official_dataset(degraded, session=session)
+
+    manifest = json.loads((degraded.output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert summary["status"] == "built"
+    assert manifest["nom_annex"]["status"] == "unavailable"
+    assert "unexpected network URL" in manifest["nom_annex"]["reason"]

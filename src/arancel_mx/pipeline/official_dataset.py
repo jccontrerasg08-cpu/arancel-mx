@@ -14,8 +14,7 @@ from arancel_mx.parsers.documents import (
     parse_national_notes_html,
 )
 from arancel_mx.parsers.nom_annex import (
-    AnnexParseError,
-    locate_annex_pages,
+    locate_annex_span,
     parse_annex,
     read_annex_pages,
     requirement_rows,
@@ -217,12 +216,19 @@ def _read_nom_annex(
         return [], {"status": "unavailable", "reason": reason}
     source_id = str(source.source_document["source_document_id"])
     try:
-        first_page, last_page = locate_annex_pages(source.capture.path)
+        span = locate_annex_span(source.capture.path)
         parsed = parse_annex(
-            read_annex_pages(source.capture.path, first_page, last_page), first_page=first_page
+            read_annex_pages(
+                source.capture.path,
+                span.first_page,
+                span.last_page,
+                start_y=span.start_y,
+                end_y=span.end_y,
+            ),
+            first_page=span.first_page,
         )
         summary = validate_annex_structure(parsed)
-    except (AnnexParseError, OSError, ValueError) as exc:
+    except Exception as exc:  # noqa: BLE001 - ancillary source: a corrupt PDF or odd layout must not stop the release
         return [], {
             "status": "unavailable",
             "reason": f"{type(exc).__name__}: {exc}"[:300],
@@ -231,8 +237,8 @@ def _read_nom_annex(
     return requirement_rows(parsed, source_document_id=source_id), {
         "status": "available",
         "source_document_id": source_id,
-        "first_page": first_page,
-        "last_page": last_page,
+        "first_page": span.first_page,
+        "last_page": span.last_page,
         **summary,
     }
 

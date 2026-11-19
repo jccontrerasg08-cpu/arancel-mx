@@ -8,8 +8,6 @@ import hashlib
 from importlib.resources import files
 import json
 from pathlib import Path
-
-import requests
 import shutil
 from typing import TYPE_CHECKING, Any, Sequence
 from urllib.parse import urlparse
@@ -370,7 +368,7 @@ def capture_official_inputs(
         "national_notes",
     )
 
-    discovery_registry = {key: registry[key] for key in ("ligie", "nico", "nom_annex")}
+    discovery_registry = {key: registry[key] for key in ("ligie", "nico")}
     discovered = discover_registered_sources(
         discovery_registry,
         client,
@@ -383,7 +381,13 @@ def capture_official_inputs(
     nom_annex_sources: tuple[CapturedOfficialSource, ...] = ()
     nom_annex_error: str | None = None
     try:
-        nom_annex_document = select_current_document(discovered, "nom_annex", "nom_annex_rules")
+        # Discovered on its own so that nothing about the annex can abort the tariff discovery above.
+        annex_discovered = discover_registered_sources(
+            {"nom_annex": registry["nom_annex"]},
+            client,
+            timeout_s=config.timeout_s,
+        )
+        nom_annex_document = select_current_document(annex_discovered, "nom_annex", "nom_annex_rules")
         nom_annex_sources = (
             _capture_source(
                 dataset_key="nom_annex",
@@ -397,7 +401,7 @@ def capture_official_inputs(
                 session=client,
             ),
         )
-    except (ValueError, requests.RequestException, OSError) as exc:
+    except Exception as exc:  # noqa: BLE001 - ancillary source: any failure is recorded, never raised
         nom_annex_error = f"{type(exc).__name__}: {exc}"[:300]
 
     sources = (

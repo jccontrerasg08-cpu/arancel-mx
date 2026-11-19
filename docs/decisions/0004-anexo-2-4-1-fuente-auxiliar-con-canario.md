@@ -22,3 +22,13 @@ La 0003 hizo del anexo una fuente obligatoria: si SNICE cambiaba el archivo o su
 - Un cambio de formato en SNICE ya no detiene la actualización diaria; se entera uno por el canario y, mientras se arregla el lector, el sitio muestra el aviso en lugar de callar.
 - Se acepta que, con el arancel cambiando y el anexo roto, un release salga sin NOM por unos días. Es visible, está marcado y es reversible al corregir el lector.
 - El lector sigue siendo la única puerta: ninguna fila de NOM entra al release sin pasar la validación.
+
+## Limitación conocida y opciones (pendiente de decisión del propietario)
+
+Si el anexo no se puede leer **el mismo día en que cambia otra fuente** (una edición nueva de LIGIE o NICO, o el registro de tasas), el release sale sin NOM aunque el anterior sí las tuviera, y la ficha muestra el aviso de «no disponible» hasta que el anexo vuelva a leerse. Opciones:
+
+1. **Aceptarlo** (lo implementado). Simple y visible; el costo es que la ficha pierde las NOM por unos días en ese caso. El canario avisa con un día de ventaja.
+2. **Arrastrar las NOM del release anterior** cuando el anexo falle: el pipeline descargaría el DuckDB anterior (≈38 MB), copiaría sus filas de `nom_requirement` con su fuente original y lo marcaría `carried_forward` con la fecha de origen. La ficha seguiría mostrando NOM, indicando de qué edición vienen. Es más robusto, pero añade una descarga y un nuevo estado a la superficie pública.
+3. **Retener el release** hasta que el anexo se lea. Descartada: frena la actualización del arancel.
+
+Recomendación: la opción 2 si se esperan muchas visitas y se quiere que la NOM no desaparezca nunca; requiere validar el cambio en el contrato público (`annex.status = carried_forward`).
