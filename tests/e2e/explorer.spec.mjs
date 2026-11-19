@@ -366,6 +366,20 @@ test('shows no NOM block when the release has no regulations file or the fractio
   await expect(page.getByTestId('nom-requirements')).toHaveCount(0);
 });
 
+test('says plainly when the annex has no NOM for the fraction, and when the release lacks annex data', async ({ page }) => {
+  await serveStaticRecords(page, [{ code: '85171301', description: 'Teléfonos móviles.', igi: 'Ex.' }]);
+  await page.route('**/data/v1/sections.json', (route) => route.fulfill({ json: [{ numeral: 'XVI', title: 'Máquinas y aparatos', chapter_from: '84', chapter_to: '85' }] }));
+  await page.route('**/data/v1/regulations/85.json', (route) => route.fulfill({ json: { annex: { status: 'available' }, sources: {}, requirements: [] } }));
+  await page.goto('/app/record/85171301');
+  await expect(page.getByTestId('nom-none')).toContainText(/no aparece en el Anexo 2\.4\.1/i);
+  await expect(page.getByTestId('nom-requirements')).toHaveCount(0);
+
+  await page.route('**/data/v1/regulations/85.json', (route) => route.fulfill({ json: { annex: { status: 'unavailable' }, sources: {}, requirements: [] } }));
+  await page.goto('/app/record/85171301');
+  await expect(page.getByTestId('nom-unavailable')).toContainText(/no están disponibles en esta release/i);
+  await expect(page.getByTestId('nom-none')).toHaveCount(0);
+});
+
 test('looks up a complete tariff fraction with evidence and a decision tree', async ({ page }) => {
   await page.goto('/app');
   await page.getByTestId('search-input').fill('8517.13.01');

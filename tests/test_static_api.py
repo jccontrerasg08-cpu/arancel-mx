@@ -204,7 +204,7 @@ def test_browser_client_matches_python_reference(exported, tmp_path: Path) -> No
 
 def test_regulations_file_is_empty_for_a_release_without_nom_requirements(exported, tmp_path: Path) -> None:
     payload = json.loads((tmp_path / "static/regulations/01.json").read_text(encoding="utf-8"))
-    assert payload == {"sources": {}, "requirements": []}
+    assert payload == {"annex": {"status": "not_included"}, "sources": {}, "requirements": []}
 
 
 def test_regulations_file_carries_requirements_scope_and_source(tmp_path: Path) -> None:
@@ -259,3 +259,29 @@ def test_regulations_file_carries_requirements_scope_and_source(tmp_path: Path) 
     assert set(payload["sources"]) == {source_id}
     assert payload["sources"][source_id]["sha256"]
     assert verify_static_api(tmp_path / "static") == []
+
+
+@pytest.mark.parametrize(
+    ("metadata", "expected"),
+    [
+        ({"nom_annex": {"status": "available"}}, "available"),
+        ({"nom_annex": {"status": "unavailable", "reason": "x"}}, "unavailable"),
+        ({}, "not_included"),
+        ({"nom_annex": {"status": "weird"}}, "not_included"),
+    ],
+)
+def test_regulations_file_reports_whether_the_release_carries_the_annex(tmp_path: Path, metadata: dict, expected: str) -> None:
+    import duckdb
+
+    duckdb_path = create_consumer_duckdb(tmp_path / "fixture.duckdb")
+    with duckdb.connect(str(duckdb_path)) as connection:
+        connection.execute("UPDATE dataset_release SET release_metadata_json = ?", [json.dumps(metadata)])
+    build_static_api(
+        duckdb_path,
+        tmp_path / "static",
+        dataset_tag="data-2026.08.11",
+        release_verified=True,
+        generated_at=datetime(2026, 8, 11, tzinfo=timezone.utc),
+    )
+    payload = json.loads((tmp_path / "static/regulations/01.json").read_text(encoding="utf-8"))
+    assert payload["annex"] == {"status": expected}

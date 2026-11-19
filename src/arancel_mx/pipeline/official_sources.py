@@ -79,6 +79,8 @@ class OfficialInputSnapshot:
     registry_version: str
     registry_sha256: str
     reconciliation: ReconciliationReport
+    # Why Annex 2.4.1 could not be captured; None when it was (or when a caller did not look for it).
+    nom_annex_error: str | None = None
 
 
 def _isoformat_or_none(value: object) -> str | None:
@@ -366,7 +368,7 @@ def capture_official_inputs(
         "national_notes",
     )
 
-    discovery_registry = {key: registry[key] for key in ("ligie", "nico", "nom_annex")}
+    discovery_registry = {key: registry[key] for key in ("ligie", "nico")}
     discovered = discover_registered_sources(
         discovery_registry,
         client,
@@ -374,9 +376,36 @@ def capture_official_inputs(
     )
     ligie_document = select_current_document(discovered, "ligie", "ligie_snapshot")
     nico_document = select_current_document(discovered, "nico", "nico_snapshot")
-    nom_annex_document = select_current_document(discovered, "nom_annex", "nom_annex_rules")
+
+    # Annex 2.4.1 is ancillary: its failure must not stop the tariff release (decision 0004).
+    nom_annex_sources: tuple[CapturedOfficialSource, ...] = ()
+    nom_annex_error: str | None = None
+    try:
+        # Discovered on its own so that nothing about the annex can abort the tariff discovery above.
+        annex_discovered = discover_registered_sources(
+            {"nom_annex": registry["nom_annex"]},
+            client,
+            timeout_s=config.timeout_s,
+        )
+        nom_annex_document = select_current_document(annex_discovered, "nom_annex", "nom_annex_rules")
+        nom_annex_sources = (
+            _capture_source(
+                dataset_key="nom_annex",
+                document_role="nom_annex_rules",
+                title=nom_annex_document.title or _filename(nom_annex_document.source_url),
+                url=nom_annex_document.source_url,
+                entry=registry["nom_annex"],
+                discovery_url=nom_annex_document.discovery_url,
+                discovery_kind=nom_annex_document.discovery_kind,
+                config=config,
+                session=client,
+            ),
+        )
+    except Exception as exc:  # noqa: BLE001 - ancillary source: any failure is recorded, never raised
+        nom_annex_error = f"{type(exc).__name__}: {exc}"[:300]
 
     sources = (
+        *nom_annex_sources,
         _capture_source(
             dataset_key="ligie",
             document_role="ligie_snapshot",
@@ -396,17 +425,6 @@ def capture_official_inputs(
             entry=registry["nico"],
             discovery_url=nico_document.discovery_url,
             discovery_kind=nico_document.discovery_kind,
-            config=config,
-            session=client,
-        ),
-        _capture_source(
-            dataset_key="nom_annex",
-            document_role="nom_annex_rules",
-            title=nom_annex_document.title or _filename(nom_annex_document.source_url),
-            url=nom_annex_document.source_url,
-            entry=registry["nom_annex"],
-            discovery_url=nom_annex_document.discovery_url,
-            discovery_kind=nom_annex_document.discovery_kind,
             config=config,
             session=client,
         ),
@@ -449,6 +467,7 @@ def capture_official_inputs(
         registry_version=registry_version,
         registry_sha256=registry_sha256,
         reconciliation=reconciliation,
+        nom_annex_error=nom_annex_error,
     )
 
 

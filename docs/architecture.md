@@ -70,7 +70,7 @@ Cada permiso de escritura vive sólo en el job que lo necesita. `tests/test_work
 | `records/{hs2}.json` | Todos los registros vigentes del capítulo, con el mismo modelo que `/v1/lookup`. Resuelve `lookup`, `ficha`, `parent` y `children`. |
 | `provenance/{hs2}.json` | Fuentes del capítulo y enlaces código → fuente. |
 | `national-notes/{hs2}.json` | Notas nacionales del capítulo. |
-| `regulations/{hs2}.json` | NOM por fracción del Anexo 2.4.1 de las reglas de comercio exterior: `requirements` (una por NOM y fracción, con numeral, sección, acotación literal, NICO y página del anexo) y `sources` (documento oficial con URL y SHA-256). Vacío en releases sin el anexo. |
+| `regulations/{hs2}.json` | NOM por fracción del Anexo 2.4.1 de las reglas de comercio exterior: `requirements` (una por NOM y fracción, con numeral, sección, acotación literal, NICO y página del anexo) y `sources` (documento oficial con URL y SHA-256). `annex.status` indica si el release pudo leer el anexo (decisión 0004). Vacío en releases sin el anexo. |
 | `search-index.json` | Pares `[código, descripción normalizada]` para `search` y `suggest`. |
 | `manifest.json` | SHA-256 y tamaño de cada archivo, más la release de origen. |
 

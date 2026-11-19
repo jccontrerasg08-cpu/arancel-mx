@@ -469,7 +469,18 @@ def test_schema_v2_manifest_replay_returns_no_change_without_candidate(tmp_path)
     assert not (second.work_dir / "candidate" / "arancel_mx.duckdb").exists()
 
 
-def test_offline_build_stores_nom_requirements_from_the_annex(tmp_path):
+def relax_annex_floors(monkeypatch):
+    """The one-row fixture annex is far below the floors that guard the real annex."""
+    from arancel_mx.parsers import nom_annex
+
+    monkeypatch.setattr(nom_annex, "_MIN_RECORDS", 1)
+    monkeypatch.setattr(nom_annex, "_MIN_FRACTIONS", 1)
+    monkeypatch.setattr(nom_annex, "_MIN_SECTIONS", 0)
+    monkeypatch.setattr(nom_annex, "_REQUIRED_NUMERALS", (1,))
+
+
+def test_offline_build_stores_nom_requirements_from_the_annex(tmp_path, monkeypatch):
+    relax_annex_floors(monkeypatch)
     build_config = config(tmp_path, "annex")
 
     build_official_dataset(build_config, session=fake_session())
@@ -483,3 +494,120 @@ def test_offline_build_stores_nom_requirements_from_the_annex(tmp_path):
         ).fetchall()
 
     assert rows == [("01012101", 1, "import_noms", "NOM-EM-004-SAG/ZOO-2020", 2)]
+
+
+def session_without_annex():
+    session = fake_session()
+    html = session.responses[SNICE_DOCS_INDEX].text.replace(f'<a href="{ANNEX_URL}">Acuerdo reglas 20260520</a>', "")
+    session.responses[SNICE_DOCS_INDEX] = Response(SNICE_DOCS_INDEX, html.encode("utf-8"), "text/html", html)
+    return session
+
+
+def test_an_unreadable_annex_does_not_stop_the_release_and_is_recorded(tmp_path):
+    degraded = config(tmp_path, "degraded")
+
+    summary = build_official_dataset(degraded, session=fake_session())
+
+    manifest = json.loads((degraded.output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert summary["status"] == "built"
+    assert manifest["nom_annex"]["status"] == "unavailable"
+    assert "numeral" in manifest["nom_annex"]["reason"]
+    with duckdb.connect(str(degraded.output_dir / "arancel_mx.duckdb"), read_only=True) as connection:
+        assert connection.execute("SELECT COUNT(*) FROM arancel_mx_nom_requirements").fetchone()[0] == 0
+
+
+def test_a_missing_annex_is_recorded_with_the_reason_and_the_release_still_builds(tmp_path):
+    degraded = config(tmp_path, "missing")
+
+    summary = build_official_dataset(degraded, session=session_without_annex())
+
+    manifest = json.loads((degraded.output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert summary["status"] == "built"
+    assert summary["source_count"] == 7
+    assert manifest["nom_annex"]["status"] == "unavailable"
+    assert "nom_annex" in manifest["nom_annex"]["reason"]
+
+
+def test_a_readable_annex_is_recorded_as_available_with_its_counts(tmp_path, monkeypatch):
+    relax_annex_floors(monkeypatch)
+    ok = config(tmp_path, "available")
+
+    build_official_dataset(ok, session=fake_session())
+
+    manifest = json.loads((ok.output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["nom_annex"]["status"] == "available"
+    assert manifest["nom_annex"]["records"] == 1
+    assert manifest["nom_annex"]["fractions"] == 1
+
+
+def test_an_annex_that_stops_working_keeps_the_previous_release_when_nothing_else_changed(tmp_path, monkeypatch):
+    with monkeypatch.context() as relaxed:
+        relax_annex_floors(relaxed)
+        first = config(tmp_path, "with-annex")
+        build_official_dataset(first, session=fake_session())
+    previous_manifest = json.loads((first.output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert previous_manifest["nom_annex"]["status"] == "available"
+    second = config(tmp_path, "annex-broken")
+
+    result = build_official_dataset(second, session=session_without_annex(), previous_manifest=previous_manifest)
+
+    assert result["status"] == "no_change"
+    assert not second.output_dir.exists()
+
+
+def test_an_annex_that_stops_working_does_not_hide_a_real_source_change(tmp_path, monkeypatch):
+    with monkeypatch.context() as relaxed:
+        relax_annex_floors(relaxed)
+        first = config(tmp_path, "baseline")
+        build_official_dataset(first, session=fake_session())
+    previous_manifest = json.loads((first.output_dir / "manifest.json").read_text(encoding="utf-8"))
+    for identity in previous_manifest["source_identity"]:
+        if identity["dataset_key"] == "ligie":
+            identity["sha256"] = "0" * 64
+    second = config(tmp_path, "tariff-changed")
+
+    result = build_official_dataset(second, session=session_without_annex(), previous_manifest=previous_manifest)
+
+    assert result["status"] == "built"
+    manifest = json.loads((second.output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["nom_annex"]["status"] == "unavailable"
+
+
+def test_an_annex_that_becomes_readable_again_rebuilds_even_if_no_source_changed(tmp_path, monkeypatch):
+    degraded = config(tmp_path, "degraded-first")
+    build_official_dataset(degraded, session=fake_session())
+    previous_manifest = json.loads((degraded.output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert previous_manifest["nom_annex"]["status"] == "unavailable"
+    relax_annex_floors(monkeypatch)
+    recovered = config(tmp_path, "recovered")
+
+    result = build_official_dataset(recovered, session=fake_session(), previous_manifest=previous_manifest)
+
+    assert result["status"] == "built"
+    manifest = json.loads((recovered.output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["nom_annex"]["status"] == "available"
+
+
+def test_a_corrupt_annex_pdf_does_not_stop_the_release(tmp_path):
+    session = fake_session()
+    session.responses[ANNEX_URL] = Response(ANNEX_URL, b"%PDF-1.7\nnot really a pdf", "application/pdf")
+    degraded = config(tmp_path, "corrupt")
+
+    summary = build_official_dataset(degraded, session=session)
+
+    manifest = json.loads((degraded.output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert summary["status"] == "built"
+    assert manifest["nom_annex"]["status"] == "unavailable"
+
+
+def test_an_unexpected_error_while_capturing_the_annex_does_not_stop_the_release(tmp_path):
+    session = fake_session()
+    del session.responses[ANNEX_URL]  # the fake raises AssertionError, a type no handler lists by name
+    degraded = config(tmp_path, "capture-error")
+
+    summary = build_official_dataset(degraded, session=session)
+
+    manifest = json.loads((degraded.output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert summary["status"] == "built"
+    assert manifest["nom_annex"]["status"] == "unavailable"
+    assert "unexpected network URL" in manifest["nom_annex"]["reason"]

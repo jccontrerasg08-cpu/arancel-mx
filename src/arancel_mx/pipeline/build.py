@@ -94,6 +94,11 @@ def _validated_release_metadata(release: Mapping[str, object]) -> dict[str, obje
     nico_coverage = metadata.get("nico_coverage")
     if nico_coverage is not None and not isinstance(nico_coverage, Mapping):
         raise ValueError("release.release_metadata.nico_coverage must be an object")
+    nom_annex = metadata.get("nom_annex")
+    if nom_annex is not None and (
+        not isinstance(nom_annex, Mapping) or nom_annex.get("status") not in {"available", "unavailable"}
+    ):
+        raise ValueError("release.release_metadata.nom_annex must be an object with a known status")
     rate_validity = metadata.get("rate_validity")
     if rate_validity is not None and not isinstance(rate_validity, Mapping):
         raise ValueError("release.release_metadata.rate_validity must be an object")
@@ -986,7 +991,7 @@ def _export_arancel_release(
         manifest[field] = release_metadata[field]
     if "nico_coverage" in release_metadata:
         manifest["nico_coverage"] = release_metadata["nico_coverage"]
-    for optional in ("rate_validity", "description_corrections", "rate_corrections"):
+    for optional in ("rate_validity", "description_corrections", "rate_corrections", "nom_annex"):
         if optional in release_metadata:
             manifest[optional] = release_metadata[optional]
 

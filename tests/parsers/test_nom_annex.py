@@ -191,3 +191,41 @@ def test_locate_annex_pages_fails_when_the_annex_is_missing(tmp_path) -> None:
     document.save(pdf)
     with pytest.raises(AnnexParseError, match="heading not found"):
         locate_annex_pages(pdf)
+
+
+def test_a_requirement_repeated_in_the_annex_is_kept_once_with_every_nico_line() -> None:
+    page = Page().line(91, 20, "1.-").header()
+    page.line(91, 120, "0101.21.01").line(161, 120, "Caballos").line(380, 120, "NOM-EM-004-SAG/ZOO-2020")
+    page.line(140, 140, "00").line(161, 140, "Primero")
+    page.line(91, 160, "0101.21.01").line(161, 160, "Caballos").line(380, 160, "NOM-EM-004-SAG/ZOO-2020")
+    page.line(140, 180, "01").line(161, 180, "Segundo")
+    rows = requirement_rows(parse_annex([page.page()]), source_document_id="doc-annex")
+    assert len(rows) == 1
+    assert [line["nico"] for line in rows[0]["nico"]] == ["00", "01"]
+
+
+def test_the_span_keeps_a_page_where_the_next_annex_starts_midway_and_trims_it(tmp_path) -> None:
+    import pymupdf
+
+    from arancel_mx.parsers.nom_annex import locate_annex_span, read_annex_pages
+
+    document = pymupdf.open()
+    first = document.new_page()
+    first.insert_text((91, 30), "Cola del anexo anterior")
+    first.insert_text((91, 200), "ANEXO 2.4.1")
+    first.insert_text((91, 220), "1.-")
+    second = document.new_page()
+    second.insert_text((91, 30), "texto del anexo")
+    second.insert_text((91, 400), "ANEXO 2.5.1")
+    second.insert_text((91, 430), "Texto del siguiente anexo")
+    pdf = tmp_path / "mitad.pdf"
+    document.save(pdf)
+
+    span = locate_annex_span(pdf)
+
+    assert (span.first_page, span.last_page) == (1, 2)
+    assert span.start_y > 150 and span.end_y is not None and span.end_y > 300
+    pages = read_annex_pages(pdf, span.first_page, span.last_page, start_y=span.start_y, end_y=span.end_y)
+    texts = {word[4] for page in pages for word in page.words}
+    assert "anterior" not in texts and "siguiente" not in texts
+    assert "texto" in texts and "1.-" in texts

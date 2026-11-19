@@ -3,6 +3,7 @@
 - **Estado:** propuesta (pendiente de revisión del propietario)
 - **Fecha:** 2026-11-13
 - **Responsable:** @jccontrerasg08-cpu
+- **Nota:** el punto de fuente obligatoria fue modificado por la [decisión 0004](0004-anexo-2-4-1-fuente-auxiliar-con-canario.md).
 
 ## Contexto
 

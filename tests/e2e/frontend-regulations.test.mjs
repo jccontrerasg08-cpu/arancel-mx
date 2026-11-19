@@ -10,8 +10,10 @@ const RECORDS = [
   { code: '8517130100', level: 'nico10', parent_code: '85171301' },
   { code: '851713', level: 'hs6', parent_code: '8517' },
   { code: '85171491', level: 'fraccion8', parent_code: '851714' },
+  { code: '85171999', level: 'fraccion8', parent_code: '851719' },
 ];
 const REGULATIONS = {
+  annex: { status: 'available' },
   sources: { annex: { source_url: 'https://example.test/anexo.pdf', sha256: 'a'.repeat(64) } },
   requirements: [
     { fraction8: '85171301', numeral: 1, nom: 'NOM-208-SCFI-2016', scope: 'Únicamente: radiocomunicación', annex_page: 600, source_document_id: 'annex' },
@@ -44,11 +46,19 @@ test('a NICO shows the NOM of its fraction and a heading shows none', async () =
 
 test('a release without the regulations file yields no requirements instead of failing', async () => {
   const result = await api(null).regulations('85171301');
-  assert.deepEqual(result, { requirements: [], sources: {} });
+  assert.deepEqual(result, { requirements: [], sources: {}, annex: null });
 });
 
 test('the derived resource is reachable through request() and does not alter the ficha', async () => {
   const client = api(REGULATIONS);
   assert.equal((await client.request('/v1/codes/85171301/regulations')).requirements.length, 2);
   assert.deepEqual(Object.keys(await client.ficha('85171301')).sort(), ['children', 'formatted_code', 'hierarchy', 'record', 'section']);
+});
+
+test('the annex status of the release travels with the answer, even for a fraction with no NOM', async () => {
+  const none = await api(REGULATIONS).regulations('85171999');
+  assert.deepEqual(none.requirements, []);
+  assert.equal(none.annex.status, 'available');
+  const unavailable = await api({ annex: { status: 'unavailable' }, sources: {}, requirements: [] }).regulations('85171301');
+  assert.deepEqual(unavailable, { requirements: [], sources: {}, annex: { status: 'unavailable' } });
 });
