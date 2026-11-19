@@ -87,7 +87,21 @@ _NOM_SOURCE_SELECT = """
 """
 
 
-def _regulations(connection: Any, chapter: str) -> dict[str, Any]:
+def _annex_status(connection: Any) -> dict[str, Any]:
+    """Whether the release carries Annex 2.4.1 data, from its release metadata (decision 0004)."""
+
+    row = connection.execute("SELECT release_metadata_json FROM dataset_release LIMIT 1").fetchone()
+    try:
+        metadata = json.loads(str(row[0])) if row and row[0] else {}
+    except ValueError:
+        metadata = {}
+    annex = metadata.get("nom_annex") if isinstance(metadata, dict) else None
+    if not isinstance(annex, dict) or annex.get("status") not in {"available", "unavailable"}:
+        return {"status": "not_included"}
+    return {"status": annex["status"]}
+
+
+def _regulations(connection: Any, chapter: str, annex: dict[str, Any]) -> dict[str, Any]:
     """NOM requirements of one chapter and the documents they come from (empty without them)."""
 
     requirements = nom_requirements(connection, chapter)
@@ -106,6 +120,7 @@ def _regulations(connection: Any, chapter: str) -> dict[str, Any]:
         )
         sources[source_id] = {field: dumped[field] for field in _SOURCE_FIELDS}
     return {
+        "annex": annex,
         "sources": sources,
         "requirements": [
             {
@@ -173,6 +188,7 @@ def build_static_api(
             )
 
         chapters = sorted(by_chapter)
+        annex = _annex_status(connection)
         for chapter in chapters:
             files[f"records/{chapter}.json"] = _dump(by_chapter[chapter])
             files[f"provenance/{chapter}.json"] = _dump(
@@ -185,7 +201,7 @@ def build_static_api(
                 ]
             )
             files[f"regulations/{chapter}.json"] = _dump(
-                _regulations(connection, chapter)
+                _regulations(connection, chapter, annex)
             )
 
     files["chapters.json"] = _dump(

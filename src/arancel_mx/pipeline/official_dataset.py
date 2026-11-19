@@ -14,10 +14,12 @@ from arancel_mx.parsers.documents import (
     parse_national_notes_html,
 )
 from arancel_mx.parsers.nom_annex import (
+    AnnexParseError,
     locate_annex_pages,
     parse_annex,
     read_annex_pages,
     requirement_rows,
+    validate_annex_structure,
 )
 from arancel_mx.parsers.profiles import resolve_workbook_profile
 from arancel_mx.parsers.workbooks import (
@@ -198,6 +200,47 @@ def _required_source(
     return matches[0]
 
 
+def _read_nom_annex(
+    snapshot: OfficialInputSnapshot,
+) -> tuple[list[dict[str, object]], dict[str, object]]:
+    """NOM rows from the captured annex, or no rows and why. Never raises: the annex is ancillary."""
+    source = next(
+        (
+            item
+            for item in snapshot.sources
+            if (item.dataset_key, item.document_role) == ("nom_annex", "nom_annex_rules")
+        ),
+        None,
+    )
+    if source is None:
+        reason = getattr(snapshot, "nom_annex_error", None) or "the annex was not captured"
+        return [], {"status": "unavailable", "reason": reason}
+    source_id = str(source.source_document["source_document_id"])
+    try:
+        first_page, last_page = locate_annex_pages(source.capture.path)
+        parsed = parse_annex(
+            read_annex_pages(source.capture.path, first_page, last_page), first_page=first_page
+        )
+        summary = validate_annex_structure(parsed)
+    except (AnnexParseError, OSError, ValueError) as exc:
+        return [], {
+            "status": "unavailable",
+            "reason": f"{type(exc).__name__}: {exc}"[:300],
+            "source_document_id": source_id,
+        }
+    return requirement_rows(parsed, source_document_id=source_id), {
+        "status": "available",
+        "source_document_id": source_id,
+        "first_page": first_page,
+        "last_page": last_page,
+        **summary,
+    }
+
+
+def _without_annex(identities: Any) -> list[Any]:
+    return [item for item in identities if item.dataset_key != "nom_annex"]
+
+
 def _release_metadata(
     config: OfficialDatasetConfig,
     snapshot: OfficialInputSnapshot,
@@ -206,6 +249,7 @@ def _release_metadata(
     rate_validity: Mapping[str, object],
     description_corrections: Mapping[str, object],
     rate_corrections: Mapping[str, object],
+    nom_annex: Mapping[str, object] | None = None,
 ) -> dict[str, object]:
     metadata: dict[str, object] = {
         "rate_validity": dict(rate_validity),
@@ -235,6 +279,8 @@ def _release_metadata(
         ],
         "source_history": source_identity_history(snapshot.identities, previous_manifest),
     }
+    if nom_annex is not None:
+        metadata["nom_annex"] = dict(nom_annex)
     return metadata
 
 
@@ -311,10 +357,18 @@ def build_official_dataset(
     # Only a successfully reconciled current snapshot is eligible for no-change.
     snapshot = capture_official_inputs(config, session=session)
     legacy_baseline = previous_manifest is not None and _is_legacy_baseline(previous_manifest)
+    nom_requirements, nom_annex_status = _read_nom_annex(snapshot)
     if previous_manifest is not None and not legacy_baseline:
         previous_identity = source_identity_from_manifest(previous_manifest)
+        current_identity = snapshot.identities
+        if nom_annex_status["status"] != "available":
+            # An annex that cannot be read must not by itself replace a release that has NOM data
+            # with one that has none (decision 0004): compare everything but the annex, and keep the
+            # previous release when nothing else moved. The canary reports the failure.
+            current_identity = tuple(_without_annex(current_identity))
+            previous_identity = tuple(_without_annex(previous_identity))
         if not source_identity_changed(
-            snapshot.identities, previous_identity
+            current_identity, previous_identity
         ) and not _rate_registry_changed(previous_manifest):
             return _no_change_result(
                 config,
@@ -382,16 +436,6 @@ def build_official_dataset(
     classifications = assemble_classifications(hs_rows, fraction_rows, nico_rows)
     description_corrections = apply_description_corrections(classifications)
 
-    annex_source = _required_source(snapshot, "nom_annex", "nom_annex_rules")
-    first_page, last_page = locate_annex_pages(annex_source.capture.path)
-    nom_requirements = requirement_rows(
-        parse_annex(
-            read_annex_pages(annex_source.capture.path, first_page, last_page),
-            first_page=first_page,
-        ),
-        source_document_id=str(annex_source.source_document["source_document_id"]),
-    )
-
     source_documents = sorted(
         (item.source_document for item in snapshot.sources),
         key=lambda row: str(row["source_document_id"]),
@@ -410,6 +454,7 @@ def build_official_dataset(
             rate_validity,
             description_corrections,
             rate_corrections,
+            nom_annex_status,
         ),
     }
     candidate = config.work_dir / "candidate" / "arancel_mx.duckdb"

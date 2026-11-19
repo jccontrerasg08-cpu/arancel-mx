@@ -492,3 +492,42 @@ def locate_annex_pages(pdf_path: Path) -> tuple[int, int]:
     if first is None:
         raise AnnexParseError("Annex 2.4.1 heading not found in the document")
     raise AnnexParseError("the annex after 2.4.1 was not found, so its last page is unknown")
+
+
+# Floors well below the edition of 2 April 2026 (3,085 records, 2,530 fractions, 14 sections in
+# numeral 3). They catch a truncated or mis-read annex, not the normal drift between editions.
+_MIN_RECORDS = 1500
+_MIN_FRACTIONS = 1200
+_MIN_SECTIONS = 8
+_REQUIRED_NUMERALS = (1, 3)
+
+
+def annex_summary(parse: AnnexParse) -> dict[str, object]:
+    """Counts that describe a reading of the annex, for release metadata and canaries."""
+    return {
+        "records": len(parse.records),
+        "fractions": len({record.fraction for record in parse.records}),
+        "requirements": sum(len(record.requirements) for record in parse.records),
+        "numerals": sorted({record.numeral for record in parse.records}),
+        "sections": sorted(
+            {record.section for record in parse.records if record.numeral == 3 and record.section}
+        ),
+    }
+
+
+def validate_annex_structure(parse: AnnexParse) -> dict[str, object]:
+    """Raise unless the reading has the shape of the annex; return its summary."""
+    summary = annex_summary(parse)
+    numerals = {record.numeral for record in parse.records}
+    sections = {record.section for record in parse.records if record.numeral == 3 and record.section}
+    fractions = len({record.fraction for record in parse.records})
+    missing = [numeral for numeral in _REQUIRED_NUMERALS if numeral not in numerals]
+    if missing:
+        raise AnnexParseError(f"the annex reading has no records for numeral(s) {missing}")
+    if len(parse.records) < _MIN_RECORDS or fractions < _MIN_FRACTIONS:
+        raise AnnexParseError(
+            f"the annex reading is too small: {len(parse.records)} records, {fractions} fractions"
+        )
+    if len(sections) < _MIN_SECTIONS:
+        raise AnnexParseError(f"numeral 3 has only {len(sections)} sections")
+    return summary

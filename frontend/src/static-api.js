@@ -119,12 +119,12 @@ export function createStaticApi({ base = DEFAULT_DATA_BASE, fetchImpl = globalTh
   const regulations = async (code, signal) => {
     const record = await lookup(code, signal);
     const fraction = record.code.slice(0, 8);
-    if (record.code.length < 8) return { requirements: [], sources: {} };
-    const data = (await json(`regulations/${record.code.slice(0, 2)}.json`, signal)) || { sources: {}, requirements: [] };
+    if (record.code.length < 8) return { requirements: [], sources: {}, annex: null };
+    const data = (await json(`regulations/${record.code.slice(0, 2)}.json`, signal)) || { sources: {}, requirements: [], annex: null };
     const requirements = data.requirements.filter((item) => item.fraction8 === fraction);
     const sources = {};
     for (const item of requirements) sources[item.source_document_id] = data.sources[item.source_document_id];
-    return { requirements, sources };
+    return { requirements, sources, annex: data.annex ?? null };
   };
 
   const provenance = async (code, signal) => {
