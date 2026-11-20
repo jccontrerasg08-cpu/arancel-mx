@@ -238,7 +238,7 @@ def test_every_public_route_is_served_by_vercel_and_the_local_app() -> None:
     shell = next(item["source"] for item in rewrites if item["destination"] == "/")
     shell_pattern = re.compile(f"^{shell}$")
     dedicated = {item["source"] for item in rewrites}
-    served_locally = set(_MARKETING_PAGES) | {"/app", "/trade"}
+    served_locally = set(_MARKETING_PAGES) | {"/app", "/trade", "/trade-analytics"}
     redirected = {item["source"]: item["destination"] for item in config["redirects"]}
 
     for route in _public_routes():
