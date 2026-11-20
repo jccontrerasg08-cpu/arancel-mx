@@ -19,7 +19,8 @@ def test_vercel_deploys_the_standalone_public_site() -> None:
     assert "crons" not in config
     assert "functions" not in config
     assert config["rewrites"] == [
-        {"source": "/trade", "destination": "/trade.html"},\n        {"source": "/trade-analytics", "destination": "/trade-analytics.html"},
+        {"source": "/trade", "destination": "/trade.html"},
+        {"source": "/trade-analytics", "destination": "/trade-analytics.html"},
         {
             "source": "/data/v1/:path*",
             "destination": "https://jccontrerasg08-cpu.github.io/arancel-mx/v1/:path*",
