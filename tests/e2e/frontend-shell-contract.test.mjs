@@ -33,7 +33,7 @@ test('the trade desk uses the same header, logo and palette as the explorer', as
   const [html, css] = await Promise.all([read('src/arancel_mx/api/static/site/trade.html'), read('src/arancel_mx/api/static/site/assets/trade-desk.css')]);
   assert.match(html, /class="trade-brand"[^>]*><img src="\/assets\/arancel-mx-logo\.svg"/);
   assert.doesNotMatch(html, /trade-topline|trade-brand__seal/);
-  assert.match(css, /--trade-teal: #008a5b;/);
+  assert.match(css, /--trade-teal: #00855a;/);
   assert.match(css, /--trade-ink: #102a43;/);
 });
 
@@ -100,4 +100,18 @@ test('every public page has its own tab title and description, not the site defa
   for (const phrase of ['Explora una referencia arancelaria sin perder su camino.', 'Explore a tariff reference without losing its path.']) {
     assert.ok(pages.includes(phrase) && copy.includes(phrase), `the explorer hero and its tab title say the same thing (${phrase})`);
   }
+});
+
+test('white text on the brand green meets WCAG AA (4.5:1) in the app and the trade desk', async () => {
+  const luminance = (hex) => {
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const contrastWithWhite = (hex) => 1.05 / (luminance(hex) + 0.05);
+  const [styles, trade] = await Promise.all([read('frontend/src/styles.css'), read('src/arancel_mx/api/static/site/assets/trade-desk.css')]);
+  const brand = /:root \{[^}]*--brand:(#[0-9a-f]{6})/i.exec(styles)?.[1];
+  const teal = /--trade-teal: (#[0-9a-f]{6});/i.exec(trade)?.[1];
+  assert.ok(brand && teal, 'both greens are declared');
+  assert.ok(contrastWithWhite(brand) >= 4.5, `--brand ${brand} is ${contrastWithWhite(brand).toFixed(2)}:1 against white`);
+  assert.ok(contrastWithWhite(teal) >= 4.5, `--trade-teal ${teal} is ${contrastWithWhite(teal).toFixed(2)}:1 against white`);
 });
