@@ -13,6 +13,13 @@ from arancel_mx.parsers.documents import (
     parse_ligie_pdf_hierarchy,
     parse_national_notes_html,
 )
+from arancel_mx.parsers.nom_annex import (
+    locate_annex_span,
+    parse_annex,
+    read_annex_pages,
+    requirement_rows,
+    validate_annex_structure,
+)
 from arancel_mx.parsers.profiles import resolve_workbook_profile
 from arancel_mx.parsers.workbooks import (
     parse_ligie_workbook,
@@ -31,6 +38,7 @@ from arancel_mx.pipeline.rate_corrections import (
     load_rate_corrections,
 )
 from arancel_mx.pipeline.nico_coverage import nico_coverage_report
+from arancel_mx.pipeline.nom_carry import carry_forward
 from arancel_mx.pipeline.official_sources import (
     OfficialInputSnapshot,
     capture_official_inputs,
@@ -192,6 +200,56 @@ def _required_source(
     return matches[0]
 
 
+def _read_nom_annex(
+    snapshot: OfficialInputSnapshot,
+) -> tuple[list[dict[str, object]], dict[str, object]]:
+    """NOM rows from the captured annex, or no rows and why. Never raises: the annex is ancillary."""
+    source = next(
+        (
+            item
+            for item in snapshot.sources
+            if (item.dataset_key, item.document_role) == ("nom_annex", "nom_annex_rules")
+        ),
+        None,
+    )
+    if source is None:
+        reason = getattr(snapshot, "nom_annex_error", None) or "the annex was not captured"
+        return [], {"status": "unavailable", "reason": reason}
+    source_id = str(source.source_document["source_document_id"])
+    try:
+        span = locate_annex_span(source.capture.path)
+        parsed = parse_annex(
+            read_annex_pages(
+                source.capture.path,
+                span.first_page,
+                span.last_page,
+                start_y=span.start_y,
+                end_y=span.end_y,
+            ),
+            first_page=span.first_page,
+        )
+        summary = validate_annex_structure(parsed)
+    except Exception as exc:  # noqa: BLE001 - ancillary source: a corrupt PDF or odd layout must not stop the release
+        return [], {
+            "status": "unavailable",
+            "reason": f"{type(exc).__name__}: {exc}"[:300],
+            "source_document_id": source_id,
+        }
+    rows = requirement_rows(parsed, source_document_id=source_id)
+    return rows, {
+        "status": "available",
+        "source_document_id": source_id,
+        "rows": len(rows),
+        "first_page": span.first_page,
+        "last_page": span.last_page,
+        **summary,
+    }
+
+
+def _without_annex(identities: Any) -> list[Any]:
+    return [item for item in identities if item.dataset_key != "nom_annex"]
+
+
 def _release_metadata(
     config: OfficialDatasetConfig,
     snapshot: OfficialInputSnapshot,
@@ -200,6 +258,7 @@ def _release_metadata(
     rate_validity: Mapping[str, object],
     description_corrections: Mapping[str, object],
     rate_corrections: Mapping[str, object],
+    nom_annex: Mapping[str, object] | None = None,
 ) -> dict[str, object]:
     metadata: dict[str, object] = {
         "rate_validity": dict(rate_validity),
@@ -229,6 +288,8 @@ def _release_metadata(
         ],
         "source_history": source_identity_history(snapshot.identities, previous_manifest),
     }
+    if nom_annex is not None:
+        metadata["nom_annex"] = dict(nom_annex)
     return metadata
 
 
@@ -290,6 +351,7 @@ def build_official_dataset(
     config: OfficialDatasetConfig,
     session: Any | None = None,
     previous_manifest: Mapping[str, object] | None = None,
+    previous_nom: Mapping[str, object] | None = None,
 ) -> dict[str, object]:
     """Build one verified release, or stop after a reconciled no-change check."""
     if config.timeout_s <= 0:
@@ -305,11 +367,27 @@ def build_official_dataset(
     # Only a successfully reconciled current snapshot is eligible for no-change.
     snapshot = capture_official_inputs(config, session=session)
     legacy_baseline = previous_manifest is not None and _is_legacy_baseline(previous_manifest)
+    nom_requirements, nom_annex_status = _read_nom_annex(snapshot)
     if previous_manifest is not None and not legacy_baseline:
         previous_identity = source_identity_from_manifest(previous_manifest)
-        if not source_identity_changed(
-            snapshot.identities, previous_identity
-        ) and not _rate_registry_changed(previous_manifest):
+        current_identity = snapshot.identities
+        if nom_annex_status["status"] != "available":
+            # An annex that cannot be read must not by itself replace a release that has NOM data
+            # with one that has none (decision 0004): compare everything but the annex, and keep the
+            # previous release when nothing else moved. The canary reports the failure.
+            current_identity = tuple(_without_annex(current_identity))
+            previous_identity = tuple(_without_annex(previous_identity))
+        previous_annex = previous_manifest.get("nom_annex")
+        annex_recovered = (
+            nom_annex_status["status"] == "available"
+            and isinstance(previous_annex, Mapping)
+            and previous_annex.get("status") in {"unavailable", "carried_forward"}
+        )
+        if (
+            not source_identity_changed(current_identity, previous_identity)
+            and not _rate_registry_changed(previous_manifest)
+            and not annex_recovered
+        ):
             return _no_change_result(
                 config,
                 previous_manifest,
@@ -376,10 +454,23 @@ def build_official_dataset(
     classifications = assemble_classifications(hs_rows, fraction_rows, nico_rows)
     description_corrections = apply_description_corrections(classifications)
 
-    source_documents = sorted(
-        (item.source_document for item in snapshot.sources),
-        key=lambda row: str(row["source_document_id"]),
-    )
+    source_documents = [item.source_document for item in snapshot.sources]
+    if nom_annex_status["status"] != "available":
+        # Decision 0004, option 2: keep the previous release's NOM, unchanged and still attributed to the
+        # annex edition they were read from, rather than dropping them for a day the annex is unreadable.
+        carried = carry_forward(
+            previous_nom,
+            None if legacy_baseline else previous_manifest,
+            {str(row["code"]) for row in fraction_rows},
+            str(nom_annex_status.get("reason", "")),
+        )
+        if carried is not None:
+            nom_requirements, carried_documents, nom_annex_status = carried
+            known_ids = {str(row["source_document_id"]) for row in source_documents}
+            source_documents.extend(
+                row for row in carried_documents if str(row["source_document_id"]) not in known_ids
+            )
+    source_documents = sorted(source_documents, key=lambda row: str(row["source_document_id"]))
     release = {
         "dataset_version": config.dataset_version,
         "schema_version": config.schema_version,
@@ -394,6 +485,7 @@ def build_official_dataset(
             rate_validity,
             description_corrections,
             rate_corrections,
+            nom_annex_status,
         ),
     }
     candidate = config.work_dir / "candidate" / "arancel_mx.duckdb"
@@ -406,6 +498,7 @@ def build_official_dataset(
             rate_rows,
             release,
             national_notes=national_notes,
+            nom_requirements=nom_requirements,
         )
         level_counts = dict(
             connection.execute(

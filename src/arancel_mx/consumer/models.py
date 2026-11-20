@@ -65,6 +65,21 @@ class NationalNote:
 
 
 @dataclass(frozen=True, slots=True)
+class NomRequirement:
+    """One NOM that Annex 2.4.1 of the SE rules lists for a fraction, with its limits."""
+
+    fraction8: str
+    numeral: int
+    numeral_meaning: str
+    section: str | None
+    nom: str
+    scope: str | None
+    nico: tuple[dict[str, str], ...]
+    annex_page: int
+    source_document_id: str
+
+
+@dataclass(frozen=True, slots=True)
 class ProvenanceRecord:
     source_document_id: str
     role: str

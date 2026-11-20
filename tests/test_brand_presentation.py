@@ -236,26 +236,11 @@ def test_brand_css_uses_stable_asset_selectors_not_generated_bundle_classes() ->
     assert "index-" not in styles
 
 
-def test_v1_sunset_runbook_tracks_the_remaining_vercel_runtime() -> None:
-    """Keep the deprecated runtime documented until it is removed."""
+def test_v1_runbook_records_what_was_retired_and_what_is_left_to_do() -> None:
+    """Keep the retirement record explicit about the manual steps that remain outside the repository."""
     runbook = _read("docs/operations/v1-sunset.md")
-    for fragment in (
-        "Neon",
-        "/v1/meta",
-        "/readyz",
-        "Vercel: metadatos, búsqueda, ficha y evidencia activa",
-        "ARANCEL_MX_DATABASE_DATABASE_URL",
-        "api/_vendor",
-        "api/_runtime.py",
-        "python3.13",
-        "requirements/vercel.txt",
-        "--require-hashes",
-        "requirements.txt",
-        "maxDuration",
-    ):
+    for fragment in ("Neon", "CRON_SECRET", "ARANCEL_MX_DATABASE_URL", "/data/v1", "Revertir"):
         assert fragment in runbook, fragment
-    assert "installCommand" not in runbook
-
 
 def test_architecture_doc_records_frontend_cache_and_bridge_boundaries() -> None:
     """Keep the stable-asset and bridge contracts in the canonical architecture doc."""
