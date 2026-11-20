@@ -405,3 +405,18 @@ h1,h2,h3 { text-wrap:balance; }
 .trade-analytics__bars small { color:var(--muted); font-size:.78rem; }
 .trade-analytics__bars output { font-family:monospace; text-align:right; }
 @media (max-width:600px) { .trade-analytics__bars li { grid-template-columns:1fr; gap:.45rem; } .trade-analytics__bars output { text-align:left; } }
+.trade-analytics__ranking { max-width:62rem; }
+.trade-analytics__bars .data-bar { width:100%; }
+.trade-analytics__bars output { color:var(--ink); font:600 .9rem 'DM Mono',monospace; }
+.trade-analytics__filter { display:grid; gap:.4rem; max-width:22rem; }
+.trade-analytics__filter label { color:var(--ink); font-size:.9rem; font-weight:700; }
+.trade-analytics__filter select { min-height:2.8rem; border:1px solid var(--line); border-radius:.5rem; background:var(--surface); color:var(--ink); padding:.5rem .7rem; font:inherit; }
+.trade-analytics__filter select:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
+.trade-analytics__ranking + .trade-analytics__ranking,.trade-analytics__ranking + .source-strip { margin-top:0; }
+.data-section .stat-tiles { grid-template-columns:repeat(3,minmax(0,1fr)); max-width:48rem; }
+.example-note { max-width:54rem; margin-block:0 2rem; border-left:3px solid var(--brand); }
+.example-note code { overflow-wrap:anywhere; font-family:'DM Mono',monospace; font-size:.85rem; }
+.source-strip { max-width:62rem; margin-top:2rem; }
+.source-strip ul { margin:.6rem 0 0; padding-left:1.2rem; color:var(--muted); }
+.source-strip li + li { margin-top:.4rem; }
+@media (max-width:600px) { .data-section .stat-tiles { grid-template-columns:1fr; } }

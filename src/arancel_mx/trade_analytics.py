@@ -6,7 +6,7 @@ import re
 import unicodedata
 from collections import defaultdict
 from datetime import datetime, timezone
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal
 from pathlib import Path
 from typing import Iterable, Mapping, TypedDict
 
@@ -21,7 +21,7 @@ HEADER_ALIASES = {
 
 
 class Aggregate(TypedDict):
-    value: Decimal
+    value: Decimal | None
     rows: int
     confidential_rows: int
     unavailable_value_rows: int
@@ -37,19 +37,51 @@ def _columns(fieldnames: Iterable[str | None]) -> dict[str, str]:
     return {target: normalized[alias] for target, aliases in HEADER_ALIASES.items() for alias in aliases if alias in normalized}
 
 
+_MISSING = {"NA", "N/A", "N/D", "NULL", "-", "C"}
+_PLAIN = re.compile(r"^\d+$")
+_POINT = re.compile(r"^(\d+)\.(\d+)$")
+_COMMA = re.compile(r"^(\d+),(\d+)$")
+_GROUPED_US = re.compile(r"^\d{1,3}(?:,\d{3})+(?:\.\d+)?$")
+_GROUPED_ES = re.compile(r"^\d{1,3}(?:\.\d{3})+(?:,\d+)?$")
+
+
+def _ambiguous_single_separator(integer: str, fraction: str) -> bool:
+    """`1.234` / `1,234` may be one thousand two hundred thirty-four or 1.234."""
+    return len(fraction) == 3 and re.fullmatch(r"[1-9]\d{0,2}", integer) is not None
+
+
 def parse_decimal(value: object) -> Decimal | None:
-    text = str(value or "").strip().replace(" ", "")
-    if not text or text.upper() in {"NA", "N/D", "NULL", "-", "C"}:
+    """Parse a published number strictly.
+
+    Returns None only for empty values or official missing markers. Raises ValueError for
+    anything malformed or ambiguous (e.g. ``1,234`` or ``1.234``) instead of guessing.
+    """
+    text = re.sub(r"\s+", "", str(value if value is not None else "")).replace("$", "")
+    if not text or text.upper() in _MISSING:
         return None
-    text = text.replace("$", "")
-    if "," in text and "." in text:
-        text = text.replace(",", "") if text.rfind(".") > text.rfind(",") else text.replace(".", "").replace(",", ".")
-    elif "," in text:
-        text = text.replace(",", ".") if text.count(",") == 1 and len(text.rsplit(",", 1)[1]) <= 2 else text.replace(",", "")
-    try:
-        return Decimal(text)
-    except InvalidOperation:
-        return None
+    sign, digits = ("-", text[1:]) if text[0] == "-" else ("", text.lstrip("+"))
+    ambiguous = ValueError(f"ambiguous or malformed number: {value!r}")
+    if _PLAIN.match(digits):
+        canonical = digits
+    elif match := _POINT.match(digits):
+        if _ambiguous_single_separator(*match.groups()):
+            raise ambiguous
+        canonical = digits
+    elif match := _COMMA.match(digits):
+        if _ambiguous_single_separator(*match.groups()):
+            raise ambiguous
+        canonical = digits.replace(",", ".")
+    elif _GROUPED_US.match(digits):
+        if "." not in digits and digits.count(",") == 1:
+            raise ambiguous
+        canonical = digits.replace(",", "")
+    elif _GROUPED_ES.match(digits):
+        if "," not in digits and digits.count(".") == 1:
+            raise ambiguous
+        canonical = digits.replace(".", "").replace(",", ".")
+    else:
+        raise ambiguous
+    return Decimal(sign + canonical)
 
 
 def is_confidential(status: object) -> bool:
@@ -61,34 +93,39 @@ def canonical_row(row: Mapping[str, object], columns: Mapping[str, str]) -> dict
     def get(name: str) -> str:
         return str(row.get(columns[name], "")).strip() if name in columns else ""
 
+    def number(name: str) -> Decimal | None:
+        try:
+            return parse_decimal(row.get(columns[name], "")) if name in columns else None
+        except ValueError as error:
+            raise ValueError(f"column {columns[name]}: {error}") from error
+
     year, month = get("year"), get("month")
     period = f"{int(year):04d}-{int(month):02d}" if year.isdigit() and month.isdigit() else ""
     return {
         "period": period, "flow": get("flow") or "Sin especificar", "partner": get("partner") or "No especificado",
         "tariff": re.sub(r"\D", "", get("tariff")), "unit": get("unit"), "status": get("status"),
-        "quantity": parse_decimal(row.get(columns.get("quantity", ""))),
-        "value_mxn": parse_decimal(row.get(columns.get("value_mxn", ""))),
-        "value_usd": parse_decimal(row.get(columns.get("value_usd", ""))),
+        "quantity": number("quantity"), "value_mxn": number("value_mxn"), "value_usd": number("value_usd"),
     }
 
 
 def _new_aggregate() -> Aggregate:
-    return {"value": Decimal(0), "rows": 0, "confidential_rows": 0, "unavailable_value_rows": 0}
+    return {"value": None, "rows": 0, "confidential_rows": 0, "unavailable_value_rows": 0}
 
 
 def _serialize(groups: Mapping[tuple[str, ...], Aggregate], labels: tuple[str, ...], value_key: str) -> list[dict[str, object]]:
     result: list[dict[str, object]] = []
     for key, state in groups.items():
         item: dict[str, object] = dict(zip(labels, key))
-        item[value_key] = float(state["value"])
+        total = state["value"]
+        item[value_key] = None if total is None else float(total)
         item["rows"] = state["rows"]
         item["confidential_rows"] = state["confidential_rows"]
         item["unavailable_value_rows"] = state["unavailable_value_rows"]
         result.append(item)
 
-    def sort_key(item: dict[str, object]) -> tuple[str, float]:
+    def sort_key(item: dict[str, object]) -> tuple[str, bool, float]:
         value = item.get(value_key)
-        return str(item.get("period", "")), -(float(value) if isinstance(value, (int, float)) else -1.0)
+        return str(item.get("period", "")), value is None, -(float(value) if isinstance(value, (int, float)) else 0.0)
 
     return sorted(result, key=sort_key)
 
@@ -115,14 +152,14 @@ def build_snapshot(rows: Iterable[Mapping[str, object]], *, source_url: str = ""
             if not isinstance(amount, Decimal):
                 state["unavailable_value_rows"] += 1
             else:
-                state["value"] += amount
+                state["value"] = (state["value"] or Decimal(0)) + amount
     now = retrieved_at or datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
     partner_rows = _serialize(partners, ("flow", "partner"), "value_usd")
     tariff_rows = _serialize(tariffs, ("flow", "tariff_group"), "value_usd")
 
-    def rank_key(item: dict[str, object]) -> tuple[str, float]:
+    def rank_key(item: dict[str, object]) -> tuple[str, bool, float]:
         value = item.get("value_usd")
-        return str(item["flow"]), -(float(value) if isinstance(value, (int, float)) else 0.0)
+        return str(item["flow"]), value is None, -(float(value) if isinstance(value, (int, float)) else 0.0)
     return {
         "schema_version": "1.0.0", "status": "ready" if records else "not_loaded", "generated_at": now,
         "source": {"publisher": "INEGI", "dataset": "Balanza Comercial de Mercancías de México (BCMM)", "url": source_url},
