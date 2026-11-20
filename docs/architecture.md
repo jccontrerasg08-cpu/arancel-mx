@@ -28,7 +28,7 @@ DOF / SIDOF               ┘            → publicación                       
 | Paquete Python | PyPI `arancel-mx` | Cliente `Dataset`, CLI y servidor FastAPI opcional. | Vigente. |
 | Frontend | Vercel (`src/arancel_mx/api/static/site/`) | Sitio y explorador; leen `/data/v1`, que Vercel reescribe hacia Pages. | Vigente. |
 | Vigilancia del DOF | job `notify` del pipeline | Consulta SIDOF y abre un issue por instrumento candidato. | Vigente. |
-| API dinámica `/v1` | Funciones de Vercel sobre Neon | Proyección operacional de la release. | **Deprecada**, se retira el 2027-01-31. |
+| API dinámica `/v1` | (retirada) | Funciones de Vercel sobre Neon. | **Retirada el 2026-11-20**; `/v1/meta`, `/v1/sections` y `/v1/chapters` redirigen a `/data/v1`, el resto a `/documentation`. |
 
 ## 2. Flujo de una publicación
 
@@ -95,7 +95,6 @@ Un archivo por capítulo en lugar de uno por código reduce el árbol de unos 13
 | `certification/` | Certificación del bundle y del DuckDB antes de publicar. | `bundle.py`, `consumer.py`, `reports.py` |
 | `consumer/` | Cliente público: descarga, caché, verificación, consultas, CLI de consumo, errores tipados. | `dataset.py`, `manager.py`, `release_api.py`, `query.py`, `integrity.py`, `cli.py` |
 | `api/` | Servidor FastAPI de sólo lectura; también sirve el sitio y `/data/v1`. | `app.py`, `routes.py`, `models.py`, `config.py` |
-| `operational/` | Proyección en Neon para la API dinámica de Vercel. **Se retira con `/v1`.** | `sync.py`, `query.py` |
 | `benchmark/` | Evaluación offline de recuperación sobre un conjunto etiquetado. | `classification.py` |
 
 Las fronteras de importación (por ejemplo, que `consumer` no dependa de `pipeline`) se prueban en `tests/test_import_boundaries.py`.
@@ -113,7 +112,6 @@ Las fronteras de importación (por ejemplo, que `consumer` no dependa de `pipeli
 | `build_official_dataset.py` | Build local de punta a punta, sin comparar contra la release anterior |
 | `capture_instrument_research.py` | Captura local de instrumentos para el [inventario](research/ligie-instrument-inventory.md) |
 | `dependency_compatibility_probe.py` | Pruebas de compatibilidad de dependencias |
-| `promote_operational_release.py` | Promoción manual a Neon; se retira con `/v1` |
 | `build-frontend.mjs`, `sync-frontend-static.mjs` | `npm run build:frontend` y mantenimiento del frontend |
 
 ## 6. Workflows (`.github/workflows/`)
@@ -162,7 +160,7 @@ Si un cambio rompe uno de estos puntos, el cambio está mal aunque las pruebas l
 |---|---|
 | Protección de `main`, inmutabilidad de releases, permisos de Actions | [Configuración de GitHub](operations/github-settings.md) |
 | GitHub Pages desde la rama `gh-pages` | Settings → Pages (se crea con la primera publicación) |
-| Variables de Neon y `CRON_SECRET` | Vercel, sólo hasta el retiro de `/v1` |
+| Variables de Neon y `CRON_SECRET` | Vercel; sin uso desde el retiro de `/v1`, se pueden borrar (ver [retiro](operations/v1-sunset.md)) |
 
 ## Relacionado
 
