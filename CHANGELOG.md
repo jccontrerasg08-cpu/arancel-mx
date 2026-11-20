@@ -4,7 +4,17 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ## [Unreleased]
 
+### Removed
+
+- The dynamic `/v1` API on Vercel, its weekly Neon sync cron and the `arancel_mx.operational` projection (`api/operational.py`, `api/sync_operational.py`, `scripts/promote_operational_release.py`, the `operational` extra and the `psycopg` pins), retired on 2026-11-20 ahead of the announced 2027-01-31 sunset. `/v1/meta`, `/v1/sections` and `/v1/chapters` redirect permanently to `/data/v1`; any other `/v1/...` redirects to `/documentation`; `/healthz` and `/readyz` no longer exist on Vercel. The static data API under `/data/v1` and the FastAPI server in `arancel_mx.api` are unchanged. The Neon database and the Vercel variables are no longer used and can be deleted (see `docs/operations/v1-sunset.md`).
+
+### Fixed
+
+- The "rate in force since" date of about 450 fractions is now the first day of the unbroken run of the same rate, instead of the date of the latest decree. When a staged-rates decree (published earlier) also mentions the fraction, the run is followed back through the later temporary and modifying decrees that governed every day in between, and stops where the base text or a different rate governs. For example, 5208.19.91 (35 % since the 2024 decree, renewed on 24 April 2026) now reads "since 2024-04-23", not "since 2026-04-24". The legal registry version changed so the next daily run publishes the corrected dates.
+
 ### Changed
+
+- When the SE foreign-trade annex cannot be read on a day the tariff changes, the release carries the NOM rows of the previous release unchanged (`nom_annex.status = carried_forward`, with `carried_from`), only after proving that release's database against its manifest SHA-256, and the fraction page says which release they come from (decision 0004).
 
 - The import estimator (`/trade`) absorbs the standalone `calculadora-aranceles-mx` calculator. A new "Moneda, DTA de cuota fija y cuota compensatoria" section lets you capture the customs value in USD with a declared exchange rate (the result is always MXN), use a fixed-amount DTA instead of a rate, add a fixed-amount IEPS, and declare a compensatory quota; the quota and the fixed IEPS enter the IVA base, and the quota is itemized only when declared. Everything defaults to the previous behavior (MXN, ad valorem DTA), and `tests/e2e/trade-tools.spec.mjs` reproduces the calculator's numeric vectors.
 - A DOF publication that sets rates now opens with a table of the chapters it touches, largest first: how many fractions of each chapter it sets and with which IGI values (for example, the December 29, 2025 reform sets 146 fractions of chapter 72, 126 of them at 35 %). A button on each row filters the fraction table below to that chapter. It summarizes the instrument and does not compare with the earlier rate, which the dataset does not hold.
