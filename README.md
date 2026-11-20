@@ -45,8 +45,8 @@ El paquete Python y el dataset se versionan por separado. Una versión del paque
 
 | Superficie | Versión / estado |
 |---|---|
-| Paquete Python | **0.3.7** (PyPI) |
-| Dataset público | **data-2026.11.09** (release verificada) |
+| Paquete Python | [última versión en PyPI](https://pypi.org/project/arancel-mx/) |
+| Dataset público | [última release verificada](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest) (`data-YYYY.MM.DD`, tag inmutable) |
 | Hub web | [arancel-mx.vercel.app](https://arancel-mx.vercel.app/) |
 | Cobertura NICO | El dataset no inventa NICO. Si el código no está publicado, `lookup` y `ficha` fallan cerrado. |
 
@@ -63,9 +63,9 @@ SHA-256 del DuckDB / CSV / JSON según SHA256SUMS de la release
 Ejemplo reproducible:
 
 ```bash
-arancel-mx data download --dataset data-2026.11.09
-arancel-mx data verify --dataset data-2026.11.09
-arancel-mx lookup 85171301 --dataset data-2026.11.09
+arancel-mx data download --dataset data-YYYY.MM.DD
+arancel-mx data verify --dataset data-YYYY.MM.DD
+arancel-mx lookup 85171301 --dataset data-YYYY.MM.DD
 ```
 
 Ejemplos en el repositorio: [examples/quickstart_duckdb.py](examples/quickstart_duckdb.py) (API Python) y [examples/sql_chapter_audit.py](examples/sql_chapter_audit.py) (SQL de sólo lectura sobre el DuckDB local).

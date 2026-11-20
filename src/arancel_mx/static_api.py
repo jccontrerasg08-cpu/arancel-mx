@@ -41,6 +41,7 @@ from arancel_mx.consumer.query import (
     SUGGEST_DISCLAIMER,
     format_code,
     national_notes,
+    nom_requirements,
     normalize_code,
 )
 
@@ -77,6 +78,72 @@ def _dump(value: Any) -> bytes:
 
 def _model(value: Any) -> Any:
     return value.model_dump(mode="json")
+
+
+_NOM_SOURCE_SELECT = """
+    SELECT source_document_id, authority, publication_venue, title, source_url,
+           sha256, published_at, effective_from, effective_to
+    FROM source_document WHERE source_document_id = ?
+"""
+
+
+def _annex_status(connection: Any) -> dict[str, Any]:
+    """Whether the release carries Annex 2.4.1 data, from its release metadata (decision 0004)."""
+
+    row = connection.execute("SELECT release_metadata_json FROM dataset_release LIMIT 1").fetchone()
+    try:
+        metadata = json.loads(str(row[0])) if row and row[0] else {}
+    except ValueError:
+        metadata = {}
+    annex = metadata.get("nom_annex") if isinstance(metadata, dict) else None
+    if not isinstance(annex, dict) or annex.get("status") not in {
+        "available",
+        "unavailable",
+        "carried_forward",
+    }:
+        return {"status": "not_included"}
+    status: dict[str, Any] = {"status": annex["status"]}
+    if annex["status"] == "carried_forward" and annex.get("carried_from"):
+        status["carried_from"] = str(annex["carried_from"])
+    return status
+
+
+def _regulations(connection: Any, chapter: str, annex: dict[str, Any]) -> dict[str, Any]:
+    """NOM requirements of one chapter and the documents they come from (empty without them)."""
+
+    requirements = nom_requirements(connection, chapter)
+    sources: dict[str, dict[str, Any]] = {}
+    for source_id in sorted({item.source_document_id for item in requirements}):
+        row = connection.execute(_NOM_SOURCE_SELECT, [source_id]).fetchone()
+        if row is None:
+            raise QueryError(f"NOM requirement cites an unknown source: {source_id}")
+        dumped = _model(
+            ProvenanceResponse(
+                source_document_id=source_id,
+                role="nom_annex",
+                is_primary=True,
+                **{field: value for field, value in zip(_SOURCE_FIELDS, row[1:])},
+            )
+        )
+        sources[source_id] = {field: dumped[field] for field in _SOURCE_FIELDS}
+    return {
+        "annex": annex,
+        "sources": sources,
+        "requirements": [
+            {
+                "fraction8": item.fraction8,
+                "numeral": item.numeral,
+                "numeral_meaning": item.numeral_meaning,
+                "section": item.section,
+                "nom": item.nom,
+                "scope": item.scope,
+                "nico": list(item.nico),
+                "annex_page": item.annex_page,
+                "source_document_id": item.source_document_id,
+            }
+            for item in requirements
+        ],
+    }
 
 
 def build_static_api(
@@ -128,6 +195,7 @@ def build_static_api(
             )
 
         chapters = sorted(by_chapter)
+        annex = _annex_status(connection)
         for chapter in chapters:
             files[f"records/{chapter}.json"] = _dump(by_chapter[chapter])
             files[f"provenance/{chapter}.json"] = _dump(
@@ -138,6 +206,9 @@ def build_static_api(
                     _model(NationalNoteResponse.from_note(note))
                     for note in national_notes(connection, chapter)
                 ]
+            )
+            files[f"regulations/{chapter}.json"] = _dump(
+                _regulations(connection, chapter, annex)
             )
 
     files["chapters.json"] = _dump(

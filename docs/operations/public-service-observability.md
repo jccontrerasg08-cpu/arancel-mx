@@ -46,3 +46,7 @@ Separa red, caché del CDN y tamaño del archivo antes de atribuir una diferenci
 - [Proceso de release](../release-process.md#9-api-estática-en-github-pages)
 - [Consumo externo](../external-consumption.md)
 - [Configuración de GitHub](github-settings.md#7-github-pages)
+
+## Lighthouse semanal
+
+`.github/workflows/lighthouse-weekly.yml` (lunes 14:23 UTC, o a mano) ejecuta `scripts/lighthouse-check.mjs` contra `https://arancel-mx.vercel.app` (`/`, `/app`, `/learn`, `/trade`), escribe la tabla en el resumen del job y falla si **accesibilidad < 95, mejores prácticas < 90 o SEO < 95**. El rendimiento sólo se reporta: depende de la carga del runner, así que es una tendencia, no una puerta. Usa `lighthouse@12.8.2` fijado y el Chrome del runner; no añade acciones de terceros. Para cambiar de dominio, el script acepta `--base`.

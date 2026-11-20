@@ -3,8 +3,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import re
-import subprocess
-import sys
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -13,73 +11,14 @@ SITE = ROOT / "src" / "arancel_mx" / "api" / "static" / "site"
 
 def test_vercel_deploys_the_standalone_public_site() -> None:
     config = json.loads((ROOT / "vercel.json").read_text(encoding="utf-8"))
-    runtime_version = (ROOT / ".python-version").read_text(encoding="utf-8").strip()
 
     assert config["framework"] is None
     assert config["outputDirectory"] == "src/arancel_mx/api/static/site"
     assert "installCommand" not in config
-    assert config["buildCommand"].startswith(f"python{runtime_version} -m pip install ")
+    assert "buildCommand" not in config
+    assert "crons" not in config
+    assert "functions" not in config
     assert config["rewrites"] == [
-        {
-            "source": "/healthz",
-            "destination": "/api/operational?resource=health",
-        },
-        {
-            "source": "/v1",
-            "destination": "/api/operational?resource=api",
-        },
-        {
-            "source": "/v1/meta",
-            "destination": "/api/operational?resource=meta",
-        },
-        {
-            "source": "/v1/search",
-            "destination": "/api/operational?resource=search",
-        },
-        {
-            "source": "/v1/suggest",
-            "destination": "/api/operational?resource=suggest",
-        },
-        {
-            "source": "/v1/ficha/:code",
-            "destination": "/api/operational?resource=ficha&code=:code",
-        },
-        {
-            "source": "/v1/lookup/:code",
-            "destination": "/api/operational?resource=lookup&code=:code",
-        },
-        {
-            "source": "/v1/sections",
-            "destination": "/api/operational?resource=sections",
-        },
-        {
-            "source": "/v1/chapters",
-            "destination": "/api/operational?resource=chapters",
-        },
-        {
-            "source": "/v1/repository",
-            "destination": "/api/operational?resource=repository",
-        },
-        {
-            "source": "/v1/codes/:code/parent",
-            "destination": "/api/operational?resource=parent&code=:code",
-        },
-        {
-            "source": "/v1/codes/:code/children",
-            "destination": "/api/operational?resource=children&code=:code",
-        },
-        {
-            "source": "/v1/codes/:code/provenance",
-            "destination": "/api/operational?resource=provenance&code=:code",
-        },
-        {
-            "source": "/v1/chapters/:chapter/national-notes",
-            "destination": "/api/operational?resource=national-notes&chapter=:chapter",
-        },
-        {
-            "source": "/readyz",
-            "destination": "/api/operational?resource=ready",
-        },
         {"source": "/trade", "destination": "/trade.html"},
         {
             "source": "/data/v1/:path*",
@@ -88,6 +27,11 @@ def test_vercel_deploys_the_standalone_public_site() -> None:
         {"source": "/(app(?:/.*)?|chapters|changes(?:/.*)?|data|learn|moa|wiki|glossary|trade-context|documentation|trust|records|features|releases|release-analytics|community)", "destination": "/"},
     ]
     assert config["redirects"] == [
+        {"source": "/v1/meta", "destination": "/data/v1/meta.json", "permanent": True},
+        {"source": "/v1/sections", "destination": "/data/v1/sections.json", "permanent": True},
+        {"source": "/v1/chapters", "destination": "/data/v1/chapters.json", "permanent": True},
+        {"source": "/v1", "destination": "/documentation", "permanent": True},
+        {"source": "/v1/:path*", "destination": "/documentation", "permanent": True},
         {"source": "/docs", "destination": "/documentation", "permanent": True},
         {"source": "/docs/:path*", "destination": "/documentation", "permanent": True},
         {"source": "/pricing", "destination": "/releases", "permanent": True},
@@ -96,21 +40,6 @@ def test_vercel_deploys_the_standalone_public_site() -> None:
         {"source": "/moa-guide", "destination": "/moa", "permanent": True},
     ]
     assert "fastapicloud.dev" not in json.dumps(config)
-
-
-def test_vercel_functions_bundle_the_src_layout_with_bounded_runtime() -> None:
-    config = json.loads((ROOT / "vercel.json").read_text(encoding="utf-8"))
-
-    assert config["functions"] == {
-        "api/operational.py": {
-            "includeFiles": "{api/_vendor/**,src/arancel_mx/**}",
-            "maxDuration": 30,
-        },
-        "api/sync_operational.py": {
-            "includeFiles": "{api/_vendor/**,src/arancel_mx/**}",
-            "maxDuration": 60,
-        },
-    }
 
 
 def test_vercel_cache_policy_only_marks_hashed_bundles_immutable() -> None:
@@ -139,28 +68,6 @@ def test_vercel_cache_policy_only_marks_hashed_bundles_immutable() -> None:
             ],
         },
     ]
-
-
-def test_vercel_runtime_bootstrap_adds_the_src_layout_first() -> None:
-    probe = subprocess.run(
-        [
-            sys.executable,
-            "-S",
-            "-c",
-            (
-                "from api._runtime import ensure_project_source; "
-                "ensure_project_source(); "
-                "from pathlib import Path; import sys; "
-                "assert Path(sys.path[0]).resolve() == (Path.cwd() / 'src').resolve()"
-            ),
-        ],
-        cwd=ROOT,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-
-    assert probe.returncode == 0, probe.stderr
 
 
 def test_public_site_serves_the_react_shell_with_canonical_brand_assets() -> None:
@@ -230,23 +137,18 @@ def test_public_site_bridge_keeps_current_release_and_route_aliases() -> None:
     assert "node.nodeValue.replace(currentReleasePattern" not in bridge
 
 
-def test_v1_sunset_runbook_matches_the_deprecation_contract() -> None:
-    """Keep the /v1 retirement runbook aligned with vercel.json and decision 0002."""
+def test_v1_retirement_record_matches_vercel_json_and_decision_0002() -> None:
+    """Keep the /v1 retirement record aligned with vercel.json and decision 0002."""
 
     runbook = (ROOT / "docs" / "operations" / "v1-sunset.md").read_text(encoding="utf-8")
     vercel = json.loads((ROOT / "vercel.json").read_text(encoding="utf-8"))
-    v1_headers = {
-        header["key"]: header["value"]
-        for rule in vercel["headers"]
-        if rule["source"] == "/v1(.*)"
-        for header in rule["headers"]
-    }
 
-    assert v1_headers["Deprecation"] in runbook
-    assert v1_headers["Sunset"] in runbook
-    assert "2027-01-31" in runbook
+    assert "retirada" in runbook
+    assert "2026-11-20" in runbook
     assert "/data/v1/records/{hs2}.json" in runbook
-    assert "fastapicloud.dev" not in runbook
+    for source in ("/v1/meta", "/v1/sections", "/v1/chapters"):
+        assert source in runbook
+        assert any(rule["source"] == source for rule in vercel["redirects"])
 
 
 def test_trade_desk_publishes_a_visual_source_atlas_with_accessible_flags() -> None:
@@ -381,3 +283,20 @@ def test_trade_desk_links_only_real_pages_and_shares_the_site_groups() -> None:
         if href.startswith("/assets/") or href in {"/favicon.svg"}:
             continue
         assert href in {"/", "/app", "/learn", "/data", "/trust", "/trade", "/documentation", "/trade-context", "/moa", "/wiki", "/glossary", "/records", "/changes"}, f"unexpected internal link {href}"
+
+
+def test_every_public_page_shares_with_a_png_card_that_exists() -> None:
+    card = SITE / "assets" / "arancel-mx-social.png"
+    data = card.read_bytes()
+    assert data[:8] == b"\x89PNG\r\n\x1a\n"
+    assert int.from_bytes(data[16:20], "big") == 1280 and int.from_bytes(data[20:24], "big") == 640
+
+    pages = sorted(path for path in SITE.glob("*.html") if path.name != "404.html")
+    assert pages
+    for page in pages:
+        html = page.read_text(encoding="utf-8")
+        assert (
+            '<meta property="og:image" content="https://arancel-mx.vercel.app/assets/arancel-mx-social.png"' in html
+        ), page.name
+        assert '<meta name="twitter:card" content="summary_large_image"' in html, page.name
+        assert '<meta name="twitter:image" content="https://arancel-mx.vercel.app/assets/arancel-mx-social.png"' in html, page.name

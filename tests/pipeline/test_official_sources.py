@@ -29,6 +29,7 @@ PROMOTED_LIGIE_URL = (
     "https://www.snice.gob.mx/~oracle/SNICE_DOCS/FRACCIONESARANCELARIAS_20260820.XLSX"
 )
 NICO_URL = "https://www.snice.gob.mx/files/NICO-AGOSTO26-LIGIE_20260810-20260810.XLSX"
+ANNEX_URL = "https://www.snice.gob.mx/~oracle/SNICE_DOCS/ACUERDO-REGLAS-SE-02ABRIL2026-BIBLIOTECA_20260520-20260520.pdf"
 NOTES_URL = "https://dof.gob.mx/nota_detalle.php?codigo=5673161&fecha=02/12/2022"
 NOTES_HTML = (
     Path(__file__).parents[1] / "fixtures" / "dof" / "national-notes-2022.html"
@@ -79,6 +80,7 @@ def fake_session(*, promote_ligie_from_corpus=False):
     corpus_html = (
         f'<a href="{corpus_ligie_url}">Fracciones 20260820</a>'
         f'<a href="{NICO_URL}">NICO 20260810</a>'
+        f'<a href="{ANNEX_URL}">Acuerdo reglas 20260520</a>'
     )
     responses = {
         DIPUTADOS_URL: Response(
@@ -111,6 +113,7 @@ def fake_session(*, promote_ligie_from_corpus=False):
             PROMOTED_LIGIE_URL, b"promoted-ligie-workbook", XLSX_TYPE
         ),
         NICO_URL: Response(NICO_URL, b"nico-workbook", XLSX_TYPE),
+        ANNEX_URL: Response(ANNEX_URL, b"%PDF-1.7\nannex", "application/pdf"),
         NOTES_URL: Response(
             NOTES_URL, NOTES_HTML.encode("utf-8"), "text/html; charset=utf-8", NOTES_HTML
         ),
@@ -142,11 +145,12 @@ def test_capture_official_inputs_returns_registered_and_required_legal_roles(tmp
         ("dof_law_reform", "law_reform"),
         ("dof_tariff_decree", "tariff_decree"),
         ("national_notes", "national_notes"),
+        ("nom_annex", "nom_annex_rules"),
     }
-    assert snapshot.registry_version == "2026-08-17"
+    assert snapshot.registry_version == "2026-11-17"
     assert len(snapshot.registry_sha256) == 64
-    assert len(snapshot.identities) == 7
-    assert all(identity.registry_version == "2026-08-17" for identity in snapshot.identities)
+    assert len(snapshot.identities) == 8
+    assert all(identity.registry_version == "2026-11-17" for identity in snapshot.identities)
     assert snapshot.reconciliation.publishable is True
     assert snapshot.reconciliation.discrepancies == ()
 
@@ -228,6 +232,7 @@ def test_release_sources_preserve_required_dof_evidence(tmp_path):
         "ligie.xlsx",
         "national-notes.html",
         "nico.xlsx",
+        "nom-annex.pdf",
         "source_capture.json",
     ]
     captured = json.loads((source_dir / "source_capture.json").read_text(encoding="utf-8"))

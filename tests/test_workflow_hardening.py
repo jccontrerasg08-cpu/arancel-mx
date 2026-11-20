@@ -376,3 +376,10 @@ def test_jobs_with_write_permissions_do_not_restore_dependency_caches():
         for job_name, block in _job_blocks(text).items():
             if ": write" in block:
                 assert not re.search(r"^\s+cache:", block, re.MULTILINE), f"{name}:{job_name}"
+
+
+def test_the_nom_annex_canary_installs_the_pdf_reader():
+    text = (WORKFLOWS / "nom-annex-canary.yml").read_text(encoding="utf-8")
+    assert '-e ".[maintainer]"' in text or '-e ".[dev]"' in text, (
+        "the annex reader imports PyMuPDF, which only the maintainer and dev extras install"
+    )

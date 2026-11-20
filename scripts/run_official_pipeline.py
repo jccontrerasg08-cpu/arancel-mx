@@ -20,6 +20,7 @@ from arancel_mx.pipeline.official_dataset import (
     OfficialDatasetConfig,
     build_official_dataset,
 )
+from arancel_mx.pipeline.nom_carry import load_previous_nom
 from arancel_mx.sources.capture import atomic_write_json
 
 
@@ -85,6 +86,7 @@ def execute_pipeline(
     previous_manifest: Mapping[str, object] | None,
     result_path: Path,
     builder: Callable[..., dict[str, object]] = build_official_dataset,
+    previous_nom: Mapping[str, object] | None = None,
 ) -> tuple[int, dict[str, object]]:
     try:
         if previous_manifest is not None and previous_manifest.get(
@@ -104,7 +106,8 @@ def execute_pipeline(
             }
             atomic_write_json(Path(result_path), result)
             return 0, result
-        summary = builder(config, previous_manifest=previous_manifest)
+        extra = {"previous_nom": previous_nom} if previous_nom is not None else {}
+        summary = builder(config, previous_manifest=previous_manifest, **extra)
         status = summary.get("status")
         if status == "no_change":
             result = {
@@ -167,6 +170,14 @@ def _load_previous_manifest(path: Path | None) -> dict[str, object] | None:
     return value
 
 
+def _load_previous_nom(path: Path | None) -> dict[str, object] | None:
+    """The previous release's NOM rows; a missing or unreadable file only means nothing is carried."""
+    try:
+        return load_previous_nom(path)
+    except (OSError, ValueError):
+        return None
+
+
 def _provenance_from_environment() -> dict[str, str]:
     run_id = os.getenv("GITHUB_RUN_ID", "local")
     run_attempt = os.getenv("GITHUB_RUN_ATTEMPT", "local")
@@ -195,6 +206,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--generated-at")
     parser.add_argument("--timeout", type=float, default=60.0)
     parser.add_argument("--previous-manifest", type=Path)
+    parser.add_argument(
+        "--previous-nom",
+        type=Path,
+        help="NOM rows of the previous release (fetch_previous_release --nom-output); optional",
+    )
     parser.add_argument(
         "--result-path",
         type=Path,
@@ -229,6 +245,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         config = _config_from_args(args)
         previous_manifest = _load_previous_manifest(args.previous_manifest)
+        previous_nom = _load_previous_nom(args.previous_nom)
     except Exception as error:  # noqa: BLE001 - configuration must also emit diagnostics
         dataset_version = str(getattr(args, "dataset_version", "unknown"))
         result: dict[str, object] = {
@@ -252,6 +269,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         config,
         previous_manifest=previous_manifest,
         result_path=result_path,
+        previous_nom=previous_nom,
     )
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     return exit_code
