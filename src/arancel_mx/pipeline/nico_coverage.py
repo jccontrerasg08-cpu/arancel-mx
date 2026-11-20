@@ -5,19 +5,11 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping
 from typing import Any
 
-
-_POLICY_VERSION = "nico-coverage-v1"
-_TOTOABA_DOF_URL = "https://dof.gob.mx/nota_detalle.php?codigo=5763398&fecha=21/07/2025"
-_TOTOABA_DOI_DATE = "2025-07-21"
-_KNOWN_UPSTREAM_LAG_CODES = frozenset(
-    {
-        "03028902",
-        "03029904",
-        "03038902",
-        "03039904",
-        "03048901",
-        "03048902",
-    }
+from arancel_mx.domain.nico_lag import (
+    KNOWN_UPSTREAM_LAG_CODES,
+    POLICY_VERSION,
+    TOTOABA_EVIDENCE_URL,
+    TOTOABA_PUBLISHED_AT,
 )
 
 
@@ -50,9 +42,9 @@ def nico_coverage_report(
     nico_prefixes = {code[:8] for code in _rows_at_level(rows, "nico10")}
     missing = tuple(code for code in fractions if code not in nico_prefixes)
     known_upstream_lag = tuple(
-        code for code in missing if code in _KNOWN_UPSTREAM_LAG_CODES
+        code for code in missing if code in KNOWN_UPSTREAM_LAG_CODES
     )
-    unclassified = tuple(code for code in missing if code not in _KNOWN_UPSTREAM_LAG_CODES)
+    unclassified = tuple(code for code in missing if code not in KNOWN_UPSTREAM_LAG_CODES)
     inputs = tuple(
         sorted(
             (
@@ -69,7 +61,7 @@ def nico_coverage_report(
         raise ValueError("NICO coverage requires one LIGIE and one NICO source identity")
 
     return {
-        "policy_version": _POLICY_VERSION,
+        "policy_version": POLICY_VERSION,
         "source_identity": inputs,
         "counts": {
             "fraccion8": len(fractions),
@@ -79,8 +71,8 @@ def nico_coverage_report(
             "unclassified_missing": len(unclassified),
         },
         "known_upstream_lag": {
-            "evidence_url": _TOTOABA_DOF_URL,
-            "published_at": _TOTOABA_DOI_DATE,
+            "evidence_url": TOTOABA_EVIDENCE_URL,
+            "published_at": TOTOABA_PUBLISHED_AT,
             "codes": known_upstream_lag,
         },
         "unclassified_missing": unclassified,

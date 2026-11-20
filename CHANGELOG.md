@@ -58,6 +58,8 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Added
 
+- CLI: `arancel-mx data nico-coverage` reports current fractions without published NICO descendants. The known Totoaba lag (DOF 2025-07-21) and any other gaps come from one shared policy in `arancel_mx.domain.nico_lag`, also used by the pipeline. No synthetic NICO codes are created.
+- CLI: `arancel-mx data rate-validity` counts current fractions whose published `rate_effective_from` is present or absent, grouped by `validity_basis`. It does not invent dates.
 - English README parity: current-status table (linking to the latest release instead of a pinned one) and citation guidance. It does not advertise commands that are not on this branch.
 - `docs/hub-citation-guidance.md`: cite `dataset_tag`, `schema_version`, `release_verified`, and the SHA-256 from `SHA256SUMS`. Says what not to cite.
 - `docs/static-api-parity.md`: the three readers and the test that locks them together.
