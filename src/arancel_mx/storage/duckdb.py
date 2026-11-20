@@ -164,6 +164,19 @@ CREATE TABLE IF NOT EXISTS national_note_applicability (
     source_document_id VARCHAR NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS nom_requirement (
+    nom_requirement_id VARCHAR PRIMARY KEY,
+    fraction8 VARCHAR NOT NULL,
+    numeral INTEGER NOT NULL CHECK (numeral BETWEEN 1 AND 5),
+    numeral_meaning VARCHAR NOT NULL,
+    section VARCHAR,
+    nom VARCHAR NOT NULL,
+    scope VARCHAR,
+    nico_json VARCHAR NOT NULL,
+    annex_page INTEGER NOT NULL,
+    source_document_id VARCHAR NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS indicator_methodology (
     methodology_id VARCHAR PRIMARY KEY,
     title VARCHAR NOT NULL,

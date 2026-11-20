@@ -106,6 +106,27 @@ export function createStaticApi({ base = DEFAULT_DATA_BASE, fetchImpl = globalTh
     };
   };
 
+  // Client-side derived resource (no /v1 counterpart): the other fractions of the same heading, from the cached chapter file.
+  const siblings = async (code, signal) => {
+    const record = await lookup(code, signal);
+    if (record.level !== 'fraccion8') return [];
+    return (await chapterRecords(record.code.slice(0, 2), signal)).filter(
+      (item) => item.level === 'fraccion8' && item.code !== record.code && item.code.startsWith(record.code.slice(0, 4)),
+    );
+  };
+
+  // Client-side derived resource (no /v1 counterpart): the NOM that Annex 2.4.1 lists for one fraction (or the fraction of a NICO).
+  const regulations = async (code, signal) => {
+    const record = await lookup(code, signal);
+    const fraction = record.code.slice(0, 8);
+    if (record.code.length < 8) return { requirements: [], sources: {}, annex: null };
+    const data = (await json(`regulations/${record.code.slice(0, 2)}.json`, signal)) || { sources: {}, requirements: [], annex: null };
+    const requirements = data.requirements.filter((item) => item.fraction8 === fraction);
+    const sources = {};
+    for (const item of requirements) sources[item.source_document_id] = data.sources[item.source_document_id];
+    return { requirements, sources, annex: data.annex ?? null };
+  };
+
   const provenance = async (code, signal) => {
     const record = await lookup(code, signal);
     const data = (await json(`provenance/${record.code.slice(0, 2)}.json`, signal)) || { sources: {}, links: {} };
@@ -216,9 +237,11 @@ export function createStaticApi({ base = DEFAULT_DATA_BASE, fetchImpl = globalTh
     if (resource === 'codes' && value && sub === 'parent') return parent(value, signal);
     if (resource === 'codes' && value && sub === 'children') return children(value, signal);
     if (resource === 'codes' && value && sub === 'provenance') return provenance(value, signal);
+    if (resource === 'codes' && value && sub === 'siblings') return siblings(value, signal);
+    if (resource === 'codes' && value && sub === 'regulations') return regulations(value, signal);
     if (resource === 'repository') return repository(signal);
     throw new StaticApiError(404, `unknown path: ${path}`);
   };
 
-  return { request, lookup, ficha, parent, children, provenance, nationalNotes, search, suggest };
+  return { request, lookup, ficha, parent, children, siblings, regulations, provenance, nationalNotes, search, suggest };
 }

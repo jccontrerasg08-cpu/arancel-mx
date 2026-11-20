@@ -50,6 +50,23 @@ export const chaptersOf = (instrument) => [...new Set(instrumentCodes(instrument
 
 export const countFractions = (instrument) => instrumentCodes(instrument).length;
 
+// Fractions per chapter in one publication with the IGI values it sets, largest chapter first:
+// the shape of a reform at a glance. It summarizes the instrument; it does not compare with earlier rates.
+export function chapterSummary(instrument) {
+  const byChapter = new Map();
+  for (const row of instrument.rate_rows || []) {
+    const chapter = row[0].slice(0, 2);
+    const entry = byChapter.get(chapter) || { chapter, count: 0, rates: new Map() };
+    const label = rateLabel(row[1]);
+    entry.count += 1;
+    entry.rates.set(label, (entry.rates.get(label) || 0) + 1);
+    byChapter.set(chapter, entry);
+  }
+  return [...byChapter.values()]
+    .map(({ chapter, count, rates }) => ({ chapter, count, rates: [...rates].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])) }))
+    .sort((a, b) => b.count - a.count || a.chapter.localeCompare(b.chapter));
+}
+
 // Instruments that touch a code or a code prefix, with the rate they set when it is published.
 export function findByCode(instruments, input) {
   const digits = String(input || '').replace(/\D/g, '');

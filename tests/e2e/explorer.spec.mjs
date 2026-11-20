@@ -305,6 +305,96 @@ test('shows possible verified paths while a person types without requiring a sub
   await expect(page).toHaveURL(/\/app\/record\/85171301$/);
 });
 
+test('summarizes a publication by chapter and narrows the fraction table from it', async ({ page }) => {
+  await page.goto('/changes/ref02');
+  const summary = page.getByTestId('dof-chapter-summary');
+  await expect(summary).toBeVisible();
+  const first = summary.locator('tbody tr').first();
+  await expect(first).toContainText('Capítulo 72');
+  await expect(first).toContainText('35% × 126');
+  await first.getByRole('button', { name: /ver fracciones/i }).click();
+  await expect(page.locator('#rows-filter')).toHaveValue('72');
+  await expect(page.getByTestId('dof-chapter-summary-more')).toBeVisible();
+  await page.getByTestId('dof-chapter-summary-more').click();
+  expect(await summary.locator('tbody tr').count()).toBeGreaterThan(10);
+});
+
+test('lists the other fractions of the heading with their IGI and links to them', async ({ page }) => {
+  await page.goto('/app/record/85171301');
+  const siblings = page.getByTestId('sibling-fractions');
+  await expect(siblings).toContainText(/otras fracciones de la partida 85\.17/i);
+  await expect(siblings.getByRole('link', { name: /8517\.13\.01/ })).toHaveCount(0);
+  const before = await siblings.locator('li').count();
+  await page.getByTestId('sibling-fractions-more').click();
+  expect(await siblings.locator('li').count()).toBeGreaterThan(before);
+  await expect(page.getByTestId('sibling-fractions-more')).toHaveCount(0);
+  await siblings.getByRole('link', { name: /8517\.14\.91/ }).click();
+  await expect(page).toHaveURL(/\/app\/record\/85171491$/);
+});
+
+test('shows the NOM the annex lists for a fraction with its limit, source and the not-a-determination note', async ({ page }) => {
+  await serveStaticRecords(page, [{ code: '85171301', description: 'Teléfonos móviles.', igi: 'Ex.' }]);
+  await page.route('**/data/v1/sections.json', (route) => route.fulfill({ json: [{ numeral: 'XVI', title: 'Máquinas y aparatos', chapter_from: '84', chapter_to: '85' }] }));
+  await page.route('**/data/v1/regulations/85.json', (route) => route.fulfill({
+    json: {
+      sources: { annex: { source_url: 'https://www.snice.gob.mx/~oracle/SNICE_DOCS/anexo.pdf', sha256: 'a'.repeat(64) } },
+      requirements: [
+        { fraction8: '85171301', numeral: 1, numeral_meaning: 'import_noms', section: null, nom: 'NOM-208-SCFI-2016', scope: 'Únicamente: equipos de radiocomunicación', nico: [], annex_page: 600, source_document_id: 'annex' },
+        { fraction8: '85171301', numeral: 3, numeral_meaning: 'commercial_information_noms', section: 'III', nom: 'NOM-024-SCFI-2013', scope: null, nico: [], annex_page: 700, source_document_id: 'annex' },
+      ],
+    },
+  }));
+  await page.goto('/app/record/85171301');
+  const nom = page.getByTestId('nom-requirements');
+  await expect(nom).toContainText(/NOM que el anexo lista para esta fracción/i);
+  await expect(nom).toContainText(/no determina si tu producto está sujeto/i);
+  await expect(nom).toContainText('NOM-208-SCFI-2016');
+  await expect(nom).toContainText(/Acotación del anexo: Únicamente: equipos de radiocomunicación/);
+  await expect(nom).toContainText(/Importación sujeta a NOM \(regla 2\.4\.3\)/);
+  await expect(nom).toContainText(/Información comercial y sanitaria en importación/);
+  await expect(nom.getByRole('link', { name: /Anexo 2\.4\.1/ }).first()).toHaveAttribute('href', /snice\.gob\.mx/);
+  await expect(nom).toContainText(/página 600/);
+});
+
+test('keeps showing the NOM, and says which release they come from, when the annex could not be read today', async ({ page }) => {
+  await serveStaticRecords(page, [{ code: '85171301', description: 'Teléfonos móviles.', igi: 'Ex.' }]);
+  await page.route('**/data/v1/sections.json', (route) => route.fulfill({ json: [{ numeral: 'XVI', title: 'Máquinas y aparatos', chapter_from: '84', chapter_to: '85' }] }));
+  await page.route('**/data/v1/regulations/85.json', (route) => route.fulfill({
+    json: {
+      annex: { status: 'carried_forward', carried_from: '2026.11.19' },
+      sources: { annex: { source_url: 'https://www.snice.gob.mx/~oracle/SNICE_DOCS/anexo.pdf', sha256: 'a'.repeat(64) } },
+      requirements: [{ fraction8: '85171301', numeral: 1, numeral_meaning: 'import_noms', section: null, nom: 'NOM-208-SCFI-2016', scope: null, nico: [], annex_page: 600, source_document_id: 'annex' }],
+    },
+  }));
+  await page.goto('/app/record/85171301');
+  await expect(page.getByTestId('nom-requirements')).toContainText('NOM-208-SCFI-2016');
+  await expect(page.getByTestId('nom-carried')).toContainText(/no se pudo leer el Anexo 2\.4\.1 vigente.*2026\.11\.19/i);
+});
+
+test('shows no NOM block when the release has no regulations file or the fraction is not listed', async ({ page }) => {
+  await serveStaticRecords(page, [{ code: '85171301', description: 'Teléfonos móviles.', igi: 'Ex.' }]);
+  await page.route('**/data/v1/sections.json', (route) => route.fulfill({ json: [{ numeral: 'XVI', title: 'Máquinas y aparatos', chapter_from: '84', chapter_to: '85' }] }));
+  await page.route('**/data/v1/regulations/85.json', (route) => route.fulfill({ json: { sources: {}, requirements: [] } }));
+  await page.goto('/app/record/85171301');
+  await expect(page.getByTestId('result-card')).toBeVisible();
+  await expect(page.getByRole('paragraph').filter({ hasText: 'Teléfonos móviles.' })).toBeVisible();
+  await expect(page.getByTestId('nom-requirements')).toHaveCount(0);
+});
+
+test('says plainly when the annex has no NOM for the fraction, and when the release lacks annex data', async ({ page }) => {
+  await serveStaticRecords(page, [{ code: '85171301', description: 'Teléfonos móviles.', igi: 'Ex.' }]);
+  await page.route('**/data/v1/sections.json', (route) => route.fulfill({ json: [{ numeral: 'XVI', title: 'Máquinas y aparatos', chapter_from: '84', chapter_to: '85' }] }));
+  await page.route('**/data/v1/regulations/85.json', (route) => route.fulfill({ json: { annex: { status: 'available' }, sources: {}, requirements: [] } }));
+  await page.goto('/app/record/85171301');
+  await expect(page.getByTestId('nom-none')).toContainText(/no aparece en el Anexo 2\.4\.1/i);
+  await expect(page.getByTestId('nom-requirements')).toHaveCount(0);
+
+  await page.route('**/data/v1/regulations/85.json', (route) => route.fulfill({ json: { annex: { status: 'unavailable' }, sources: {}, requirements: [] } }));
+  await page.goto('/app/record/85171301');
+  await expect(page.getByTestId('nom-unavailable')).toContainText(/no están disponibles en esta release/i);
+  await expect(page.getByTestId('nom-none')).toHaveCount(0);
+});
+
 test('looks up a complete tariff fraction with evidence and a decision tree', async ({ page }) => {
   await page.goto('/app');
   await page.getByTestId('search-input').fill('8517.13.01');
@@ -582,8 +672,9 @@ test('opens a publication with its fractions, the DOF link and the original docu
   await page.getByRole('link', { name: /modifica la tarifa de la ligie y el decreto prosec/i }).first().click();
   await expect(page).toHaveURL(/\/changes\/tarifa15$/);
   const detail = page.getByTestId('dof-detail');
-  await expect(detail.getByRole('table')).toBeVisible();
-  expect(await detail.locator('tbody tr').count()).toBeGreaterThan(50);
+  const fractions = detail.getByRole('table', { name: /fracciones/i });
+  await expect(fractions).toBeVisible();
+  expect(await fractions.locator('tbody tr').count()).toBeGreaterThan(50);
   await expect(detail.getByRole('link', { name: /ver en el dof/i })).toHaveAttribute('href', /year=2026&month=04&day=23/);
   await expect(detail.getByRole('link', { name: /documento de la publicación/i })).toHaveAttribute('href', /LIGIE_2022_tarifa15_23abr26\.pdf$/);
 });

@@ -1,0 +1,35 @@
+name: Lighthouse weekly
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 14 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: arancel-mx-lighthouse
+  cancel-in-progress: false
+
+jobs:
+  lighthouse:
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+
+      # Accessibility, best practices and SEO must stay above the floor in scripts/lighthouse-check.mjs; performance is only reported.
+      - name: Audit the public site
+        run: node scripts/lighthouse-check.mjs

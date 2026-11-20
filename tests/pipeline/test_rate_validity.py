@@ -198,3 +198,48 @@ def test_packaged_registry_matches_each_instruments_declared_row_count() -> None
     assert rate_validity(registry, "98030001", "Ex.", "Ex.", AS_OF) == RateValidity(
         date(2026, 10, 14), date(2031, 10, 14), "tarifa16"
     )
+
+
+def _staged_registry(unmodeled_dof):
+    unmodeled = {"id": "staged", "reason": "staged rates", "codes": ["10101010", "11111111"]}
+    if unmodeled_dof:
+        unmodeled["dof_date"] = unmodeled_dof
+    payload = {
+        "kind": "arancel-mx/ligie-rate-instruments",
+        "version": "test",
+        "ledger_url": "https://www.diputados.gob.mx/ligie.htm",
+        "instruments": [
+            _instrument("orig", "base", "2022-12-12", None, [["10101010", "10", "Ex."], ["11111111", "10", "Ex."]]),
+            _instrument(
+                "temp", "temporary_rate", "2024-04-23", "2026-04-23",
+                [["10101010", "35", "Ex."], ["11111111", "35", "Ex."]], dof="2024-04-22",
+            ),
+            _instrument(
+                "reform", "modify_rate", "2026-04-24", None,
+                [["10101010", "35", "Ex."], ["11111111", "20", "Ex."]], dof="2026-04-23",
+            ),
+        ],
+        "unmodeled": [unmodeled],
+    }
+    return load_registry(json.dumps(payload).encode())
+
+
+def test_a_renewed_rate_touched_by_an_older_staged_decree_keeps_its_first_start() -> None:
+    registry = _staged_registry("2022-11-18")
+
+    # The staged decree predates the temporary one, which governed every day until the renewal.
+    assert rate_validity(registry, "10101010", "35", "Ex.", AS_OF) == RateValidity(
+        date(2024, 4, 23), None, "reform"
+    )
+    # A real change of rate still restarts the run.
+    assert rate_validity(registry, "11111111", "20", "Ex.", AS_OF) == RateValidity(
+        date(2026, 4, 24), None, "reform"
+    )
+
+
+def test_without_the_date_of_the_staged_decree_the_start_stays_at_the_governing_instrument() -> None:
+    registry = _staged_registry(None)
+
+    assert rate_validity(registry, "10101010", "35", "Ex.", AS_OF) == RateValidity(
+        date(2026, 4, 24), None, "reform"
+    )

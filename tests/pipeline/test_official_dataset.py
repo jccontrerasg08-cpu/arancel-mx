@@ -16,6 +16,7 @@ from arancel_mx.pipeline.official_dataset import (
     build_official_dataset,
 )
 from arancel_mx.sources.legal_evidence import RequiredDofEvidence
+from tests.pipeline.annex_fixture import ANNEX_URL, annex_pdf_bytes
 
 
 DIPUTADOS_LEDGER = (
@@ -146,7 +147,8 @@ class FakeSession:
 def fake_session():
     ligie_html = f'<a href="{LIGIE_URL}">Fracciones 20260810</a>'
     nico_html = f'<a href="{NICO_URL}">NICO 20260810</a>'
-    corpus_html = ligie_html + nico_html
+    annex_html = f'<a href="{ANNEX_URL}">Acuerdo reglas 20260520</a>'
+    corpus_html = ligie_html + nico_html + annex_html
     ligie_bytes, nico_bytes, pdf_bytes = fixture_bytes()
     responses = {
         DIPUTADOS_URL: Response(
@@ -176,6 +178,7 @@ def fake_session():
         ),
         LIGIE_URL: Response(LIGIE_URL, ligie_bytes, XLSX_TYPE),
         NICO_URL: Response(NICO_URL, nico_bytes, XLSX_TYPE),
+        ANNEX_URL: Response(ANNEX_URL, annex_pdf_bytes(), "application/pdf"),
         NOTES_URL: Response(
             NOTES_URL, NOTES_HTML.encode("utf-8"), "text/html; charset=utf-8", NOTES_HTML
         ),
@@ -209,7 +212,7 @@ def test_offline_build_produces_verified_release(tmp_path):
 
     assert summary["validation_status"] == "passed"
     assert summary["row_count"] == 5
-    assert summary["source_count"] == 7
+    assert summary["source_count"] == 8
     assert sorted(path.name for path in build_config.output_dir.iterdir()) == [
         "SHA256SUMS",
         "arancel_mx.csv",
@@ -228,6 +231,7 @@ def test_offline_build_produces_verified_release(tmp_path):
         SNICE_DOCS_INDEX,
         LIGIE_URL,
         NICO_URL,
+        ANNEX_URL,
         NOTES_URL,
     }
 
@@ -272,7 +276,7 @@ def test_offline_build_produces_verified_release(tmp_path):
         (build_config.output_dir / "manifest.json").read_text(encoding="utf-8")
     )
     assert manifest["validation_status"] == "passed"
-    assert len(manifest["source_documents"]) == 7
+    assert len(manifest["source_documents"]) == 8
     assert {
         (
             identity["dataset_key"],
@@ -287,6 +291,7 @@ def test_offline_build_produces_verified_release(tmp_path):
         ("dof_law_reform", "law_reform"),
         ("dof_tariff_decree", "tariff_decree"),
         ("national_notes", "national_notes"),
+        ("nom_annex", "nom_annex_rules"),
     }
     coverage = manifest["nico_coverage"]
     assert coverage["counts"] == {
@@ -457,8 +462,299 @@ def test_schema_v2_manifest_replay_returns_no_change_without_candidate(tmp_path)
         "schema_version": "2",
         "row_count": 5,
         "validation_status": "passed",
-        "source_count": 7,
+        "source_count": 8,
         "output_dir": None,
     }
     assert not second.output_dir.exists()
     assert not (second.work_dir / "candidate" / "arancel_mx.duckdb").exists()
+
+
+def relax_annex_floors(monkeypatch):
+    """The one-row fixture annex is far below the floors that guard the real annex."""
+    from arancel_mx.parsers import nom_annex
+
+    monkeypatch.setattr(nom_annex, "_MIN_RECORDS", 1)
+    monkeypatch.setattr(nom_annex, "_MIN_FRACTIONS", 1)
+    monkeypatch.setattr(nom_annex, "_MIN_SECTIONS", 0)
+    monkeypatch.setattr(nom_annex, "_REQUIRED_NUMERALS", (1,))
+
+
+def test_offline_build_stores_nom_requirements_from_the_annex(tmp_path, monkeypatch):
+    relax_annex_floors(monkeypatch)
+    build_config = config(tmp_path, "annex")
+
+    build_official_dataset(build_config, session=fake_session())
+
+    with duckdb.connect(
+        str(build_config.output_dir / "arancel_mx.duckdb"), read_only=True
+    ) as connection:
+        rows = connection.execute(
+            "SELECT fraction8, numeral, numeral_meaning, nom, annex_page"
+            " FROM arancel_mx_nom_requirements"
+        ).fetchall()
+
+    assert rows == [("01012101", 1, "import_noms", "NOM-EM-004-SAG/ZOO-2020", 2)]
+
+
+def session_without_annex():
+    session = fake_session()
+    html = session.responses[SNICE_DOCS_INDEX].text.replace(f'<a href="{ANNEX_URL}">Acuerdo reglas 20260520</a>', "")
+    session.responses[SNICE_DOCS_INDEX] = Response(SNICE_DOCS_INDEX, html.encode("utf-8"), "text/html", html)
+    return session
+
+
+def test_an_unreadable_annex_does_not_stop_the_release_and_is_recorded(tmp_path):
+    degraded = config(tmp_path, "degraded")
+
+    summary = build_official_dataset(degraded, session=fake_session())
+
+    manifest = json.loads((degraded.output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert summary["status"] == "built"
+    assert manifest["nom_annex"]["status"] == "unavailable"
+    assert "numeral" in manifest["nom_annex"]["reason"]
+    with duckdb.connect(str(degraded.output_dir / "arancel_mx.duckdb"), read_only=True) as connection:
+        assert connection.execute("SELECT COUNT(*) FROM arancel_mx_nom_requirements").fetchone()[0] == 0
+
+
+def test_a_missing_annex_is_recorded_with_the_reason_and_the_release_still_builds(tmp_path):
+    degraded = config(tmp_path, "missing")
+
+    summary = build_official_dataset(degraded, session=session_without_annex())
+
+    manifest = json.loads((degraded.output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert summary["status"] == "built"
+    assert summary["source_count"] == 7
+    assert manifest["nom_annex"]["status"] == "unavailable"
+    assert "nom_annex" in manifest["nom_annex"]["reason"]
+
+
+def test_a_readable_annex_is_recorded_as_available_with_its_counts(tmp_path, monkeypatch):
+    relax_annex_floors(monkeypatch)
+    ok = config(tmp_path, "available")
+
+    build_official_dataset(ok, session=fake_session())
+
+    manifest = json.loads((ok.output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["nom_annex"]["status"] == "available"
+    assert manifest["nom_annex"]["records"] == 1
+    assert manifest["nom_annex"]["fractions"] == 1
+
+
+def test_an_annex_that_stops_working_keeps_the_previous_release_when_nothing_else_changed(tmp_path, monkeypatch):
+    with monkeypatch.context() as relaxed:
+        relax_annex_floors(relaxed)
+        first = config(tmp_path, "with-annex")
+        build_official_dataset(first, session=fake_session())
+    previous_manifest = json.loads((first.output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert previous_manifest["nom_annex"]["status"] == "available"
+    second = config(tmp_path, "annex-broken")
+
+    result = build_official_dataset(second, session=session_without_annex(), previous_manifest=previous_manifest)
+
+    assert result["status"] == "no_change"
+    assert not second.output_dir.exists()
+
+
+def test_an_annex_that_stops_working_does_not_hide_a_real_source_change(tmp_path, monkeypatch):
+    with monkeypatch.context() as relaxed:
+        relax_annex_floors(relaxed)
+        first = config(tmp_path, "baseline")
+        build_official_dataset(first, session=fake_session())
+    previous_manifest = json.loads((first.output_dir / "manifest.json").read_text(encoding="utf-8"))
+    for identity in previous_manifest["source_identity"]:
+        if identity["dataset_key"] == "ligie":
+            identity["sha256"] = "0" * 64
+    second = config(tmp_path, "tariff-changed")
+
+    result = build_official_dataset(second, session=session_without_annex(), previous_manifest=previous_manifest)
+
+    assert result["status"] == "built"
+    manifest = json.loads((second.output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["nom_annex"]["status"] == "unavailable"
+
+
+def test_an_annex_that_becomes_readable_again_rebuilds_even_if_no_source_changed(tmp_path, monkeypatch):
+    degraded = config(tmp_path, "degraded-first")
+    build_official_dataset(degraded, session=fake_session())
+    previous_manifest = json.loads((degraded.output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert previous_manifest["nom_annex"]["status"] == "unavailable"
+    relax_annex_floors(monkeypatch)
+    recovered = config(tmp_path, "recovered")
+
+    result = build_official_dataset(recovered, session=fake_session(), previous_manifest=previous_manifest)
+
+    assert result["status"] == "built"
+    manifest = json.loads((recovered.output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["nom_annex"]["status"] == "available"
+
+
+def test_a_corrupt_annex_pdf_does_not_stop_the_release(tmp_path):
+    session = fake_session()
+    session.responses[ANNEX_URL] = Response(ANNEX_URL, b"%PDF-1.7\nnot really a pdf", "application/pdf")
+    degraded = config(tmp_path, "corrupt")
+
+    summary = build_official_dataset(degraded, session=session)
+
+    manifest = json.loads((degraded.output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert summary["status"] == "built"
+    assert manifest["nom_annex"]["status"] == "unavailable"
+
+
+def test_an_unexpected_error_while_capturing_the_annex_does_not_stop_the_release(tmp_path):
+    session = fake_session()
+    del session.responses[ANNEX_URL]  # the fake raises AssertionError, a type no handler lists by name
+    degraded = config(tmp_path, "capture-error")
+
+    summary = build_official_dataset(degraded, session=session)
+
+    manifest = json.loads((degraded.output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert summary["status"] == "built"
+    assert manifest["nom_annex"]["status"] == "unavailable"
+    assert "unexpected network URL" in manifest["nom_annex"]["reason"]
+
+
+def _baseline_with_annex(tmp_path, monkeypatch):
+    """A published release that has NOM, as the manifest and the NOM rows the next run would fetch."""
+    from arancel_mx.pipeline.nom_carry import extract_previous_nom
+
+    with monkeypatch.context() as relaxed:
+        relax_annex_floors(relaxed)
+        first = config(tmp_path, "baseline")
+        build_official_dataset(first, session=fake_session())
+    manifest = json.loads((first.output_dir / "manifest.json").read_text(encoding="utf-8"))
+    return manifest, extract_previous_nom(first.output_dir / "arancel_mx.duckdb", manifest)
+
+
+def _with_tariff_change(manifest):
+    changed = json.loads(json.dumps(manifest))
+    for identity in changed["source_identity"]:
+        if identity["dataset_key"] == "ligie":
+            identity["sha256"] = "0" * 64
+    return changed
+
+
+def test_an_unreadable_annex_carries_the_previous_nom_unchanged_when_the_tariff_changes(tmp_path, monkeypatch):
+    manifest, previous_nom = _baseline_with_annex(tmp_path, monkeypatch)
+    second = config(tmp_path, "carried")
+
+    result = build_official_dataset(
+        second,
+        session=session_without_annex(),
+        previous_manifest=_with_tariff_change(manifest),
+        previous_nom=previous_nom,
+    )
+
+    assert result["status"] == "built"
+    carried = json.loads((second.output_dir / "manifest.json").read_text(encoding="utf-8"))["nom_annex"]
+    assert carried["status"] == "carried_forward"
+    assert carried["carried_from"] == manifest["dataset_version"]
+    assert carried["rows"] == 1 and carried["dropped_rows"] == 0
+    assert "nom_annex" in carried["reason"]
+    with duckdb.connect(str(second.output_dir / "arancel_mx.duckdb"), read_only=True) as connection:
+        rows = connection.execute(
+            "SELECT fraction8, numeral, nom, scope, nico_json, annex_page, source_document_id"
+            " FROM arancel_mx_nom_requirements"
+        ).fetchall()
+        source = connection.execute(
+            "SELECT sha256 FROM source_document WHERE source_document_id = ?", [rows[0][-1]]
+        ).fetchone()
+    original = previous_nom["rows"][0]
+    assert rows == [
+        (
+            original["fraction8"],
+            original["numeral"],
+            original["nom"],
+            original["scope"],
+            original["nico_json"],
+            original["annex_page"],
+            original["source_document_id"],
+        )
+    ]
+    assert source is not None and source[0] == previous_nom["source_documents"][0]["sha256"]
+
+
+def test_nom_is_not_carried_unless_it_provably_belongs_to_the_previous_release(tmp_path, monkeypatch):
+    manifest, previous_nom = _baseline_with_annex(tmp_path, monkeypatch)
+    for name, tampered in {
+        "other-database": {**previous_nom, "database_sha256": "0" * 64},
+        "other-version": {**previous_nom, "dataset_version": "1999.01.01"},
+        "wrong-count": None,
+    }.items():
+        second = config(tmp_path, name)
+        stale = _with_tariff_change(manifest)
+        if tampered is None:
+            stale["nom_annex"]["rows"] = 99
+            tampered = previous_nom
+
+        build_official_dataset(
+            second, session=session_without_annex(), previous_manifest=stale, previous_nom=tampered
+        )
+
+        status = json.loads((second.output_dir / "manifest.json").read_text(encoding="utf-8"))["nom_annex"]
+        assert status["status"] == "unavailable", name
+
+
+def test_carried_nom_drops_fractions_that_no_longer_exist_and_says_so():
+    from arancel_mx.pipeline.nom_carry import carry_forward
+
+    def row(fraction):
+        return {
+            "fraction8": fraction, "numeral": 1, "numeral_meaning": "import_noms", "section": None,
+            "nom": "NOM-X", "scope": None, "nico_json": "[]", "annex_page": 5, "source_document_id": "doc",
+        }
+
+    manifest = {
+        "dataset_version": "2026.01.01",
+        "artifact_sha256": {"arancel_mx.duckdb": "a" * 64},
+        "nom_annex": {"status": "available", "rows": 2},
+    }
+    previous = {
+        "dataset_version": "2026.01.01",
+        "database_sha256": "a" * 64,
+        "rows": [row("01012101"), row("99999999")],
+        "source_documents": [{
+            "source_document_id": "doc", "authority": "SE", "publication_venue": "SNICE", "title": "Annex",
+            "source_url": "https://example.test/a.pdf", "media_type": "application/pdf", "sha256": "b" * 64,
+            "local_path": None, "published_at": None, "effective_from": None, "effective_to": None,
+            "observed_at": "2026-01-01", "retrieved_at": "2026-01-01T00:00:00",
+        }],
+    }
+
+    rows, documents, status = carry_forward(previous, manifest, {"01012101"}, "boom")
+
+    assert [item["fraction8"] for item in rows] == ["01012101"]
+    assert status["dropped_rows"] == 1 and status["rows"] == 1
+    assert [item["source_document_id"] for item in documents] == ["doc"]
+    assert carry_forward(previous, manifest, {"11111111"}, "boom") is None
+    assert carry_forward(None, manifest, {"01012101"}, "boom") is None
+    assert carry_forward(previous, {**manifest, "nom_annex": {"status": "unavailable"}}, {"01012101"}, "x") is None
+
+
+def test_a_carried_release_is_rebuilt_with_fresh_nom_once_the_annex_reads_again(tmp_path, monkeypatch):
+    manifest, previous_nom = _baseline_with_annex(tmp_path, monkeypatch)
+    carried = config(tmp_path, "carried-first")
+    build_official_dataset(
+        carried, session=session_without_annex(),
+        previous_manifest=_with_tariff_change(manifest), previous_nom=previous_nom,
+    )
+    carried_manifest = json.loads((carried.output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert carried_manifest["nom_annex"]["status"] == "carried_forward"
+    relax_annex_floors(monkeypatch)
+    recovered = config(tmp_path, "recovered-from-carry")
+
+    result = build_official_dataset(recovered, session=fake_session(), previous_manifest=carried_manifest)
+
+    assert result["status"] == "built"
+    status = json.loads((recovered.output_dir / "manifest.json").read_text(encoding="utf-8"))["nom_annex"]
+    assert status["status"] == "available"
+
+
+def test_extracting_previous_nom_refuses_a_database_that_is_not_the_published_one(tmp_path, monkeypatch):
+    from arancel_mx.pipeline.nom_carry import extract_previous_nom
+
+    manifest, _ = _baseline_with_annex(tmp_path, monkeypatch)
+    forged = json.loads(json.dumps(manifest))
+    forged["artifact_sha256"]["arancel_mx.duckdb"] = "0" * 64
+
+    with pytest.raises(ValueError, match="SHA-256"):
+        extract_previous_nom(tmp_path / "baseline-release" / "arancel_mx.duckdb", forged)
