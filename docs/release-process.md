@@ -128,7 +128,7 @@ La política es **immutable**: nunca se sobrescribe un tag o release existente.
 
 ### Same-date second change
 
-Si ocurre un segundo cambio válido el mismo día y ya existe `data-YYYY.MM.DD`, el sistema no sobreescribe esa identidad. Falla con categoría `release_tag_collision`. Este **same-date** collision bloquea publicación y se trata como alerta operativa.
+Si ocurre un segundo cambio válido el mismo día y ya existe `data-YYYY.MM.DD`, el sistema no sobreescribe esa identidad: la ejecución termina en `no_change` con etapa `deferred` y el cambio sale con la release del siguiente día UTC. `release_tag_collision` queda como defensa si aun así se intenta publicar un tag existente.
 
 ## 9. API estática en GitHub Pages
 

@@ -59,7 +59,7 @@ Cada permiso de escritura vive sólo en el job que lo necesita. `tests/test_work
 | CLI | `arancel-mx doctor`, `data …`, `lookup`, `search`, `ficha`, `provenance`, etc. | [CLI de consumo](consumer-cli.md) |
 | API estática | `GET /data/v1/meta.json`, `records/{hs2}.json`, `search-index.json`… | [Consumo externo](external-consumption.md#api-http-pública) |
 | Servidor propio | `uvicorn arancel_mx.api.app:app` con `ARANCEL_MX_API_DATASET`. | [Consumo externo](external-consumption.md) |
-| `/v1` en Vercel | Deprecada; responde con `Deprecation`, `Sunset` y `Link`. | [Retiro de la API dinámica](operations/v1-sunset.md) |
+| `/v1` en Vercel | Retirada el 2026-11-20; redirige a `/data/v1` o a `/documentation`. | [Retiro de la API dinámica](operations/v1-sunset.md) |
 
 ### Archivos de la API estática
 
@@ -149,7 +149,7 @@ Si un cambio rompe uno de estos puntos, el cambio está mal aunque las pruebas l
 
 1. **Una sola fuente de verdad.** Ninguna superficie publica datos que no estén en una release verificada.
 2. **Fail-closed.** Una discrepancia legal, un parser ambiguo o una verificación fallida bloquean la publicación. Nunca se corrigen datos en silencio.
-3. **Releases inmutables.** Un tag `data-YYYY.MM.DD` publicado no se reescribe; una colisión falla con `release_tag_collision`.
+3. **Releases inmutables.** Un tag `data-YYYY.MM.DD` publicado no se reescribe. Un segundo cambio el mismo día UTC no se publica: la ejecución termina en `no_change` con etapa `deferred` y el cambio sale con la release del día siguiente.
 4. **Mínimo privilegio.** Los permisos de escritura viven en un solo job cada uno; las acciones se fijan por SHA.
 5. **Sólo lectura hacia fuera.** Ninguna superficie pública acepta escrituras ni requiere credenciales.
 6. **Recuperar, no clasificar.** `search` y `suggest` recuperan evidencia; el proyecto no clasifica mercancías ni da asesoría legal.
