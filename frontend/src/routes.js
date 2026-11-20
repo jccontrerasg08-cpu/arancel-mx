@@ -12,6 +12,7 @@ export const PUBLIC_ROUTES = Object.freeze([
   { path: '/wiki', label: 'Wiki' },
   { path: '/glossary', label: 'Glossary' },
   { path: '/trade-context', label: 'Trade context' },
+  { path: '/trade-analytics', label: 'Trade analytics' },
   { path: '/documentation', label: 'Documentation' },
   { path: '/trust', label: 'Trust' },
   { path: '/records', label: 'My records' },

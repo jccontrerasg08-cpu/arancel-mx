@@ -398,3 +398,11 @@ h1,h2,h3 { text-wrap:balance; }
 .dof-detail .label-narrow { display:none; }
 @media (max-width:600px) { .dof-detail .label-wide { display:none; } .dof-detail .label-narrow { display:inline; } }
 @media (max-width:600px) { .dof-detail .data-table th, .dof-detail .data-table td { padding-inline:.45rem; } }
+
+
+.trade-analytics__bars { display:grid; gap:.7rem; max-width:62rem; margin:0; padding:0; list-style:none; }
+.trade-analytics__bars li { display:grid; grid-template-columns:minmax(11rem,1fr) minmax(8rem,2fr) minmax(8rem,auto); align-items:center; gap:1rem; border-bottom:1px solid var(--line); padding:.7rem 0; }
+.trade-analytics__bars strong,.trade-analytics__bars small { display:block; }
+.trade-analytics__bars small { color:var(--muted); font-size:.78rem; }
+.trade-analytics__bars output { font-family:monospace; text-align:right; }
+@media (max-width:600px) { .trade-analytics__bars li { grid-template-columns:1fr; gap:.45rem; } .trade-analytics__bars output { text-align:left; } }

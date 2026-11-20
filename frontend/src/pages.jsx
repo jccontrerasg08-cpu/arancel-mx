@@ -403,9 +403,66 @@ export function MoaPage() { return <><PageHero page={EDITORIAL_PAGES['/moa']}><d
 export function WikiPage() { return <><PageHero page={EDITORIAL_PAGES['/wiki']}><div className="hero-actions"><External href={OFFICIAL_LINKS.anamNormativity}>Abrir normatividad ANAM</External><External href={OFFICIAL_LINKS.anamGlossary}>Abrir glosario ANAM</External></div></PageHero><section className="card-grid">{WIKI_REFERENCES.map(([category, title, description, href]) => <article key={title}><span>{category}</span><h2>{title}</h2><p>{description}</p><External href={href}>Abrir fuente</External></article>)}</section><aside className="example-note"><h2>Cómo usar esta wiki</h2><p>Lee la fuente primaria completa y verifica su vigencia antes de usarla como contexto.</p><Link to="/glossary">Explorar glosario</Link></aside></>;
 }
 
-export function TradeContextPage() { return <><PageHero page={EDITORIAL_PAGES['/trade-context']}><External href={OFFICIAL_LINKS.inegi}>Abrir explicación completa de INEGI</External></PageHero><section className="flow-diagram" aria-label="Trade context"><article><strong>Importaciones</strong><span>Compra al exterior</span></article><span aria-hidden="true">+</span><article><strong>Exportaciones</strong><span>Venta al exterior</span></article><span aria-hidden="true">→</span><article><strong>Balanza</strong><span>Diferencia</span></article></section><section className="card-grid"><article><h2>Importaciones</h2><p>Mercancías adquiridas desde el exterior.</p></article><article><h2>Exportaciones</h2><p>Mercancías vendidas hacia otros mercados.</p></article><article><h2>Balanza comercial</h2><p>Relación entre importaciones y exportaciones.</p></article><article><h2>Entidades y socios</h2><p>Contexto por territorio y contraparte comercial.</p></article></section><TradeBalance /><aside className="example-note"><p>INEGI · BCMM 2013–2023 · ETEF 2024</p><p>Estados Unidos en 2023: 42.7% de importaciones y 79.4% de exportaciones.</p><External href={OFFICIAL_LINKS.inegi}>Consultar tablas, gráficas y mapa originales</External></aside></>;
+export function TradeContextPage() {
+  const { language } = useLocale();
+  const t = (spanish, english) => localize(language, spanish, english);
+  const page = editorialPage('/trade-context', language);
+  const pathways = [
+    [t('Entender lo básico', 'Learn the basics'), t('Importación, exportación, balanza y cómo se mide el comercio de mercancías.', 'Imports, exports, balance, and how merchandise trade is measured.'), '/learn', t('Empezar a aprender', 'Start learning')],
+    [t('Investigar una mercancía', 'Research a product'), t('Busca en la LIGIE/NICO y revisa jerarquía, tasas publicadas y evidencia de la release.', 'Search LIGIE/NICO and inspect hierarchy, published rates, and release evidence.'), '/app', t('Abrir explorador', 'Open explorer')],
+    [t('Preparar una operación', 'Prepare an operation'), t('Explora preguntas de importación, exportación, origen, documentos y regulaciones.', 'Explore import, export, origin, document, and regulatory questions.'), '/trade', t('Abrir mesa', 'Open trade desk')],
+    [t('Leer las reglas', 'Read the rules'), t('Encuentra el marco legal y las fuentes oficiales por tema y autoridad.', 'Find the legal framework and official sources by topic and authority.'), '/wiki', t('Ver normatividad', 'Browse regulations')],
+    [t('Explorar cifras', 'Explore figures'), t('Separa los datos de la tarifa de las estadísticas de flujos comerciales.', 'Keep tariff data separate from trade-flow statistics.'), '/trade-analytics', t('Analizar comercio', 'Analyze trade')],
+    [t('Seguir cambios', 'Track changes'), t('Consulta los decretos publicados en el Diario Oficial de la Federación.', 'Follow decrees published in the Official Gazette.'), '/changes', t('Ver cambios del DOF', 'View DOF changes')],
+  ];
+  const steps = [
+    [t('01 · Describe', '01 · Describe'), t('Qué es, de qué está hecho y cómo se usa el producto.', 'What the product is, what it is made of, and how it is used.')],
+    [t('02 · Clasifica', '02 · Classify'), t('Investiga la fracción en la TIGIE con reglas y notas; valida la decisión con evidencia.', 'Research the tariff fraction using the TIGIE rules and notes; validate the decision with evidence.')],
+    [t('03 · Verifica medidas', '03 · Check measures'), t('Consulta aranceles, permisos, cupos, NOM y demás requisitos vigentes en fuentes oficiales.', 'Check current tariffs, permits, quotas, NOMs, and other requirements in official sources.')],
+    [t('04 · Revisa origen y acuerdo', '04 · Review origin and agreement'), t('Una preferencia depende del tratado aplicable y de cumplir su regla de origen.', 'A preference depends on the applicable agreement and meeting its rule of origin.')],
+    [t('05 · Planea operación y despacho', '05 · Plan the operation and clearance'), t('Revisa contribuciones, documentos, régimen, transporte y trámite con la autoridad competente.', 'Review taxes, documents, customs regime, transport, and procedures with the competent authority.')],
+    [t('06 · Analiza resultados', '06 · Analyze outcomes'), t('Usa estadísticas agregadas para entender tendencias; no las confundas con el costo o requisito de una operación individual.', 'Use aggregate statistics to understand trends; do not treat them as the cost or requirements of an individual operation.')],
+  ];
+  const sources = [
+    [t('INEGI · BCMM', 'INEGI · BCMM'), t('Balanza Comercial de Mercancías: exportaciones, importaciones, saldo y metodología.', 'Merchandise Trade Balance: exports, imports, balance, and methodology.'), 'https://www.inegi.org.mx/programas/comext/default.html'],
+    [t('INEGI · API de Indicadores', 'INEGI · Indicators API'), t('Series y metadatos para integrar indicadores; requiere token de desarrollador.', 'Series and metadata for indicators; requires a developer token.'), 'https://www.inegi.org.mx/servicios/api_indicadores.html'],
+    [t('SNICE · Secretaría de Economía', 'SNICE · Ministry of Economy'), t('TIGIE/LIGIE, NICO, tratados, medidas no arancelarias, estadísticas y programas de fomento.', 'TIGIE/LIGIE, NICO, agreements, non-tariff measures, statistics, and support programs.'), 'https://www.snice.gob.mx/cs/avi/snice/home.html'],
+    [t('DOF', 'DOF'), t('Publicación oficial de leyes, decretos, acuerdos y modificaciones.', 'Official publication of laws, decrees, agreements, and amendments.'), 'https://www.dof.gob.mx/'],
+    [t('SAT · RGCE y trámites', 'SAT · General rules and procedures'), t('Reglas Generales de Comercio Exterior y obligaciones fiscales/aduaneras.', 'General Foreign Trade Rules and tax/customs obligations.'), 'https://www.sat.gob.mx/minisitio/NormatividadRMFyRGCE/'],
+    [t('ANAM · Operación aduanera', 'ANAM · Customs operations'), t('Manual de Operación Aduanera y orientación para el despacho.', 'Customs Operation Manual and clearance guidance.'), 'https://www.anam.gob.mx/manual-de-operacion-aduanera-moa/'],
+    [t('VUCEM', 'VUCEM'), t('Ventanilla Digital para trámites de comercio exterior.', 'Digital window for foreign-trade procedures.'), 'https://www.ventanillaunica.gob.mx/vucem/index.html'],
+    [t('Secretaría de Economía · acuerdos', 'Ministry of Economy · agreements'), t('Tratados y acuerdos comerciales de México.', 'Mexico’s trade agreements.'), 'https://www.gob.mx/se/acciones-y-programas/comercio-exterior-paises-con-tratados-y-acuerdos-firmados-con-mexico'],
+  ];
+  return <>
+    <PageHero page={page}>
+      <div className="hero-actions">
+        <External href="https://www.inegi.org.mx/programas/comext/default.html">{t('Abrir BCMM de INEGI', 'Open INEGI’s BCMM')}</External>
+        <Link className="button" to="/learn">{t('Seguir una ruta de aprendizaje', 'Follow a learning path')}</Link>
+      </div>
+    </PageHero>
+    <section className="data-section" aria-labelledby="trade-pathways-title">
+      <h2 id="trade-pathways-title">{t('¿Qué quieres hacer?', 'What do you want to do?')}</h2>
+      <div className="card-grid">{pathways.map(([title, description, href, action]) => <article key={href}><h3>{title}</h3><p>{description}</p><Link to={href}>{action} <span aria-hidden="true">→</span></Link></article>)}</div>
+    </section>
+    <section className="data-section" aria-labelledby="trade-flow-title">
+      <h2 id="trade-flow-title">{t('Una operación, paso a paso', 'A trade operation, step by step')}</h2>
+      <p>{t('El hub conecta cada pregunta con la herramienta y la fuente que pueden responderla. La secuencia orienta la investigación; no reemplaza la determinación de la autoridad.', 'The hub connects each question to the tool and source that can answer it. This sequence guides research; it does not replace an authority’s determination.')}</p>
+      <ol className="result-list">{steps.map(([title, description]) => <li key={title}><strong>{title}</strong><p>{description}</p></li>)}</ol>
+    </section>
+    <section className="data-section" aria-labelledby="trade-sources-title">
+      <h2 id="trade-sources-title">{t('Fuentes oficiales para profundizar', 'Official sources to explore')}</h2>
+      <p>{t('Cada fuente tiene un papel distinto. Consulta el documento o servicio original y verifica su fecha y ámbito antes de aplicarlo.', 'Each source has a different role. Check the original document or service and verify its date and scope before applying it.')}</p>
+      <div className="card-grid">{sources.map(([title, description, href]) => <article key={href}><h3>{title}</h3><p>{description}</p><External href={href}>{t('Consultar fuente oficial', 'Open official source')}</External></article>)}</div>
+    </section>
+    <TradeBalance />
+    <aside className="example-note">
+      <h2>{t('Qué muestran estas cifras', 'What these figures show')}</h2>
+      <p>{t('La balanza de INEGI resume flujos agregados de mercancías. No identifica el arancel de una operación, no sustituye una consulta por fracción y no demuestra que una preferencia comercial aplique a un producto.', 'INEGI’s balance summarizes aggregate merchandise flows. It does not identify the tariff for a transaction, replace a tariff-fraction lookup, or establish that a trade preference applies to a product.')}</p>
+      <p>{t('Esta sección ya consulta las series mensuales de la API de Indicadores del INEGI y conserva una copia pública si el servicio en vivo no responde. Revisa la fecha, unidad y condición de las cifras junto con la fuente.', 'This section already queries monthly series from INEGI’s Indicators API and keeps a public snapshot if the live service is unavailable. Read the date, unit, and figure status together with the source.')}</p>
+      <External href="https://www.inegi.org.mx/servicios/api_indicadores.html">{t('Cómo funciona la API de INEGI', 'How INEGI’s API works')}</External>
+    </aside>
+  </>;
 }
-
 export function DocumentationPage() {
   const { language } = useLocale();
   const t = (spanish, english) => localize(language, spanish, english);
