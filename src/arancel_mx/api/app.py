@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 DatasetLoader = Callable[[ApiSettings], Dataset]
 _MARKETING_DIR = Path(__file__).with_name("static") / "site"
 _MARKETING_PAGE = _MARKETING_DIR / "index.html"
-_TRADE_PAGE = _MARKETING_DIR / "trade.html"
+_TRADE_PAGE = _MARKETING_DIR / "trade.html"\n_TRADE_ANALYTICS_PAGE = _MARKETING_DIR / "trade-analytics.html"
 _MARKETING_PAGES = (
     "/",
     "/features",

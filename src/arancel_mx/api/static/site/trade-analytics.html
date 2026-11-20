@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Comercio exterior mexicano: cómo leer datos BCMM de INEGI por país y mercancía sin confundirlos con una decisión arancelaria." />
+  <title>arancel-mx — Comercio exterior por país y mercancía</title>
+  <link rel="canonical" href="https://arancel-mx.vercel.app/trade-analytics" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <style>
+    :root{font-family:system-ui,sans-serif;color:#102a43;background:#fbfcfd}body{margin:0}.wrap{max-width:980px;margin:auto;padding:2rem}.eyebrow{color:#008a5b;font:600 .75rem ui-monospace,monospace;letter-spacing:.1em}.lead{max-width:48rem;color:#526575;font-size:1.15rem}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:2rem 0}.card{border:1px solid #dbe4e8;border-radius:14px;background:#fff;padding:1.15rem}.card p{color:#526575}.callout{border-left:3px solid #ce9b3c;background:#fff;padding:1rem 1.2rem}.button{display:inline-block;margin:.4rem .45rem .4rem 0;border:1px solid #008a5b;border-radius:8px;background:#008a5b;color:#fff;padding:.65rem .85rem;font-weight:700;text-decoration:none}.button.alt{background:#fff;color:#008a5b}@media(max-width:700px){.grid{grid-template-columns:1fr}.wrap{padding:1.25rem}}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <p class="eyebrow">INEGI · BCMM · ANÁLISIS REPRODUCIBLE</p>
+    <h1>Comercio exterior por país y mercancía.</h1>
+    <p class="lead">Un mapa para entender la Balanza Comercial de Mercancías de México: qué fuente usar, qué se puede comparar y cómo llegar a gráficos por socio y partida sin inventar cifras.</p>
+    <p><a class="button" href="/trade-context">Ver balanza nacional</a><a class="button alt" href="https://www.inegi.org.mx/programas/comext/default.html">Abrir BCMM de INEGI</a></p>
+    <section class="grid" aria-label="Vistas de análisis">
+      <article class="card"><h2>Resumen nacional</h2><p>Exportaciones, importaciones y saldo mensual. Provienen de la API de Indicadores, no del detalle por mercancía.</p></article>
+      <article class="card"><h2>Socios comerciales</h2><p>Ranking y participación por país de origen o destino, a partir de un corte oficial BCMM procesado.</p></article>
+      <article class="card"><h2>Mercancías</h2><p>Partida, fracción o NICO cuando el conjunto oficial lo incluya. La jerarquía se conecta con el explorador arancelario.</p></article>
+    </section>
+    <section class="callout">
+      <h2>Conector listo, corte pendiente</h2>
+      <p>No se muestran números de ejemplo. El pipeline público puede convertir una exportación oficial BCMM en agregados por periodo, flujo, país y partida, conservando los estados confidenciales sin tratarlos como cero.</p>
+      <p><code>python scripts/build_trade_analytics.py --input BCMM.csv</code></p>
+      <p><a href="https://github.com/jccontrerasg08-cpu/arancel-mx/blob/main/docs/research/inegi-analytics-contract.md">Leer contrato y metodología</a></p>
+    </section>
+    <section>
+      <h2>Reglas de lectura</h2>
+      <ul><li>Las cantidades sólo se agregan dentro de la misma unidad de medida.</li><li>Un saldo compara periodos, moneda, universo y corte equivalentes.</li><li>Los estados de confidencialidad permanecen visibles: no se infieren ni se imputan.</li></ul>
+    </section>
+  </main>
+</body>
+</html>
