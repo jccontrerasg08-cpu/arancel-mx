@@ -1,8 +1,9 @@
 """HS section grouping derived from chapter number.
 
 This is structural Harmonized System / LIGIE section membership, not a captured
-SIICEX, CAAAREM, or other third-party document. Chapter 98 (Mexican special
-operations) has no WCO section.
+SIICEX, CAAAREM, or other third-party document. The Harmonized System has 21
+sections; the LIGIE adds Section XXII, "Operaciones especiales", for Mexico's
+chapter 98 (see the consolidated LIGIE text, "Sección XXII / Capítulo 98").
 """
 
 from __future__ import annotations
@@ -53,11 +54,12 @@ _SECTIONS: tuple[HsSection, ...] = (
     HsSection("XIX", "Armas, municiones, y sus partes y accesorios", "93", "93"),
     HsSection("XX", "Mercancías y productos diversos", "94", "96"),
     HsSection("XXI", "Objetos de arte o colección y antigüedades", "97", "97"),
+    HsSection("XXII", "Operaciones especiales", "98", "98"),
 )
 
 
 def hs_sections() -> tuple[HsSection, ...]:
-    """Return the 21 HS/LIGIE sections in roman-numeral order."""
+    """Return the 22 LIGIE sections (21 of the HS plus XXII) in roman-numeral order."""
 
     return _SECTIONS
 

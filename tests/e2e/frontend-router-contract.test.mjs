@@ -7,7 +7,7 @@ const root = path.resolve(import.meta.dirname, '../..');
 
 test('app routes every maintained page through the shared source manifest', async () => {
   const source = await readFile(path.join(root, 'frontend/src/App.jsx'), 'utf8');
-  assert.match(source, /import\s+\{\s*PAGE_COMPONENTS\s*\}/);
+  assert.match(source, /import\s+\{\s*PAGE_COMPONENTS\b[^}]*\}\s+from\s+'\.\/pages\.jsx'/);
   assert.match(source, /<Route/);
   assert.match(source, /Object\.entries\(PAGE_COMPONENTS\)/);
 });

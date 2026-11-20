@@ -56,6 +56,7 @@ El nombre se presenta como `arancel.mx` en minúsculas, con navy como color prin
 | `docs/assets/arancel-mx-banner.svg` | hero del README |
 | `docs/assets/arancel-mx-social.svg` | master social 1280×640 |
 | `src/arancel_mx/api/static/site/assets/arancel-mx-social.svg` | copia desplegable social |
+| `docs/assets/arancel-mx-social.png`, `src/arancel_mx/api/static/site/assets/arancel-mx-social.png` | versión PNG 1280×640 para `og:image` y `twitter:image` (las redes no leen SVG) |
 | `docs/assets/arancel-mx-cover.svg` | portada 1600×900 para presentaciones |
 
 Los SVG son masters vectoriales. No incrustar PNG/JPEG, elementos `<image>` ni payloads base64. Si una plataforma exige raster, exportarlo desde el master SVG sin reemplazar el archivo canónico.

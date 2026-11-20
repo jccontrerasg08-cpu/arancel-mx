@@ -12,7 +12,7 @@ from uuid import uuid4
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -44,8 +44,8 @@ _TRADE_PAGE = _MARKETING_DIR / "trade.html"
 _MARKETING_PAGES = (
     "/",
     "/features",
-    "/pricing",
-    "/analytics",
+    "/releases",
+    "/release-analytics",
     "/documentation",
     "/community",
     "/trust",
@@ -53,12 +53,19 @@ _MARKETING_PAGES = (
     "/chapters",
     "/changes",
     "/data",
+    "/learn",
     "/moa",
-    "/moa-guide",
     "/wiki",
     "/glossary",
     "/trade-context",
 )
+# Former addresses of renamed pages; vercel.json carries the same permanent redirects.
+_MOVED_PAGES = {
+    "/pricing": "/releases",
+    "/analytics": "/release-analytics",
+    "/product": "/app",
+    "/moa-guide": "/moa",
+}
 _API_DESCRIPTION = """
 Public, read-only HTTP access to the verified `arancel-mx` dataset through the
 versioned `/v1` contract.
@@ -326,6 +333,16 @@ def create_app(
 
     for public_path in _MARKETING_PAGES:
         application.add_api_route(public_path, marketing_page, include_in_schema=False)
+
+    def moved_page(destination: str) -> Callable[[Request], RedirectResponse]:
+        def redirect(request: Request) -> RedirectResponse:
+            query = request.url.query
+            return RedirectResponse(f"{destination}?{query}" if query else destination, status_code=301)
+
+        return redirect
+
+    for old_path, new_path in _MOVED_PAGES.items():
+        application.add_api_route(old_path, moved_page(new_path), include_in_schema=False)
 
     @application.get("/trade", include_in_schema=False)
     def trade_desk() -> FileResponse:

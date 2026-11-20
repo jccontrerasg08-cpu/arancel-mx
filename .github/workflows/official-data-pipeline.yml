@@ -60,6 +60,10 @@ jobs:
           python -m pip install -c requirements/production-build.txt -e ".[dev]"
 
       - name: Run offline tests before source access
+        env:
+          # Live probes of official URLs run in CI's `official-sources` job; an outage of an
+          # official host (DOF answered 504) must not stop the scheduled data build.
+          ARANCEL_MX_SKIP_URL_CHECKS: "1"
         run: python -m pytest -q
 
       - name: Resolve UTC dataset version and provenance
@@ -81,7 +85,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           mkdir -p out
-          python -m scripts.fetch_previous_release --output out/previous-manifest.json
+          python -m scripts.fetch_previous_release --output out/previous-manifest.json --nom-output out/previous-nom.json
 
       - name: Record previous-release lookup failure
         if: steps.previous.outcome == 'failure'
@@ -107,6 +111,7 @@ jobs:
             --dataset-version "$DATASET_VERSION" \
             --generated-at "$GENERATED_AT" \
             --previous-manifest out/previous-manifest.json \
+            --previous-nom out/previous-nom.json \
             --result-path out/pipeline-result.json
 
       - name: Extract bounded pipeline diagnostics
@@ -289,6 +294,8 @@ jobs:
         env:
           # Empty on no_change, which builds the latest published release.
           DATASET_VERSION: ${{ needs.build-and-verify.outputs.status == 'built' && needs.build-and-verify.outputs.dataset_version || '' }}
+          # Unauthenticated release lookups share a 60/hour limit per runner IP and fail with 403.
+          ARANCEL_MX_GITHUB_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
@@ -307,12 +314,14 @@ jobs:
           set -euo pipefail
           tag="$(python -c 'import json; print(json.load(open("out/pages-build.json"))["dataset_tag"])')"
           message="data: static API for ${tag}"
-          current=""
+          # Compare content, not the tag: an exporter change rebuilds different
+          # files for the same release and must still reach gh-pages.
+          rm -f out/deployed-manifest.json
           if git fetch --quiet --depth=1 "https://github.com/${GITHUB_REPOSITORY}.git" gh-pages; then
-            current="$(git log -1 --format=%s FETCH_HEAD)"
+            git show FETCH_HEAD:v1/manifest.json > out/deployed-manifest.json 2>/dev/null || rm -f out/deployed-manifest.json
           fi
-          if [ "$current" = "$message" ]; then
-            echo "gh-pages already serves ${tag}."
+          if python -m scripts.static_pages_unchanged out/deployed-manifest.json out/pages/v1/manifest.json; then
+            echo "gh-pages already serves ${tag} with identical content."
             exit 0
           fi
           cd out/pages

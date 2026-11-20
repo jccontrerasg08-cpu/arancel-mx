@@ -27,7 +27,7 @@ test('every publication has a DOF date, a document and a type, newest first', as
 
 test('helpers build the DOF edition link, rate labels and code lookups', async () => {
   const { dofEditionUrl, findByCode, groupOf, rateLabel } = await load('frontend/src/dof-changes.js');
-  assert.equal(dofEditionUrl('2026-04-23'), 'https://www.dof.gob.mx/index.php?year=2026&month=04&day=23');
+  assert.equal(dofEditionUrl('2026-04-23'), 'https://dof.gob.mx/index.php?year=2026&month=04&day=23');
   assert.equal(rateLabel('Ex.'), 'Ex.');
   assert.equal(rateLabel('35'), '35%');
   assert.equal(rateLabel(null), '—');

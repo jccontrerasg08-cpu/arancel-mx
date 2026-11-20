@@ -1,86 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "buildCommand": "python3.13 -m pip install --require-hashes --only-binary=:all: --target api/_vendor -r requirements/vercel.txt",
   "outputDirectory": "src/arancel_mx/api/static/site",
-  "functions": {
-    "api/operational.py": {
-      "includeFiles": "{api/_vendor/**,src/arancel_mx/**}",
-      "maxDuration": 30
-    },
-    "api/sync_operational.py": {
-      "includeFiles": "{api/_vendor/**,src/arancel_mx/**}",
-      "maxDuration": 60
-    }
-  },
   "cleanUrls": true,
-  "crons": [
-    {
-      "path": "/api/sync_operational",
-      "schedule": "30 12 * * 1"
-    }
-  ],
   "rewrites": [
-    {
-      "source": "/healthz",
-      "destination": "/api/operational?resource=health"
-    },
-    {
-      "source": "/v1",
-      "destination": "/api/operational?resource=api"
-    },
-    {
-      "source": "/v1/meta",
-      "destination": "/api/operational?resource=meta"
-    },
-    {
-      "source": "/v1/search",
-      "destination": "/api/operational?resource=search"
-    },
-    {
-      "source": "/v1/suggest",
-      "destination": "/api/operational?resource=suggest"
-    },
-    {
-      "source": "/v1/ficha/:code",
-      "destination": "/api/operational?resource=ficha&code=:code"
-    },
-    {
-      "source": "/v1/lookup/:code",
-      "destination": "/api/operational?resource=lookup&code=:code"
-    },
-    {
-      "source": "/v1/sections",
-      "destination": "/api/operational?resource=sections"
-    },
-    {
-      "source": "/v1/chapters",
-      "destination": "/api/operational?resource=chapters"
-    },
-    {
-      "source": "/v1/repository",
-      "destination": "/api/operational?resource=repository"
-    },
-    {
-      "source": "/v1/codes/:code/parent",
-      "destination": "/api/operational?resource=parent&code=:code"
-    },
-    {
-      "source": "/v1/codes/:code/children",
-      "destination": "/api/operational?resource=children&code=:code"
-    },
-    {
-      "source": "/v1/codes/:code/provenance",
-      "destination": "/api/operational?resource=provenance&code=:code"
-    },
-    {
-      "source": "/v1/chapters/:chapter/national-notes",
-      "destination": "/api/operational?resource=national-notes&chapter=:chapter"
-    },
-    {
-      "source": "/readyz",
-      "destination": "/api/operational?resource=ready"
-    },
     {
       "source": "/trade",
       "destination": "/trade.html"
@@ -90,11 +13,36 @@
       "destination": "https://jccontrerasg08-cpu.github.io/arancel-mx/v1/:path*"
     },
     {
-      "source": "/(app(?:/.*)?|product|chapters|changes(?:/.*)?|data|moa|moa-guide|wiki|glossary|trade-context|documentation|trust|records|features|pricing|analytics|community)",
+      "source": "/(app(?:/.*)?|chapters|changes(?:/.*)?|data|learn|moa|wiki|glossary|trade-context|documentation|trust|records|features|releases|release-analytics|community)",
       "destination": "/"
     }
   ],
   "redirects": [
+    {
+      "source": "/v1/meta",
+      "destination": "/data/v1/meta.json",
+      "permanent": true
+    },
+    {
+      "source": "/v1/sections",
+      "destination": "/data/v1/sections.json",
+      "permanent": true
+    },
+    {
+      "source": "/v1/chapters",
+      "destination": "/data/v1/chapters.json",
+      "permanent": true
+    },
+    {
+      "source": "/v1",
+      "destination": "/documentation",
+      "permanent": true
+    },
+    {
+      "source": "/v1/:path*",
+      "destination": "/documentation",
+      "permanent": true
+    },
     {
       "source": "/docs",
       "destination": "/documentation",
@@ -103,6 +51,26 @@
     {
       "source": "/docs/:path*",
       "destination": "/documentation",
+      "permanent": true
+    },
+    {
+      "source": "/pricing",
+      "destination": "/releases",
+      "permanent": true
+    },
+    {
+      "source": "/analytics",
+      "destination": "/release-analytics",
+      "permanent": true
+    },
+    {
+      "source": "/product",
+      "destination": "/app",
+      "permanent": true
+    },
+    {
+      "source": "/moa-guide",
+      "destination": "/moa",
       "permanent": true
     }
   ],
@@ -147,23 +115,6 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=0, must-revalidate"
-        }
-      ]
-    },
-    {
-      "source": "/v1(.*)",
-      "headers": [
-        {
-          "key": "Deprecation",
-          "value": "@1792108800"
-        },
-        {
-          "key": "Sunset",
-          "value": "Sun, 31 Jan 2027 00:00:00 GMT"
-        },
-        {
-          "key": "Link",
-          "value": "<https://jccontrerasg08-cpu.github.io/arancel-mx/v1/manifest.json>; rel=\"successor-version\", <https://github.com/jccontrerasg08-cpu/arancel-mx/blob/main/docs/decisions/0002-arquitectura-github-primero.md>; rel=\"deprecation\""
         }
       ]
     }

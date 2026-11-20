@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import date
 from decimal import Decimal
+import json
 import re
 import unicodedata
 from typing import Iterable
@@ -14,6 +15,7 @@ from arancel_mx.consumer.models import (
     Ficha,
     MatchKind,
     NationalNote,
+    NomRequirement,
     ProvenanceRecord,
     SearchResult,
     SuggestHit,
@@ -245,6 +247,54 @@ def search(connection, text: str, *, limit: int) -> tuple[SearchResult, ...]:
             )
         )
     return tuple(results[:limit])
+
+
+def nom_requirements(connection, chapter: str) -> tuple[NomRequirement, ...]:
+    """Return the NOM requirements of one exact two-digit chapter (empty for releases without them)."""
+
+    if (
+        not isinstance(chapter, str)
+        or len(chapter) != 2
+        or not chapter.isascii()
+        or not chapter.isdigit()
+    ):
+        raise QueryError("chapter must be exactly two digits")
+    exists = connection.execute(
+        """
+        SELECT 1 FROM information_schema.tables
+        WHERE lower(table_name) = 'arancel_mx_nom_requirements'
+        LIMIT 1
+        """
+    ).fetchone()
+    if exists is None:
+        return ()
+    rows = connection.execute(
+        """
+        SELECT fraction8, numeral, numeral_meaning, section, nom, scope,
+               nico_json, annex_page, source_document_id
+        FROM arancel_mx_nom_requirements
+        WHERE fraction8 LIKE ?
+        ORDER BY fraction8, numeral, section NULLS FIRST, nom, scope NULLS FIRST
+        """,
+        [f"{chapter}%"],
+    ).fetchall()
+    return tuple(
+        NomRequirement(
+            fraction8=str(row[0]),
+            numeral=int(row[1]),
+            numeral_meaning=str(row[2]),
+            section=None if row[3] is None else str(row[3]),
+            nom=str(row[4]),
+            scope=None if row[5] is None else str(row[5]),
+            nico=tuple(
+                {"nico": str(line["nico"]), "description": str(line["description"])}
+                for line in json.loads(str(row[6]))
+            ),
+            annex_page=int(row[7]),
+            source_document_id=str(row[8]),
+        )
+        for row in rows
+    )
 
 
 def national_notes(connection, chapter: str) -> tuple[NationalNote, ...]:

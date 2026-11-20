@@ -3,6 +3,7 @@ export const NAVIGATION = [
   ['Chapters', '/chapters'],
   ['Changes', '/changes'],
   ['Figures', '/data'],
+  ['Start here', '/learn'],
   ['MOA guide', '/moa'],
   ['Wiki', '/wiki'],
   ['Glossary', '/glossary'],
@@ -10,16 +11,32 @@ export const NAVIGATION = [
   ['Documentation', '/documentation'],
   ['Trust', '/trust'],
   ['My records', '/records'],
+  ['Releases', '/releases'],
+  ['Release analytics', '/release-analytics'],
+  ['Features', '/features'],
+  ['Community', '/community'],
+  ['Import estimator', '/trade'],
 ];
 
 // The header keeps four items. A group with `href` opens its page; one with
-// `items` holds the remaining destinations. `/records` lives in the header
-// actions, so every other NAVIGATION entry belongs to exactly one group.
+// `items` holds the remaining destinations. HEADER_ACTIONS sit beside the groups
+// and FOOTER_ONLY pages are reachable from the footer, so every other
+// NAVIGATION entry belongs to exactly one group.
 export const NAV_GROUPS = [
   { id: 'explore', href: '/app' },
-  { id: 'learn', items: ['/glossary', '/wiki', '/moa', '/trade-context'] },
-  { id: 'data', items: ['/data', '/chapters', '/changes', '/documentation'] },
+  { id: 'learn', items: ['/learn', '/glossary', '/wiki', '/moa', '/trade-context'] },
+  { id: 'data', items: ['/data', '/chapters', '/changes', '/releases', '/release-analytics', '/documentation'] },
   { id: 'trust', href: '/trust' },
+];
+export const HEADER_ACTIONS = ['/records', '/trade'];
+export const FOOTER_ONLY = ['/features', '/community'];
+
+// The footer lists every public page once, in four columns.
+export const FOOTER_GROUPS = [
+  { id: 'explore', items: ['/app', '/chapters', '/trade', '/records'] },
+  { id: 'learn', items: ['/learn', '/glossary', '/wiki', '/moa', '/trade-context'] },
+  { id: 'data', items: ['/data', '/changes', '/releases', '/release-analytics', '/documentation'] },
+  { id: 'project', items: ['/trust', '/features', '/community'] },
 ];
 
 export const OFFICIAL_LINKS = {
@@ -28,7 +45,7 @@ export const OFFICIAL_LINKS = {
   anamMoaNotice: 'https://www.anam.gob.mx/moa/',
   anamGlossary: 'https://www.anam.gob.mx/glosario-anam/',
   anamNormativity: 'https://www.anam.gob.mx/normatividad_2022/',
-  dof: 'https://www.dof.gob.mx/',
+  dof: 'https://dof.gob.mx/',
   law: 'https://www.diputados.gob.mx/LeyesBiblio/pdf/LAdua.pdf',
   inegi: 'https://cuentame.inegi.org.mx/explora/economia/comercio_exterior/',
   github: 'https://github.com/jccontrerasg08-cpu/arancel-mx',
@@ -66,6 +83,13 @@ export const EDITORIAL_PAGES = {
     title: 'Comercio exterior: datos para entender el contexto.',
     description: 'Explicación y series oficiales para importaciones, exportaciones, balanza, entidades y socios.',
     disclaimer: 'El contexto histórico no determina una fracción ni una operación individual.',
+  },
+  '/learn': {
+    eyebrow: 'APRENDER · GUÍA PARA EMPEZAR',
+    title: 'Aprende a leer el arancel de México.',
+    description: 'De qué está hecho un código, qué ley lo define y dónde seguir leyendo, con la fuente oficial a la vista.',
+    disclaimer: 'Es material educativo: no clasifica mercancías ni sustituye la consulta a la autoridad.',
+    en: { eyebrow: 'LEARN · START HERE', title: 'Learn to read Mexico’s tariff.', description: 'What a code is made of, which law defines it and where to keep reading, with the official source in view.', disclaimer: 'This is educational material: it does not classify goods or replace asking the authority.' },
   },
   '/data': {
     eyebrow: 'DATOS · CIFRAS DE LA RELEASE',
@@ -132,12 +156,12 @@ export const MOA_GROUPS = [
 ];
 
 export const WIKI_REFERENCES = [
-  ['Institución', 'Creación de la ANAM', 'Decreto de creación de la Agencia Nacional de Aduanas de México.', 'https://www.dof.gob.mx/nota_detalle.php?codigo=5623945&fecha=14/07/2021'],
-  ['Institución', 'Reglamento de la ANAM', 'Reglamento publicado en el Diario Oficial de la Federación.', 'https://www.dof.gob.mx/nota_detalle.php?codigo=5639045&fecha=21/12/2021'],
+  ['Institución', 'Creación de la ANAM', 'Decreto de creación de la Agencia Nacional de Aduanas de México.', 'https://dof.gob.mx/nota_detalle.php?codigo=5623945&fecha=14/07/2021'],
+  ['Institución', 'Reglamento de la ANAM', 'Reglamento publicado en el Diario Oficial de la Federación.', 'https://dof.gob.mx/nota_detalle.php?codigo=5639045&fecha=21/12/2021'],
   ['Marco aduanero', 'Ley Aduanera', 'Texto vigente disponible en la biblioteca legislativa.', OFFICIAL_LINKS.law],
   ['Marco aduanero', 'Manual de Operación Aduanera', 'Página institucional y documento enlazado por ANAM.', OFFICIAL_LINKS.anamMoa],
-  ['Territorio', 'Circunscripción territorial de las aduanas', 'Acuerdo publicado en el DOF.', 'https://www.dof.gob.mx/nota_detalle.php?codigo=5644134&fecha=01/03/2022'],
-  ['Territorio', 'Modificación de circunscripción territorial', 'Actualización publicada en el DOF.', 'https://www.dof.gob.mx/nota_detalle.php?codigo=5645887&fecha=17/03/2022'],
+  ['Territorio', 'Circunscripción territorial de las aduanas', 'Acuerdo publicado en el DOF.', 'https://dof.gob.mx/nota_detalle.php?codigo=5644134&fecha=01/03/2022'],
+  ['Territorio', 'Modificación de circunscripción territorial', 'Actualización publicada en el DOF.', 'https://dof.gob.mx/nota_detalle.php?codigo=5645887&fecha=17/03/2022'],
   ['Comercio exterior', 'Reglas Generales de Comercio Exterior', 'Acceso institucional a reglamentación y normatividad.', OFFICIAL_LINKS.anamNormativity],
   ['Consulta', 'Diario Oficial de la Federación', 'Publicador oficial para instrumentos normativos federales.', OFFICIAL_LINKS.dof],
   ['Consulta', 'Leyes federales', 'Biblioteca legislativa de la Cámara de Diputados.', 'https://www.diputados.gob.mx/LeyesBiblio/index.htm'],

@@ -5,9 +5,9 @@ import pytest
 from arancel_mx.consumer.hs_sections import hs_sections, section_for_chapter
 
 
-def test_hs_sections_are_the_21_ligie_groupings() -> None:
+def test_hs_sections_are_the_22_ligie_groupings() -> None:
     sections = hs_sections()
-    assert len(sections) == 21
+    assert len(sections) == 22
     assert [section.roman for section in sections] == [
         "I",
         "II",
@@ -30,6 +30,7 @@ def test_hs_sections_are_the_21_ligie_groupings() -> None:
         "XIX",
         "XX",
         "XXI",
+        "XXII",
     ]
     assert {section.source for section in sections} == {"hs_section_grouping"}
 
@@ -49,8 +50,20 @@ def test_live_animals_chapter_is_section_i() -> None:
     assert section.roman == "I"
 
 
-def test_chapter_98_has_no_wco_section() -> None:
-    assert section_for_chapter("98") is None
+def test_chapter_98_belongs_to_the_ligie_section_xxii() -> None:
+    section = section_for_chapter("98")
+    assert section is not None
+    assert section.roman == "XXII"
+    assert section.name == "Operaciones especiales"
+    assert (section.chapter_from, section.chapter_to) == ("98", "98")
+
+
+def test_every_chapter_with_records_has_exactly_one_section() -> None:
+    covered = [
+        section_for_chapter(f"{chapter:02d}")
+        for chapter in range(1, 99)
+    ]
+    assert all(section is not None for section in covered)
 
 
 def test_reserved_chapter_77_still_belongs_to_section_xv() -> None:

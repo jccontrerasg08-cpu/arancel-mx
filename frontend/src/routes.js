@@ -6,6 +6,7 @@ export const PUBLIC_ROUTES = Object.freeze([
   { path: '/chapters', label: 'Chapters' },
   { path: '/changes', label: 'Changes' },
   { path: '/data', label: 'Data figures' },
+  { path: '/learn', label: 'Start here' },
   { path: '/moa', label: 'MOA guide' },
   { path: '/moa-guide', label: 'MOA guide alias' },
   { path: '/wiki', label: 'Wiki' },
@@ -16,7 +17,10 @@ export const PUBLIC_ROUTES = Object.freeze([
   { path: '/records', label: 'My records' },
   { path: '/trade', label: 'Trade desk' },
   { path: '/features', label: 'Product features' },
-  { path: '/pricing', label: 'Data releases' },
-  { path: '/analytics', label: 'Release analytics' },
+  { path: '/releases', label: 'Data releases' },
+  { path: '/release-analytics', label: 'Release analytics' },
   { path: '/community', label: 'Community' },
 ]);
+
+// Old addresses that now redirect permanently (vercel.json and the local app) to the page that replaced them.
+export const ROUTE_ALIASES = Object.freeze({ '/product': '/app', '/moa-guide': '/moa' });

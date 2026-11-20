@@ -37,9 +37,9 @@ Canónico: [Política de desarrollo verificable](../../docs/governance/DEVELOPME
 ## Restricciones
 
 - **Sólo lectura hacia fuera:** ninguna superficie pública acepta escrituras ni pide credenciales.
-- **Mínimo privilegio en CI:** permisos de escritura en un solo job cada uno, acciones fijadas por SHA, valores dinámicos por `env:`.
+- **Mínimo privilegio en CI:** permisos de escritura en un solo job cada uno, acciones de terceros fijadas por SHA, valores dinámicos por `env:`, sólo runners alojados por GitHub y los controles de `tests/test_workflow_hardening.py`.
 - **Sin secretos ni datos privados** en Git, fixtures, artefactos ni logs.
-- **Stack:** Python 3.11 con `requirements/production-build.txt` fijado; frontend Vite + React compilado a `src/arancel_mx/api/static/site/`; datos en DuckDB.
+- **Stack:** Python 3.11 con `requirements/production-build.txt` fijado; frontend Vite + React compilado a `src/arancel_mx/api/static/site/`, copia estática versionada que Vercel publica tal cual (sin API dinámica ni base de datos externa); datos en DuckDB.
 - **Idioma:** documentación y textos de interfaz en español, siguiendo la [guía de estilo](../../docs/documentation-style.md); nombres de archivo en inglés `kebab-case`.
 
 ## Flujo de trabajo y calidad

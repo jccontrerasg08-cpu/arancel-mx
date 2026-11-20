@@ -97,8 +97,47 @@ test('groups the header into four destinations and keeps every page reachable', 
   await page.keyboard.press('Escape');
   await expect(learn).toHaveAttribute('aria-expanded', 'false');
   await expect(learn).toBeFocused();
-  await page.getByRole('link', { name: /^mis registros$/i }).click();
+  await page.getByRole('banner').getByRole('link', { name: /^mis registros$/i }).click();
   await expect(page).toHaveURL(/\/records$/);
+});
+
+test('reaches the import estimator from the header and every page from the footer', async ({ page }) => {
+  await page.goto('/');
+  const estimator = page.getByRole('banner').getByRole('link', { name: /^estimador$/i });
+  await expect(estimator).toHaveAttribute('href', '/trade');
+
+  const footer = page.getByRole('contentinfo');
+  const expected = { Explorar: '/app', Capítulos: '/chapters', Estimador: '/trade', 'Mis registros': '/records', 'Guía para empezar': '/learn', Glosario: '/glossary', Wiki: '/wiki', 'Guía MOA': '/moa', 'Contexto comercial': '/trade-context', Cifras: '/data', 'Cambios en el DOF': '/changes', Releases: '/releases', 'Análisis de releases': '/release-analytics', Documentación: '/documentation', Confianza: '/trust', Funciones: '/features', Comunidad: '/community' };
+  for (const [name, href] of Object.entries(expected)) {
+    await expect(footer.getByRole('link', { name, exact: true }), name).toHaveAttribute('href', href);
+  }
+  await footer.getByRole('link', { name: 'Releases', exact: true }).click();
+  await expect(page).toHaveURL(/\/releases$/);
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(/releases públicos/i);
+});
+
+test('lists the estimator and the data pages in the mobile menu', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await page.getByRole('button', { name: /abrir menú de navegación/i }).click();
+  const navigation = page.getByLabel('Navegación principal');
+  await expect(navigation.getByRole('link', { name: /^estimador$/i })).toHaveAttribute('href', '/trade');
+  await expect(navigation.getByRole('link', { name: /^releases$/i })).toHaveAttribute('href', '/releases');
+  await expect(navigation.getByRole('link', { name: /^análisis de releases$/i })).toHaveAttribute('href', '/release-analytics');
+});
+
+test('teaches how to read a code from the Learn menu', async ({ page }) => {
+  await page.goto('/');
+  const navigation = page.getByLabel('Navegación principal');
+  await navigation.getByRole('button', { name: /^aprender$/i }).click();
+  await navigation.getByRole('link', { name: /^guía para empezar$/i }).click();
+  await expect(page).toHaveURL(/[/]learn$/);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(/aprende a leer el arancel de méxico/i);
+  await expect(page.getByRole('status').filter({ hasText: 'Capítulo' })).toContainText('2 dígitos');
+  await page.getByRole('button', { name: /^13[ ]*subpartida$/i }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Subpartida' })).toContainText(/sistema armonizado/i);
+  await page.getByText('¿Qué es la LIGIE y qué es la TIGIE?').click();
+  await expect(page.getByText(/12 de diciembre de 2022/)).toBeVisible();
 });
 
 test('lists every destination, grouped, in the mobile menu', async ({ page }) => {
@@ -112,8 +151,8 @@ test('lists every destination, grouped, in the mobile menu', async ({ page }) =>
 });
 test('offers verified examples as shortcuts into the explorer', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('link', { name: '01.01.21.01.00' }).click();
-  await expect(page).toHaveURL(/\/app\?q=01.01.21.01.00/);
+  await page.getByRole('link', { name: '0101.21.01 00' }).click();
+  await expect(page).toHaveURL(/\/app\?q=0101\.21\.01(%20|\+| )00/);
 });
 test('updates editorial metadata when the route changes', async ({ page }) => {
   await page.goto('/documentation');
@@ -169,11 +208,62 @@ test('opens a verified chapter section and family hierarchy from the keyboard', 
   await expect(page.getByRole('button', { name: /partida · familia HS4.*01\.01/i })).toBeVisible();
 });
 
+test('lists chapter 98 under its own section and expands the tree down to the NICO', async ({ page }) => {
+  await page.goto('/chapters');
+  const section = page.getByRole('button', { name: /^sección XXII /i });
+  await expect(section).toBeVisible();
+  await expect(section).toContainText('98');
+  await page.getByRole('button', { name: /^sección I /i }).click();
+  await page.getByRole('button', { name: /capítulo 01/i }).click();
+  const tree = page.locator('.tree').first();
+  await tree.getByRole('button', { name: /partida · familia HS4 01\.01/i }).click();
+  await tree.getByRole('button', { name: /subpartida · HS6 0101\.21/i }).click();
+  await tree.getByRole('button', { name: /fracción 0101\.21\.01 ·/i }).click();
+  const nico = tree.locator('li', { hasText: 'NICO 0101.21.01 00' }).last();
+  await expect(nico).toBeVisible();
+  await expect(nico.getByRole('link', { name: /ver ficha 0101\.21\.01 00/i })).toHaveAttribute('href', '/app/record/0101210100');
+});
+
+test('never invents a family code when a chapter file cannot be loaded', async ({ page }) => {
+  await failStaticFile(page, 'records/85.json');
+  await page.goto('/chapters');
+  await page.getByRole('button', { name: /^sección XVI /i }).click();
+  await page.getByRole('button', { name: /capítulo 85/i }).click();
+  await expect(page.getByText(/no se pudo cargar el detalle del capítulo 85/i)).toBeVisible();
+  await expect(page.getByRole('button', { name: /reintentar/i })).toBeVisible();
+  await expect(page.getByText('85.01')).toHaveCount(0);
+});
+
 test('opens matching chapter paths while a person filters the visual tree', async ({ page }) => {
   await page.goto('/chapters');
   await page.getByRole('searchbox', { name: /buscar capítulo/i }).fill('01');
-  await expect(page.getByRole('status')).toContainText(/capítulos coinciden/i);
+  // The chapter families can announce their own loading status at the same moment, so pick the filter's one.
+  await expect(page.getByRole('status').filter({ hasText: /capítulos coinciden/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /capítulo 01/i })).toBeVisible();
+});
+
+test('shows INEGI’s trade balance from the saved copy when the live function is unavailable', async ({ page }) => {
+  await page.route('**/api/trade_balance', (route) => route.fulfill({ status: 502, json: { status: 'upstream_unavailable' } }));
+  await page.goto('/trade-context');
+  const balance = page.getByTestId('trade-balance');
+  await expect(balance.getByRole('heading', { level: 2 })).toHaveText(/^Exportaciones e importaciones, \d{4}–\d{4}$/);
+  await expect(balance.getByRole('row', { name: /^2025/ })).toContainText('+209.4');
+  await expect(balance.getByRole('row', { name: /^2022/ })).toContainText('−28,107.9');
+  await expect(balance.getByRole('link', { name: /^INEGI · Balanza Comercial/ })).toHaveAttribute('href', 'https://www.inegi.org.mx/temas/balanza/');
+  await expect(balance).toHaveAttribute('data-live', 'false');
+  await expect(balance).toContainText('Copia guardada de la API del INEGI');
+});
+
+test('replaces the saved copy with figures computed from the live INEGI series', async ({ page }) => {
+  const observation = (year, month, value) => ({ TIME_PERIOD: `${year}/${String(month).padStart(2, '0')}`, OBS_VALUE: String(value) });
+  const series = (id, value) => ({ INDICADOR: id, OBSERVATIONS: [...Array(12 * 12)].map((_, index) => observation(2014 + Math.floor(index / 12), (index % 12) + 1, value)) });
+  await page.route('**/api/trade_balance', (route) => route.fulfill({ json: { Series: [series('33860', 100), series('33861', 90), series('33229', 10)] } }));
+  await page.goto('/trade-context');
+  const balance = page.getByTestId('trade-balance');
+  await expect(balance).toHaveAttribute('data-live', 'true');
+  await expect(balance.getByRole('heading', { level: 2 })).toHaveText('Exportaciones e importaciones, 2016–2025');
+  await expect(balance.getByRole('row', { name: /^2025/ })).toContainText('1,200.0');
+  await expect(balance).toContainText('Datos en vivo de la API del INEGI');
 });
 
 test('serves the source-cited trade-context and ANAM MOA routes', async ({ page }) => {
@@ -210,9 +300,99 @@ test('shows possible verified paths while a person types without requiring a sub
   await page.getByTestId('search-input').fill('teléfonos');
   const suggestions = page.getByTestId('live-suggestions');
   await expect(suggestions).toContainText(/rutas verificadas posibles/i);
-  await expect(suggestions.getByRole('option', { name: /85\.17\.13\.01/i })).toBeVisible();
-  await suggestions.getByRole('option', { name: /85\.17\.13\.01/i }).click();
+  await expect(suggestions.getByRole('option', { name: /8517\.13\.01/i })).toBeVisible();
+  await suggestions.getByRole('option', { name: /8517\.13\.01/i }).click();
   await expect(page).toHaveURL(/\/app\/record\/85171301$/);
+});
+
+test('summarizes a publication by chapter and narrows the fraction table from it', async ({ page }) => {
+  await page.goto('/changes/ref02');
+  const summary = page.getByTestId('dof-chapter-summary');
+  await expect(summary).toBeVisible();
+  const first = summary.locator('tbody tr').first();
+  await expect(first).toContainText('Capítulo 72');
+  await expect(first).toContainText('35% × 126');
+  await first.getByRole('button', { name: /ver fracciones/i }).click();
+  await expect(page.locator('#rows-filter')).toHaveValue('72');
+  await expect(page.getByTestId('dof-chapter-summary-more')).toBeVisible();
+  await page.getByTestId('dof-chapter-summary-more').click();
+  expect(await summary.locator('tbody tr').count()).toBeGreaterThan(10);
+});
+
+test('lists the other fractions of the heading with their IGI and links to them', async ({ page }) => {
+  await page.goto('/app/record/85171301');
+  const siblings = page.getByTestId('sibling-fractions');
+  await expect(siblings).toContainText(/otras fracciones de la partida 85\.17/i);
+  await expect(siblings.getByRole('link', { name: /8517\.13\.01/ })).toHaveCount(0);
+  const before = await siblings.locator('li').count();
+  await page.getByTestId('sibling-fractions-more').click();
+  expect(await siblings.locator('li').count()).toBeGreaterThan(before);
+  await expect(page.getByTestId('sibling-fractions-more')).toHaveCount(0);
+  await siblings.getByRole('link', { name: /8517\.14\.91/ }).click();
+  await expect(page).toHaveURL(/\/app\/record\/85171491$/);
+});
+
+test('shows the NOM the annex lists for a fraction with its limit, source and the not-a-determination note', async ({ page }) => {
+  await serveStaticRecords(page, [{ code: '85171301', description: 'Teléfonos móviles.', igi: 'Ex.' }]);
+  await page.route('**/data/v1/sections.json', (route) => route.fulfill({ json: [{ numeral: 'XVI', title: 'Máquinas y aparatos', chapter_from: '84', chapter_to: '85' }] }));
+  await page.route('**/data/v1/regulations/85.json', (route) => route.fulfill({
+    json: {
+      sources: { annex: { source_url: 'https://www.snice.gob.mx/~oracle/SNICE_DOCS/anexo.pdf', sha256: 'a'.repeat(64) } },
+      requirements: [
+        { fraction8: '85171301', numeral: 1, numeral_meaning: 'import_noms', section: null, nom: 'NOM-208-SCFI-2016', scope: 'Únicamente: equipos de radiocomunicación', nico: [], annex_page: 600, source_document_id: 'annex' },
+        { fraction8: '85171301', numeral: 3, numeral_meaning: 'commercial_information_noms', section: 'III', nom: 'NOM-024-SCFI-2013', scope: null, nico: [], annex_page: 700, source_document_id: 'annex' },
+      ],
+    },
+  }));
+  await page.goto('/app/record/85171301');
+  const nom = page.getByTestId('nom-requirements');
+  await expect(nom).toContainText(/NOM que el anexo lista para esta fracción/i);
+  await expect(nom).toContainText(/no determina si tu producto está sujeto/i);
+  await expect(nom).toContainText('NOM-208-SCFI-2016');
+  await expect(nom).toContainText(/Acotación del anexo: Únicamente: equipos de radiocomunicación/);
+  await expect(nom).toContainText(/Importación sujeta a NOM \(regla 2\.4\.3\)/);
+  await expect(nom).toContainText(/Información comercial y sanitaria en importación/);
+  await expect(nom.getByRole('link', { name: /Anexo 2\.4\.1/ }).first()).toHaveAttribute('href', /snice\.gob\.mx/);
+  await expect(nom).toContainText(/página 600/);
+});
+
+test('keeps showing the NOM, and says which release they come from, when the annex could not be read today', async ({ page }) => {
+  await serveStaticRecords(page, [{ code: '85171301', description: 'Teléfonos móviles.', igi: 'Ex.' }]);
+  await page.route('**/data/v1/sections.json', (route) => route.fulfill({ json: [{ numeral: 'XVI', title: 'Máquinas y aparatos', chapter_from: '84', chapter_to: '85' }] }));
+  await page.route('**/data/v1/regulations/85.json', (route) => route.fulfill({
+    json: {
+      annex: { status: 'carried_forward', carried_from: '2026.11.19' },
+      sources: { annex: { source_url: 'https://www.snice.gob.mx/~oracle/SNICE_DOCS/anexo.pdf', sha256: 'a'.repeat(64) } },
+      requirements: [{ fraction8: '85171301', numeral: 1, numeral_meaning: 'import_noms', section: null, nom: 'NOM-208-SCFI-2016', scope: null, nico: [], annex_page: 600, source_document_id: 'annex' }],
+    },
+  }));
+  await page.goto('/app/record/85171301');
+  await expect(page.getByTestId('nom-requirements')).toContainText('NOM-208-SCFI-2016');
+  await expect(page.getByTestId('nom-carried')).toContainText(/no se pudo leer el Anexo 2\.4\.1 vigente.*2026\.11\.19/i);
+});
+
+test('shows no NOM block when the release has no regulations file or the fraction is not listed', async ({ page }) => {
+  await serveStaticRecords(page, [{ code: '85171301', description: 'Teléfonos móviles.', igi: 'Ex.' }]);
+  await page.route('**/data/v1/sections.json', (route) => route.fulfill({ json: [{ numeral: 'XVI', title: 'Máquinas y aparatos', chapter_from: '84', chapter_to: '85' }] }));
+  await page.route('**/data/v1/regulations/85.json', (route) => route.fulfill({ json: { sources: {}, requirements: [] } }));
+  await page.goto('/app/record/85171301');
+  await expect(page.getByTestId('result-card')).toBeVisible();
+  await expect(page.getByRole('paragraph').filter({ hasText: 'Teléfonos móviles.' })).toBeVisible();
+  await expect(page.getByTestId('nom-requirements')).toHaveCount(0);
+});
+
+test('says plainly when the annex has no NOM for the fraction, and when the release lacks annex data', async ({ page }) => {
+  await serveStaticRecords(page, [{ code: '85171301', description: 'Teléfonos móviles.', igi: 'Ex.' }]);
+  await page.route('**/data/v1/sections.json', (route) => route.fulfill({ json: [{ numeral: 'XVI', title: 'Máquinas y aparatos', chapter_from: '84', chapter_to: '85' }] }));
+  await page.route('**/data/v1/regulations/85.json', (route) => route.fulfill({ json: { annex: { status: 'available' }, sources: {}, requirements: [] } }));
+  await page.goto('/app/record/85171301');
+  await expect(page.getByTestId('nom-none')).toContainText(/no aparece en el Anexo 2\.4\.1/i);
+  await expect(page.getByTestId('nom-requirements')).toHaveCount(0);
+
+  await page.route('**/data/v1/regulations/85.json', (route) => route.fulfill({ json: { annex: { status: 'unavailable' }, sources: {}, requirements: [] } }));
+  await page.goto('/app/record/85171301');
+  await expect(page.getByTestId('nom-unavailable')).toContainText(/no están disponibles en esta release/i);
+  await expect(page.getByTestId('nom-none')).toHaveCount(0);
 });
 
 test('looks up a complete tariff fraction with evidence and a decision tree', async ({ page }) => {
@@ -220,12 +400,20 @@ test('looks up a complete tariff fraction with evidence and a decision tree', as
   await page.getByTestId('search-input').fill('8517.13.01');
   await page.getByTestId('search-submit').click();
   const card = page.getByTestId('result-card').first();
-  await expect(card).toContainText('85.17.13.01');
+  await expect(card).toContainText('8517.13.01');
   await expect(card).toContainText(/teléfonos inteligentes/i);
   await expect(page.getByTestId('hierarchy-card')).toContainText(/árbol de decisión progresivo/i);
-  await expect(page.getByTestId('tree-filter-status')).toContainText('85.17.13.01');
+  await expect(page.getByTestId('tree-filter-status')).toContainText('8517.13.01');
   await expect(page.getByRole('status')).toHaveText(/registro verificado listo/i);
   await expect(page.getByRole('link', { name: /API JSON/i })).toHaveAttribute('href', /\/data\/v1\/records\/85\.json$/);
+});
+
+test('names the fraction in the tab title and the share metadata of a record', async ({ page }) => {
+  await page.goto('/app/record/85171301');
+  await expect(page).toHaveTitle(/8517[.]13[.]01 · Teléfonos inteligentes/);
+  await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', /8517[.]13[.]01/);
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /^Ficha verificada 8517[.]13[.]01/);
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://arancel-mx.vercel.app/app/record/85171301');
 });
 
 test('jumps between the sections of a record from its own navigation', async ({ page }) => {
@@ -251,14 +439,14 @@ test('retries a direct record request without leaving the record route', async (
 test('exposes rates only on fraction cards', async ({ page }) => {
   await page.goto('/app/record/01012101');
   const fractionCard = page.getByTestId('result-card');
-  await expect(fractionCard).toContainText('01.01.21.01');
+  await expect(fractionCard).toContainText('0101.21.01');
   await expect(fractionCard).toContainText('IGI');
   await expect(fractionCard).toContainText('IGE');
   await expect(fractionCard.getByTestId('open-estimate')).toHaveAttribute('href', '/trade?code=01012101');
 
   await page.goto('/app/record/0101210100');
   const nicoCard = page.getByTestId('result-card');
-  await expect(nicoCard).toContainText('01.01.21.01.00');
+  await expect(nicoCard).toContainText('0101.21.01 00');
   await expect(nicoCard).not.toContainText('IGI');
   await expect(nicoCard).not.toContainText('IGE');
   await expect(nicoCard.getByTestId('open-estimate')).toHaveAttribute('href', '/trade?code=0101210100');
@@ -273,8 +461,8 @@ test('renders every non-fraction direct record without rate fields or a page err
   for (const { code, formatted } of [
     { code: '01', formatted: '01' },
     { code: '0101', formatted: '01.01' },
-    { code: '010121', formatted: '01.01.21' },
-    { code: '0101210100', formatted: '01.01.21.01.00' },
+    { code: '010121', formatted: '0101.21' },
+    { code: '0101210100', formatted: '0101.21.01 00' },
   ]) {
     await page.goto(`/app/record/${code}`);
     await expect(page.getByText(/an unexpected error occurred/i)).toHaveCount(0);
@@ -335,19 +523,36 @@ test('shows the heading path of a generic "Los demás." search result', async ({
   await expect(card.getByTestId('result-context')).toContainText(/^Teléfonos, incluidos los teléfonos inteligentes.* › Los demás$/);
 });
 
+test('labels each hierarchy level with the official code notation and indents it by depth', async ({ page }) => {
+  await page.goto('/app/record/0101210100');
+  const tree = page.getByTestId('hierarchy-card').locator('ol.hierarchy > li');
+  await expect(tree).toHaveCount(5);
+  const rows = await tree.evaluateAll((items) => items.map((item) => ({ label: item.querySelector('strong').textContent, margin: parseFloat(getComputedStyle(item).marginLeft) })));
+  expect(rows.map((row) => row.label)).toEqual([
+    'Capítulo HS2 · 01',
+    'Partida · familia HS4 · 01.01',
+    'Subpartida · HS6 · 0101.21',
+    'Fracción · 0101.21.01',
+    'NICO · 0101.21.01 00',
+  ]);
+  const margins = rows.map((row) => row.margin);
+  expect(margins).toEqual([...margins].sort((a, b) => a - b));
+  expect(new Set(margins).size).toBe(margins.length);
+});
+
 test('opens the visual tree from the explorer and keeps its selected hierarchy inspectable', async ({ page }) => {
   await page.goto('/app');
   await page.getByRole('link', { name: /explorar árbol visual/i }).click();
   await expect(page).toHaveURL(/\/chapters$/);
   await expect(page.getByRole('button', { name: /^sección I /i })).toBeVisible();
   await page.goto('/app/record/85171301');
-  await expect(page.getByTestId('hierarchy-card')).toContainText('85.17.13.01');
+  await expect(page.getByTestId('hierarchy-card')).toContainText('8517.13.01');
 });
 
 test('saves and exports a browser-local research snapshot', async ({ page }) => {
   await page.goto('/app/record/85171301');
   await page.getByRole('button', { name: /guardar localmente/i }).click();
-  await expect(page.getByTestId('snapshot-list')).toContainText('85.17.13.01');
+  await expect(page.getByTestId('snapshot-list')).toContainText('8517.13.01');
   const download = page.waitForEvent('download');
   await page.getByTestId('export-snapshots').click();
   const backup = await download;
@@ -396,7 +601,7 @@ test('opens the quick search with Ctrl+K, offers verified paths and opens a reco
   await expect(dialog.getByRole('combobox')).toBeFocused();
   await expect(dialog.getByRole('option').first()).toBeVisible();
   await dialog.getByRole('combobox').fill('teléfonos');
-  await dialog.getByRole('option', { name: /85\.17\.13\.01/ }).click();
+  await dialog.getByRole('option', { name: /8517\.13\.01/ }).click();
   await expect(page).toHaveURL(/\/app\/record\/85171301$/);
   await expect(page.getByRole('dialog')).toHaveCount(0);
 });
@@ -467,8 +672,9 @@ test('opens a publication with its fractions, the DOF link and the original docu
   await page.getByRole('link', { name: /modifica la tarifa de la ligie y el decreto prosec/i }).first().click();
   await expect(page).toHaveURL(/\/changes\/tarifa15$/);
   const detail = page.getByTestId('dof-detail');
-  await expect(detail.getByRole('table')).toBeVisible();
-  expect(await detail.locator('tbody tr').count()).toBeGreaterThan(50);
+  const fractions = detail.getByRole('table', { name: /fracciones/i });
+  await expect(fractions).toBeVisible();
+  expect(await fractions.locator('tbody tr').count()).toBeGreaterThan(50);
   await expect(detail.getByRole('link', { name: /ver en el dof/i })).toHaveAttribute('href', /year=2026&month=04&day=23/);
   await expect(detail.getByRole('link', { name: /documento de la publicación/i })).toHaveAttribute('href', /LIGIE_2022_tarifa15_23abr26\.pdf$/);
 });
@@ -478,4 +684,16 @@ test('finds which DOF publications touched a fraction', async ({ page }) => {
   await page.getByLabel(/código o prefijo/i).fill('28272001');
   await expect(page.getByRole('status').filter({ hasText: /publicaciones del DOF tocan/i })).toBeVisible();
   await expect(page.locator('.change-matches li').first()).toContainText(/IGI 35%/);
+});
+
+test('gives the explorer and the secondary pages their own tab title', async ({ page }) => {
+  const expected = { '/app': /explora una referencia arancelaria/i, '/features': /construye sobre datos arancelarios verificables/i, '/releases': /releases públicos/i, '/release-analytics': /contexto del release/i, '/community': /contribuye con evidencia visible/i };
+  const titles = new Set();
+  for (const [route, pattern] of Object.entries(expected)) {
+    await page.goto(route);
+    await expect(page).toHaveTitle(pattern);
+    await expect(page.locator('meta[name="description"]')).not.toHaveAttribute('content', /^Datos arancelarios mexicanos verificables\.$/);
+    titles.add(await page.title());
+  }
+  expect(titles.size).toBe(Object.keys(expected).length);
 });

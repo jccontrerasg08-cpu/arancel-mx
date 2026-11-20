@@ -23,8 +23,8 @@ const PUBLIC_SURFACES = [
   '/records',
   '/trade',
   '/features',
-  '/pricing',
-  '/analytics',
+  '/releases',
+  '/release-analytics',
   '/community',
 ];
 

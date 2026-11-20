@@ -70,7 +70,7 @@ def test_capture_records_failures_and_off_host_links_without_aborting(tmp_path):
 
 
 def test_capture_scans_dof_daily_index_for_tariff_instruments(tmp_path):
-    index = "https://www.dof.gob.mx/index.php?year=2026&month=10&day=13&edicion=MAT"
+    index = "https://dof.gob.mx/index.php?year=2026&month=10&day=13&edicion=MAT"
     note = "https://www.dof.gob.mx/nota_detalle.php?codigo=1&fecha=13/10/2026"
     other = "https://www.dof.gob.mx/nota_detalle.php?codigo=2&fecha=13/10/2026"
     html = (

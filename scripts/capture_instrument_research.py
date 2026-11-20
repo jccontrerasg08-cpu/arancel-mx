@@ -250,7 +250,7 @@ def run(
     for day in dof_dates:
         for edition in DOF_EDITIONS:
             url = (
-                f"https://www.dof.gob.mx/index.php?year={day.year}"
+                f"https://dof.gob.mx/index.php?year={day.year}"
                 f"&month={day.month:02d}&day={day.day:02d}&edicion={edition}"
             )
             document = capture.get(

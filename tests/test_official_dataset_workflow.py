@@ -133,6 +133,9 @@ def test_pages_job_publishes_gh_pages_from_trusted_main_even_without_a_release()
     assert "persist-credentials: false" in pages
     assert "::add-mask::" in pages
     assert '"https://github.com/${GITHUB_REPOSITORY}.git" gh-pages' in pages
+    # Skipping a publish is decided by content, never by the release tag alone.
+    assert "python -m scripts.static_pages_unchanged" in pages
+    assert "git log -1 --format=%s FETCH_HEAD" not in pages
 
 
 def test_artifact_name_survives_a_publish_only_rerun():

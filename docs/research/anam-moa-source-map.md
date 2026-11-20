@@ -36,7 +36,7 @@ La página de normatividad de ANAM enlaza, entre otros recursos, a la creación 
 | Rol de fuente | Uso de interfaz propuesto | Fuente primaria |
 |---|---|---|
 | Ley y reglamento | Enlaces de verificación normativa | [Ley Aduanera — Cámara de Diputados](https://www.diputados.gob.mx/LeyesBiblio/pdf/LAdua.pdf) |
-| Publicación oficial | Enlaces de consulta a decretos, acuerdos o actualizaciones | [Diario Oficial de la Federación](https://www.dof.gob.mx/) |
+| Publicación oficial | Enlaces de consulta a decretos, acuerdos o actualizaciones | [Diario Oficial de la Federación](https://dof.gob.mx/) |
 | Guía operativa | Índice por etapa y enlace de salida a ANAM | [Manual de Operación Aduanera — ANAM](https://www.anam.gob.mx/manual-de-operacion-aduanera-moa/) |
 | Reglas de comercio exterior | Enlace a la serie publicada por ANAM y aviso de que debe verificarse versión/fecha | [Normatividad ANAM](https://www.anam.gob.mx/normatividad_2022/) |
 
