@@ -255,7 +255,7 @@ jobs:
       - name: Run frontend contract tests
         # Plain node:test files (generated route pages, brand contrast, DOF changes file, static API client). Playwright
         # does not run them, so without this step a stale generated file only shows up on someone's machine.
-        run: node --test tests/e2e/frontend-*.test.mjs tests/e2e/set-site-origin.test.mjs
+        run: node --test tests/e2e/frontend-*.test.mjs tests/e2e/set-site-origin.test.mjs tests/e2e/lighthouse-check.test.mjs
 
       - name: Run browser smoke tests
         run: npm run test:e2e
