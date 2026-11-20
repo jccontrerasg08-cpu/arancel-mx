@@ -17,9 +17,9 @@ The hub at [arancel-mx.vercel.app](https://arancel-mx.vercel.app/) is a projecti
 Example citation:
 
 ```text
-arancel-mx dataset data-2026.11.09
+arancel-mx dataset data-YYYY.MM.DD
 schema 2, release_verified true
-https://github.com/jccontrerasg08-cpu/arancel-mx/releases/tag/data-2026.11.09
+https://github.com/jccontrerasg08-cpu/arancel-mx/releases/tag/data-YYYY.MM.DD
 SHA-256 of the consumed asset, from that release's SHA256SUMS
 code consulted, and the consultation date
 ```

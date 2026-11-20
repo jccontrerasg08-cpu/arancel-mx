@@ -14,7 +14,7 @@ def test_english_readme_does_not_advertise_an_unshipped_diagnostic() -> None:
     readme = _text("README.en.md")
     assert "data nico-coverage" not in readme
     assert "How to cite" in readme
-    assert "release_verified" not in readme or "data-2026.11.09" in readme
+    assert "data-YYYY.MM.DD" in readme
 
 
 def test_hub_citation_uses_meta_identity_fields() -> None:

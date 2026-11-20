@@ -11,7 +11,6 @@ def test_github_aware_scripts_are_importable_as_repo_modules():
     modules = (
         "scripts.fetch_previous_release",
         "scripts.publish_release",
-        "scripts.promote_operational_release",
         "scripts.data_alert",
         "scripts.check_documented_urls",
         "scripts.validate_ligie_html_pages",

@@ -20,7 +20,8 @@ La portada del repositorio explica **qué es** `arancel-mx` y cómo empezar. Est
 |---|---|---|
 | Integrar DuckDB/CSV/JSON, Python o HTTP | [Consumo externo](external-consumption.md) | Contratos de archivos, `Dataset` y API estática GET-only/read-only. |
 | Evolucionar biblioteca, CLI o HTTP sin romper consumidores | [Política de compatibilidad](compatibility.md) | Soporte certificado, cambios aditivos y deprecaciones anunciadas. |
-| Migrar desde la API dinámica `/v1` alojada | [Retiro de `/v1`](operations/v1-sunset.md) | Equivalencias con `/data/v1` y calendario de retiro (2027-01-31). |
+| Migrar desde la API dinámica `/v1` alojada | [Retiro de `/v1`](operations/v1-sunset.md) | Registro del retiro (ya ocurrido) y equivalencias con `/data/v1`. |
+| Cambiar el sitio a un dominio propio | [Dominio propio](operations/custom-domain.md) | Pasos de Vercel y DNS, y el comando que cambia la dirección en todo el repositorio. |
 | Explorar rutas, límites y contratos públicos | [Centro de documentación](https://arancel-mx.vercel.app/documentation) | Rutas GET-only, documentación mantenida y límites de integración. |
 | Identificar la release que sirve el hub | [`/data/v1/meta.json`](https://arancel-mx.vercel.app/data/v1/meta.json) | Identidad del dataset servido por la API estática. |
 | Citar un resultado del hub | [Guía de cita](hub-citation-guidance.md) | Tag, `release_verified`, SHA-256 y qué no citar. |

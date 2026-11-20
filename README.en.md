@@ -45,8 +45,8 @@ The Python package and the dataset have separate version cycles. A package versi
 
 | Surface | Version / status |
 |---|---|
-| Python package | **0.3.7** (PyPI) |
-| Public dataset | **data-2026.11.09** (verified release) |
+| Python package | [latest on PyPI](https://pypi.org/project/arancel-mx/) |
+| Public dataset | [latest verified release](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest) (`data-YYYY.MM.DD`, immutable tag) |
 | Web hub | [arancel-mx.vercel.app](https://arancel-mx.vercel.app/) |
 | NICO coverage | Missing published NICO codes are not filled in. `lookup` and `ficha` fail closed when the code is absent. |
 
@@ -63,9 +63,9 @@ SHA-256 of the DuckDB / CSV / JSON from the release SHA256SUMS
 Reproducible example:
 
 ```bash
-arancel-mx data download --dataset data-2026.11.09
-arancel-mx data verify --dataset data-2026.11.09
-arancel-mx lookup 85171301 --dataset data-2026.11.09
+arancel-mx data download --dataset data-YYYY.MM.DD
+arancel-mx data verify --dataset data-YYYY.MM.DD
+arancel-mx lookup 85171301 --dataset data-YYYY.MM.DD
 ```
 
 

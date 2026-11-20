@@ -10,7 +10,9 @@ import os
 from pathlib import Path
 import re
 import sys
+import tempfile
 
+from arancel_mx.pipeline.nom_carry import DATABASE_ASSET, extract_previous_nom
 from arancel_mx.release.metadata import source_identity_from_manifest
 from arancel_mx.sources.capture import atomic_write_json
 from scripts.github_api import GitHubApi
@@ -143,9 +145,53 @@ def fetch_previous_manifest(
     return manifest
 
 
+def _named_asset(release: Mapping[str, object], name: str) -> Mapping[str, object]:
+    assets = release.get("assets")
+    matching = [
+        asset
+        for asset in assets
+        if isinstance(asset, Mapping) and asset.get("name") == name
+    ] if isinstance(assets, list) else []
+    if len(matching) != 1:
+        raise ValueError(f"selected release must contain exactly one {name} asset")
+    return matching[0]
+
+
+def fetch_previous_nom(
+    client: GitHubApi,
+    manifest: Mapping[str, object],
+    output_path: Path,
+) -> int:
+    """Save the NOM rows of the latest release (decision 0004, option 2); return how many.
+
+    Downloads that release's DuckDB (about 38 MB) and refuses it unless its SHA-256 is the one in the
+    release manifest, so carried rows are provably the published ones.
+    """
+    releases = client.request_json("GET", "/releases?per_page=100")
+    if not isinstance(releases, list):
+        raise ValueError("GitHub releases response must be a list")
+    selected = latest_data_release([r for r in releases if isinstance(r, Mapping)])
+    if selected is None or str(selected["tag_name"]) != f"data-{manifest.get('dataset_version')}":
+        raise ValueError("the latest release is not the one the manifest describes")
+    asset = _named_asset(selected, DATABASE_ASSET)
+    raw = client.request_bytes("GET", _asset_api_path(asset), accept="application/octet-stream")
+    with tempfile.TemporaryDirectory() as scratch:
+        database = Path(scratch) / DATABASE_ASSET
+        database.write_bytes(raw)
+        data = extract_previous_nom(database, manifest)
+    atomic_write_json(Path(output_path), data)
+    rows = data["rows"]
+    return len(rows) if isinstance(rows, list) else 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=Path("out/previous-manifest.json"))
+    parser.add_argument(
+        "--nom-output",
+        type=Path,
+        help="also save the previous release's NOM rows here (for the carry-forward of decision 0004)",
+    )
     parser.add_argument("--repository", default=os.getenv("GITHUB_REPOSITORY"))
     parser.add_argument("--token", default=os.getenv("GITHUB_TOKEN"))
     parser.add_argument("--api-url", default=os.getenv("GITHUB_API_URL", "https://api.github.com"))
@@ -163,6 +209,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     if manifest is None:
         print(json.dumps({"status": "none"}, sort_keys=True))
         return 0
+    annex = manifest.get("nom_annex")
+    carryable = isinstance(annex, Mapping) and annex.get("status") in {"available", "carried_forward"}
+    if args.nom_output is not None and carryable:
+        try:
+            count = fetch_previous_nom(client, manifest, args.nom_output)
+            print(json.dumps({"nom_rows": count}, sort_keys=True))
+        except Exception as exc:  # noqa: BLE001 - optional step: no failure here may stop the tariff update
+            # Best effort: without these rows a day with an unreadable annex simply carries nothing.
+            print(f"warning: previous NOM rows not saved: {exc}", file=sys.stderr)
     print(
         json.dumps(
             {

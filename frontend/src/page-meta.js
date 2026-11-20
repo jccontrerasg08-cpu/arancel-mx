@@ -1,5 +1,5 @@
 export const SITE_ORIGIN = 'https://arancel-mx.vercel.app';
-export const DEFAULT_SUMMARY = 'Datos arancelarios mexicanos verificables.';
+export const DEFAULT_SUMMARY = 'Consulta fracciones arancelarias de México (LIGIE y NICO) con fuente oficial, vigencia y evidencia verificable: IGI, IGE y NOM.';
 
 // The page a record route is currently showing, set once its record has loaded so the title and the
 // share metadata name the fraction instead of repeating the site's generic text.

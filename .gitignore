@@ -24,7 +24,6 @@ out/
 dist/
 build/
 *.egg-info/
-api/_vendor/
 
 .DS_Store
 frontend-dist/
