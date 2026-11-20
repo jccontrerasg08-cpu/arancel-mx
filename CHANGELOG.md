@@ -10,8 +10,8 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Fixed
 
+- `docs/architecture.md` and `docs/release-process.md` described two retired behaviours: the dynamic `/v1` API as deprecated (it was retired on 2026-11-20) and a same-day second change as failing with `release_tag_collision` (it ends in `no_change` at the `deferred` stage since #244).
 - The "rate in force since" date of about 450 fractions is now the first day of the unbroken run of the same rate, instead of the date of the latest decree. When a staged-rates decree (published earlier) also mentions the fraction, the run is followed back through the later temporary and modifying decrees that governed every day in between, and stops where the base text or a different rate governs. For example, 5208.19.91 (35 % since the 2024 decree, renewed on 24 April 2026) now reads "since 2024-04-23", not "since 2026-04-24". The legal registry version changed so the next daily run publishes the corrected dates.
-
 ### Changed
 
 - The app's web fonts no longer load through a CSS `@import` (which chained the font sheet behind the app sheet and blocked the first paint); `index.html` preconnects and loads them without blocking, and every generated route page inherits it. In a local mobile-simulated Lighthouse run the explorer went from performance 72 to 85-86, first contentful paint from 4.4 s to about 3.0 s and render-blocking time from 1.65 s to under 0.3 s.
@@ -58,6 +58,8 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Added
 
+- CLI: `arancel-mx data nico-coverage` reports current fractions without published NICO descendants. The known Totoaba lag (DOF 2025-07-21) and any other gaps come from one shared policy in `arancel_mx.domain.nico_lag`, also used by the pipeline. No synthetic NICO codes are created.
+- CLI: `arancel-mx data rate-validity` counts current fractions whose published `rate_effective_from` is present or absent, grouped by `validity_basis`. It does not invent dates.
 - Chapter 98 (Operaciones especiales: 9801 to 9807, including 9803.00.01) now belongs to its own section. The LIGIE text has "Sección XXII" for it, but the section list stopped at XXI, so the chapters page never showed chapter 98. `/data/v1/sections.json` now lists 22 sections and a record in chapter 98 reports `section` XXII instead of none.
 - The chapters page is now the full hierarchy: each chapter expands to its partidas (HS4), and each partida to its subpartidas (HS6), fracciones and NICO, with a "Ver ficha" link at every level. Before, it stopped at HS4 and, while a chapter loaded or if it failed, showed an invented family code (`85.01`); it now shows a loading or error state with a retry button. Checked in a real browser against the verified `data-2026.11.06`: all 97 chapters show 26,544 nodes, exactly the database's records below chapter level.
 
