@@ -10,6 +10,7 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Fixed
 
+- `docs/architecture.md` and `docs/release-process.md` described two retired behaviours: the dynamic `/v1` API as deprecated (it was retired on 2026-11-20) and a same-day second change as failing with `release_tag_collision` (it ends in `no_change` at the `deferred` stage since #244).
 - The "rate in force since" date of about 450 fractions is now the first day of the unbroken run of the same rate, instead of the date of the latest decree. When a staged-rates decree (published earlier) also mentions the fraction, the run is followed back through the later temporary and modifying decrees that governed every day in between, and stops where the base text or a different rate governs. For example, 5208.19.91 (35 % since the 2024 decree, renewed on 24 April 2026) now reads "since 2024-04-23", not "since 2026-04-24". The legal registry version changed so the next daily run publishes the corrected dates.
 
 ### Changed
