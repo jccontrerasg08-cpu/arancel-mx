@@ -119,6 +119,10 @@ def build_snapshot(rows: Iterable[Mapping[str, object]], *, source_url: str = ""
     now = retrieved_at or datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
     partner_rows = _serialize(partners, ("flow", "partner"), "value_usd")
     tariff_rows = _serialize(tariffs, ("flow", "tariff_group"), "value_usd")
+
+    def rank_key(item: dict[str, object]) -> tuple[str, float]:
+        value = item.get("value_usd")
+        return str(item["flow"]), -(float(value) if isinstance(value, (int, float)) else 0.0)
     return {
         "schema_version": "1.0.0", "status": "ready" if records else "not_loaded", "generated_at": now,
         "source": {"publisher": "INEGI", "dataset": "Balanza Comercial de Mercancías de México (BCMM)", "url": source_url},
@@ -127,8 +131,8 @@ def build_snapshot(rows: Iterable[Mapping[str, object]], *, source_url: str = ""
         "dimensions": ["flow", "period", "partner", "tariff_group"],
         "observations": {
             "monthly": _serialize(monthly, ("flow", "period"), "value_usd"),
-            "partners": sorted(partner_rows, key=lambda item: (str(item["flow"]), -float(item["value_usd"]))),
-            "tariff_groups": sorted(tariff_rows, key=lambda item: (str(item["flow"]), -float(item["value_usd"]))),
+            "partners": sorted(partner_rows, key=rank_key),
+            "tariff_groups": sorted(tariff_rows, key=rank_key),
         },
         "notes": ["Los registros confidenciales se cuentan y nunca se imputan como cero.", "Las agregaciones no sustituyen las cifras, metodología ni metadatos publicados por INEGI."],
     }
