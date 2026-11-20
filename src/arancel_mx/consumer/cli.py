@@ -13,6 +13,8 @@ from arancel_mx.consumer.errors import DatasetUnavailableError, QueryError
 from arancel_mx.consumer.manager import DatasetManager
 from arancel_mx.consumer.output import CsvSchema, render, render_json
 from arancel_mx.consumer.wco_support import cite_chapter, cite_gir, download_chapter, download_gir
+from arancel_mx.domain.nico_lag import classify_missing_nico
+from arancel_mx.domain.rate_diagnostics import summarize_rate_validity
 
 
 _OUTPUT_FORMATS = ("table", "json", "csv")
@@ -27,6 +29,28 @@ _QUERY_CSV_SCHEMAS: dict[str, CsvSchema] = {
     "chapters": "tariff",
     "compare": "compare",
 }
+
+_MISSING_NICO_SQL = """
+    SELECT f.code
+    FROM arancel_mx f
+    WHERE f.level = 'fraccion8'
+      AND f.is_current
+      AND NOT EXISTS (
+        SELECT 1 FROM arancel_mx n
+        WHERE n.level = 'nico10'
+          AND n.is_current
+          AND n.fraccion8 = f.code
+      )
+    ORDER BY f.code
+"""
+
+_RATE_VALIDITY_SQL = """
+    SELECT code, rate_effective_from, validity_basis
+    FROM arancel_mx
+    WHERE level = 'fraccion8'
+      AND is_current
+    ORDER BY code
+"""
 
 
 def _positive_int(value: str) -> int:
@@ -156,6 +180,22 @@ def register_consumer_commands(
         help="Download and verify all six public release assets temporarily",
     )
     verify.set_defaults(consumer_action="data_verify")
+
+    nico_cov = data_subparsers.add_parser(
+        "nico-coverage",
+        help="Reporta fracciones sin descendientes NICO y lag upstream conocido",
+    )
+    _add_dataset_selection(nico_cov)
+    _add_output_format(nico_cov)
+    nico_cov.set_defaults(consumer_action="data_nico_coverage")
+
+    rates = data_subparsers.add_parser(
+        "rate-validity",
+        help="Cuenta fracciones vigentes con y sin vigencia de tasa publicada",
+    )
+    _add_dataset_selection(rates)
+    _add_output_format(rates)
+    rates.set_defaults(consumer_action="data_rate_validity")
 
     _add_query_command(
         subparsers,
@@ -421,6 +461,49 @@ def _run_data_verify(namespace: argparse.Namespace) -> int:
     return 0
 
 
+
+def _dataset_version(dataset: Dataset) -> str | None:
+    return dataset.info.dataset_version
+
+
+def _run_data_nico_coverage(namespace: argparse.Namespace) -> int:
+    """Report current fractions without published NICO descendants.
+
+    Distinguishes the known upstream lag (Totoaba fractions) from any other gaps.
+    Does not invent or synthesize missing NICO codes.
+    """
+    dataset = _selected_dataset(namespace)
+    with dataset.connect() as con:
+        rows = con.execute(_MISSING_NICO_SQL).fetchall()
+    report = classify_missing_nico(
+        (row[0] for row in rows),
+        dataset_version=_dataset_version(dataset),
+    )
+    _emit(report, format_name=namespace.format)
+    return 0
+
+
+def _run_data_rate_validity(namespace: argparse.Namespace) -> int:
+    """Count current fractions whose published rate validity is dated or not."""
+
+    dataset = _selected_dataset(namespace)
+    with dataset.connect() as con:
+        rows = con.execute(_RATE_VALIDITY_SQL).fetchall()
+    report = summarize_rate_validity(
+        (
+            {
+                "code": row[0],
+                "rate_effective_from": row[1],
+                "validity_basis": row[2],
+            }
+            for row in rows
+        ),
+        dataset_version=_dataset_version(dataset),
+    )
+    _emit(report, format_name=namespace.format)
+    return 0
+
+
 def _run_doctor(namespace: argparse.Namespace) -> int:
     result = run_doctor(_consumer_config(namespace))
     if namespace.json:
@@ -485,6 +568,10 @@ def run_consumer(namespace: argparse.Namespace) -> int:
         return _run_data_update(namespace)
     if action == "data_verify":
         return _run_data_verify(namespace)
+    if action == "data_nico_coverage":
+        return _run_data_nico_coverage(namespace)
+    if action == "data_rate_validity":
+        return _run_data_rate_validity(namespace)
     if action == "doctor":
         return _run_doctor(namespace)
     if action == "wco_cite":
