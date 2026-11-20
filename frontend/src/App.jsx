@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { createBrowserRouter, createRoutesFromElements, Link, Outlet, Route, RouterProvider, useLocation } from 'react-router-dom';
 import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 import { editorialPage, FOOTER_GROUPS, NAV_GROUPS, OFFICIAL_LINKS } from './content.js';
 import { CommandPalette, OPEN_SEARCH_EVENT, shortcutLabel } from './command-palette.jsx';
@@ -144,5 +145,5 @@ function SiteLayout() {
 const router = createBrowserRouter(createRoutesFromElements(<Route element={<SiteLayout/>}>{Object.entries(PAGE_COMPONENTS).map(([path, Component]) => <Route key={path} path={path} element={<RoutedPage Component={Component} />} />)}<Route path="/glossary" element={<RoutedPage Component={DeferredGlossaryPage} />}/><Route path="/data" element={<RoutedPage Component={DeferredDataPage} />}/><Route path="/learn" element={<RoutedPage Component={DeferredLearnPage} />}/><Route path="/changes/:id" element={<RoutedPage Component={DeferredChangeDetail} />}/><Route path="/product" element={<RoutedPage Component={PAGE_COMPONENTS['/app']} />}/><Route path="/app/chapter/:code" element={<RoutedPage Component={PAGE_COMPONENTS['/app/record/:code']} />}/><Route path="*" element={<RoutedPage Component={NotFoundPage} />}/></Route>));
 
 export function App() {
-  return <LocaleProvider><RouterProvider router={router}/><Analytics /></LocaleProvider>;
+  return <LocaleProvider><RouterProvider router={router}/><Analytics /><SpeedInsights /></LocaleProvider>;
 }
