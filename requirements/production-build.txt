@@ -16,7 +16,7 @@ httpx2==2.16.0
 idna==3.20
 iniconfig==2.3.1
 librt==0.16.0
-mypy==2.4.0
+mypy==2.4.1
 mypy_extensions==1.1.0
 openpyxl==3.1.5
 packaging==26.3
