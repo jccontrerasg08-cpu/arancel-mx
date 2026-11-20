@@ -70,6 +70,7 @@ arancel-mx search "refrigeradores" --format csv
 arancel-mx data status --format json
 arancel-mx data list --format csv
 arancel-mx data verify --format json
+```
 
 ### Cobertura NICO
 
