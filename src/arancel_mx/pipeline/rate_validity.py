@@ -20,7 +20,7 @@ mentions it and the base text would otherwise govern.
 from __future__ import annotations
 
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, timedelta
 from decimal import Decimal
 import hashlib
@@ -61,6 +61,7 @@ class Registry:
     instruments: tuple[Instrument, ...]
     rows: Mapping[str, tuple[tuple[Instrument, Duty, Duty], ...]]
     unmodeled: Mapping[str, tuple[str, ...]]
+    unmodeled_dof_dates: Mapping[str, date] = field(default_factory=dict)
 
 
 def _duty(text: object) -> Duty:
@@ -94,7 +95,10 @@ def load_registry(raw: bytes | None = None) -> Registry:
         for code, igi, ige in item["rows"]:
             rows[code].append((instrument, _duty(igi), _duty(ige)))
     unmodeled: dict[str, list[str]] = defaultdict(list)
+    unmodeled_dof_dates: dict[str, date] = {}
     for item in payload.get("unmodeled", []):
+        if item.get("dof_date"):
+            unmodeled_dof_dates[item["id"]] = date.fromisoformat(item["dof_date"])
         for code in item["codes"]:
             unmodeled[code].append(item["id"])
     return Registry(
@@ -103,6 +107,7 @@ def load_registry(raw: bytes | None = None) -> Registry:
         instruments=tuple(instruments),
         rows={code: tuple(items) for code, items in rows.items()},
         unmodeled={code: tuple(ids) for code, ids in unmodeled.items()},
+        unmodeled_dof_dates=unmodeled_dof_dates,
     )
 
 
@@ -141,16 +146,22 @@ def rate_validity(
     instrument, igi, ige = current
     if (igi, ige) != (_duty(igi_text), _duty(ige_text)):
         return "snapshot_disagrees"
+    unmodeled_since: date | None = None
     if code in registry.unmodeled:
         if instrument.kind == "base":
             return "unmodeled_instrument"
-        # An unmodeled instrument may have changed the rate before the governing
-        # one, so the run is only known from the governing instrument's entry.
-        return RateValidity(
-            rate_effective_from=instrument.entry_into_force,
-            rate_effective_to=instrument.validity_end,
-            instrument_id=instrument.id,
-        )
+        # An instrument the registry does not model (staged rates) may have changed the rate, but only
+        # until a later modeled instrument took over: such an instrument governs on every day it is in
+        # force. So the run can be followed back through modeled instruments published after every
+        # unmodeled one, and stops where the base text (or an older instrument) would govern.
+        dof_dates = [registry.unmodeled_dof_dates.get(item) for item in registry.unmodeled[code]]
+        if any(item is None for item in dof_dates):
+            return RateValidity(
+                rate_effective_from=instrument.entry_into_force,
+                rate_effective_to=instrument.validity_end,
+                instrument_id=instrument.id,
+            )
+        unmodeled_since = max(item for item in dof_dates if item is not None)
 
     changes = sorted(
         {entry[0].entry_into_force for entry in entries}
@@ -164,6 +175,10 @@ def rate_validity(
     for day in reversed([day for day in changes if day <= as_of]):
         governing = _governing(entries, day)
         if governing is None or (governing[1], governing[2]) != (igi, ige):
+            break
+        if unmodeled_since is not None and (
+            governing[0].kind == "base" or governing[0].dof_date <= unmodeled_since
+        ):
             break
         start = day
     return RateValidity(
