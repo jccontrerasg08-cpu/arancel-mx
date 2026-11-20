@@ -25,7 +25,7 @@ test('every tracked file that names the site uses the one configured origin', ()
   const canonical = /<link rel="canonical" href="(https:\/\/[^/"]+)/;
   const pages = ['frontend/index.html', 'src/arancel_mx/api/static/site/index.html', 'src/arancel_mx/api/static/site/trade.html', 'src/arancel_mx/api/static/site/learn.html'];
   for (const file of pages) assert.equal(canonical.exec(readFileSync(file, 'utf8'))?.[1], origin, file);
-  assert.match(readFileSync('src/arancel_mx/api/static/site/sitemap.xml', 'utf8'), new RegExp(`<loc>${origin.replace(/[.]/g, '\\.')}/</loc>`));
+  assert.match(readFileSync('src/arancel_mx/api/static/site/sitemap.xml', 'utf8'), new RegExp(`<loc>${origin.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&')}/</loc>`));
   assert.ok(readFileSync('src/arancel_mx/api/static/site/robots.txt', 'utf8').includes(`Sitemap: ${origin}/sitemap.xml`));
   assert.ok(readFileSync('scripts/check_public_service.py', 'utf8').includes(`DEFAULT_BASE_URL = "${origin}"`));
 });

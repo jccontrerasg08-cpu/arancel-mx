@@ -21,13 +21,13 @@ export function validateOrigin(value) {
   return url.origin;
 }
 
-const escapeDots = (host) => host.replace(/\./g, '\\.');
+const escapeRegExp = (value) => value.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&');
 
 export function rewriteOrigin(text, from, to) {
   const fromHost = new URL(from).host;
   const toHost = new URL(to).host;
   // Tests pin the address inside regular expressions, with the dots escaped: rewrite that spelling too.
-  return text.split(from).join(to).split(fromHost).join(toHost).split(escapeDots(fromHost)).join(escapeDots(toHost));
+  return text.split(from).join(to).split(fromHost).join(toHost).split(escapeRegExp(fromHost)).join(escapeRegExp(toHost));
 }
 
 export const currentOrigin = () => /SITE_ORIGIN = '([^']+)'/.exec(readFileSync(PAGE_META, 'utf8'))?.[1];
@@ -50,7 +50,7 @@ function main() {
   for (const file of files) {
     let text;
     try { text = readFileSync(file, 'utf8'); } catch { continue; }
-    if (text.includes('\0') || !(text.includes(fromHost) || text.includes(escapeDots(fromHost)))) continue;
+    if (text.includes('\0') || !(text.includes(fromHost) || text.includes(escapeRegExp(fromHost)))) continue;
     const next = rewriteOrigin(text, from, to);
     if (next === text) continue;
     changed.push(file);
