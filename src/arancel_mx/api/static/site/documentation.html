@@ -4,6 +4,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Fonts load without blocking the first paint (text shows in the fallback face, then swaps). Not an @import in the CSS: that chains the font sheet behind the app sheet. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&amp;family=Fredoka:wght@500;600&amp;family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&amp;display=swap" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&amp;family=Fredoka:wght@500;600&amp;family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&amp;display=swap" /></noscript>
     <meta name="description" content="Guías técnicas para consumir releases verificables, API y artefactos de verificación." />
     <title>arancel-mx — Empieza por el contrato y luego escribe la integración.</title>
     <link rel="canonical" href="https://arancel-mx.vercel.app/documentation" />
@@ -27,8 +32,8 @@
       const legacyRoute = { '/moa-guide': '/moa', '/product': '/app' }[window.location.pathname];
       if (legacyRoute) window.location.replace(`${legacyRoute}${window.location.search}${window.location.hash}`);
     </script>
-    <script type="module" crossorigin src="/assets/index-7bc441a803e7.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-Bsli2BgM.css">
+    <script type="module" crossorigin src="/assets/index-05ae5223b8ae.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-Dcc8OiHG.css">
   </head>
   <body>
     <div id="root"></div>
