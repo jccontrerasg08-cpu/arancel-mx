@@ -11,7 +11,6 @@ SITE = ROOT / "src" / "arancel_mx" / "api" / "static" / "site"
 
 def test_vercel_deploys_the_standalone_public_site() -> None:
     config = json.loads((ROOT / "vercel.json").read_text(encoding="utf-8"))
-    runtime_version = (ROOT / ".python-version").read_text(encoding="utf-8").strip()
 
     assert config["framework"] is None
     assert config["outputDirectory"] == "src/arancel_mx/api/static/site"
