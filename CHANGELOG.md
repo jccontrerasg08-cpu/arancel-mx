@@ -14,6 +14,8 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Changed
 
+- The app's web fonts no longer load through a CSS `@import` (which chained the font sheet behind the app sheet and blocked the first paint); `index.html` preconnects and loads them without blocking, and every generated route page inherits it. In a local mobile-simulated Lighthouse run the explorer went from performance 72 to 85-86, first contentful paint from 4.4 s to about 3.0 s and render-blocking time from 1.65 s to under 0.3 s.
+- A weekly Lighthouse check (`lighthouse-weekly.yml`, `scripts/lighthouse-check.mjs`) fails when accessibility, best practices or SEO of the public pages fall below their floor, and only reports performance.
 - When the SE foreign-trade annex cannot be read on a day the tariff changes, the release carries the NOM rows of the previous release unchanged (`nom_annex.status = carried_forward`, with `carried_from`), only after proving that release's database against its manifest SHA-256, and the fraction page says which release they come from (decision 0004).
 
 - The import estimator (`/trade`) absorbs the standalone `calculadora-aranceles-mx` calculator. A new "Moneda, DTA de cuota fija y cuota compensatoria" section lets you capture the customs value in USD with a declared exchange rate (the result is always MXN), use a fixed-amount DTA instead of a rate, add a fixed-amount IEPS, and declare a compensatory quota; the quota and the fixed IEPS enter the IVA base, and the quota is itemized only when declared. Everything defaults to the previous behavior (MXN, ad valorem DTA), and `tests/e2e/trade-tools.spec.mjs` reproduces the calculator's numeric vectors.
