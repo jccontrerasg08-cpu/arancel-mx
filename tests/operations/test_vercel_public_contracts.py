@@ -54,6 +54,8 @@ def test_vercel_serves_a_real_404_for_paths_that_are_not_site_routes() -> None:
     pages = re.findall(r'^    "(/[^"]*)",$', app_source.split("_MARKETING_PAGES = (", 1)[1].split(")", 1)[0], re.MULTILINE)
 
     assert "/documentation" in pages
+    assert "/trade-analytics" not in pages
+    assert {"source": "/trade-analytics", "destination": "/trade-analytics.html"} in config["rewrites"]
     for page in (page for page in pages if page != "/"):
         assert spa.fullmatch(page), f"{page} is a public route and must reach the SPA"
     for path in ("/app", "/app/record/8517", "/app/chapter/85", "/changes/tarifa15"):

@@ -8,6 +8,7 @@ export const NAVIGATION = [
   ['Wiki', '/wiki'],
   ['Glossary', '/glossary'],
   ['Trade context', '/trade-context'],
+  ['Trade analytics', '/trade-analytics'],
   ['Documentation', '/documentation'],
   ['Trust', '/trust'],
   ['My records', '/records'],
@@ -25,7 +26,7 @@ export const NAVIGATION = [
 export const NAV_GROUPS = [
   { id: 'explore', href: '/app' },
   { id: 'learn', items: ['/learn', '/glossary', '/wiki', '/moa', '/trade-context'] },
-  { id: 'data', items: ['/data', '/chapters', '/changes', '/releases', '/release-analytics', '/documentation'] },
+  { id: 'data', items: ['/data', '/trade-analytics', '/chapters', '/changes', '/releases', '/release-analytics', '/documentation'] },
   { id: 'trust', href: '/trust' },
 ];
 export const HEADER_ACTIONS = ['/records', '/trade'];
@@ -35,7 +36,7 @@ export const FOOTER_ONLY = ['/features', '/community'];
 export const FOOTER_GROUPS = [
   { id: 'explore', items: ['/app', '/chapters', '/trade', '/records'] },
   { id: 'learn', items: ['/learn', '/glossary', '/wiki', '/moa', '/trade-context'] },
-  { id: 'data', items: ['/data', '/changes', '/releases', '/release-analytics', '/documentation'] },
+  { id: 'data', items: ['/data', '/trade-analytics', '/changes', '/releases', '/release-analytics', '/documentation'] },
   { id: 'project', items: ['/trust', '/features', '/community'] },
 ];
 
@@ -90,6 +91,13 @@ export const EDITORIAL_PAGES = {
     description: 'De qué está hecho un código, qué ley lo define y dónde seguir leyendo, con la fuente oficial a la vista.',
     disclaimer: 'Es material educativo: no clasifica mercancías ni sustituye la consulta a la autoridad.',
     en: { eyebrow: 'LEARN · START HERE', title: 'Learn to read Mexico’s tariff.', description: 'What a code is made of, which law defines it and where to keep reading, with the official source in view.', disclaimer: 'This is educational material: it does not classify goods or replace asking the authority.' },
+  },
+  '/trade-analytics': {
+    eyebrow: 'INEGI · BCMM · ANÁLISIS REPRODUCIBLE',
+    title: 'Comercio exterior por país y mercancía.',
+    description: 'Cortes agregados de BCMM por país y partida, con metadatos, estados y límites visibles.',
+    disclaimer: 'Las cifras agregadas no determinan la clasificación ni el tratamiento de una operación individual.',
+    en: { eyebrow: 'INEGI · BCMM · REPRODUCIBLE ANALYSIS', title: 'Foreign trade by partner and product.', description: 'BCMM aggregates by partner and heading, with metadata, status, and limits visible.', disclaimer: 'Aggregated figures do not determine the treatment of an individual transaction.' },
   },
   '/data': {
     eyebrow: 'DATOS · CIFRAS DE LA RELEASE',
