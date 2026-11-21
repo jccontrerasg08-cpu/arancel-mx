@@ -44,7 +44,9 @@ La **API HTTP pública** es **GET-only**, **read-only** y funciona **sin API key
 El paquete Python y el dataset se versionan por separado. Una versión del paquete no fija los datos: las releases del dataset usan tags inmutables `data-YYYY.MM.DD`.
 
 
-## Estado actual
+## Estado y cómo citar
+
+### Estado actual
 
 | Superficie | Versión / estado |
 |---|---|
@@ -55,7 +57,7 @@ El paquete Python y el dataset se versionan por separado. Una versión del paque
 
 > Los datos provienen de fuentes oficiales (SNICE, DOF, Diputados) y se publican con SHA-256, manifest y cadena de procedencia. No constituyen clasificación oficial ni asesoría legal.
 
-## Cómo citar
+### Cómo citar
 
 ```text
 arancel-mx dataset data-YYYY.MM.DD
