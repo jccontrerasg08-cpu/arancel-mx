@@ -40,6 +40,37 @@ The **public HTTP API** is **GET-only**, **read-only**, and requires **no API ke
 
 The Python package and the dataset have separate version cycles. A package version does not pin the data: dataset releases use immutable `data-YYYY.MM.DD` tags.
 
+
+## Status and how to cite
+
+### Current status
+
+| Surface | Version / status |
+|---|---|
+| Python package | [latest on PyPI](https://pypi.org/project/arancel-mx/) |
+| Public dataset | [latest verified release](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest) (`data-YYYY.MM.DD`, immutable tag) |
+| Web hub | [arancel-mx.vercel.app](https://arancel-mx.vercel.app/) |
+| NICO coverage | Missing published NICO codes are not filled in. `lookup` and `ficha` fail closed when the code is absent. |
+
+> Data comes from official sources (SNICE, DOF, Chamber of Deputies) and is published with SHA-256, a manifest, and a provenance chain. It is not an official classification or legal advice.
+
+### How to cite
+
+```text
+arancel-mx dataset data-YYYY.MM.DD
+https://github.com/jccontrerasg08-cpu/arancel-mx/releases/tag/data-YYYY.MM.DD
+SHA-256 of the DuckDB / CSV / JSON from the release SHA256SUMS
+```
+
+Reproducible example:
+
+```bash
+arancel-mx data download --dataset data-YYYY.MM.DD
+arancel-mx data verify --dataset data-YYYY.MM.DD
+arancel-mx lookup 85171301 --dataset data-YYYY.MM.DD
+```
+
+
 **Direct downloads:** [DuckDB](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/arancel_mx.duckdb) · [CSV](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/arancel_mx.csv) · [JSON](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/arancel_mx.json) · [Manifest](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/manifest.json) · [SHA256SUMS](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/SHA256SUMS)
 
 ## Start in 60 seconds

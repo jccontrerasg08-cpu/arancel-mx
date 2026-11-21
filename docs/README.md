@@ -20,10 +20,12 @@ La portada del repositorio explica **qué es** `arancel-mx` y cómo empezar. Est
 |---|---|---|
 | Integrar DuckDB/CSV/JSON, Python o HTTP | [Consumo externo](external-consumption.md) | Contratos de archivos, `Dataset` y API estática GET-only/read-only. |
 | Evolucionar biblioteca, CLI o HTTP sin romper consumidores | [Política de compatibilidad](compatibility.md) | Soporte certificado, cambios aditivos y deprecaciones anunciadas. |
-| Migrar desde la API dinámica `/v1` alojada | [Retiro de `/v1`](operations/v1-sunset.md) | Equivalencias con `/data/v1` y calendario de retiro (2027-01-31). |
+| Migrar desde la API dinámica `/v1` alojada | [Retiro de `/v1`](operations/v1-sunset.md) | Registro del retiro (ya ocurrido) y equivalencias con `/data/v1`. |
 | Cambiar el sitio a un dominio propio | [Dominio propio](operations/custom-domain.md) | Pasos de Vercel y DNS, y el comando que cambia la dirección en todo el repositorio. |
 | Explorar rutas, límites y contratos públicos | [Centro de documentación](https://arancel-mx.vercel.app/documentation) | Rutas GET-only, documentación mantenida y límites de integración. |
 | Identificar la release que sirve el hub | [`/data/v1/meta.json`](https://arancel-mx.vercel.app/data/v1/meta.json) | Identidad del dataset servido por la API estática. |
+| Citar un resultado del hub | [Guía de cita](hub-citation-guidance.md) | Tag, `release_verified`, SHA-256 y qué no citar. |
+| Saber por qué el cliente web y Python deben coincidir | [Paridad de la API estática](static-api-parity.md) | Los tres lectores y el test que los ata. |
 | Entender tablas, vigencia y manifest | [Modelo de datos](data-model.md) | Semántica del DuckDB y de una release verificable. |
 
 ## Entender y verificar
@@ -38,6 +40,7 @@ La portada del repositorio explica **qué es** `arancel-mx` y cómo empezar. Est
 | Ver cada instrumento del DOF que creó o modificó la LIGIE | [Inventario de instrumentos](research/ligie-instrument-inventory.md) | Decretos, acuerdos NICO, fechas y verificación contra la release. |
 | Priorizar una posible reforma detectada en DOF Intelligence Lab | [Triage entre proyectos](research/dof-triage-consumer-contract.md) | Señal de investigación sin efectos jurídicos; el watcher SIDOF y el pipeline oficial de arancel-mx siguen independientes. |
 | Ubicar la fuente oficial para una categoría de comercio exterior | [Mapa de cobertura de comercio exterior](research/external-trade-coverage-map.md) | Cobertura LIGIE/NICO y referencias oficiales para leyes, RGCE, tratados, RRNA, VUCEM, padrones y programas. |\n| Navegar el hub como estudiante, operador o analista | [Mapa del hub de comercio exterior](research/trade-hub.md) | Ruta de aprendizaje, cobertura por fuente y contrato de datos para INEGI. |\n| Diseñar gráficas y análisis multidimensionales de BCMM | [Contrato analítico de INEGI](research/inegi-analytics-contract.md) · [Catálogo de datos](research/inegi-analytics-catalog.json) | Distingue la API agregada BIE-BISE del Cubo/archivos BCMM por país, mercancía y NICO. |
+| Ver el límite de un arancel preferencial futuro | [Spike de preferencias](research/treaty-preferences-spike.md) | Esquema lateral propuesto. No está implementado y no entra en `igi_text`. |
 | Auditar variables, fórmulas y límites de la mesa | [Plan de fuentes de la mesa](research/trade-assistant-source-plan.md) | Fuentes primarias confirmadas y separación entre datos declarados, resultados orientativos y determinaciones de autoridad. |
 
 ## Mantener y contribuir
