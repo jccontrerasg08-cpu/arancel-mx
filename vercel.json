@@ -9,6 +9,10 @@
       "destination": "/trade.html"
     },
     {
+      "source": "/trade-analytics",
+      "destination": "/trade-analytics.html"
+    },
+    {
       "source": "/data/v1/:path*",
       "destination": "https://jccontrerasg08-cpu.github.io/arancel-mx/v1/:path*"
     },
