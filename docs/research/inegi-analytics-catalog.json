@@ -1,0 +1,189 @@
+{
+  "schema_version": "1.0.0",
+  "status": "design-catalog",
+  "language": "es-MX",
+  "sources": [
+    {
+      "id": "inegi_bie_balance_monthly",
+      "name": "Banco de Información Económica · API de Indicadores",
+      "access": "indicator-api",
+      "token_required": true,
+      "frequency": "monthly",
+      "geography": "national",
+      "currency": "USD",
+      "unit": "million USD",
+      "valuation_basis": "FOB",
+      "indicators": [
+        {
+          "id": "33860",
+          "key": "exports",
+          "label": "Exportaciones totales FOB"
+        },
+        {
+          "id": "33861",
+          "key": "imports",
+          "label": "Importaciones totales FOB"
+        },
+        {
+          "id": "33229",
+          "key": "balance",
+          "label": "Saldo FOB"
+        }
+      ],
+      "current_use": "National time series and annual/month-to-date summaries."
+    },
+    {
+      "id": "inegi_bcmm_open_monthly",
+      "name": "Balanza Comercial de Mercancías de México · Datos Abiertos Mensuales",
+      "access": "official-open-data-files",
+      "token_required": false,
+      "frequency": "monthly",
+      "coverage_from": 2012,
+      "unit": "dataset-defined",
+      "dimensions": [
+        "year",
+        "month",
+        "flow",
+        "tariff_code",
+        "country_or_zone",
+        "quantity",
+        "unit_of_measure",
+        "customs",
+        "transport_mode"
+      ],
+      "measures": [
+        "value_usd",
+        "value_mxn",
+        "quantity"
+      ],
+      "statuses": [
+        "information_status",
+        "figure_status",
+        "available_or_confidential"
+      ],
+      "granularity_note": "Available dimensions vary by dataset/table; validate the exact official dictionary before ingestion.",
+      "confidentiality": "Preserve confidential values as status, never coerce to zero or infer suppressed values."
+    },
+    {
+      "id": "inegi_bcmm_cube_monthly",
+      "name": "Consulta Interactiva de Datos · Cubo mensual BCMM",
+      "access": "official-multidimensional-query-and-export",
+      "token_required": false,
+      "frequency": "monthly",
+      "dimensions": [
+        "period",
+        "flow",
+        "tariff_code_and_nico",
+        "country",
+        "quantity",
+        "unit_of_measure",
+        "value",
+        "customs_when_available",
+        "transport_mode_when_available"
+      ],
+      "measures": [
+        "value",
+        "quantity"
+      ],
+      "filters": [
+        "period",
+        "flow",
+        "country",
+        "tariff_level",
+        "customs_when_available",
+        "transport_mode_when_available"
+      ],
+      "confidentiality": "Aggregated public data only; preserve official suppression statuses.",
+      "output_formats": [
+        "csv",
+        "xls",
+        "txt"
+      ],
+      "granularity_note": "Treat available dimensions and output format as dataset/version specific."
+    }
+  ],
+  "analytic_views": [
+    {
+      "id": "overview",
+      "audience": "all",
+      "visuals": [
+        "kpi_cards",
+        "monthly_series",
+        "annual_table"
+      ],
+      "measures": [
+        "exports",
+        "imports",
+        "balance"
+      ]
+    },
+    {
+      "id": "partners",
+      "audience": "all",
+      "visuals": [
+        "ranked_bars",
+        "share_table"
+      ],
+      "dimensions": [
+        "country",
+        "period",
+        "flow"
+      ]
+    },
+    {
+      "id": "products",
+      "audience": "all",
+      "visuals": [
+        "ranked_bars",
+        "hierarchical_treemap",
+        "time_series"
+      ],
+      "dimensions": [
+        "tariff_level",
+        "tariff_code",
+        "period",
+        "flow"
+      ]
+    },
+    {
+      "id": "advanced",
+      "audience": "analyst",
+      "visuals": [
+        "filtered_pivot_table",
+        "csv_export"
+      ],
+      "dimensions": [
+        "period",
+        "flow",
+        "country",
+        "tariff_code",
+        "unit_of_measure",
+        "customs",
+        "transport_mode"
+      ]
+    }
+  ],
+  "rules": {
+    "balance": "exports - imports, only for matching period/currency/universe/vintage",
+    "yoy": "(value_t / value_same_period_previous_year - 1) * 100",
+    "share": "category_value / comparable_total * 100",
+    "confidential_values": "never coerce to zero; label or suppress dependent ratios",
+    "quantities": "aggregate only within the same unit of measure",
+    "metadata_required": [
+      "source",
+      "source_url",
+      "dataset_id",
+      "retrieved_at",
+      "source_updated_at",
+      "reference_period",
+      "figure_status",
+      "unit",
+      "currency",
+      "valuation_basis",
+      "aggregation_level",
+      "filters",
+      "notes",
+      "checksum"
+    ]
+  }
+}

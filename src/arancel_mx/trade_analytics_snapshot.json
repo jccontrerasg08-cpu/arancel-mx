@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "status": "not_loaded",
+  "generated_at": null,
+  "source": {"publisher": "INEGI", "dataset": "Balanza Comercial de Mercancías de México (BCMM)", "url": "https://www.inegi.org.mx/programas/comext/default.html"},
+  "coverage": {"period_start": null, "period_end": null, "input_rows": 0},
+  "measures": {"value_usd": "Valor en dólares estadounidenses corrientes, según la convención del archivo oficial.", "quantity": "Cantidad publicada con su unidad de medida (UMED)."},
+  "dimensions": ["flow", "period", "partner", "tariff_group"],
+  "observations": {"monthly": [], "partners": [], "tariff_groups": []},
+  "notes": ["Aún no hay un corte BCMM procesado en esta publicación.", "Los registros confidenciales se conservan como estado y nunca se imputan como cero."]
+}

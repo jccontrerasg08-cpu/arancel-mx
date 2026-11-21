@@ -20,6 +20,7 @@ def test_vercel_deploys_the_standalone_public_site() -> None:
     assert "functions" not in config
     assert config["rewrites"] == [
         {"source": "/trade", "destination": "/trade.html"},
+        {"source": "/trade-analytics", "destination": "/trade-analytics.html"},
         {
             "source": "/data/v1/:path*",
             "destination": "https://jccontrerasg08-cpu.github.io/arancel-mx/v1/:path*",
@@ -238,7 +239,7 @@ def test_every_public_route_is_served_by_vercel_and_the_local_app() -> None:
     shell = next(item["source"] for item in rewrites if item["destination"] == "/")
     shell_pattern = re.compile(f"^{shell}$")
     dedicated = {item["source"] for item in rewrites}
-    served_locally = set(_MARKETING_PAGES) | {"/app", "/trade"}
+    served_locally = set(_MARKETING_PAGES) | {"/app", "/trade", "/trade-analytics"}
     redirected = {item["source"]: item["destination"] for item in config["redirects"]}
 
     for route in _public_routes():
