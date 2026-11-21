@@ -65,6 +65,9 @@ All notable changes to the Python package are documented here. Dataset releases 
 - `docs/static-api-parity.md`: the three readers and the test that locks them together.
 - `docs/research/treaty-preferences-spike.md`: a side-asset schema for preferential rates. Not implemented, and forbidden from writing into `igi_text`.
 - Richer `ficha` and `compare` examples in the CLI reference.
+- Example script `examples/quickstart_duckdb.py`: verified `Dataset` lookup, hierarchy, search, and a citation built from `DatasetInfo` (`dataset_version`, `release_verified`, `schema_version`, `path`).
+- Example script `examples/sql_chapter_audit.py`: read-only DuckDB audit of one HS chapter (level counts, undated fractions, fractions without a current NICO). It reports gaps and does not repair them.
+- README: current-status table (links to the latest package and dataset release, so it never goes stale) and citation guidance for reproducible references.
 - Chapter 98 (Operaciones especiales: 9801 to 9807, including 9803.00.01) now belongs to its own section. The LIGIE text has "Sección XXII" for it, but the section list stopped at XXI, so the chapters page never showed chapter 98. `/data/v1/sections.json` now lists 22 sections and a record in chapter 98 reports `section` XXII instead of none.
 - The chapters page is now the full hierarchy: each chapter expands to its partidas (HS4), and each partida to its subpartidas (HS6), fracciones and NICO, with a "Ver ficha" link at every level. Before, it stopped at HS4 and, while a chapter loaded or if it failed, showed an invented family code (`85.01`); it now shows a loading or error state with a retry button. Checked in a real browser against the verified `data-2026.11.06`: all 97 chapters show 26,544 nodes, exactly the database's records below chapter level.
 

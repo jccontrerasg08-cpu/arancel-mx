@@ -43,6 +43,39 @@ La **API HTTP pública** es **GET-only**, **read-only** y funciona **sin API key
 
 El paquete Python y el dataset se versionan por separado. Una versión del paquete no fija los datos: las releases del dataset usan tags inmutables `data-YYYY.MM.DD`.
 
+
+## Estado y cómo citar
+
+### Estado actual
+
+| Superficie | Versión / estado |
+|---|---|
+| Paquete Python | [última versión en PyPI](https://pypi.org/project/arancel-mx/) |
+| Dataset público | [última release verificada](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest) (`data-YYYY.MM.DD`, tag inmutable) |
+| Hub web | [arancel-mx.vercel.app](https://arancel-mx.vercel.app/) |
+| Cobertura NICO | El dataset no inventa NICO. Si el código no está publicado, `lookup` y `ficha` fallan cerrado. |
+
+> Los datos provienen de fuentes oficiales (SNICE, DOF, Diputados) y se publican con SHA-256, manifest y cadena de procedencia. No constituyen clasificación oficial ni asesoría legal.
+
+### Cómo citar
+
+```text
+arancel-mx dataset data-YYYY.MM.DD
+https://github.com/jccontrerasg08-cpu/arancel-mx/releases/tag/data-YYYY.MM.DD
+SHA-256 del DuckDB / CSV / JSON según SHA256SUMS de la release
+```
+
+Ejemplo reproducible:
+
+```bash
+arancel-mx data download --dataset data-YYYY.MM.DD
+arancel-mx data verify --dataset data-YYYY.MM.DD
+arancel-mx lookup 85171301 --dataset data-YYYY.MM.DD
+```
+
+Ejemplos en el repositorio: [examples/quickstart_duckdb.py](examples/quickstart_duckdb.py) (API Python) y [examples/sql_chapter_audit.py](examples/sql_chapter_audit.py) (SQL de sólo lectura sobre el DuckDB local).
+
+
 **Descargas directas:** [DuckDB](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/arancel_mx.duckdb) · [CSV](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/arancel_mx.csv) · [JSON](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/arancel_mx.json) · [Manifest](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/manifest.json) · [SHA256SUMS](https://github.com/jccontrerasg08-cpu/arancel-mx/releases/latest/download/SHA256SUMS)
 
 ## Empieza en 60 segundos
