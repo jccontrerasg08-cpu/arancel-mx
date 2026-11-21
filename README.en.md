@@ -41,7 +41,9 @@ The **public HTTP API** is **GET-only**, **read-only**, and requires **no API ke
 The Python package and the dataset have separate version cycles. A package version does not pin the data: dataset releases use immutable `data-YYYY.MM.DD` tags.
 
 
-## Current status
+## Status and how to cite
+
+### Current status
 
 | Surface | Version / status |
 |---|---|
@@ -52,7 +54,7 @@ The Python package and the dataset have separate version cycles. A package versi
 
 > Data comes from official sources (SNICE, DOF, Chamber of Deputies) and is published with SHA-256, a manifest, and a provenance chain. It is not an official classification or legal advice.
 
-## How to cite
+### How to cite
 
 ```text
 arancel-mx dataset data-YYYY.MM.DD
