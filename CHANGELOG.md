@@ -60,6 +60,11 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 - CLI: `arancel-mx data nico-coverage` reports current fractions without published NICO descendants. The known Totoaba lag (DOF 2025-07-21) and any other gaps come from one shared policy in `arancel_mx.domain.nico_lag`, also used by the pipeline. No synthetic NICO codes are created.
 - CLI: `arancel-mx data rate-validity` counts current fractions whose published `rate_effective_from` is present or absent, grouped by `validity_basis`. It does not invent dates.
+- English README parity: current-status table (linking to the latest release instead of a pinned one) and citation guidance. It does not advertise commands that are not on this branch.
+- `docs/hub-citation-guidance.md`: cite `dataset_tag`, `schema_version`, `release_verified`, and the SHA-256 from `SHA256SUMS`. Says what not to cite.
+- `docs/static-api-parity.md`: the three readers and the test that locks them together.
+- `docs/research/treaty-preferences-spike.md`: a side-asset schema for preferential rates. Not implemented, and forbidden from writing into `igi_text`.
+- Richer `ficha` and `compare` examples in the CLI reference.
 - Chapter 98 (Operaciones especiales: 9801 to 9807, including 9803.00.01) now belongs to its own section. The LIGIE text has "Sección XXII" for it, but the section list stopped at XXI, so the chapters page never showed chapter 98. `/data/v1/sections.json` now lists 22 sections and a record in chapter 98 reports `section` XXII instead of none.
 - The chapters page is now the full hierarchy: each chapter expands to its partidas (HS4), and each partida to its subpartidas (HS6), fracciones and NICO, with a "Ver ficha" link at every level. Before, it stopped at HS4 and, while a chapter loaded or if it failed, showed an invented family code (`85.01`); it now shows a loading or error state with a retry button. Checked in a real browser against the verified `data-2026.11.06`: all 97 chapters show 26,544 nodes, exactly the database's records below chapter level.
 
