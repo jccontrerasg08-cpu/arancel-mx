@@ -6,6 +6,7 @@ import argparse
 from datetime import datetime, timezone
 from pathlib import Path
 import sys
+from typing import cast
 
 from arancel_mx.consumer.config import resolve_config
 from arancel_mx.consumer.dataset import Dataset
@@ -14,6 +15,7 @@ from arancel_mx.consumer.errors import DatasetUnavailableError, QueryError
 from arancel_mx.consumer.export import export_parquet
 from arancel_mx.consumer.ficha_markdown import ficha_markdown
 from arancel_mx.consumer.manager import DatasetManager
+from arancel_mx.consumer.nom_report import nom_report
 from arancel_mx.benchmark.search_selfcheck import SelfcheckRecord, run_selfcheck
 from arancel_mx.consumer.output import CsvSchema, render, render_json
 from arancel_mx.consumer.query import SCORER_VERSION, nom_annex_status, nom_requirements, search as query_search
@@ -290,6 +292,11 @@ def register_consumer_commands(
         "compare",
         help_text="Compara HS6, MX8 o NICO del dataset GitHub con VUCEM (informativo)",
     )
+    _add_query_command(
+        subparsers,
+        "nom",
+        help_text="Muestra las NOM que el Anexo 2.4.1 de la release lista para una fracción o NICO (no determina cumplimiento)",
+    )
     chapters = subparsers.add_parser(
         "chapters",
         help="Lista los capítulos HS2 vigentes",
@@ -400,6 +407,41 @@ def _ficha_markdown(dataset: Dataset, code: str) -> str:
         annex=annex,
         national_notes=dataset.national_notes(chapter),
     )
+
+
+def _run_nom(namespace: argparse.Namespace) -> int:
+    """Report the Annex 2.4.1 NOM rows of one code without deciding whether they apply."""
+
+    dataset = _selected_dataset(namespace)
+    code = dataset.lookup(namespace.code).code
+    with dataset.connect() as con:
+        annex = nom_annex_status(con)
+        requirements = nom_requirements(con, code[:2]) if len(code) >= 8 else ()
+    report = nom_report(
+        code,
+        requirements=requirements,
+        annex=annex,
+        dataset_version=dataset.info.dataset_version,
+    )
+    if namespace.format == "json":
+        _emit(report, format_name="json")
+        return 0
+    rows = [
+        {
+            "nom": item["nom"],
+            "numeral": item["numeral"],
+            "scope": item["scope"],
+            "annex_page": item["annex_page"],
+            "nico_match": item["nico_match"],
+        }
+        for item in cast("list[dict[str, object]]", report["requirements"])
+    ]
+    if namespace.format == "table":
+        sys.stdout.write(f"{report['message']}\n")
+        if not rows:
+            return 0
+    _emit(rows, format_name=namespace.format)
+    return 0
 
 
 def _run_query(namespace: argparse.Namespace) -> int:
@@ -709,6 +751,8 @@ def run_consumer(namespace: argparse.Namespace) -> int:
     action = getattr(namespace, "consumer_action", None)
     if action in _QUERY_CSV_SCHEMAS:
         return _run_query(namespace)
+    if action == "nom":
+        return _run_nom(namespace)
     if action == "data_download":
         return _run_data_download(namespace)
     if action == "data_path":
