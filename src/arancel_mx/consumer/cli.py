@@ -11,7 +11,7 @@ from arancel_mx.consumer.config import resolve_config
 from arancel_mx.consumer.dataset import Dataset
 from arancel_mx.consumer.doctor import doctor_to_dict, render_doctor_human, run_doctor
 from arancel_mx.consumer.errors import DatasetUnavailableError, QueryError
-from arancel_mx.consumer.export import export_parquet
+from arancel_mx.consumer.export import export_parquet, export_sqlite
 from arancel_mx.consumer.ficha_markdown import ficha_markdown
 from arancel_mx.consumer.manager import DatasetManager
 from arancel_mx.benchmark.search_selfcheck import SelfcheckRecord, run_selfcheck
@@ -213,10 +213,16 @@ def register_consumer_commands(
 
     export = data_subparsers.add_parser(
         "export",
-        help="Exporta las vistas públicas de una release a Parquet local (no es un asset de la release)",
+        help="Exporta las vistas públicas de una release a Parquet o SQLite local (no es un asset de la release)",
     )
     _add_dataset_selection(export)
-    export.add_argument("--out", required=True, type=Path, help="Empty or new directory for the Parquet files")
+    export.add_argument("--out", required=True, type=Path, help="Empty or new directory for the exported files")
+    export.add_argument(
+        "--to",
+        choices=("parquet", "sqlite"),
+        default="parquet",
+        help="parquet: one file per view (default); sqlite: one arancel_mx.sqlite with a table per view",
+    )
     _add_output_format(export)
     export.set_defaults(consumer_action="data_export")
 
@@ -596,7 +602,8 @@ def _run_data_export(namespace: argparse.Namespace) -> int:
     info = dataset.info
     try:
         with dataset.connect() as con:
-            manifest = export_parquet(
+            writer = export_sqlite if namespace.to == "sqlite" else export_parquet
+            manifest = writer(
                 con,
                 namespace.out,
                 source_path=Path(info.path),

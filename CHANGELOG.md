@@ -60,6 +60,8 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Added
 
+- CLI: `arancel-mx data export --to sqlite` writes the public views into one `arancel_mx.sqlite` (a table per view) with an `_export_columns` table recording each DuckDB → SQLite type mapping: text and NULL kept, booleans as 0/1, DECIMAL as its exact text, DATE/TIMESTAMP as ISO 8601. The manifest records the database SHA-256. Second phase of the SDK and exports RFC (#310).
+
 - CLI: `arancel-mx data export --dataset <release> --out <dir>` writes one Parquet file per public view of the release and an `export-manifest.json` with the source DuckDB SHA-256, the release verification state, and each file's SHA-256 and row count. Column types are kept (rate text stays text, NULL stays NULL, dates stay dates); the export is a derived local copy, not a release asset. First phase of the SDK and exports RFC (#310).
 
 - Record page: «Copiar cita» copies a plain-text citation built only from the release identity in `meta.json` (tag, schema, verification state, release URL), the record and the consultation date. It writes no SHA-256 and points to the release `SHA256SUMS` instead; an unverified or unknown state is stated, never called verified, and the button is hidden when the release tag cannot be read.

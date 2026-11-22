@@ -115,6 +115,14 @@ arancel-mx data export --dataset data-2026.11.20 --out ./parquet --format json
 
 Escribe un archivo Parquet por cada vista pública que trae la release (`arancel_mx`, `arancel_mx_nom_requirements`, `arancel_mx_national_notes`, `arancel_mx_weighted_indicators`) y un `export-manifest.json` con el SHA-256 del DuckDB de origen, si la release pasó la verificación remota, y el SHA-256 y número de filas de cada archivo. Los tipos se conservan: la tasa sigue siendo texto (`Ex.` no se convierte en número), un valor no publicado sigue siendo `NULL` y las fechas siguen siendo fechas. Una vista que la release no trae se lista en `skipped`; no se escribe vacía.
 
+Con `--to sqlite` escribe un solo `arancel_mx.sqlite` con una tabla por vista:
+
+```bash
+arancel-mx data export --dataset data-2026.11.20 --out ./sqlite --to sqlite
+```
+
+SQLite no tiene tipos de fecha ni decimales exactos, así que la conversión es explícita y queda escrita dentro del archivo, en la tabla `_export_columns` (vista, columna, tipo DuckDB, tipo SQLite): el texto y los `NULL` se conservan, enteros y booleanos quedan como `INTEGER` (0/1), los `DECIMAL` como su texto exacto (`10.000000`, nunca un flotante) y `DATE`/`TIMESTAMP` como texto ISO 8601. El manifiesto agrega `format` y el SHA-256 de la base en `database`.
+
 El directorio debe no existir o estar vacío, para no mezclar archivos de dos releases. La exportación es una **copia derivada local**: no es uno de los seis assets de la release ni los sustituye. Para auditar, verifica la release (`data verify --bundle`) y compara el `sha256` de `source`.
 
 Usa `--format json` para automatización estructurada y `--format csv` para intercambio por filas. `data path` imprime a propósito sólo la ruta del DuckDB local seleccionado, para que los scripts la consuman directamente.
