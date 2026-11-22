@@ -19,6 +19,7 @@ test('the ficha carries the release, the generation date and the literal publish
   assert.match(text, /\| IGI \(importación\) \| Ex\. \|/);
   assert.match(text, /\| Vigencia de la tasa publicada \| desde 2022-12-12 \|/);
   assert.match(text, /No es una clasificación arancelaria oficial/);
+  assert.match(text, /tasas generales de la LIGIE.*no incluye tasas preferenciales/);
 });
 
 test('NOM rows keep their scope, page and a link to the annex, and say they do not determine compliance', () => {

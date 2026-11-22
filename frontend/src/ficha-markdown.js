@@ -35,6 +35,7 @@ const COPY = {
     ige: 'IGE (exportación)',
     validity: 'Vigencia de la tasa publicada',
     notPublished: 'No publicado en esta release',
+    generalRate: 'El IGI y el IGE son las tasas generales de la LIGIE publicadas en esta release. Una tasa preferencial de un tratado sólo aplica si se acredita el origen conforme a ese tratado; esta release no incluye tasas preferenciales.',
     hierarchy: 'Jerarquía',
     sources: 'Fuentes registradas',
     noSources: 'La release no registra fuentes para este código.',
@@ -63,6 +64,7 @@ const COPY = {
     ige: 'IGE (export duty)',
     validity: 'Validity of the published rate',
     notPublished: 'Not published in this release',
+    generalRate: 'IGI and IGE are the general LIGIE rates published in this release. A preferential rate under a trade agreement applies only when origin is proved under that agreement; this release does not include preferential rates.',
     hierarchy: 'Hierarchy',
     sources: 'Recorded sources',
     noSources: 'The release records no sources for this code.',
@@ -104,6 +106,7 @@ export function fichaMarkdown({ record, hierarchy = [], provenance = [], regulat
     `| ${t.ige} | ${value('ige')} |`,
     `| ${t.validity} | ${present(record.effective_from) ? `${t.from} ${escapeMarkdown(record.effective_from)}${present(record.effective_to) ? ` ${t.to} ${escapeMarkdown(record.effective_to)}` : ''}` : `_${t.notPublished}_`} |`,
   ];
+  if (code.length >= 8) lines.push('', t.generalRate);
   const ancestors = hierarchy.filter((entry) => entry && present(entry.code) && String(entry.code).replace(/\D/g, '') !== code);
   if (ancestors.length) {
     lines.push('', `## ${t.hierarchy}`, '');
