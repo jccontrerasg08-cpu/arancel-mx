@@ -7,7 +7,7 @@ import duckdb
 import pytest
 
 from arancel_mx.cli import build_parser, main
-from arancel_mx.consumer.release_diff import EVENTS, diff_rows, release_diff_report
+from arancel_mx.consumer.release_diff import EVENTS, auxiliary_rows, diff_auxiliary, diff_rows, release_diff_report
 from tests.consumer.conftest import create_consumer_duckdb
 
 
@@ -127,3 +127,52 @@ def test_cli_compares_two_local_files_end_to_end(tmp_path: Path, capsys: pytest.
     lines = capsys.readouterr().out.splitlines()
     assert lines[0] == "code,event,level,new_value,old_value"
     assert lines[1] == "01012101,igi_changed,fraccion8,15,10"
+
+
+
+def test_nom_rows_report_additions_removals_and_literal_scope_changes() -> None:
+    before = {("85171301", "1", "NOM-208-SCFI-2016"): "Únicamente: radio", ("85171301", "3", "NOM-024-SCFI-2013"): None}
+    after = {("85171301", "1", "NOM-208-SCFI-2016"): "Únicamente: radiocomunicación", ("85171302", "3", "NOM-024-SCFI-2013"): None}
+    report = diff_auxiliary("nom", before, after)
+    assert report["status"] == "compared"
+    assert [(c["fraction8"], c["event"]) for c in report["changes"]] == [
+        ("85171301", "nom_scope_changed"),
+        ("85171301", "nom_removed"),
+        ("85171302", "nom_added"),
+    ]
+    assert report["by_event"] == {"nom_added": 1, "nom_removed": 1, "nom_scope_changed": 1}
+
+
+def test_an_auxiliary_table_missing_on_one_side_is_not_compared_rather_than_all_added() -> None:
+    after = {("85171301", "1", "NOM-208-SCFI-2016"): None}
+    report = diff_auxiliary("nom", "view not present", after)
+    assert report == {"status": "not_compared", "reason": "from: view not present", "changes": []}
+    report = diff_auxiliary("national_notes", {}, "older schema without scope_type")
+    assert report["status"] == "not_compared"
+    assert report["reason"] == "to: older schema without scope_type"
+
+
+def _aux_db(with_scope: bool) -> duckdb.DuckDBPyConnection:
+    conn = duckdb.connect()
+    conn.execute("CREATE TABLE nom_t (fraction8 VARCHAR, numeral INTEGER, nom VARCHAR, scope VARCHAR)")
+    conn.execute("CREATE VIEW arancel_mx_nom_requirements AS SELECT * FROM nom_t")
+    conn.execute("INSERT INTO nom_t VALUES ('85171301', 1, 'NOM-208-SCFI-2016', NULL)")
+    if with_scope:
+        conn.execute("CREATE TABLE notes_t (chapter VARCHAR, scope_type VARCHAR, scope_value VARCHAR, note_number VARCHAR, text VARCHAR)")
+        conn.execute("INSERT INTO notes_t VALUES ('84', 'section', 'XVI', '1', 'Nota de sección'), ('85', 'section', 'XVI', '1', 'Nota de sección')")
+    else:
+        conn.execute("CREATE TABLE notes_t (chapter VARCHAR, note_number VARCHAR, text VARCHAR)")
+    conn.execute("CREATE VIEW arancel_mx_national_notes AS SELECT * FROM notes_t")
+    return conn
+
+
+def test_auxiliary_rows_key_section_notes_by_chapter_and_detect_older_schemas() -> None:
+    current = auxiliary_rows(_aux_db(with_scope=True))
+    assert current["nom"] == {("85171301", "1", "NOM-208-SCFI-2016"): None}
+    notes = current["national_notes"]
+    assert isinstance(notes, dict)
+    assert set(notes) == {("84", "section", "XVI", "1"), ("85", "section", "XVI", "1")}
+    older = auxiliary_rows(_aux_db(with_scope=False))
+    assert older["national_notes"] == "older schema without scope_type, scope_value"
+    empty = auxiliary_rows(duckdb.connect())
+    assert empty == {"nom": "view not present", "national_notes": "view not present"}
