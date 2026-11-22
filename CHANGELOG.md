@@ -62,6 +62,8 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 - CLI: `arancel-mx data search-selfcheck` measures the current lexical search against the release itself (own code, dotted code and own description of an evenly spaced sample of fractions), reports non-distinctive descriptions separately, lists misses with their rank and records per-search latency. It is a retrieval baseline for the hybrid-search RFC (#312), not a classification benchmark.
 
+- CLI: `data diff --format json` also compares Annex 2.4.1 NOM rows and National Notes under `auxiliary`; a table a release does not ship, or ships with an older schema, is reported as `not_compared` with the reason instead of counting every row as added or removed.
+
 - Record page: a «Notas nacionales» section shows, as plain text, the National Notes the release publishes for the chapter and its section, ordered by note number, flags the notes that cite the heading number literally («Menciona la partida 85.17»), says when the release has none, and links the DOF publication taken from the pipeline source registry. Phase 1 of the notes and SAT criteria RFC (#304).
 
 - CLI: `arancel-mx data diff --from <release> --to <release>` compares the current rows of two releases (added and removed codes, description, IGI, IGE, unit and parent changes), compares values literally, reports `verified_snapshots` only when both releases passed remote verification, and states that a snapshot difference is not a legal event. First implementation phase of the release-diff RFC (#308).
