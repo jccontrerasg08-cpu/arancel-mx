@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 import re
 import unicodedata
-from typing import Iterable
+from typing import Any, Iterable
 
 from arancel_mx.consumer.errors import InvalidCodeError, QueryError, RecordNotFoundError
 from arancel_mx.consumer.hs_sections import section_for_chapter
@@ -295,6 +295,31 @@ def search(connection, text: str, *, limit: int) -> tuple[SearchResult, ...]:
             )
         )
     return tuple(results[:limit])
+
+
+def nom_annex_status(connection: Any) -> dict[str, Any]:
+    """Whether the release carries Annex 2.4.1 data, from its release metadata (decision 0004).
+
+    Returns ``{"status": "not_included"}`` when the release metadata does not say; that is unknown,
+    not a statement that no NOM applies.
+    """
+
+    row = connection.execute("SELECT release_metadata_json FROM dataset_release LIMIT 1").fetchone()
+    try:
+        metadata = json.loads(str(row[0])) if row and row[0] else {}
+    except ValueError:
+        metadata = {}
+    annex = metadata.get("nom_annex") if isinstance(metadata, dict) else None
+    if not isinstance(annex, dict) or annex.get("status") not in {
+        "available",
+        "unavailable",
+        "carried_forward",
+    }:
+        return {"status": "not_included"}
+    status: dict[str, Any] = {"status": annex["status"]}
+    if annex["status"] == "carried_forward" and annex.get("carried_from"):
+        status["carried_from"] = str(annex["carried_from"])
+    return status
 
 
 def nom_requirements(connection, chapter: str) -> tuple[NomRequirement, ...]:
