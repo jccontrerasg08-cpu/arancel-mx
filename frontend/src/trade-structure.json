@@ -1,0 +1,62 @@
+{
+ "source": "INEGI · Balanza Comercial de Mercancías de México (BCMM), boletín del 27 de octubre de 2026, cifras oportunas",
+ "source_url": "https://inegi.org.mx/contenidos/saladeprensa/boletines/2026/comext_o/balcom_o2026_10.pdf",
+ "period": "Enero–septiembre 2026",
+ "period_en": "January–September 2026",
+ "published": "2026-10-27",
+ "unit": "millones de dólares",
+ "exports": {
+  "total": 627194.2,
+  "parts": [
+   {
+    "key": "manufacturing",
+    "es": "Manufacturas",
+    "en": "Manufactures",
+    "value": 578596.6
+   },
+   {
+    "key": "extractive",
+    "es": "Extractivas no petroleras",
+    "en": "Non-oil extractive",
+    "value": 16605.7
+   },
+   {
+    "key": "oil",
+    "es": "Petroleras",
+    "en": "Oil",
+    "value": 16351.1
+   },
+   {
+    "key": "agri",
+    "es": "Agropecuarias",
+    "en": "Agriculture",
+    "value": 15640.8
+   }
+  ],
+  "automotive": 141958.7,
+  "us_share_non_oil": 84.8
+ },
+ "imports": {
+  "total": 617940.0,
+  "parts": [
+   {
+    "key": "intermediate",
+    "es": "Bienes de uso intermedio",
+    "en": "Intermediate goods",
+    "value": 497038.3
+   },
+   {
+    "key": "consumer",
+    "es": "Bienes de consumo",
+    "en": "Consumer goods",
+    "value": 77141.2
+   },
+   {
+    "key": "capital",
+    "es": "Bienes de capital",
+    "en": "Capital goods",
+    "value": 43760.5
+   }
+  ]
+ }
+}

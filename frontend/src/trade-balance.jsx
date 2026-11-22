@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { buildTradeBalance, parseSeries } from '../../scripts/trade-balance-lib.mjs';
 import { useLocale } from './locale.jsx';
 import snapshot from './trade-balance.json';
-import { formatMillions, formatPercent, summarizeBalance } from './trade-balance.js';
+import { balanceScale, formatChange, formatMillions, formatPercent, summarizeBalance, yearlyChanges } from './trade-balance.js';
 
 export const LIVE_ENDPOINT = '/api/trade_balance';
 
@@ -39,16 +39,26 @@ export function TradeBalance() {
     [money(last.balance, { sign: true }), nearBalance ? t(`En ${last.year} el comercio quedó casi en equilibrio: exportaciones e importaciones, en millones de dólares, apenas se diferenciaron.`, `In ${last.year} trade was almost balanced: exports and imports, in millions of dollars, barely differed.`) : t(`Fue la balanza de ${last.year}, en millones de dólares.`, `That was the ${last.year} balance, in millions of dollars.`)],
     [formatPercent(summary.exportGrowth, language), t(`Es lo que crecieron las exportaciones entre ${first.year} y ${last.year}; las importaciones crecieron ${formatPercent(summary.importGrowth, language)}.`, `That is how much exports grew between ${first.year} and ${last.year}; imports grew ${formatPercent(summary.importGrowth, language)}.`)],
   ].filter(Boolean);
+  const changes = yearlyChanges(data.years);
+  const scale = balanceScale(data.years);
+  const headline = nearBalance
+    ? t(`En ${last.year} México compró casi lo mismo que vendió: la balanza fue de ${money(last.balance, { sign: true })} millones de dólares. En lo que va de ${previousYear + 1}, las exportaciones ${change(latest.exports_growth, 'crecieron', 'cayeron')} y las importaciones ${change(latest.imports_growth, 'crecieron', 'cayeron')}.`, `In ${last.year} Mexico bought almost as much as it sold: the balance was ${money(last.balance, { sign: true })} million dollars. So far in ${previousYear + 1}, exports ${change(latest.exports_growth, 'grew', 'fell')} and imports ${change(latest.imports_growth, 'grew', 'fell')}.`)
+    : t(`En ${last.year} la balanza cerró con ${last.balance >= 0 ? 'un superávit' : 'un déficit'} de ${money(Math.abs(last.balance))} millones de dólares. En lo que va de ${previousYear + 1}, las exportaciones ${change(latest.exports_growth, 'crecieron', 'cayeron')} y las importaciones ${change(latest.imports_growth, 'crecieron', 'cayeron')}.`, `In ${last.year} the balance closed with a ${last.balance >= 0 ? 'surplus' : 'deficit'} of ${money(Math.abs(last.balance))} million dollars. So far in ${previousYear + 1}, exports ${change(latest.exports_growth, 'grew', 'fell')} and imports ${change(latest.imports_growth, 'grew', 'fell')}.`);
   return (
     <section className="trade-balance" aria-labelledby="trade-balance-title" data-testid="trade-balance" data-live={live ? 'true' : 'false'}>
       <p className="eyebrow">{t('INEGI · BALANZA COMERCIAL DE MERCANCÍAS', 'INEGI · MERCHANDISE TRADE BALANCE')}</p>
       <h2 id="trade-balance-title">{t(`Exportaciones e importaciones, ${first.year}–${last.year}`, `Exports and imports, ${first.year}–${last.year}`)}</h2>
+      <p className="trade-balance__headline" data-testid="trade-balance-headline">{headline}</p>
       <p>{t('Cuánto vendió México al exterior, cuánto compró y la diferencia de cada año. Cifras en millones de dólares.', 'How much Mexico sold abroad, how much it bought and the difference each year. Figures in millions of US dollars.')}</p>
       <div className="trade-balance__facts">
         {facts.map(([figure, text]) => <article key={text}><strong>{figure}</strong><p>{text}</p></article>)}
       </div>
       <figure className="trade-balance__chart">
-        <figcaption>{t('Exportaciones (verde) e importaciones (ámbar) por año', 'Exports (green) and imports (amber) per year')}</figcaption>
+        <figcaption>{t('Exportaciones e importaciones por año', 'Exports and imports per year')}</figcaption>
+        <ul className="trade-legend" aria-hidden="true">
+          <li><i className="trade-legend__swatch trade-legend__swatch--exports" />{t('Exportaciones', 'Exports')}</li>
+          <li><i className="trade-legend__swatch trade-legend__swatch--imports" />{t('Importaciones', 'Imports')}</li>
+        </ul>
         <div className="trade-balance__bars" aria-hidden="true">
           {data.years.map((entry) => (
             <div key={entry.year} className="trade-balance__year">
@@ -62,10 +72,24 @@ export function TradeBalance() {
           ))}
         </div>
       </figure>
+      <figure className="trade-balance__chart trade-balance__swing">
+        <figcaption>{t('Balanza de cada año: arriba, superávit; abajo, déficit', 'Balance of each year: up is a surplus, down is a deficit')}</figcaption>
+        <div className="trade-swing" aria-hidden="true">
+          {scale.map((entry) => (
+            <div key={entry.year} className="trade-swing__year">
+              <span className="trade-swing__half trade-swing__half--up">{entry.balance > 0 ? <span className="trade-swing__bar is-up" style={{ height: `${Math.max(entry.ratio * 100, 3)}%` }} /> : null}</span>
+              <span className="trade-swing__half trade-swing__half--down">{entry.balance < 0 ? <span className="trade-swing__bar is-down" style={{ height: `${Math.max(entry.ratio * 100, 3)}%` }} /> : null}</span>
+              <b>{entry.year}</b>
+              {entry.year === largestSurplus?.year ? <small className="is-surplus">{t('Mayor superávit', 'Largest surplus')}</small> : null}
+              {entry.year === largestDeficit?.year ? <small className="is-deficit">{t('Mayor déficit', 'Largest deficit')}</small> : null}
+            </div>
+          ))}
+        </div>
+      </figure>
       <div className="data-table-wrap">
         <table className="data-table">
           <caption>{t('Balanza comercial anual, millones de dólares', 'Annual trade balance, millions of US dollars')}</caption>
-          <thead><tr><th scope="col">{t('Año', 'Year')}</th><th scope="col" className="is-numeric">{t('Exportaciones', 'Exports')}</th><th scope="col" className="is-numeric">{t('Importaciones', 'Imports')}</th><th scope="col" className="is-numeric">{t('Balanza', 'Balance')}</th></tr></thead>
+          <thead><tr><th scope="col">{t('Año', 'Year')}</th><th scope="col" className="is-numeric">{t('Exportaciones', 'Exports')}</th><th scope="col" className="is-numeric">{t('Importaciones', 'Imports')}</th><th scope="col" className="is-numeric">{t('Balanza', 'Balance')}</th><th scope="col" className="is-numeric">{t('Var. export.', 'Exports chg.')}</th><th scope="col" className="is-numeric">{t('Var. import.', 'Imports chg.')}</th></tr></thead>
           <tbody>
             {[...data.years].reverse().map((entry) => (
               <tr key={entry.year}>
@@ -73,6 +97,8 @@ export function TradeBalance() {
                 <td className="is-numeric">{money(entry.exports)}</td>
                 <td className="is-numeric">{money(entry.imports)}</td>
                 <td className={entry.balance >= 0 ? 'is-numeric is-surplus' : 'is-numeric is-deficit'}>{money(entry.balance, { sign: true })}</td>
+                <td className="is-numeric">{formatChange(changes.find((item) => item.year === entry.year).exports, language)}</td>
+                <td className="is-numeric">{formatChange(changes.find((item) => item.year === entry.year).imports, language)}</td>
               </tr>
             ))}
           </tbody>
