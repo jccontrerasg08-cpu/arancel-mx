@@ -41,3 +41,15 @@ Antes de agregar un caso al corpus, se debe verificar la existencia de la releas
 ## Próximo experimento controlado
 
 El primer experimento puede ser un recuperador léxico o semántico que sólo consulte descripciones de la release fijada. Debe evaluar top-5, cobertura y abstención contra un conjunto de prueba retenido. Un modelo generativo, si se utiliza en una etapa posterior, sólo podrá ordenar candidatos ya recuperados y deberá citar la evidencia recuperada; no debe inventar fracciones ni sustituir la revisión documental.
+
+## Autoverificación de la búsqueda actual
+
+Antes de evaluar cualquier búsqueda asistida (RFC de búsqueda híbrida, #312) se necesita una línea base de la búsqueda léxica que ya existe. `arancel-mx data search-selfcheck` la mide sin etiquetas humanas, usando la propia release como respuesta conocida:
+
+```bash
+arancel-mx data search-selfcheck --dataset data-2026.11.20 --sample 50
+```
+
+Toma una muestra determinista y uniformemente espaciada de fracciones vigentes y, para cada una, consulta su código (`exact_code`), su código con puntos (`dotted_code`) y su descripción publicada (`own_description`). Una descripción compartida por varias fracciones (por ejemplo «Los demás.») no puede identificar una sola y se cuenta aparte como `non_distinctive_skipped`, no como fallo. Encontrar el mismo artículo en otro nivel de su propia línea con la misma descripción (su NICO o subpartida) cuenta como acierto. El reporte incluye las primeras fallas con su posición y la latencia por búsqueda en la máquina donde se corrió.
+
+Esto mide si la búsqueda encuentra registros que ya existen, no si clasifica bien una mercancía: sus tasas no son una probabilidad de acierto para un producto.
