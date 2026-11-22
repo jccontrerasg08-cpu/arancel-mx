@@ -53,6 +53,6 @@ jobs:
           git rm .github/workflows/pr299-sync-frontend.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A src/arancel_mx/api/static/site .github/workflows/pr299-sync-frontend.yml
+          git add -A src/arancel_mx/api/static/site .github/workflows
           git commit -m "build: sync frontend static assets"
           git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:refs/heads/feat/trade-storytelling
