@@ -15,7 +15,7 @@ from arancel_mx.consumer.ficha_markdown import ficha_markdown
 from arancel_mx.consumer.manager import DatasetManager
 from arancel_mx.consumer.output import CsvSchema, render, render_json
 from arancel_mx.consumer.query import nom_annex_status, nom_requirements
-from arancel_mx.consumer.release_diff import LEVELS, current_rows, release_diff_report
+from arancel_mx.consumer.release_diff import LEVELS, auxiliary_rows, current_rows, release_diff_report
 from arancel_mx.consumer.wco_support import cite_chapter, cite_gir, download_chapter, download_gir
 from arancel_mx.domain.nico_lag import classify_missing_nico
 from arancel_mx.domain.rate_diagnostics import summarize_rate_validity
@@ -535,6 +535,7 @@ def _run_data_diff(namespace: argparse.Namespace) -> int:
         dataset = _selected_dataset(namespace, raw)
         with dataset.connect() as con:
             rows = current_rows(con)
+            auxiliary = auxiliary_rows(con)
         info = dataset.info
         sides.append(
             (
@@ -544,12 +545,19 @@ def _run_data_diff(namespace: argparse.Namespace) -> int:
                     "release_verified": info.release_verified,
                     "github_digest_state": info.github_digest_state,
                 },
+                auxiliary,
             )
         )
-    (before, from_info), (after, to_info) = sides
+    (before, from_info, auxiliary_from), (after, to_info, auxiliary_to) = sides
     try:
         report = release_diff_report(
-            before, after, from_info=from_info, to_info=to_info, levels=namespace.level
+            before,
+            after,
+            from_info=from_info,
+            to_info=to_info,
+            levels=namespace.level,
+            auxiliary_from=auxiliary_from,
+            auxiliary_to=auxiliary_to,
         )
     except ValueError as exc:
         raise QueryError(str(exc)) from exc
