@@ -60,6 +60,8 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Added
 
+- CLI: `arancel-mx data export --dataset <release> --out <dir>` writes one Parquet file per public view of the release and an `export-manifest.json` with the source DuckDB SHA-256, the release verification state, and each file's SHA-256 and row count. Column types are kept (rate text stays text, NULL stays NULL, dates stay dates); the export is a derived local copy, not a release asset. First phase of the SDK and exports RFC (#310).
+
 - Record page: «Copiar cita» copies a plain-text citation built only from the release identity in `meta.json` (tag, schema, verification state, release URL), the record and the consultation date. It writes no SHA-256 and points to the release `SHA256SUMS` instead; an unverified or unknown state is stated, never called verified, and the button is hidden when the release tag cannot be read.
 
 - CLI: `arancel-mx data search-selfcheck` measures the current lexical search against the release itself (own code, dotted code and own description of an evenly spaced sample of fractions), reports non-distinctive descriptions separately, lists misses with their rank and records per-search latency. It is a retrieval baseline for the hybrid-search RFC (#312), not a classification benchmark.

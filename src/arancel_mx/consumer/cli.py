@@ -11,6 +11,7 @@ from arancel_mx.consumer.config import resolve_config
 from arancel_mx.consumer.dataset import Dataset
 from arancel_mx.consumer.doctor import doctor_to_dict, render_doctor_human, run_doctor
 from arancel_mx.consumer.errors import DatasetUnavailableError, QueryError
+from arancel_mx.consumer.export import export_parquet
 from arancel_mx.consumer.ficha_markdown import ficha_markdown
 from arancel_mx.consumer.manager import DatasetManager
 from arancel_mx.benchmark.search_selfcheck import SelfcheckRecord, run_selfcheck
@@ -209,6 +210,15 @@ def register_consumer_commands(
     _add_offline(diff)
     _add_output_format(diff)
     diff.set_defaults(consumer_action="data_diff")
+
+    export = data_subparsers.add_parser(
+        "export",
+        help="Exporta las vistas públicas de una release a Parquet local (no es un asset de la release)",
+    )
+    _add_dataset_selection(export)
+    export.add_argument("--out", required=True, type=Path, help="Empty or new directory for the Parquet files")
+    _add_output_format(export)
+    export.set_defaults(consumer_action="data_export")
 
     selfcheck = data_subparsers.add_parser(
         "search-selfcheck",
@@ -579,6 +589,31 @@ def _run_data_diff(namespace: argparse.Namespace) -> int:
     return 0
 
 
+def _run_data_export(namespace: argparse.Namespace) -> int:
+    """Write the public views of the selected release as local Parquet files."""
+
+    dataset = _selected_dataset(namespace)
+    info = dataset.info
+    try:
+        with dataset.connect() as con:
+            manifest = export_parquet(
+                con,
+                namespace.out,
+                source_path=Path(info.path),
+                info={
+                    "dataset_version": info.dataset_version,
+                    "release_verified": info.release_verified,
+                },
+            )
+    except FileExistsError as exc:
+        raise QueryError(str(exc)) from exc
+    if namespace.format == "json":
+        _emit(manifest, format_name="json")
+    else:
+        _emit(manifest["files"], format_name=namespace.format)
+    return 0
+
+
 def _run_data_search_selfcheck(namespace: argparse.Namespace) -> int:
     """Probe the current search with codes and descriptions taken from the release itself."""
 
@@ -690,6 +725,8 @@ def run_consumer(namespace: argparse.Namespace) -> int:
         return _run_data_nico_coverage(namespace)
     if action == "data_diff":
         return _run_data_diff(namespace)
+    if action == "data_export":
+        return _run_data_export(namespace)
     if action == "data_search_selfcheck":
         return _run_data_search_selfcheck(namespace)
     if action == "data_rate_validity":
