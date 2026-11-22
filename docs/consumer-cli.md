@@ -102,6 +102,8 @@ arancel-mx data diff --from viejo.duckdb --to nuevo.duckdb --format json
 
 Compara fila por fila los registros vigentes de dos releases y reporta un evento por cada diferencia: `row_added`, `row_removed`, `description_changed`, `igi_changed`, `ige_changed`, `unit_changed` y `hierarchy_changed`. Un código puede tener varios eventos. Los valores se comparan literalmente (un acento corregido sí es un cambio) y un valor que pasa a vacío queda como `null`, nunca como cero.
 
+En `--format json` el reporte incluye además `auxiliary`, que compara las NOM del Anexo 2.4.1 (`nom_added`, `nom_removed`, `nom_scope_changed`, por fracción, numeral y NOM) y las Notas Nacionales (`note_added`, `note_removed`, `note_text_changed`, por capítulo, sección y número de nota). Si una de las dos releases no trae la vista o la trae con un esquema anterior, esa tabla queda como `not_compared` con el motivo, en lugar de contar todas sus filas como altas o bajas.
+
 Las releases se descargan y verifican igual que en `data download`; `comparison_status` vale `verified_snapshots` sólo cuando ambas pasaron la verificación remota, y `unverified_local_files` cuando alguna es un `.duckdb` local. Un cambio entre dos snapshots **no es un evento legal**: confirma el instrumento del DOF y su entrada en vigor antes de usarlo. Entre `data-2026.08.15` y `data-2026.11.20` el comando reporta, por ejemplo, las dos correcciones de descripción y los dos cambios de tasa que registra el manifiesto.
 
 ### Exportar a Parquet

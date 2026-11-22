@@ -62,6 +62,8 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 - CLI: `arancel-mx data export --dataset <release> --out <dir>` writes one Parquet file per public view of the release and an `export-manifest.json` with the source DuckDB SHA-256, the release verification state, and each file's SHA-256 and row count. Column types are kept (rate text stays text, NULL stays NULL, dates stay dates); the export is a derived local copy, not a release asset. First phase of the SDK and exports RFC (#310).
 
+- CLI: `data diff --format json` also compares Annex 2.4.1 NOM rows and National Notes under `auxiliary`; a table a release does not ship, or ships with an older schema, is reported as `not_compared` with the reason instead of counting every row as added or removed.
+
 - Record page: a «Notas nacionales» section shows, as plain text, the National Notes the release publishes for the chapter and its section, ordered by note number, flags the notes that cite the heading number literally («Menciona la partida 85.17»), says when the release has none, and links the DOF publication taken from the pipeline source registry. Phase 1 of the notes and SAT criteria RFC (#304).
 
 - CLI: `arancel-mx data diff --from <release> --to <release>` compares the current rows of two releases (added and removed codes, description, IGI, IGE, unit and parent changes), compares values literally, reports `verified_snapshots` only when both releases passed remote verification, and states that a snapshot difference is not a legal event. First implementation phase of the release-diff RFC (#308).
