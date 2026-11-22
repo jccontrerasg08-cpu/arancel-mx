@@ -60,6 +60,8 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 - CLI: `data diff --format json` also compares Annex 2.4.1 NOM rows and National Notes under `auxiliary`; a table a release does not ship, or ships with an older schema, is reported as `not_compared` with the reason instead of counting every row as added or removed.
 
+- Record page: a «Notas nacionales» section shows, as plain text, the National Notes the release publishes for the chapter and its section, ordered by note number, flags the notes that cite the heading number literally («Menciona la partida 85.17»), says when the release has none, and links the DOF publication taken from the pipeline source registry. Phase 1 of the notes and SAT criteria RFC (#304).
+
 - CLI: `arancel-mx data diff --from <release> --to <release>` compares the current rows of two releases (added and removed codes, description, IGI, IGE, unit and parent changes), compares values literally, reports `verified_snapshots` only when both releases passed remote verification, and states that a snapshot difference is not a legal event. First implementation phase of the release-diff RFC (#308).
 
 - Record page: «Descargar ficha (.md)» downloads a Markdown record built only from the data the page loaded (release, code, description, unit, IGI/IGE literal text, rate validity, hierarchy, Annex 2.4.1 state and NOM rows, recorded sources) with a not-official notice. Missing values are written as not published, never as 0. Text is escaped and only http(s) links are kept. Phase 1 of the record export RFC (#311).
