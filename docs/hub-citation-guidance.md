@@ -39,7 +39,7 @@ If `release_verified` is not `true`, do not describe the result as a verified re
 3. Copy the SHA-256 line for the asset you used (`arancel_mx.duckdb`, `arancel_mx.csv`, or `arancel_mx.json`) from `SHA256SUMS`.
 4. Record the code and the consultation date next to that tag.
 
-There is no one-click “Copy citation” control yet. The steps above are deterministic. A future control should assemble only these fields and must not invent a SHA-256.
+The record page has a «Copiar cita» / «Copy citation» button that assembles exactly these fields from `meta.json`: release tag, schema, verification state, release URL, the record code and description, the page URL and the consultation date. It writes no SHA-256; the citation tells the reader to copy it from that release's `SHA256SUMS`. When `release_verified` is not `true` the citation says so, and when `meta.json` cannot be read or has no `data-YYYY.MM.DD` tag the button is not shown.
 
 ## Mobile
 
