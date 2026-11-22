@@ -24,9 +24,18 @@ test('the state export table covers the 32 states, adds up and cites INEGI', asy
   assert.match(data.source_url, /^https:\/\/www\.inegi\.org\.mx\//);
 });
 
-test('every state has its own tile in the grid', async () => {
-  const data = await json('state-exports.json');
-  assert.equal(new Set(data.states.map((state) => `${state.col},${state.row}`)).size, 32);
+test('the state map has an outline and a population for each of the 32 states, keyed like the export table', async () => {
+  const [data, map] = await Promise.all([json('state-exports.json'), json('state-map.json')]);
+  assert.equal(map.states.length, 32);
+  assert.deepEqual(map.states.map((shape) => shape.cve_ent), data.states.map((state) => state.cve_ent).sort());
+  for (const shape of map.states) {
+    assert.match(shape.d, /^M[\d.,L-]+Z/, `${shape.name} has a path`);
+    assert.ok(Number.isInteger(shape.population) && shape.population > 0, `${shape.name} population`);
+  }
+  assert.ok(map.width > 0 && map.height > 0);
+  assert.match(map.service, /^https:\/\/gaia\.inegi\.org\.mx\//);
+  const total = map.states.reduce((sum, shape) => sum + shape.population, 0);
+  assert.ok(total > 126_000_000 && total < 127_000_000, `census 2020 population is about 126.0 million, got ${total}`);
 });
 
 test('the trade structure parts add up to the published totals', async () => {

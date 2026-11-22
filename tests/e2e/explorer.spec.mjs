@@ -275,6 +275,8 @@ test('tells the trade story: what is bought and sold, and which states export', 
   const states = page.getByTestId('state-exports');
   await expect(states.getByRole('heading', { level: 2 })).toContainText('5 estados venden 63.5 %');
   await states.getByRole('button', { name: /^Jalisco: 12\.1 %/ }).click();
+  await states.getByRole('button', { name: 'Por habitante' }).click();
+  await expect(states.getByRole('button', { name: /^Jalisco: \$\d/ })).toBeVisible();
   await expect(states.getByRole('heading', { level: 3, name: 'Jalisco' })).toBeVisible();
   await expect(states).toContainText('+130.8 %');
   await states.getByText('Ver la tabla de los 32 estados').click();

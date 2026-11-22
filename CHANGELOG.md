@@ -58,7 +58,7 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Added
 
-- Trade context: the page now tells the story with data. A headline states the conclusion of the annual balance, a strip shows each year’s surplus or deficit, and the annual table adds yearly change. A new section shows what Mexico imports and exports by kind of good (INEGI BCMM, January–September 2026), and another shows exports by state as a tile map with a table of all 32 states (INEGI ETEF, second quarter 2026). Figures are saved copies from INEGI’s published bulletins; the live annual balance still comes from the INEGI API.
+- Trade context: the page now tells the story with data. A headline states the conclusion of the annual balance, a strip shows each year’s surplus or deficit, and the annual table adds yearly change. A new section shows what Mexico imports and exports by kind of good (INEGI BCMM, January–September 2026), and another shows exports by state on a map drawn from INEGI’s Marco Geoestadístico, with three measures (share, per person, yearly change) and a table of all 32 states (INEGI ETEF, second quarter 2026; `scripts/build_state_map.py` rebuilds the outlines). Figures are saved copies from INEGI’s published bulletins; the live annual balance still comes from the INEGI API.
 
 - CLI: `arancel-mx data nico-coverage` reports current fractions without published NICO descendants. The known Totoaba lag (DOF 2025-07-21) and any other gaps come from one shared policy in `arancel_mx.domain.nico_lag`, also used by the pipeline. No synthetic NICO codes are created.
 - CLI: `arancel-mx data rate-validity` counts current fractions whose published `rate_effective_from` is present or absent, grouped by `validity_basis`. It does not invent dates.

@@ -8,7 +8,6 @@
  "total_millions": 195260.7,
  "unit": "millones de dólares",
  "note": "El total difiere de la Balanza Comercial de Mercancías: ETEF excluye comercio y servicios y operaciones no vinculadas al RENEM.",
- "grid": "Cuadrícula cartográfica propia: un cuadro por estado, ordenado de forma aproximada a su ubicación; no es un mapa a escala.",
  "states": [
   {
    "cve_ent": "01",
@@ -17,9 +16,7 @@
    "millions": 3447.1,
    "yoy": 3.8,
    "share": 1.8,
-   "rank": 13,
-   "col": 3,
-   "row": 2
+   "rank": 13
   },
   {
    "cve_ent": "02",
@@ -28,9 +25,7 @@
    "millions": 14917.8,
    "yoy": 9.0,
    "share": 7.6,
-   "rank": 5,
-   "col": 0,
-   "row": 0
+   "rank": 5
   },
   {
    "cve_ent": "03",
@@ -39,9 +34,7 @@
    "millions": 121.9,
    "yoy": 24.8,
    "share": 0.1,
-   "rank": 30,
-   "col": 0,
-   "row": 1
+   "rank": 30
   },
   {
    "cve_ent": "04",
@@ -50,9 +43,7 @@
    "millions": 2718.1,
    "yoy": 29.9,
    "share": 1.4,
-   "rank": 14,
-   "col": 8,
-   "row": 3
+   "rank": 14
   },
   {
    "cve_ent": "05",
@@ -61,9 +52,7 @@
    "millions": 17967.5,
    "yoy": 6.0,
    "share": 9.2,
-   "rank": 4,
-   "col": 3,
-   "row": 0
+   "rank": 4
   },
   {
    "cve_ent": "06",
@@ -72,9 +61,7 @@
    "millions": 767.8,
    "yoy": 60.4,
    "share": 0.4,
-   "rank": 21,
-   "col": 2,
-   "row": 3
+   "rank": 21
   },
   {
    "cve_ent": "07",
@@ -83,9 +70,7 @@
    "millions": 391.1,
    "yoy": -8.3,
    "share": 0.2,
-   "rank": 29,
-   "col": 7,
-   "row": 4
+   "rank": 29
   },
   {
    "cve_ent": "08",
@@ -94,9 +79,7 @@
    "millions": 49027.5,
    "yoy": 87.3,
    "share": 25.1,
-   "rank": 1,
-   "col": 2,
-   "row": 0
+   "rank": 1
   },
   {
    "cve_ent": "09",
@@ -105,9 +88,7 @@
    "millions": 731.8,
    "yoy": -10.1,
    "share": 0.4,
-   "rank": 22,
-   "col": 5,
-   "row": 3
+   "rank": 22
   },
   {
    "cve_ent": "10",
@@ -116,9 +97,7 @@
    "millions": 867.3,
    "yoy": 19.6,
    "share": 0.4,
-   "rank": 20,
-   "col": 2,
-   "row": 1
+   "rank": 20
   },
   {
    "cve_ent": "11",
@@ -127,9 +106,7 @@
    "millions": 10163.2,
    "yoy": -0.3,
    "share": 5.2,
-   "rank": 6,
-   "col": 4,
-   "row": 2
+   "rank": 6
   },
   {
    "cve_ent": "12",
@@ -138,9 +115,7 @@
    "millions": 417.2,
    "yoy": 67.1,
    "share": 0.2,
-   "rank": 28,
-   "col": 3,
-   "row": 4
+   "rank": 28
   },
   {
    "cve_ent": "13",
@@ -149,9 +124,7 @@
    "millions": 659.3,
    "yoy": -18.7,
    "share": 0.3,
-   "rank": 24,
-   "col": 6,
-   "row": 2
+   "rank": 24
   },
   {
    "cve_ent": "14",
@@ -160,9 +133,7 @@
    "millions": 23585.1,
    "yoy": 130.8,
    "share": 12.1,
-   "rank": 2,
-   "col": 2,
-   "row": 2
+   "rank": 2
   },
   {
    "cve_ent": "15",
@@ -171,9 +142,7 @@
    "millions": 5981.0,
    "yoy": 12.6,
    "share": 3.1,
-   "rank": 10,
-   "col": 4,
-   "row": 3
+   "rank": 10
   },
   {
    "cve_ent": "16",
@@ -182,9 +151,7 @@
    "millions": 1473.0,
    "yoy": -9.9,
    "share": 0.8,
-   "rank": 18,
-   "col": 3,
-   "row": 3
+   "rank": 18
   },
   {
    "cve_ent": "17",
@@ -193,9 +160,7 @@
    "millions": 440.6,
    "yoy": -48.6,
    "share": 0.2,
-   "rank": 26,
-   "col": 4,
-   "row": 4
+   "rank": 26
   },
   {
    "cve_ent": "18",
@@ -204,9 +169,7 @@
    "millions": 105.7,
    "yoy": -2.1,
    "share": 0.1,
-   "rank": 31,
-   "col": 1,
-   "row": 2
+   "rank": 31
   },
   {
    "cve_ent": "19",
@@ -215,9 +178,7 @@
    "millions": 18533.5,
    "yoy": 25.5,
    "share": 9.5,
-   "rank": 3,
-   "col": 4,
-   "row": 0
+   "rank": 3
   },
   {
    "cve_ent": "20",
@@ -226,9 +187,7 @@
    "millions": 428.8,
    "yoy": 13.5,
    "share": 0.2,
-   "rank": 27,
-   "col": 6,
-   "row": 4
+   "rank": 27
   },
   {
    "cve_ent": "21",
@@ -237,9 +196,7 @@
    "millions": 4881.6,
    "yoy": 21.3,
    "share": 2.5,
-   "rank": 12,
-   "col": 5,
-   "row": 4
+   "rank": 12
   },
   {
    "cve_ent": "22",
@@ -248,9 +205,7 @@
    "millions": 5305.4,
    "yoy": 12.3,
    "share": 2.7,
-   "rank": 11,
-   "col": 5,
-   "row": 2
+   "rank": 11
   },
   {
    "cve_ent": "23",
@@ -259,9 +214,7 @@
    "millions": 2.0,
    "yoy": -75.1,
    "share": 0.0,
-   "rank": 32,
-   "col": 9,
-   "row": 3
+   "rank": 32
   },
   {
    "cve_ent": "24",
@@ -270,9 +223,7 @@
    "millions": 6893.2,
    "yoy": 7.3,
    "share": 3.5,
-   "rank": 9,
-   "col": 4,
-   "row": 1
+   "rank": 9
   },
   {
    "cve_ent": "25",
@@ -281,9 +232,7 @@
    "millions": 929.5,
    "yoy": 12.8,
    "share": 0.5,
-   "rank": 19,
-   "col": 1,
-   "row": 1
+   "rank": 19
   },
   {
    "cve_ent": "26",
@@ -292,9 +241,7 @@
    "millions": 8524.9,
    "yoy": 12.3,
    "share": 4.4,
-   "rank": 8,
-   "col": 1,
-   "row": 0
+   "rank": 8
   },
   {
    "cve_ent": "27",
@@ -303,9 +250,7 @@
    "millions": 1962.7,
    "yoy": 33.5,
    "share": 1.0,
-   "rank": 15,
-   "col": 7,
-   "row": 3
+   "rank": 15
   },
   {
    "cve_ent": "28",
@@ -314,9 +259,7 @@
    "millions": 9362.6,
    "yoy": -2.8,
    "share": 4.8,
-   "rank": 7,
-   "col": 5,
-   "row": 0
+   "rank": 7
   },
   {
    "cve_ent": "29",
@@ -325,9 +268,7 @@
    "millions": 572.3,
    "yoy": 6.9,
    "share": 0.3,
-   "rank": 25,
-   "col": 6,
-   "row": 3
+   "rank": 25
   },
   {
    "cve_ent": "30",
@@ -336,9 +277,7 @@
    "millions": 1862.7,
    "yoy": 1.1,
    "share": 1.0,
-   "rank": 16,
-   "col": 5,
-   "row": 1
+   "rank": 16
   },
   {
    "cve_ent": "31",
@@ -347,9 +286,7 @@
    "millions": 714.9,
    "yoy": 17.7,
    "share": 0.4,
-   "rank": 23,
-   "col": 9,
-   "row": 2
+   "rank": 23
   },
   {
    "cve_ent": "32",
@@ -358,9 +295,8 @@
    "millions": 1503.5,
    "yoy": 12.8,
    "share": 0.8,
-   "rank": 17,
-   "col": 3,
-   "row": 1
+   "rank": 17
   }
- ]
+ ],
+ "geometry_note": "Contornos: INEGI, Marco Geoestadístico (servicio wscatgeo), simplificados para esta página. Población: Censo de Población y Vivienda 2020."
 }
