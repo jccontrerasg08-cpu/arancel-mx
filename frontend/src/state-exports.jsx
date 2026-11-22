@@ -31,7 +31,7 @@ export function StateExports() {
   return (
     <section className="state-exports" aria-labelledby="state-exports-title" data-testid="state-exports">
       <p className="eyebrow">{t('INEGI · EXPORTACIONES POR ENTIDAD FEDERATIVA', 'INEGI · EXPORTS BY STATE')}</p>
-      <h2 id="state-exports-title">{t(`${top.length} estados venden ${pct(topShare)} % de lo que exporta México`, `${top.length} states sell ${pct(topShare)}% of what Mexico exports`)}</h2>
+      <h2 id="state-exports-title">{t(`${top.length} estados concentran ${pct(topShare)} % de las exportaciones estatales medidas por ETEF`, `${top.length} states account for ${pct(topShare)}% of state exports measured by ETEF`)}</h2>
       <p className="trade-balance__headline">{t(`${top.map((state) => state.name).join(', ')}. Solo Chihuahua aporta ${pct(top[0].share)} % del total.`, `${top.map((state) => state.name).join(', ')}. Chihuahua alone accounts for ${pct(top[0].share)}% of the total.`)}</p>
       <p>{t(`Origen de las exportaciones en el ${data.period}. Elige qué medir y toca un estado para ver su cifra; entre más oscuro, mayor el valor.`, `Origin of exports in ${data.period_en}. Pick what to measure and select a state to see its figure; the darker, the higher.`)}</p>
       <div className="state-modes" role="group" aria-label={t('Qué mide el mapa', 'What the map measures')}>
