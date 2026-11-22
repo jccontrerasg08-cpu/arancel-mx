@@ -30,7 +30,8 @@
           "label": "Saldo FOB"
         }
       ],
-      "current_use": "National time series and annual/month-to-date summaries."
+      "current_use": "National time series and annual/month-to-date summaries.",
+      "official_url": "https://www.inegi.org.mx/servicios/api_indicadores.html"
     },
     {
       "id": "inegi_bcmm_open_monthly",
@@ -62,7 +63,8 @@
         "available_or_confidential"
       ],
       "granularity_note": "Available dimensions vary by dataset/table; validate the exact official dictionary before ingestion.",
-      "confidentiality": "Preserve confidential values as status, never coerce to zero or infer suppressed values."
+      "confidentiality": "Preserve confidential values as status, never coerce to zero or infer suppressed values.",
+      "official_url": "https://www.inegi.org.mx/programas/comext/default.html"
     },
     {
       "id": "inegi_bcmm_cube_monthly",
@@ -99,7 +101,23 @@
         "xls",
         "txt"
       ],
-      "granularity_note": "Treat available dimensions and output format as dataset/version specific."
+      "granularity_note": "Treat available dimensions and output format as dataset/version specific.",
+      "official_url": "https://www.inegi.org.mx/sistemas/Olap/Proyectos/bd/continuas/comex/comex_bcmm_mensual2023.asp",
+      "official_page_checked_at": "2026-11-21",
+      "valuation_basis": "FOB",
+      "confidentiality_code": "C",
+      "vintage_warning": "Preservar estatus de cifras oportunas/revisadas/definitivas/ajustadas y vintage de consulta; C no es cero."
+    },
+    {
+      "id": "inegi_tigie_scian_correlation",
+      "name": "Tabla de correlación TIGIE–SCIAN 2023 (INEGI)",
+      "official_url": "https://www.inegi.org.mx/app/tigie/",
+      "access": "official-reference-table",
+      "token_required": false,
+      "official_page_checked_at": "2026-11-21",
+      "reference_vintage": "Actualización 2025; modificaciones TIGIE hasta 2025-10-31",
+      "type": "statistical_mapping_not_legal_tariff_release",
+      "granularity_note": "Relaciona fracción/NICO con SCIAN; no extrapolar conteos estadísticos de 2025 a releases LIGIE 2026."
     }
   ],
   "analytic_views": [
