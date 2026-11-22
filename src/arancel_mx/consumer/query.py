@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 import json
+from pathlib import Path
 import re
 import unicodedata
 from typing import Any, Iterable
@@ -175,6 +176,58 @@ def _confidence(match_kind: MatchKind, matched: int, query_token_count: int) -> 
     return matched / query_token_count
 
 
+_SearchRows = tuple[tuple[TariffRecord, str], ...]
+_SEARCH_ROWS_CACHE: dict[tuple[str, int, int], _SearchRows] = {}
+_SEARCH_ROWS_CACHE_SIZE = 2
+
+
+def _database_file(connection) -> Path | None:
+    """The file behind a DuckDB connection, or ``None`` for in-memory or unknown databases."""
+
+    try:
+        rows = connection.execute("PRAGMA database_list").fetchall()
+    except Exception:  # noqa: BLE001 - a connection that cannot answer is simply not cached
+        return None
+    for row in rows:
+        if len(row) >= 3 and row[2]:
+            return Path(str(row[2]))
+    return None
+
+
+def _search_rows(connection) -> _SearchRows:
+    """Current records with their normalized descriptions, in search order.
+
+    Building them dominates the cost of a search (about half a second for a full release). They are reused for
+    later searches on the same database file while its size and modification time are unchanged; releases are
+    immutable, and any rewrite of a local file changes the key. In-memory databases are never cached.
+    """
+
+    path = _database_file(connection)
+    key: tuple[str, int, int] | None = None
+    if path is not None:
+        try:
+            stat = path.stat()
+        except OSError:
+            stat = None
+        if stat is not None:
+            key = (str(path.resolve()), stat.st_mtime_ns, stat.st_size)
+            cached = _SEARCH_ROWS_CACHE.get(key)
+            if cached is not None:
+                return cached
+    rows = connection.execute(
+        _ROW_SELECT + " WHERE is_current = TRUE ORDER BY code ASC, description ASC"
+    ).fetchall()
+    built: _SearchRows = tuple(
+        (record, _normalize_text(record.description))
+        for record in (_row_to_tariff_record(row) for row in rows)
+    )
+    if key is not None:
+        while len(_SEARCH_ROWS_CACHE) >= _SEARCH_ROWS_CACHE_SIZE:
+            _SEARCH_ROWS_CACHE.pop(next(iter(_SEARCH_ROWS_CACHE)))
+        _SEARCH_ROWS_CACHE[key] = built
+    return built
+
+
 def search(connection, text: str, *, limit: int) -> tuple[SearchResult, ...]:
     """Search current records with stable scoring and tie-breaking."""
 
@@ -187,12 +240,8 @@ def search(connection, text: str, *, limit: int) -> tuple[SearchResult, ...]:
     query_tokens = tuple(token for token in normalized_text.split(" ") if token)
     code_candidate = _search_code_candidate(text.strip())
 
-    rows = connection.execute(
-        _ROW_SELECT + " WHERE is_current = TRUE ORDER BY code ASC, description ASC"
-    ).fetchall()
     results: list[SearchResult] = []
-    for row in rows:
-        record = _row_to_tariff_record(row)
+    for record, description in _search_rows(connection):
         score = 0
         match_kind: MatchKind | None = None
         matched = 0
@@ -204,7 +253,6 @@ def search(connection, text: str, *, limit: int) -> tuple[SearchResult, ...]:
             score = 700
             match_kind = "code_prefix"
         else:
-            description = _normalize_text(record.description)
             matched = sum(1 for token in query_tokens if token in description)
             if matched:
                 score = 300 + 25 * matched
