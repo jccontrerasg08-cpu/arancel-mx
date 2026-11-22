@@ -79,6 +79,7 @@ input { width:min(100%,38rem); min-height:2.8rem; border:1px solid var(--line); 
 .result-list>article { display:flex; align-items:center; justify-content:space-between; gap:1rem; border:1px solid var(--line); border-radius:.7rem; background:var(--panel); padding:1.1rem; }
 .result-list h2,.result-list h3,.result-list p { margin-bottom:.2rem; }
 .result-list .result-context { color:var(--muted); font-size:.85rem; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; overflow:hidden; }
+.result-list mark { color:inherit; background:color-mix(in srgb,var(--accent) 28%, transparent); border-radius:.2em; padding:0 .08em; }
 .result-list span,.result-list small { color:var(--muted); font-family:'DM Mono',monospace; font-size:.75rem; }
 .hierarchy { display:grid; gap:.6rem; padding-left:1.3rem; }
 .accordion>article>button>span:last-child { text-align:right; }

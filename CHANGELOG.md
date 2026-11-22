@@ -60,6 +60,8 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Added
 
+- Explorer: the words of the search are marked in each result description (accents and case ignored, as search compares them; one-letter words skipped). The description text is unchanged and rendered as text, never as HTML. Search UX phase of RFC #312.
+
 - CLI: `arancel-mx nom <code>` lists the NOM rows that Annex 2.4.1 in the release gives for a fraction or NICO, with the same states as the record page (`listed`, `not_listed`, `not_listed_carried`, `unavailable`, `unknown`, `not_a_fraction`). A missing answer is never reported as "no NOM"; for a NICO each row says whether its NICO list names it. Next phase of the RRNA/NOM RFC (#302).
 
 - CLI: `arancel-mx data export --dataset <release> --out <dir>` writes one Parquet file per public view of the release and an `export-manifest.json` with the source DuckDB SHA-256, the release verification state, and each file's SHA-256 and row count. Column types are kept (rate text stays text, NULL stays NULL, dates stay dates); the export is a derived local copy, not a release asset. First phase of the SDK and exports RFC (#310).
