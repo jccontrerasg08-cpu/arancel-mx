@@ -53,6 +53,8 @@ def test_legal_freshness_and_amount_updates_are_distinct() -> None:
     assert laws["lisr"]["last_reform_dof"] == "2026-11-13"
     assert laws["lfd"]["last_reform_dof"] == "2026-11-13"
     assert laws["lfd"]["last_amount_update_dof"] == "2025-12-28"
+    assert laws["lieps"]["last_reform_dof"] == "2025-11-07"
+    assert laws["lieps"]["last_amount_update_dof"] == "2025-12-22"
     assert laws["lfisan"]["last_reform_dof"] == "2021-11-12"
     assert laws["lfisan"]["last_amount_update_dof"] == "2025-12-28"
     pages = catalog["legal_framework"]["official_pages"]
