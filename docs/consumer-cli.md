@@ -104,6 +104,17 @@ Compara fila por fila los registros vigentes de dos releases y reporta un evento
 
 Las releases se descargan y verifican igual que en `data download`; `comparison_status` vale `verified_snapshots` sólo cuando ambas pasaron la verificación remota, y `unverified_local_files` cuando alguna es un `.duckdb` local. Un cambio entre dos snapshots **no es un evento legal**: confirma el instrumento del DOF y su entrada en vigor antes de usarlo. Entre `data-2026.08.15` y `data-2026.11.20` el comando reporta, por ejemplo, las dos correcciones de descripción y los dos cambios de tasa que registra el manifiesto.
 
+### Exportar a Parquet
+
+```bash
+arancel-mx data export --dataset data-2026.11.20 --out ./parquet
+arancel-mx data export --dataset data-2026.11.20 --out ./parquet --format json
+```
+
+Escribe un archivo Parquet por cada vista pública que trae la release (`arancel_mx`, `arancel_mx_nom_requirements`, `arancel_mx_national_notes`, `arancel_mx_weighted_indicators`) y un `export-manifest.json` con el SHA-256 del DuckDB de origen, si la release pasó la verificación remota, y el SHA-256 y número de filas de cada archivo. Los tipos se conservan: la tasa sigue siendo texto (`Ex.` no se convierte en número), un valor no publicado sigue siendo `NULL` y las fechas siguen siendo fechas. Una vista que la release no trae se lista en `skipped`; no se escribe vacía.
+
+El directorio debe no existir o estar vacío, para no mezclar archivos de dos releases. La exportación es una **copia derivada local**: no es uno de los seis assets de la release ni los sustituye. Para auditar, verifica la release (`data verify --bundle`) y compara el `sha256` de `source`.
+
 Usa `--format json` para automatización estructurada y `--format csv` para intercambio por filas. `data path` imprime a propósito sólo la ruta del DuckDB local seleccionado, para que los scripts la consuman directamente.
 
 ## Comandos de consulta

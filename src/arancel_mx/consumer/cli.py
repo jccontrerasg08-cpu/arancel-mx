@@ -10,10 +10,16 @@ from arancel_mx.consumer.config import resolve_config
 from arancel_mx.consumer.dataset import Dataset
 from arancel_mx.consumer.doctor import doctor_to_dict, render_doctor_human, run_doctor
 from arancel_mx.consumer.errors import DatasetUnavailableError, QueryError
+from arancel_mx.consumer.export import export_parquet
 from arancel_mx.consumer.manager import DatasetManager
 from arancel_mx.consumer.output import CsvSchema, render, render_json
 from arancel_mx.consumer.release_diff import LEVELS, current_rows, release_diff_report
-from arancel_mx.consumer.wco_support import cite_chapter, cite_gir, download_chapter, download_gir
+from arancel_mx.consumer.wco_support import (
+    cite_chapter,
+    cite_gir,
+    download_chapter,
+    download_gir,
+)
 from arancel_mx.domain.nico_lag import classify_missing_nico
 from arancel_mx.domain.rate_diagnostics import summarize_rate_validity
 
@@ -58,7 +64,9 @@ def _positive_int(value: str) -> int:
     try:
         parsed = int(value)
     except ValueError as exc:
-        raise argparse.ArgumentTypeError("must be an integer greater than zero") from exc
+        raise argparse.ArgumentTypeError(
+            "must be an integer greater than zero"
+        ) from exc
     if parsed <= 0:
         raise argparse.ArgumentTypeError("must be greater than zero")
     return parsed
@@ -194,8 +202,18 @@ def register_consumer_commands(
         "diff",
         help="Compara fila por fila dos releases verificadas (no interpreta cambios legales)",
     )
-    diff.add_argument("--from", dest="from_dataset", required=True, help="data-YYYY.MM.DD or a local .duckdb file")
-    diff.add_argument("--to", dest="to_dataset", required=True, help="data-YYYY.MM.DD or a local .duckdb file")
+    diff.add_argument(
+        "--from",
+        dest="from_dataset",
+        required=True,
+        help="data-YYYY.MM.DD or a local .duckdb file",
+    )
+    diff.add_argument(
+        "--to",
+        dest="to_dataset",
+        required=True,
+        help="data-YYYY.MM.DD or a local .duckdb file",
+    )
     diff.add_argument(
         "--level",
         action="append",
@@ -205,6 +223,20 @@ def register_consumer_commands(
     _add_offline(diff)
     _add_output_format(diff)
     diff.set_defaults(consumer_action="data_diff")
+
+    export = data_subparsers.add_parser(
+        "export",
+        help="Exporta las vistas públicas de una release a Parquet local (no es un asset de la release)",
+    )
+    _add_dataset_selection(export)
+    export.add_argument(
+        "--out",
+        required=True,
+        type=Path,
+        help="Empty or new directory for the Parquet files",
+    )
+    _add_output_format(export)
+    export.set_defaults(consumer_action="data_export")
 
     rates = data_subparsers.add_parser(
         "rate-validity",
@@ -301,7 +333,12 @@ def _local_duckdb_path(value: str) -> Path | None:
     if not text:
         return None
     path = Path(text)
-    if path.is_file() or text.lower().endswith(".duckdb") or "/" in text or "\\" in text:
+    if (
+        path.is_file()
+        or text.lower().endswith(".duckdb")
+        or "/" in text
+        or "\\" in text
+    ):
         return path
     return None
 
@@ -315,9 +352,7 @@ def _consumer_config(namespace: argparse.Namespace):
     try:
         return resolve_config(**options)
     except ValueError as exc:
-        raise DatasetUnavailableError(
-            f"invalid consumer configuration: {exc}"
-        ) from exc
+        raise DatasetUnavailableError(f"invalid consumer configuration: {exc}") from exc
 
 
 def _selected_dataset(namespace: argparse.Namespace, raw: str | None = None) -> Dataset:
@@ -368,7 +403,11 @@ def _run_query(namespace: argparse.Namespace) -> int:
         value = dataset.suggest(namespace.text, limit=namespace.limit)
     elif action == "parent":
         parent_record = dataset.parent(namespace.code)
-        value = () if parent_record is None and namespace.format != "json" else parent_record
+        value = (
+            ()
+            if parent_record is None and namespace.format != "json"
+            else parent_record
+        )
     elif action == "children":
         value = dataset.children(namespace.code)
     elif action == "provenance":
@@ -376,9 +415,7 @@ def _run_query(namespace: argparse.Namespace) -> int:
     elif action == "ficha":
         value = dataset.ficha(namespace.code)
     elif action == "compare":
-        value = dataset.compare(
-            namespace.code, fetch=namespace.offline is not True
-        )
+        value = dataset.compare(namespace.code, fetch=namespace.offline is not True)
     elif action == "chapters":
         value = dataset.chapters()
     else:
@@ -414,7 +451,8 @@ def _run_data_status(namespace: argparse.Namespace) -> int:
         remote_versions = manager.list_remote()
         remote_latest = remote_versions[0] if remote_versions else None
     update_available = bool(
-        remote_latest is not None and (local_latest is None or remote_latest > local_latest)
+        remote_latest is not None
+        and (local_latest is None or remote_latest > local_latest)
     )
     _emit(
         {
@@ -478,7 +516,6 @@ def _run_data_verify(namespace: argparse.Namespace) -> int:
     return 0
 
 
-
 def _dataset_version(dataset: Dataset) -> str | None:
     return dataset.info.dataset_version
 
@@ -530,6 +567,31 @@ def _run_data_diff(namespace: argparse.Namespace) -> int:
         _emit(report, format_name="json")
     else:
         _emit(report["changes"], format_name=namespace.format)
+    return 0
+
+
+def _run_data_export(namespace: argparse.Namespace) -> int:
+    """Write the public views of the selected release as local Parquet files."""
+
+    dataset = _selected_dataset(namespace)
+    info = dataset.info
+    try:
+        with dataset.connect() as con:
+            manifest = export_parquet(
+                con,
+                namespace.out,
+                source_path=Path(info.path),
+                info={
+                    "dataset_version": info.dataset_version,
+                    "release_verified": info.release_verified,
+                },
+            )
+    except FileExistsError as exc:
+        raise QueryError(str(exc)) from exc
+    if namespace.format == "json":
+        _emit(manifest, format_name="json")
+    else:
+        _emit(manifest["files"], format_name=namespace.format)
     return 0
 
 
@@ -622,6 +684,8 @@ def run_consumer(namespace: argparse.Namespace) -> int:
         return _run_data_nico_coverage(namespace)
     if action == "data_diff":
         return _run_data_diff(namespace)
+    if action == "data_export":
+        return _run_data_export(namespace)
     if action == "data_rate_validity":
         return _run_data_rate_validity(namespace)
     if action == "doctor":
