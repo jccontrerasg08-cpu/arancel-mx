@@ -8,6 +8,8 @@ La interfaz indicaba **41 fuentes**, mientras la lectura de su panel devolvió *
 
 Se cotejaron las **fuentes críticas** con índices y páginas oficiales mediante Exa y TinyFish. **No se leyó artículo por artículo cada ley, no se verificó la transcripción íntegra de todos los videos, ni se extrajeron documentos privados del notebook.** Los títulos se conservan para trazabilidad; no se copian textos legales enteros ni contenidos privados. Los enlaces jurídicos son referencias, nunca prueba suficiente de vigencia aplicable.
 
+**Auditoría de portadas legislativas (Exa):** se recuperaron las **25 URLs únicas** de PDF legislativo presentes en el notebook (26 entradas por duplicado de LSH); en **22** se extrajo una fecha de última reforma del encabezado, y en **3** no se pudo extraer una fecha con ese patrón. Esto verifica sólo la lectura del documento/portada, no cada artículo, anexo, transitorio ni vigencia normativa. El JSON conserva la fecha extraída por URL y marca los casos sin dato; no interpreta una ausencia como «sin reforma».
+
 ## Hallazgos contrastados
 
 | Tema | Hallazgo concreto | Consulta oficial |
