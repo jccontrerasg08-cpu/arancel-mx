@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 from pathlib import Path
 import sys
 
@@ -10,10 +11,11 @@ from arancel_mx.consumer.config import resolve_config
 from arancel_mx.consumer.dataset import Dataset
 from arancel_mx.consumer.doctor import doctor_to_dict, render_doctor_human, run_doctor
 from arancel_mx.consumer.errors import DatasetUnavailableError, QueryError
+from arancel_mx.consumer.ficha_markdown import ficha_markdown
 from arancel_mx.consumer.manager import DatasetManager
 from arancel_mx.benchmark.search_selfcheck import SelfcheckRecord, run_selfcheck
 from arancel_mx.consumer.output import CsvSchema, render, render_json
-from arancel_mx.consumer.query import SCORER_VERSION, search as query_search
+from arancel_mx.consumer.query import SCORER_VERSION, nom_annex_status, nom_requirements, search as query_search
 from arancel_mx.consumer.release_diff import LEVELS, auxiliary_rows, current_rows, release_diff_report
 from arancel_mx.consumer.wco_support import cite_chapter, cite_gir, download_chapter, download_gir
 from arancel_mx.domain.nico_lag import classify_missing_nico
@@ -264,11 +266,15 @@ def register_consumer_commands(
         "provenance",
         help_text="Muestra las fuentes trazables de un código",
     )
-    _add_query_command(
+    ficha = _add_query_command(
         subparsers,
         "ficha",
         help_text="Muestra la ficha jerárquica (capítulo a fracción/NICO) de un código",
     )
+    for action in ficha._actions:
+        if "--format" in action.option_strings:
+            action.choices = (*_OUTPUT_FORMATS, "markdown")
+            action.help = "Output format (default: table); markdown writes a printable reference card"
     _add_query_command(
         subparsers,
         "compare",
@@ -369,6 +375,23 @@ def _emit(
         sys.stdout.write("\n")
 
 
+def _ficha_markdown(dataset: Dataset, code: str) -> str:
+    ficha_value = dataset.ficha(code)
+    chapter = ficha_value.record.code[:2]
+    with dataset.connect() as con:
+        annex = nom_annex_status(con)
+        requirements = nom_requirements(con, chapter) if len(ficha_value.record.code) >= 8 else ()
+    return ficha_markdown(
+        ficha_value,
+        generated_at=datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        release_verified=dataset.info.release_verified,
+        provenance=dataset.provenance(ficha_value.record.code),
+        nom_requirements=requirements,
+        annex=annex,
+        national_notes=dataset.national_notes(chapter),
+    )
+
+
 def _run_query(namespace: argparse.Namespace) -> int:
     dataset = _selected_dataset(namespace)
     action = namespace.consumer_action
@@ -385,6 +408,9 @@ def _run_query(namespace: argparse.Namespace) -> int:
         value = dataset.children(namespace.code)
     elif action == "provenance":
         value = dataset.provenance(namespace.code)
+    elif action == "ficha" and namespace.format == "markdown":
+        sys.stdout.write(_ficha_markdown(dataset, namespace.code))
+        return 0
     elif action == "ficha":
         value = dataset.ficha(namespace.code)
     elif action == "compare":

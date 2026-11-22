@@ -108,6 +108,15 @@ Las releases se descargan y verifican igual que en `data download`; `comparison_
 
 Usa `--format json` para automatización estructurada y `--format csv` para intercambio por filas. `data path` imprime a propósito sólo la ruta del DuckDB local seleccionado, para que los scripts la consuman directamente.
 
+### Ficha en Markdown
+
+```bash
+arancel-mx ficha 85171301 --format markdown > ficha-85171301.md
+arancel-mx ficha 8517130100 --dataset data-2026.11.20 --format markdown
+```
+
+Escribe una ficha de consulta imprimible con la release (y si fue verificada), la fecha de generación, código, descripción, unidad, texto literal de IGI e IGE, vigencia de la tasa publicada, jerarquía, el estado del Anexo 2.4.1 con sus NOM y acotaciones, las Notas Nacionales del capítulo y las fuentes registradas con su SHA-256. Un dato que la release no publica se escribe como «No publicado en esta release», nunca como 0. La ficha dice que no es una clasificación oficial ni determina contribuciones o cumplimiento.
+
 ## Comandos de consulta
 
 ```bash
