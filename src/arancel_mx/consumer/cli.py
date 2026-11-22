@@ -14,8 +14,9 @@ from arancel_mx.consumer.errors import DatasetUnavailableError, QueryError
 from arancel_mx.consumer.export import export_parquet
 from arancel_mx.consumer.ficha_markdown import ficha_markdown
 from arancel_mx.consumer.manager import DatasetManager
+from arancel_mx.benchmark.search_selfcheck import SelfcheckRecord, run_selfcheck
 from arancel_mx.consumer.output import CsvSchema, render, render_json
-from arancel_mx.consumer.query import nom_annex_status, nom_requirements
+from arancel_mx.consumer.query import SCORER_VERSION, nom_annex_status, nom_requirements, search as query_search
 from arancel_mx.consumer.release_diff import LEVELS, auxiliary_rows, current_rows, release_diff_report
 from arancel_mx.consumer.wco_support import cite_chapter, cite_gir, download_chapter, download_gir
 from arancel_mx.domain.nico_lag import classify_missing_nico
@@ -218,6 +219,16 @@ def register_consumer_commands(
     export.add_argument("--out", required=True, type=Path, help="Empty or new directory for the Parquet files")
     _add_output_format(export)
     export.set_defaults(consumer_action="data_export")
+
+    selfcheck = data_subparsers.add_parser(
+        "search-selfcheck",
+        help="Mide si la búsqueda actual encuentra registros conocidos (no mide clasificación)",
+    )
+    _add_dataset_selection(selfcheck)
+    selfcheck.add_argument("--sample", type=_positive_int, default=50, help="Fractions to probe, evenly spaced (default: 50)")
+    selfcheck.add_argument("--depth", type=_positive_int, default=10, help="Results read per description query (default: 10)")
+    selfcheck.add_argument("--format", choices=("json",), default="json", help="Output format (json)")
+    selfcheck.set_defaults(consumer_action="data_search_selfcheck")
 
     rates = data_subparsers.add_parser(
         "rate-validity",
@@ -603,6 +614,28 @@ def _run_data_export(namespace: argparse.Namespace) -> int:
     return 0
 
 
+def _run_data_search_selfcheck(namespace: argparse.Namespace) -> int:
+    """Probe the current search with codes and descriptions taken from the release itself."""
+
+    dataset = _selected_dataset(namespace)
+    with dataset.connect() as con:
+        rows = con.execute(
+            "SELECT code, formatted_code, description FROM arancel_mx "
+            "WHERE is_current AND level = 'fraccion8' ORDER BY code"
+        ).fetchall()
+        records = [SelfcheckRecord(str(code), str(formatted), str(description)) for code, formatted, description in rows]
+        report = run_selfcheck(
+            records,
+            lambda text, limit: query_search(con, text, limit=limit),
+            sample=namespace.sample,
+            depth=namespace.depth,
+            dataset_version=dataset.info.dataset_version,
+            scorer_version=SCORER_VERSION,
+        )
+    _emit(report, format_name="json")
+    return 0
+
+
 def _run_data_rate_validity(namespace: argparse.Namespace) -> int:
     """Count current fractions whose published rate validity is dated or not."""
 
@@ -694,6 +727,8 @@ def run_consumer(namespace: argparse.Namespace) -> int:
         return _run_data_diff(namespace)
     if action == "data_export":
         return _run_data_export(namespace)
+    if action == "data_search_selfcheck":
+        return _run_data_search_selfcheck(namespace)
     if action == "data_rate_validity":
         return _run_data_rate_validity(namespace)
     if action == "doctor":

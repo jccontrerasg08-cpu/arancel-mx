@@ -62,6 +62,8 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 - CLI: `arancel-mx data export --dataset <release> --out <dir>` writes one Parquet file per public view of the release and an `export-manifest.json` with the source DuckDB SHA-256, the release verification state, and each file's SHA-256 and row count. Column types are kept (rate text stays text, NULL stays NULL, dates stay dates); the export is a derived local copy, not a release asset. First phase of the SDK and exports RFC (#310).
 
+- CLI: `arancel-mx data search-selfcheck` measures the current lexical search against the release itself (own code, dotted code and own description of an evenly spaced sample of fractions), reports non-distinctive descriptions separately, lists misses with their rank and records per-search latency. It is a retrieval baseline for the hybrid-search RFC (#312), not a classification benchmark.
+
 - CLI: `arancel-mx ficha CODE --format markdown` writes a printable reference card from the verified release (literal IGI/IGE, rate validity, hierarchy, Annex 2.4.1 state and NOM rows, National Notes, sources with SHA-256) with a not-official notice; missing values are written as not published and data text is escaped. `nom_annex_status` moves from the static API builder to `consumer.query` so both use the same rule. Part of the record export RFC (#311).
 
 - Record page and Markdown export: fractions state that IGI and IGE are the general LIGIE rates of the release, that a treaty preference applies only with proof of origin, and that the release has no preferential rates, with a link to the Ministry of Economy list of agreements. First step of the treaty RFC (#306) without inventing any preferential rate.
