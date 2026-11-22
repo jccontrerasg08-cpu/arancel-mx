@@ -89,3 +89,7 @@ Un enlace a un PDF consolidado puede estar atrasado respecto de un decreto del D
 ## Regla editorial
 
 El **DOF** conserva autoridad sobre publicaciones jurídicas; la Cámara de Diputados, SAT y SNICE facilitan acceso, índices y compilaciones. Este inventario no es una fuente de verdad jurídica ni asesoría aduanera. Toda modificación de reglas aplicables debe verificarse contra el instrumento oficial, sus transitorios y la fecha de la operación.
+
+## Fuentes formativas y límites de contenido
+
+La Secretaría de Economía documentó el inicio de la segunda fase de [Ruta Logística MX 2026](https://www.gob.mx/se/prensa/inicia-la-segunda-fase-de-ruta-logistica-mx-2026-mexico-la-nueva-ruta-del-mundo?state=published), organizada en diez módulos del 22-09 al 24-11-2026. Este comunicado **no acredita haber visto o transcrito todos los videos**: un canal de YouTube debe verificarse por video, fecha y material disponible antes de usarlo como fuente de un programa curricular. La propuesta didáctica interna de arancel-mx tampoco debe atribuirse automáticamente al módulo oficial número 8.
