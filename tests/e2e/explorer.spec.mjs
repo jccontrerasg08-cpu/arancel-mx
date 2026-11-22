@@ -410,6 +410,27 @@ test('says a fraction is missing from the annex of an earlier release when today
   await expect(page.getByTestId('nom-unknown')).toHaveCount(0);
 });
 
+test('downloads the record as Markdown with its release, NOM and the not-official notice', async ({ page }) => {
+  await serveStaticRecords(page, [{ code: '85171301', description: 'Teléfonos móviles.', igi: 'Ex.' }]);
+  await page.route('**/data/v1/sections.json', (route) => route.fulfill({ json: [{ numeral: 'XVI', title: 'Máquinas y aparatos', chapter_from: '84', chapter_to: '85' }] }));
+  await page.route('**/data/v1/regulations/85.json', (route) => route.fulfill({
+    json: {
+      annex: { status: 'available' },
+      sources: { annex: { source_url: 'https://www.snice.gob.mx/~oracle/SNICE_DOCS/anexo.pdf', sha256: 'a'.repeat(64) } },
+      requirements: [{ fraction8: '85171301', numeral: 3, numeral_meaning: 'commercial_information_noms', section: null, nom: 'NOM-024-SCFI-2013', scope: null, nico: [], annex_page: 700, source_document_id: 'annex' }],
+    },
+  }));
+  await page.goto('/app/record/85171301');
+  await expect(page.getByTestId('nom-requirements')).toContainText('NOM-024-SCFI-2013');
+  const [download] = await Promise.all([page.waitForEvent('download'), page.getByTestId('download-ficha-md').click()]);
+  expect(download.suggestedFilename()).toBe('arancel-mx-85171301.md');
+  const text = await (await download.createReadStream()).toArray().then((chunks) => Buffer.concat(chunks).toString('utf8'));
+  expect(text).toMatch(/^# Ficha arancelaria 8517\.13\.01/);
+  expect(text).toContain('Teléfonos móviles.');
+  expect(text).toMatch(/NOM-024-SCFI-2013/);
+  expect(text).toMatch(/No es una clasificación arancelaria oficial/);
+});
+
 test('says plainly when the annex has no NOM for the fraction, and when the release lacks annex data', async ({ page }) => {
   await serveStaticRecords(page, [{ code: '85171301', description: 'Teléfonos móviles.', igi: 'Ex.' }]);
   await page.route('**/data/v1/sections.json', (route) => route.fulfill({ json: [{ numeral: 'XVI', title: 'Máquinas y aparatos', chapter_from: '84', chapter_to: '85' }] }));
