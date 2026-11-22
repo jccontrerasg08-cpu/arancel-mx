@@ -119,6 +119,8 @@ def release_diff_report(
     from_info: Mapping[str, object],
     to_info: Mapping[str, object],
     levels: Iterable[str] | None = None,
+    auxiliary_from: Mapping[str, AuxiliaryRows | str] | None = None,
+    auxiliary_to: Mapping[str, AuxiliaryRows | str] | None = None,
 ) -> dict[str, object]:
     """Build the machine-readable comparison report for two releases."""
 
@@ -141,5 +143,100 @@ def release_diff_report(
             "by_level": {level: by_level.get(level, 0) for level in LEVELS},
         },
         "note": NOT_A_LEGAL_EVENT,
+        "changes": changes,
+        "auxiliary": {
+            table: diff_auxiliary(
+                table,
+                (auxiliary_from or {}).get(table),
+                (auxiliary_to or {}).get(table),
+            )
+            for table in _AUXILIARY_VIEWS
+        },
+    }
+
+
+# --- Auxiliary tables: NOM rows of Annex 2.4.1 and National Notes -------------------------------------------------
+#
+# Older releases do not ship every view. When either side lacks one, that table is reported as not compared, with
+# the reason, instead of turning every row of the other side into an addition or a removal.
+
+_AUXILIARY_VIEWS = {"nom": "arancel_mx_nom_requirements", "national_notes": "arancel_mx_national_notes"}
+# Identity columns (in key order) and the compared value column of each auxiliary table. Section notes are
+# repeated in every chapter of the section, so the chapter is part of a note's identity.
+_AUXILIARY_COLUMNS = {
+    "nom": (("fraction8", "numeral", "nom"), "scope"),
+    "national_notes": (("chapter", "scope_type", "scope_value", "note_number"), "text"),
+}
+_AUXILIARY_EVENTS = {
+    "nom": ("nom_added", "nom_removed", "nom_scope_changed"),
+    "national_notes": ("note_added", "note_removed", "note_text_changed"),
+}
+
+AuxiliaryRows = dict[tuple[str, ...], object]
+
+
+def _columns(connection: Any, name: str) -> set[str]:
+    rows = connection.execute(
+        "SELECT column_name FROM information_schema.columns WHERE table_name = ?", [name]
+    ).fetchall()
+    return {str(row[0]) for row in rows}
+
+
+def auxiliary_rows(connection: Any) -> dict[str, AuxiliaryRows | str]:
+    """Return NOM and National Note rows keyed for comparison, or the reason a table cannot be read."""
+
+    result: dict[str, AuxiliaryRows | str] = {}
+    for table, view in _AUXILIARY_VIEWS.items():
+        keys, value = _AUXILIARY_COLUMNS[table]
+        available = _columns(connection, view)
+        if not available:
+            result[table] = "view not present"
+            continue
+        missing = [column for column in (*keys, value) if column not in available]
+        if missing:
+            result[table] = f"older schema without {', '.join(missing)}"
+            continue
+        sql = f"SELECT {', '.join(keys)}, {value} FROM {view} ORDER BY {', '.join(keys)}"  # noqa: S608 - fixed names
+        rows: AuxiliaryRows = {}
+        for *identity, text in connection.execute(sql).fetchall():
+            key = tuple(str(item) for item in identity)
+            if key in rows:
+                raise ValueError(f"release has more than one {table} row for {'/'.join(key)}")
+            rows[key] = text
+        result[table] = rows
+    return result
+
+
+def diff_auxiliary(
+    table: str,
+    before: AuxiliaryRows | str | None,
+    after: AuxiliaryRows | str | None,
+) -> dict[str, object]:
+    """Compare one auxiliary table, or report why it could not be compared."""
+
+    reasons = [
+        f"{side}: {rows if isinstance(rows, str) else 'not read'}"
+        for side, rows in (("from", before), ("to", after))
+        if not isinstance(rows, dict)
+    ]
+    if reasons or not isinstance(before, dict) or not isinstance(after, dict):
+        return {"status": "not_compared", "reason": "; ".join(reasons), "changes": []}
+    added, removed, changed = _AUXILIARY_EVENTS[table]
+    names = _AUXILIARY_COLUMNS[table][0]
+    changes: list[dict[str, object]] = []
+    for key in sorted(set(before) | set(after)):
+        identity = dict(zip(names, key, strict=True))
+        if key not in before:
+            changes.append({**identity, "event": added, "old_value": None, "new_value": after[key]})
+        elif key not in after:
+            changes.append({**identity, "event": removed, "old_value": before[key], "new_value": None})
+        elif before[key] != after[key]:
+            changes.append({**identity, "event": changed, "old_value": before[key], "new_value": after[key]})
+    counts = Counter(str(change["event"]) for change in changes)
+    return {
+        "status": "compared",
+        "rows_from": len(before),
+        "rows_to": len(after),
+        "by_event": {event: counts.get(event, 0) for event in _AUXILIARY_EVENTS[table]},
         "changes": changes,
     }
