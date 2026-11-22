@@ -56,7 +56,7 @@ This is required by the 2026 resolution, which keeps the measures in force while
 
 Store one legal measure, one-to-many tariff scopes, and one-to-many monetary/undertaking terms.
 
-**Pros:** avoids duplicating legal facts, models multiple tariff fractions and multiple exporters correctly, keeps price undertakings distinct from duties, leaves room for NICO and future temporal operations.
+**Pros:** avoids duplicating legal facts, models multiple tariff fractions and multiple exporters correctly, keeps procedural history and its source separate, keeps price undertakings distinct from duties, and leaves room for NICO and future temporal operations.
 
 **Cons:** slightly more joins and more validation.
 
@@ -80,7 +80,7 @@ Store one legal measure, one-to-many tariff scopes, and one-to-many monetary/und
 
 ## Data model
 
-Add three internal DuckDB tables.
+Add four internal DuckDB tables.
 
 ### `trade_remedy_measure`
 
@@ -95,12 +95,34 @@ Fields:
 - `product_name VARCHAR NOT NULL`
 - `country_of_origin VARCHAR NOT NULL`
 - `legal_status VARCHAR NOT NULL`
-- `procedure_status VARCHAR NOT NULL`
 - `effective_from DATE`
 - `effective_to DATE`
 - `source_document_id VARCHAR NOT NULL`
 
+The measure's `source_document_id` is evidence for the modeled current legal measure/terms. It does not imply that this document originally created the measure.
+
 The first slice supports explicit enumerated values only and fails closed on unknown values.
+
+### `trade_remedy_procedure`
+
+One row per procedural event/status attached to a remedy. This keeps the source and effective date of a sunset review separate from the legal measure it reviews.
+
+Fields:
+
+- `procedure_id VARCHAR PRIMARY KEY`
+- `remedy_id VARCHAR NOT NULL`
+- `procedure_type VARCHAR NOT NULL`
+  - first supported value: `sunset_review`
+- `procedure_status VARCHAR NOT NULL`
+  - `final`
+  - `under_review`
+- `published_at DATE`
+- `effective_from DATE`
+- `effective_to DATE`
+- `is_current BOOLEAN NOT NULL`
+- `source_document_id VARCHAR NOT NULL`
+
+Validation requires at most one current procedure row per remedy. The 2026 ceramic initiation is `sunset_review` + `under_review`, published 2026-10-23 and effective 2026-10-24.
 
 ### `trade_remedy_scope`
 
@@ -144,6 +166,7 @@ Fields:
 - `amount DECIMAL(18,6)`
 - `currency VARCHAR`
 - `unit VARCHAR`
+- `pricing_basis VARCHAR`
 - `notes VARCHAR`
 - `source_document_id VARCHAR NOT NULL`
 
@@ -152,6 +175,7 @@ Validation:
 - `specific` and `ad_valorem` require numeric amount.
 - `specific` additionally requires unit and normally currency.
 - `undertaking` may have an amount only when the source explicitly states a threshold; it is never converted into a duty.
+- `pricing_basis` preserves source distinctions such as FOB at the Chinese port of shipment versus CIF at the Mexican port of destination.
 - a named-party term requires `exporter_or_producer`.
 - a residual `other_producer_exporters` term must not name a party.
 
@@ -171,6 +195,8 @@ Proposed fields:
 - `nico10`
 - `legal_status`
 - `procedure_status`
+- `procedure_published_at`
+- `procedure_effective_from`
 - `effective_from`
 - `effective_to`
 - `exporter_or_producer`
@@ -179,6 +205,7 @@ Proposed fields:
 - `amount`
 - `currency`
 - `unit`
+- `pricing_basis`
 - `notes`
 - `source_document_id`
 - `disclaimer`
@@ -209,6 +236,7 @@ Extend `materialize_arancel(...)` with optional `trade_remedies=()`.
 The input is a sequence of normalized remedy objects containing:
 
 - measure-level fields,
+- `procedures` list,
 - `scopes` list,
 - `terms` list,
 - `source_document_id`.
@@ -217,7 +245,7 @@ Materialization:
 
 1. validates all referenced source document IDs before the transaction;
 2. generates deterministic IDs from canonical JSON when IDs are not supplied;
-3. inserts exactly one measure and its explicit scopes/terms;
+3. inserts exactly one measure and its explicit procedures/scopes/terms;
 4. rejects duplicates and malformed codes/amount semantics;
 5. builds `arancel_mx_trade_remedies`;
 6. includes remedy tables in `PUBLIC_INTERNAL_TABLES` so a future certified release can carry them;
@@ -242,7 +270,7 @@ The first fixture will cover:
 
 - one named-party specific duty;
 - the residual “other producer-exporters” specific duty;
-- the price undertaking threshold;
+- both explicit price-undertaking thresholds (6.72 USD/m² FOB China and 8.40 USD/m² CIF Mexico), preserving their pricing basis;
 - the three explicitly named 8-digit fractions;
 - China origin;
 - active + under-review procedural state from the 2026 resolution.
@@ -264,7 +292,7 @@ The parser can be expanded with additional official resolutions only through new
 
 Required tests:
 
-1. schema installs all three remedy tables;
+1. schema installs all four remedy tables;
 2. materialization stores a named-party duty, residual duty and price undertaking separately;
 3. deterministic IDs are stable across repeated builds;
 4. invalid fraction/NICO shape fails;
@@ -274,7 +302,7 @@ Required tests:
 8. consumer query by fraction+China returns possible measures;
 9. same fraction with non-China origin returns no hits;
 10. missing remedy view on a legacy DB returns an empty tuple;
-11. active legal status can coexist with under-review procedure status;
+11. active legal status can coexist with a separate current under-review procedure row and its 2026-10-24 effective date;
 12. source document provenance/hash is preserved;
 13. build/export copying includes remedy tables when present;
 14. general tariff tests remain unchanged and green.
