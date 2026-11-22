@@ -91,6 +91,19 @@ arancel-mx data rate-validity --format json
 
 Cuenta fracciones vigentes con y sin `rate_effective_from`, agrupadas por `validity_basis`. No asigna fechas: sólo resume lo que la release ya publicó.
 
+### Comparar dos releases
+
+```bash
+arancel-mx data diff --from data-2026.08.15 --to data-2026.11.20
+arancel-mx data diff --from data-2026.08.15 --to data-2026.11.20 --format json
+arancel-mx data diff --from data-2026.08.15 --to data-2026.11.20 --level fraccion8 --format csv
+arancel-mx data diff --from viejo.duckdb --to nuevo.duckdb --format json
+```
+
+Compara fila por fila los registros vigentes de dos releases y reporta un evento por cada diferencia: `row_added`, `row_removed`, `description_changed`, `igi_changed`, `ige_changed`, `unit_changed` y `hierarchy_changed`. Un código puede tener varios eventos. Los valores se comparan literalmente (un acento corregido sí es un cambio) y un valor que pasa a vacío queda como `null`, nunca como cero.
+
+Las releases se descargan y verifican igual que en `data download`; `comparison_status` vale `verified_snapshots` sólo cuando ambas pasaron la verificación remota, y `unverified_local_files` cuando alguna es un `.duckdb` local. Un cambio entre dos snapshots **no es un evento legal**: confirma el instrumento del DOF y su entrada en vigor antes de usarlo. Entre `data-2026.08.15` y `data-2026.11.20` el comando reporta, por ejemplo, las dos correcciones de descripción y los dos cambios de tasa que registra el manifiesto.
+
 Usa `--format json` para automatización estructurada y `--format csv` para intercambio por filas. `data path` imprime a propósito sólo la ruta del DuckDB local seleccionado, para que los scripts la consuman directamente.
 
 ## Comandos de consulta
