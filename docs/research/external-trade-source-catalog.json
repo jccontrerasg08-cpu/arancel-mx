@@ -50,7 +50,11 @@
       "model_status": "official_reference",
       "last_verified_at": "2026-08-19",
       "publication_or_version": "PDF de la Cámara de Diputados; verificar reformas, transitorios y vigencia en la publicación aplicable.",
-      "boundary": "Es una referencia normativa; arancel-mx no interpreta obligaciones, regímenes, infracciones ni requisitos de un caso individual."
+      "boundary": "Es una referencia normativa; arancel-mx no interpreta obligaciones, regímenes, infracciones ni requisitos de un caso individual.",
+      "reform_history_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/ladua.htm",
+      "last_reform_dof_seen_in_history": "2026-10-23",
+      "reform_history_checked_at": "2026-11-21",
+      "consolidated_pdf_caution": "El historial registra la reforma 23-10-2026 y texto en actualización, pero el PDF consultado indicaba reforma 19-11-2025: verificar decreto, transitorios y texto aplicable."
     },
     {
       "id": "foreign_trade_law",
@@ -69,8 +73,10 @@
       "source_role": "Resolución anual oficial para reglas generales y anexos de comercio exterior.",
       "model_status": "official_reference",
       "last_verified_at": "2026-08-19",
-      "publication_or_version": "RGCE 2026; publicación del Diario Oficial identificada como 2026-01-15.",
-      "boundary": "La regla y anexo aplicables deben verificarse en su versión oficial; esta referencia no habilita cálculo de contribuciones ni llenado de pedimentos."
+      "publication_or_version": "RGCE 2026 iniciales publicadas 27-12-2025; consultar índice de modificaciones y anexos para determinar versión aplicable.",
+      "boundary": "La regla y anexo aplicables deben verificarse en su versión oficial; esta referencia no habilita cálculo de contribuciones ni llenado de pedimentos.",
+      "modifications_index_url": "https://www.sat.gob.mx/minisitio/NormatividadRMFyRGCE/normatividad_rmf_rgce2026.html",
+      "modifications_index_checked_at": "2026-11-21"
     },
     {
       "id": "treaties",
@@ -126,7 +132,7 @@
   "legal_framework": {
     "purpose": "Leyes federales que fijan contribuciones, permisos o requisitos ligados a una operación de comercio exterior. Son referencias de consulta: no se incorporan a las releases ni determinan obligaciones de un caso.",
     "index_url": "https://www.diputados.gob.mx/LeyesBiblio/index.htm",
-    "last_verified_at": "2026-10-30",
+    "last_verified_at": "2026-11-21",
     "laws": [
       {
         "id": "cff",
@@ -153,22 +159,33 @@
         "id": "lisr",
         "title": "Ley del Impuesto sobre la Renta",
         "official_url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LISR.pdf",
-        "last_reform_dof": "2024-04-01",
-        "relevance": "Maquila, IMMEX y precios de transferencia en operaciones con el extranjero."
+        "last_reform_dof": "2026-11-13",
+        "relevance": "Maquila, IMMEX y precios de transferencia en operaciones con el extranjero.",
+        "reform_history_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/lisr.htm",
+        "reform_history_checked_at": "2026-11-21",
+        "consolidated_pdf_caution": "La reforma 13-11-2026 está en historial; confirmar transitorios y entrada en vigor."
       },
       {
         "id": "lfd",
         "title": "Ley Federal de Derechos",
         "official_url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFD.pdf",
-        "last_reform_dof": "2025-12-28",
-        "relevance": "Derecho de trámite aduanero (DTA) y demás derechos por servicios aduaneros."
+        "last_reform_dof": "2026-11-13",
+        "relevance": "Derecho de trámite aduanero (DTA) y demás derechos por servicios aduaneros.",
+        "reform_history_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/lfd.htm",
+        "reform_history_checked_at": "2026-11-21",
+        "last_amount_update_dof": "2025-12-28",
+        "consolidated_pdf_caution": "El historial de Diputados registra reforma 13-11-2026; el PDF consultado aún mostraba reforma 07-11-2025. Las actualizaciones de cantidades son distintas de las reformas."
       },
       {
         "id": "lfisan",
         "title": "Ley Federal del Impuesto sobre Automóviles Nuevos",
         "official_url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFISAN.pdf",
-        "last_reform_dof": "2025-12-28",
-        "relevance": "ISAN en la importación definitiva de automóviles."
+        "last_reform_dof": "2021-11-12",
+        "relevance": "ISAN en la importación definitiva de automóviles.",
+        "reform_history_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/lfisan.htm",
+        "reform_history_checked_at": "2026-11-21",
+        "last_amount_update_dof": "2025-12-28",
+        "date_semantics": "La actualización de cantidades 28-12-2025 no equivale a reforma al articulado; PDF consultado marca reforma 12-11-2021."
       },
       {
         "id": "lfsa",
@@ -321,7 +338,43 @@
         "title": "Estudios e indicadores internacionales — SNICE",
         "official_url": "https://www.snice.gob.mx/cs/avi/snice/f.c.indic.int.html",
         "relevance": "Indicadores de facilitación comercial (WEF, Banco Mundial, OCDE); contexto, no normativa."
+      },
+      {
+        "id": "federal_laws_revision_index",
+        "title": "Índice de leyes federales vigentes — Cámara de Diputados",
+        "official_url": "https://www.diputados.gob.mx/LeyesBiblio/index.htm",
+        "relevance": "Contrastar historial de reformas, PDF y decretos DOF; fecha de reforma no es entrada en vigor.",
+        "checked_at": "2026-11-21"
+      },
+      {
+        "id": "sat_rgce_2026_modifications",
+        "title": "RGCE 2026, modificaciones y anexos — SAT",
+        "official_url": "https://www.sat.gob.mx/minisitio/NormatividadRMFyRGCE/normatividad_rmf_rgce2026.html",
+        "relevance": "Reglas iniciales y modificaciones; revisar anexos aplicables, compilación y DOF.",
+        "checked_at": "2026-11-21"
+      },
+      {
+        "id": "quality_infrastructure_regulation_2026",
+        "title": "Reglamento de la Ley de Infraestructura de la Calidad (04-09-2026)",
+        "official_url": "https://sidof.segob.gob.mx/notas/5797937",
+        "relevance": "Instrumento reglamentario diferente de la ley; revisar transitorios.",
+        "checked_at": "2026-11-21"
+      },
+      {
+        "id": "snice_nom_annex_reference",
+        "title": "Normatividad NOM Anexo 2.4.1 — SNICE",
+        "official_url": "https://www.snice.gob.mx/cs/avi/snice/seguridad.normatividad.html",
+        "relevance": "Referencia de fracciones y NOM; requiere revisar acotaciones, excepciones y operación.",
+        "checked_at": "2026-11-21"
+      },
+      {
+        "id": "anam_moa_portal",
+        "title": "Manual de Operación Aduanera — ANAM",
+        "official_url": "https://www.anam.gob.mx/manual-de-operacion-aduanera-moa/",
+        "relevance": "Portal oficial de consulta operativa, no sustituto de RGCE ni criterio individual.",
+        "checked_at": "2026-11-21"
       }
-    ]
+    ],
+    "verification_note": "Fecha de cotejo del índice y varios historiales. No implica lectura jurídica completa, texto consolidado ni vigencia de cada reforma."
   }
 }
