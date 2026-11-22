@@ -410,6 +410,34 @@ test('says a fraction is missing from the annex of an earlier release when today
   await expect(page.getByTestId('nom-unknown')).toHaveCount(0);
 });
 
+test('shows the National Notes of the chapter and flags the ones that cite the heading', async ({ page }) => {
+  await serveStaticRecords(page, [{ code: '85171301', description: 'Teléfonos móviles.', igi: 'Ex.' }]);
+  await page.route('**/data/v1/sections.json', (route) => route.fulfill({ json: [{ numeral: 'XVI', title: 'Máquinas y aparatos', chapter_from: '84', chapter_to: '85' }] }));
+  await page.route('**/data/v1/national-notes/85.json', (route) => route.fulfill({ json: [
+    { chapter: '85', note_number: '10', text: 'En la partida 85.17 se encuentran comprendidos los dispositivos llamados "Smartphones".', source_document_id: 'notes', scope_type: 'chapter', scope_value: '85', applicability_basis: 'explicit' },
+    { chapter: '85', note_number: '1', text: 'Para efectos de este Capítulo: circuitos de la partida 85.34. <b>sin html</b>', source_document_id: 'notes', scope_type: 'chapter', scope_value: '85', applicability_basis: 'explicit' },
+    { chapter: '85', note_number: '1', text: 'No obstante lo dispuesto en la Nota 1 de la Sección XVI.', source_document_id: 'notes', scope_type: 'section', scope_value: 'XVI', applicability_basis: 'explicit' },
+  ] }));
+  await page.goto('/app/record/85171301');
+  const notes = page.getByTestId('national-notes');
+  await expect(page.getByTestId('national-notes-summary')).toHaveText('3 notas; 1 menciona la partida 85.17');
+  await page.getByTestId('national-notes-summary').click();
+  await expect(notes.getByRole('heading', { name: 'Sección XVI' })).toBeVisible();
+  await expect(notes.getByRole('heading', { name: 'Capítulo 85' })).toBeVisible();
+  await expect(notes.locator('li').nth(1)).toContainText('Nota 1');
+  await expect(notes.locator('li').nth(2)).toContainText('Menciona la partida 85.17');
+  await expect(notes).toContainText('<b>sin html</b>');
+  await expect(notes.getByRole('link', { name: /Notas Nacionales publicadas en el DOF/ })).toHaveAttribute('href', /^https:\/\/dof\.gob\.mx\//);
+});
+
+test('says the release has no National Notes for a chapter instead of hiding the section', async ({ page }) => {
+  await serveStaticRecords(page, [{ code: '85171301', description: 'Teléfonos móviles.', igi: 'Ex.' }]);
+  await page.route('**/data/v1/sections.json', (route) => route.fulfill({ json: [{ numeral: 'XVI', title: 'Máquinas y aparatos', chapter_from: '84', chapter_to: '85' }] }));
+  await page.route('**/data/v1/national-notes/85.json', (route) => route.fulfill({ json: [] }));
+  await page.goto('/app/record/85171301');
+  await expect(page.getByTestId('national-notes-none')).toContainText('no registra Notas Nacionales');
+});
+
 test('says plainly when the annex has no NOM for the fraction, and when the release lacks annex data', async ({ page }) => {
   await serveStaticRecords(page, [{ code: '85171301', description: 'Teléfonos móviles.', igi: 'Ex.' }]);
   await page.route('**/data/v1/sections.json', (route) => route.fulfill({ json: [{ numeral: 'XVI', title: 'Máquinas y aparatos', chapter_from: '84', chapter_to: '85' }] }));
