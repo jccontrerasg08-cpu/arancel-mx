@@ -785,3 +785,28 @@ test('says the rates are the general LIGIE rates and that preferences need proof
   await expect(note).toContainText('sólo aplica si se acredita el origen');
   await expect(note.getByRole('link', { name: /Tratados y acuerdos de México/ })).toHaveAttribute('href', 'https://www.gob.mx/se/acciones-y-programas/comercio-exterior-paises-con-tratados-y-acuerdos-firmados-con-mexico');
 });
+
+test('copies a citation built from the release identity, without a hash', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.route('**/data/v1/meta.json', (route) => route.fulfill({ json: { dataset_tag: 'data-2026.11.20', dataset_version: '2026.11.20', schema_version: '2', release_verified: true } }));
+  await serveStaticRecords(page, [{ code: '85171301', description: 'Teléfonos móviles.', igi: 'Ex.' }]);
+  await page.route('**/data/v1/sections.json', (route) => route.fulfill({ json: [{ numeral: 'XVI', title: 'Máquinas y aparatos', chapter_from: '84', chapter_to: '85' }] }));
+  await page.goto('/app/record/85171301');
+  await page.getByTestId('copy-citation').click();
+  await expect(page.getByTestId('copy-citation')).toHaveText('Cita copiada');
+  const text = await page.evaluate(() => navigator.clipboard.readText());
+  expect(text).toContain('arancel-mx, dataset data-2026.11.20 (esquema 2, release verificada).');
+  expect(text).toContain('8517.13.01 — Teléfonos móviles.');
+  expect(text).toContain('https://github.com/jccontrerasg08-cpu/arancel-mx/releases/tag/data-2026.11.20');
+  expect(text).toContain('/app/record/85171301');
+  expect(text).not.toMatch(/[0-9a-f]{64}/);
+});
+
+test('hides the citation button when the release identity cannot be read', async ({ page }) => {
+  await page.route('**/data/v1/meta.json', (route) => route.fulfill({ status: 503, body: '' }));
+  await serveStaticRecords(page, [{ code: '85171301', description: 'Teléfonos móviles.', igi: 'Ex.' }]);
+  await page.route('**/data/v1/sections.json', (route) => route.fulfill({ json: [{ numeral: 'XVI', title: 'Máquinas y aparatos', chapter_from: '84', chapter_to: '85' }] }));
+  await page.goto('/app/record/85171301');
+  await expect(page.getByTestId('download-ficha-md')).toBeVisible();
+  await expect(page.getByTestId('copy-citation')).toHaveCount(0);
+});
