@@ -396,6 +396,18 @@ test('shows no NOM block when the release has no regulations file or the fractio
   await expect(page.getByTestId('result-card')).toBeVisible();
   await expect(page.getByRole('paragraph').filter({ hasText: 'Teléfonos móviles.' })).toBeVisible();
   await expect(page.getByTestId('nom-requirements')).toHaveCount(0);
+  await expect(page.getByTestId('nom-unknown')).toContainText(/no se puede saber si esta fracción aparece/i);
+  await expect(page.getByTestId('nom-none')).toHaveCount(0);
+});
+
+test('says a fraction is missing from the annex of an earlier release when today\'s annex could not be read', async ({ page }) => {
+  await serveStaticRecords(page, [{ code: '85171301', description: 'Teléfonos móviles.', igi: 'Ex.' }]);
+  await page.route('**/data/v1/sections.json', (route) => route.fulfill({ json: [{ numeral: 'XVI', title: 'Máquinas y aparatos', chapter_from: '84', chapter_to: '85' }] }));
+  await page.route('**/data/v1/regulations/85.json', (route) => route.fulfill({ json: { annex: { status: 'carried_forward', carried_from: '2026.11.19' }, sources: {}, requirements: [] } }));
+  await page.goto('/app/record/85171301');
+  await expect(page.getByTestId('nom-none-carried')).toContainText(/no aparece en el Anexo 2\.4\.1 tal como se leyó en una release anterior.*2026\.11\.19/i);
+  await expect(page.getByTestId('nom-none')).toHaveCount(0);
+  await expect(page.getByTestId('nom-unknown')).toHaveCount(0);
 });
 
 test('says plainly when the annex has no NOM for the fraction, and when the release lacks annex data', async ({ page }) => {
