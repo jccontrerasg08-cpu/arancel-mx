@@ -266,6 +266,25 @@ El contrato de seis assets y las atestaciones del lado de la publicación están
 - [Release del paquete de Python](package-release.md)
 
 
+## NOM del Anexo 2.4.1
+
+```bash
+arancel-mx nom 85171301
+arancel-mx nom 0402100100 --format json
+```
+
+Muestra las NOM que el Anexo 2.4.1 publicado en la release lista para una fracción de 8 dígitos o un NICO de 10, con su numeral, alcance («Únicamente: …») y página del anexo. Usa los mismos estados que la ficha web:
+
+| Estado | Significa |
+|---|---|
+| `listed` | El anexo lista NOM para la fracción. |
+| `not_listed` | El anexo de la release no lista NOM para la fracción. No descarta otras regulaciones no arancelarias. |
+| `not_listed_carried` | Igual, con un anexo arrastrado de una release anterior. |
+| `unavailable` / `unknown` | La release no pudo leer el anexo o no publica su estado: no se sabe. |
+| `not_a_fraction` | Capítulos, partidas y subpartidas no se consultan en el anexo. |
+
+Para un NICO, cada fila dice si su lista de NICO lo incluye (`listed`), nombra otros (`other_nico`) o no limita por NICO (`no_nico_limits`). El comando repite el anexo; no decide si una NOM aplica ni determina cumplimiento.
+
 ## Richer `ficha` and `compare` examples
 
 ```bash
