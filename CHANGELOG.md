@@ -58,6 +58,8 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Added
 
+- CLI: `arancel-mx ficha CODE --format markdown` writes a printable reference card from the verified release (literal IGI/IGE, rate validity, hierarchy, Annex 2.4.1 state and NOM rows, National Notes, sources with SHA-256) with a not-official notice; missing values are written as not published and data text is escaped. `nom_annex_status` moves from the static API builder to `consumer.query` so both use the same rule. Part of the record export RFC (#311).
+
 - CLI: `arancel-mx data diff --from <release> --to <release>` compares the current rows of two releases (added and removed codes, description, IGI, IGE, unit and parent changes), compares values literally, reports `verified_snapshots` only when both releases passed remote verification, and states that a snapshot difference is not a legal event. First implementation phase of the release-diff RFC (#308).
 
 - Trade context: the page now tells the story with data. A headline states the conclusion of the annual balance, a strip shows each year’s surplus or deficit, and the annual table adds yearly change. A new section shows what Mexico imports and exports by kind of good (INEGI BCMM, January–September 2026), and another shows exports by state on a map drawn from INEGI’s Marco Geoestadístico, with three measures (share, per person, yearly change) and a table of all 32 states (INEGI ETEF, second quarter 2026; `scripts/build_state_map.py` rebuilds the outlines). Figures are saved copies from INEGI’s published bulletins; the live annual balance still comes from the INEGI API.
