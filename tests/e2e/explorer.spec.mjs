@@ -266,6 +266,23 @@ test('replaces the saved copy with figures computed from the live INEGI series',
   await expect(balance).toContainText('Datos en vivo de la API del INEGI');
 });
 
+test('tells the trade story: what is bought and sold, and which states export', async ({ page }) => {
+  await page.route('**/api/trade_balance', (route) => route.fulfill({ status: 502, json: {} }));
+  await page.goto('/trade-context');
+  await expect(page.getByTestId('trade-balance-headline')).toContainText('En 2025 México compró casi lo mismo que vendió');
+  const structure = page.getByTestId('trade-structure');
+  await expect(structure.getByRole('img', { name: /Manufacturas: 92\.3 %/ })).toBeVisible();
+  const states = page.getByTestId('state-exports');
+  await expect(states.getByRole('heading', { level: 2 })).toContainText('5 estados concentran 63.5 % de las exportaciones estatales medidas por ETEF');
+  await states.getByRole('button', { name: /^Jalisco: 12\.1 %/ }).click();
+  await states.getByRole('button', { name: 'Por habitante' }).click();
+  await expect(states.getByRole('button', { name: /^Jalisco: \$\d/ })).toBeVisible();
+  await expect(states.getByRole('heading', { level: 3, name: 'Jalisco' })).toBeVisible();
+  await expect(states).toContainText('+130.8 %');
+  await states.getByText('Ver la tabla de los 32 estados').click();
+  await expect(states.getByRole('row', { name: /^1 Chihuahua/ })).toContainText('49,027.5');
+});
+
 test('serves the source-cited trade-context and ANAM MOA routes', async ({ page }) => {
   await page.goto('/trade-context');
   await expect(page.getByRole('heading', { name: /comercio exterior: datos para entender el contexto/i })).toBeVisible();

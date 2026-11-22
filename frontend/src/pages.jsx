@@ -15,7 +15,9 @@ import {
 import { MARKETING_COPY } from './marketing-copy.js';
 import { useLocale } from './locale.jsx';
 import { applyPageMeta, describeRecord, setRecordMeta } from './page-meta.js';
+import { StateExports } from './state-exports.jsx';
 import { TradeBalance } from './trade-balance.jsx';
+import { TradeStructure } from './trade-structure.jsx';
 import { asExampleFicha, exampleRecordFor, formatCode, searchExampleRecords, VERIFIED_EXAMPLES } from './verified-examples.js';
 import { displayRate, selectPrimarySearchResults } from './tariff.js';
 import { createStaticApi } from './static-api.js';
@@ -455,6 +457,8 @@ export function TradeContextPage() {
       <div className="card-grid">{sources.map(([title, description, href]) => <article key={href}><h3>{title}</h3><p>{description}</p><External href={href}>{t('Consultar fuente oficial', 'Open official source')}</External></article>)}</div>
     </section>
     <TradeBalance />
+    <TradeStructure />
+    <StateExports />
     <aside className="example-note">
       <h2>{t('Qué muestran estas cifras', 'What these figures show')}</h2>
       <p>{t('La balanza de INEGI resume flujos agregados de mercancías. No identifica el arancel de una operación, no sustituye una consulta por fracción y no demuestra que una preferencia comercial aplique a un producto.', 'INEGI’s balance summarizes aggregate merchandise flows. It does not identify the tariff for a transaction, replace a tariff-fraction lookup, or establish that a trade preference applies to a product.')}</p>
