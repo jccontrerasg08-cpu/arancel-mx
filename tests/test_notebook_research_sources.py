@@ -24,6 +24,9 @@ def test_notebook_source_inventory_reconciles_visible_entries() -> None:
     assert sum(entry["source_type"] == "federal_law" for entry in sources) == 26
     assert sum(entry["url"] == inventory["explicit_duplicate_url"] for entry in sources) == 2
     assert all(entry["content_copied"] is False for entry in sources)
+    assert inventory["pdf_header_sampling"]["unique_pdf_urls"] == 25
+    assert inventory["pdf_header_sampling"]["returned_pdf_urls"] == 25
+    assert inventory["pdf_header_sampling"]["extracted_last_reform_dates"] == 22
 
 
 def test_notebook_links_do_not_claim_unobserved_import_urls() -> None:
