@@ -50,7 +50,7 @@ Además de la Ley Aduanera y la Ley de Comercio Exterior, varias leyes federales
 |---|---|---|
 | [Código Fiscal de la Federación](https://www.diputados.gob.mx/LeyesBiblio/pdf/CFF.pdf) | 2026-04-09 | Contribuciones, actualización, recargos e infracciones; se aplica supletoriamente a las contribuciones de comercio exterior. |
 | [Ley del Impuesto al Valor Agregado](https://www.diputados.gob.mx/LeyesBiblio/pdf/LIVA.pdf) | 2021-11-12 | IVA en la importación de bienes y servicios. |
-| [Ley del Impuesto Especial sobre Producción y Servicios](https://www.diputados.gob.mx/LeyesBiblio/pdf/LIEPS.pdf) | 2025-12-22 | IEPS en la importación de bienes gravados (bebidas, tabacos, combustibles y otros). |
+| [Ley del Impuesto Especial sobre Producción y Servicios](https://www.diputados.gob.mx/LeyesBiblio/pdf/LIEPS.pdf) | 2025-11-07 | IEPS en la importación de bienes gravados (bebidas, tabacos, combustibles y otros). |
 | [Ley del Impuesto sobre la Renta](https://www.diputados.gob.mx/LeyesBiblio/pdf/LISR.pdf) | 2026-11-13 | Maquila, IMMEX y precios de transferencia en operaciones con el extranjero. |
 | [Ley Federal de Derechos](https://www.diputados.gob.mx/LeyesBiblio/pdf/LFD.pdf) | 2026-11-13 | Derecho de trámite aduanero (DTA) y demás derechos por servicios aduaneros. |
 | [Ley Federal del Impuesto sobre Automóviles Nuevos](https://www.diputados.gob.mx/LeyesBiblio/pdf/LFISAN.pdf) | 2021-11-12 | ISAN en la importación definitiva de automóviles. |
