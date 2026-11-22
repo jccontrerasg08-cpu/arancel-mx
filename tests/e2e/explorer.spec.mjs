@@ -775,3 +775,13 @@ test('gives the explorer and the secondary pages their own tab title', async ({ 
   }
   expect(titles.size).toBe(Object.keys(expected).length);
 });
+
+test('says the rates are the general LIGIE rates and that preferences need proof of origin', async ({ page }) => {
+  await serveStaticRecords(page, [{ code: '85171301', description: 'Teléfonos móviles.', igi: 'Ex.' }]);
+  await page.route('**/data/v1/sections.json', (route) => route.fulfill({ json: [{ numeral: 'XVI', title: 'Máquinas y aparatos', chapter_from: '84', chapter_to: '85' }] }));
+  await page.goto('/app/record/85171301');
+  const note = page.getByTestId('general-rate-note');
+  await expect(note).toContainText('tasas generales de la LIGIE');
+  await expect(note).toContainText('sólo aplica si se acredita el origen');
+  await expect(note.getByRole('link', { name: /Tratados y acuerdos de México/ })).toHaveAttribute('href', 'https://www.gob.mx/se/acciones-y-programas/comercio-exterior-paises-con-tratados-y-acuerdos-firmados-con-mexico');
+});
