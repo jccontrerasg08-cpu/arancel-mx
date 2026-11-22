@@ -41,16 +41,19 @@ La arquitectura conserva tres niveles que no deben mezclarse:
 
 ## Marco jurídico relacionado
 
-Además de la Ley Aduanera y la Ley de Comercio Exterior, varias leyes federales fijan contribuciones, permisos o requisitos que dependen de la mercancía. El catálogo las lista en `legal_framework`, con la fecha de su última reforma según el [índice de leyes federales de la Cámara de Diputados](https://www.diputados.gob.mx/LeyesBiblio/index.htm), consultado el 2026-10-30. Son referencias de consulta: el dataset no las incorpora ni deduce de ellas obligaciones para una fracción.
+Además de la Ley Aduanera y la Ley de Comercio Exterior, varias leyes federales fijan contribuciones, permisos o requisitos que dependen de la mercancía. El catálogo las lista en `legal_framework`, con la fecha de su última reforma según el [índice de leyes federales de la Cámara de Diputados](https://www.diputados.gob.mx/LeyesBiblio/index.htm), consultado para reformas seleccionadas el 2026-11-21. Son referencias de consulta: el dataset no las incorpora ni deduce de ellas obligaciones para una fracción.
+
+
+> **Control de vigencia (21-11-2026):** la fecha de la tabla señala el último **decreto de reforma localizado en el historial legislativo**, no la entrada en vigor, la fecha de consolidación del PDF ni las actualizaciones de cuotas. La Ley Aduanera muestra reforma 23-10-2026 en [su historial](https://www.diputados.gob.mx/LeyesBiblio/ref/ladua.htm), mientras el PDF consultado aún indicaba 19-11-2025. La LFD registra reforma 13-11-2026 en [su historial](https://www.diputados.gob.mx/LeyesBiblio/ref/lfd.htm); las cantidades actualizadas 28-12-2025 se registran por separado. Para operaciones concretas revisar DOF, transitorios y texto aplicable. [Auditoría de fuentes](notebooklm-source-audit-2026-11-21.md).
 
 | Ley | Última reforma (DOF) | Relación con comercio exterior |
 |---|---|---|
 | [Código Fiscal de la Federación](https://www.diputados.gob.mx/LeyesBiblio/pdf/CFF.pdf) | 2026-04-09 | Contribuciones, actualización, recargos e infracciones; se aplica supletoriamente a las contribuciones de comercio exterior. |
 | [Ley del Impuesto al Valor Agregado](https://www.diputados.gob.mx/LeyesBiblio/pdf/LIVA.pdf) | 2021-11-12 | IVA en la importación de bienes y servicios. |
 | [Ley del Impuesto Especial sobre Producción y Servicios](https://www.diputados.gob.mx/LeyesBiblio/pdf/LIEPS.pdf) | 2025-12-22 | IEPS en la importación de bienes gravados (bebidas, tabacos, combustibles y otros). |
-| [Ley del Impuesto sobre la Renta](https://www.diputados.gob.mx/LeyesBiblio/pdf/LISR.pdf) | 2024-04-01 | Maquila, IMMEX y precios de transferencia en operaciones con el extranjero. |
-| [Ley Federal de Derechos](https://www.diputados.gob.mx/LeyesBiblio/pdf/LFD.pdf) | 2025-12-28 | Derecho de trámite aduanero (DTA) y demás derechos por servicios aduaneros. |
-| [Ley Federal del Impuesto sobre Automóviles Nuevos](https://www.diputados.gob.mx/LeyesBiblio/pdf/LFISAN.pdf) | 2025-12-28 | ISAN en la importación definitiva de automóviles. |
+| [Ley del Impuesto sobre la Renta](https://www.diputados.gob.mx/LeyesBiblio/pdf/LISR.pdf) | 2026-11-13 | Maquila, IMMEX y precios de transferencia en operaciones con el extranjero. |
+| [Ley Federal de Derechos](https://www.diputados.gob.mx/LeyesBiblio/pdf/LFD.pdf) | 2026-11-13 | Derecho de trámite aduanero (DTA) y demás derechos por servicios aduaneros. |
+| [Ley Federal del Impuesto sobre Automóviles Nuevos](https://www.diputados.gob.mx/LeyesBiblio/pdf/LFISAN.pdf) | 2021-11-12 | ISAN en la importación definitiva de automóviles. |
 | [Ley Federal de Sanidad Animal](https://www.diputados.gob.mx/LeyesBiblio/pdf/LFSA.pdf) | 2024-05-21 | Requisitos zoosanitarios de importación y exportación. |
 | [Ley Federal de Sanidad Vegetal](https://www.diputados.gob.mx/LeyesBiblio/pdf/LFSV.pdf) | 2022-05-11 | Requisitos fitosanitarios de importación y exportación. |
 | [Ley General de Salud](https://www.diputados.gob.mx/LeyesBiblio/pdf/LGS.pdf) | 2026-01-15 | Permisos sanitarios de importación (COFEPRIS). |
