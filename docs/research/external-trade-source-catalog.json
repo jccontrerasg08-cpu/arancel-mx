@@ -152,8 +152,12 @@
         "id": "lieps",
         "title": "Ley del Impuesto Especial sobre Producción y Servicios",
         "official_url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LIEPS.pdf",
-        "last_reform_dof": "2025-12-22",
-        "relevance": "IEPS en la importación de bienes gravados (bebidas, tabacos, combustibles y otros)."
+        "last_reform_dof": "2025-11-07",
+        "relevance": "IEPS en la importación de bienes gravados (bebidas, tabacos, combustibles y otros).",
+        "last_amount_update_dof": "2025-12-22",
+        "reform_history_url": "https://www.diputados.gob.mx/LeyesBiblio/ref/lieps.htm",
+        "reform_history_checked_at": "2026-11-21",
+        "date_semantics": "El acuerdo de 22-12-2025 actualizó cuotas para 2026; el último decreto de reforma de articulado publicado fue el 07-11-2025, según historial de Diputados."
       },
       {
         "id": "lisr",
