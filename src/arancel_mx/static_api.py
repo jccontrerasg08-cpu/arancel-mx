@@ -41,6 +41,7 @@ from arancel_mx.consumer.query import (
     SUGGEST_DISCLAIMER,
     format_code,
     national_notes,
+    nom_annex_status,
     nom_requirements,
     normalize_code,
 )
@@ -87,25 +88,7 @@ _NOM_SOURCE_SELECT = """
 """
 
 
-def _annex_status(connection: Any) -> dict[str, Any]:
-    """Whether the release carries Annex 2.4.1 data, from its release metadata (decision 0004)."""
-
-    row = connection.execute("SELECT release_metadata_json FROM dataset_release LIMIT 1").fetchone()
-    try:
-        metadata = json.loads(str(row[0])) if row and row[0] else {}
-    except ValueError:
-        metadata = {}
-    annex = metadata.get("nom_annex") if isinstance(metadata, dict) else None
-    if not isinstance(annex, dict) or annex.get("status") not in {
-        "available",
-        "unavailable",
-        "carried_forward",
-    }:
-        return {"status": "not_included"}
-    status: dict[str, Any] = {"status": annex["status"]}
-    if annex["status"] == "carried_forward" and annex.get("carried_from"):
-        status["carried_from"] = str(annex["carried_from"])
-    return status
+_annex_status = nom_annex_status
 
 
 def _regulations(connection: Any, chapter: str, annex: dict[str, Any]) -> dict[str, Any]:
