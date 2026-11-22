@@ -12,6 +12,7 @@ from arancel_mx.consumer.doctor import doctor_to_dict, render_doctor_human, run_
 from arancel_mx.consumer.errors import DatasetUnavailableError, QueryError
 from arancel_mx.consumer.manager import DatasetManager
 from arancel_mx.consumer.output import CsvSchema, render, render_json
+from arancel_mx.consumer.release_diff import LEVELS, current_rows, release_diff_report
 from arancel_mx.consumer.wco_support import cite_chapter, cite_gir, download_chapter, download_gir
 from arancel_mx.domain.nico_lag import classify_missing_nico
 from arancel_mx.domain.rate_diagnostics import summarize_rate_validity
@@ -189,6 +190,22 @@ def register_consumer_commands(
     _add_output_format(nico_cov)
     nico_cov.set_defaults(consumer_action="data_nico_coverage")
 
+    diff = data_subparsers.add_parser(
+        "diff",
+        help="Compara fila por fila dos releases verificadas (no interpreta cambios legales)",
+    )
+    diff.add_argument("--from", dest="from_dataset", required=True, help="data-YYYY.MM.DD or a local .duckdb file")
+    diff.add_argument("--to", dest="to_dataset", required=True, help="data-YYYY.MM.DD or a local .duckdb file")
+    diff.add_argument(
+        "--level",
+        action="append",
+        choices=LEVELS,
+        help="Restrict to one level; repeat for several (default: all levels)",
+    )
+    _add_offline(diff)
+    _add_output_format(diff)
+    diff.set_defaults(consumer_action="data_diff")
+
     rates = data_subparsers.add_parser(
         "rate-validity",
         help="Cuenta fracciones vigentes con y sin vigencia de tasa publicada",
@@ -303,10 +320,10 @@ def _consumer_config(namespace: argparse.Namespace):
         ) from exc
 
 
-def _selected_dataset(namespace: argparse.Namespace) -> Dataset:
+def _selected_dataset(namespace: argparse.Namespace, raw: str | None = None) -> Dataset:
     # Validate environment/configuration through the same public error boundary
     # used by data and doctor before Dataset resolves it internally.
-    raw = getattr(namespace, "dataset", None)
+    raw = raw if raw is not None else getattr(namespace, "dataset", None)
     if raw:
         local = _local_duckdb_path(raw)
         if local is not None:
@@ -315,8 +332,8 @@ def _selected_dataset(namespace: argparse.Namespace) -> Dataset:
             return Dataset.open(local)
     _consumer_config(namespace)
     options = {"offline": namespace.offline}
-    if namespace.dataset:
-        return Dataset.version(namespace.dataset, **options)
+    if raw:
+        return Dataset.version(raw, **options)
     return Dataset.latest(**options)
 
 
@@ -483,6 +500,39 @@ def _run_data_nico_coverage(namespace: argparse.Namespace) -> int:
     return 0
 
 
+def _run_data_diff(namespace: argparse.Namespace) -> int:
+    """Compare the current rows of two releases without interpreting the changes."""
+
+    sides = []
+    for raw in (namespace.from_dataset, namespace.to_dataset):
+        dataset = _selected_dataset(namespace, raw)
+        with dataset.connect() as con:
+            rows = current_rows(con)
+        info = dataset.info
+        sides.append(
+            (
+                rows,
+                {
+                    "dataset_version": info.dataset_version,
+                    "release_verified": info.release_verified,
+                    "github_digest_state": info.github_digest_state,
+                },
+            )
+        )
+    (before, from_info), (after, to_info) = sides
+    try:
+        report = release_diff_report(
+            before, after, from_info=from_info, to_info=to_info, levels=namespace.level
+        )
+    except ValueError as exc:
+        raise QueryError(str(exc)) from exc
+    if namespace.format == "json":
+        _emit(report, format_name="json")
+    else:
+        _emit(report["changes"], format_name=namespace.format)
+    return 0
+
+
 def _run_data_rate_validity(namespace: argparse.Namespace) -> int:
     """Count current fractions whose published rate validity is dated or not."""
 
@@ -570,6 +620,8 @@ def run_consumer(namespace: argparse.Namespace) -> int:
         return _run_data_verify(namespace)
     if action == "data_nico_coverage":
         return _run_data_nico_coverage(namespace)
+    if action == "data_diff":
+        return _run_data_diff(namespace)
     if action == "data_rate_validity":
         return _run_data_rate_validity(namespace)
     if action == "doctor":
