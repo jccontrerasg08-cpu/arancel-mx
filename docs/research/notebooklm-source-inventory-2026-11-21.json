@@ -1,0 +1,391 @@
+{
+  "schema_version": "1.0.0",
+  "observation_date": "2026-11-21",
+  "origin": "Gemini Notebook: Datos Arancelarios y de Comercio Exterior en México",
+  "ui_source_count": 41,
+  "visible_entries": 42,
+  "unique_visible_titles": 41,
+  "explicit_duplicate_url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LSH.pdf",
+  "warning": "Reading visible titles is not a full-text audit of all laws, videos, embedded notes or specific originally imported URLs; suggested public references are marked as such.",
+  "privacy": "Only titles and public official/reference URLs; private source contents and third-party PDFs/videos are not redistributed.",
+  "sources": [
+    {
+      "order": 1,
+      "title": "Datos Arancelarios MX",
+      "source_type": "unverified_nonpublic_or_secondary",
+      "url": null,
+      "link_basis": "unknown",
+      "review_status": "reference_not_verified_as_original",
+      "content_copied": false
+    },
+    {
+      "order": 2,
+      "title": "arancel-mx — Consulta el arancel de México, con su evidencia.",
+      "source_type": "project_source",
+      "url": null,
+      "link_basis": "unknown",
+      "review_status": "reference_not_verified_as_original",
+      "content_copied": false
+    },
+    {
+      "order": 3,
+      "title": "arancel-mx — Manual de Operación Aduanera, en contexto.",
+      "source_type": "project_source",
+      "url": null,
+      "link_basis": "unknown",
+      "review_status": "reference_not_verified_as_original",
+      "content_copied": false
+    },
+    {
+      "order": 4,
+      "title": "Balanza",
+      "source_type": "statistical_source",
+      "url": "https://www.inegi.org.mx/temas/balanza/",
+      "link_basis": "public_reference_suggested_not_original_url",
+      "review_status": "reference_not_verified_as_original",
+      "content_copied": false
+    },
+    {
+      "order": 5,
+      "title": "Balanza comercial",
+      "source_type": "statistical_source",
+      "url": "https://www.inegi.org.mx/temas/balanza/",
+      "link_basis": "public_reference_suggested_not_original_url",
+      "review_status": "reference_not_verified_as_original",
+      "content_copied": false
+    },
+    {
+      "order": 6,
+      "title": "Balanza Comercial de Mercancías de México (BCMM)",
+      "source_type": "statistical_source",
+      "url": "https://www.inegi.org.mx/programas/comext/default.html",
+      "link_basis": "public_reference_suggested_not_original_url",
+      "review_status": "reference_not_verified_as_original",
+      "content_copied": false
+    },
+    {
+      "order": 7,
+      "title": "Clasificadores - Catálogo TIGIE - SCIAN",
+      "source_type": "statistical_source",
+      "url": "https://www.inegi.org.mx/app/tigie/",
+      "link_basis": "public_reference_suggested_not_original_url",
+      "review_status": "reference_not_verified_as_original",
+      "content_copied": false
+    },
+    {
+      "order": 8,
+      "title": "Cuéntame de México",
+      "source_type": "statistical_source",
+      "url": "https://cuentame.inegi.org.mx/",
+      "link_basis": "public_reference_suggested_not_original_url",
+      "review_status": "reference_not_verified_as_original",
+      "content_copied": false
+    },
+    {
+      "order": 9,
+      "title": "DOF - Diario Oficial de la Federación",
+      "source_type": "official_gazette",
+      "url": "https://www.dof.gob.mx/",
+      "link_basis": "public_reference_suggested_not_original_url",
+      "review_status": "reference_not_verified_as_original",
+      "content_copied": false
+    },
+    {
+      "order": 10,
+      "title": "GitHub - jccontrerasg08-cpu/arancel-mx: Open-source tools and traceable public data for Mexico's LIGIE, NICO, and tariff analysis · GitHub",
+      "source_type": "project_source",
+      "url": "https://github.com/jccontrerasg08-cpu/arancel-mx",
+      "link_basis": "public_reference_suggested_not_original_url",
+      "review_status": "reference_not_verified_as_original",
+      "content_copied": false
+    },
+    {
+      "order": 11,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/65_071220.pdf",
+      "source_type": "federal_law",
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/65_071220.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "review_status": "link_identified_not_full_text_audited",
+      "content_copied": false
+    },
+    {
+      "order": 12,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/207.pdf",
+      "source_type": "federal_law",
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/207.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "review_status": "link_identified_not_full_text_audited",
+      "content_copied": false
+    },
+    {
+      "order": 13,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/CFF.pdf",
+      "source_type": "federal_law",
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/CFF.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "review_status": "link_identified_not_full_text_audited",
+      "content_copied": false
+    },
+    {
+      "order": 14,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LAdua.pdf",
+      "source_type": "federal_law",
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LAdua.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "review_status": "link_identified_not_full_text_audited",
+      "content_copied": false
+    },
+    {
+      "order": 15,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LCPAF.pdf",
+      "source_type": "federal_law",
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LCPAF.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "review_status": "link_identified_not_full_text_audited",
+      "content_copied": false
+    },
+    {
+      "order": 16,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFAFE.pdf",
+      "source_type": "federal_law",
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFAFE.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "review_status": "link_identified_not_full_text_audited",
+      "content_copied": false
+    },
+    {
+      "order": 17,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFCPQ.pdf",
+      "source_type": "federal_law",
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFCPQ.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "review_status": "link_identified_not_full_text_audited",
+      "content_copied": false
+    },
+    {
+      "order": 18,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFD.pdf",
+      "source_type": "federal_law",
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFD.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "review_status": "link_identified_not_full_text_audited",
+      "content_copied": false
+    },
+    {
+      "order": 19,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFISAN.pdf",
+      "source_type": "federal_law",
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFISAN.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "review_status": "link_identified_not_full_text_audited",
+      "content_copied": false
+    },
+    {
+      "order": 20,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFMZAAH.pdf",
+      "source_type": "federal_law",
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFMZAAH.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "review_status": "link_identified_not_full_text_audited",
+      "content_copied": false
+    },
+    {
+      "order": 21,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFSA.pdf",
+      "source_type": "federal_law",
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFSA.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "review_status": "link_identified_not_full_text_audited",
+      "content_copied": false
+    },
+    {
+      "order": 22,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFSV.pdf",
+      "source_type": "federal_law",
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFSV.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "review_status": "link_identified_not_full_text_audited",
+      "content_copied": false
+    },
+    {
+      "order": 23,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFZEE.pdf",
+      "source_type": "federal_law",
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFZEE.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "review_status": "link_identified_not_full_text_audited",
+      "content_copied": false
+    },
+    {
+      "order": 24,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LGEEPA.pdf",
+      "source_type": "federal_law",
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LGEEPA.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "review_status": "link_identified_not_full_text_audited",
+      "content_copied": false
+    },
+    {
+      "order": 25,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LGOAAC.pdf",
+      "source_type": "federal_law",
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LGOAAC.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "review_status": "link_identified_not_full_text_audited",
+      "content_copied": false
+    },
+    {
+      "order": 26,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LGPAS.pdf",
+      "source_type": "federal_law",
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LGPAS.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "review_status": "link_identified_not_full_text_audited",
+      "content_copied": false
+    },
+    {
+      "order": 27,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LGS.pdf",
+      "source_type": "federal_law",
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LGS.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "review_status": "link_identified_not_full_text_audited",
+      "content_copied": false
+    },
+    {
+      "order": 28,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LGTOC.pdf",
+      "source_type": "federal_law",
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LGTOC.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "review_status": "link_identified_not_full_text_audited",
+      "content_copied": false
+    },
+    {
+      "order": 29,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LGVS.pdf",
+      "source_type": "federal_law",
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LGVS.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "review_status": "link_identified_not_full_text_audited",
+      "content_copied": false
+    },
+    {
+      "order": 30,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LICal_010720.pdf",
+      "source_type": "federal_law",
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LICal_010720.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "review_status": "link_identified_not_full_text_audited",
+      "content_copied": false
+    },
+    {
+      "order": 31,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LIEPS.pdf",
+      "source_type": "federal_law",
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LIEPS.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "review_status": "link_identified_not_full_text_audited",
+      "content_copied": false
+    },
+    {
+      "order": 32,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LISR.pdf",
+      "source_type": "federal_law",
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LISR.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "review_status": "link_identified_not_full_text_audited",
+      "content_copied": false
+    },
+    {
+      "order": 33,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LIVA.pdf",
+      "source_type": "federal_law",
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LIVA.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "review_status": "link_identified_not_full_text_audited",
+      "content_copied": false
+    },
+    {
+      "order": 34,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LNCM.pdf",
+      "source_type": "federal_law",
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LNCM.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "review_status": "link_identified_not_full_text_audited",
+      "content_copied": false
+    },
+    {
+      "order": 35,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LSH.pdf",
+      "source_type": "federal_law",
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LSH.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "review_status": "link_identified_not_full_text_audited",
+      "content_copied": false
+    },
+    {
+      "order": 36,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LSH.pdf",
+      "source_type": "federal_law",
+      "url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LSH.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "review_status": "link_identified_not_full_text_audited",
+      "content_copied": false
+    },
+    {
+      "order": 37,
+      "title": "https://www.snice.gob.mx/cs/avi/snice/biblioteca.juridica.tasas.html",
+      "source_type": "official_portal",
+      "url": "https://www.snice.gob.mx/cs/avi/snice/biblioteca.juridica.tasas.html",
+      "link_basis": "shown_literal_in_notebook",
+      "review_status": "link_identified_not_full_text_audited",
+      "content_copied": false
+    },
+    {
+      "order": 38,
+      "title": "https://www.snice.gob.mx/cs/avi/snice/biblioteca.juridica.tlc.html",
+      "source_type": "official_portal",
+      "url": "https://www.snice.gob.mx/cs/avi/snice/biblioteca.juridica.tlc.html",
+      "link_basis": "shown_literal_in_notebook",
+      "review_status": "link_identified_not_full_text_audited",
+      "content_copied": false
+    },
+    {
+      "order": 39,
+      "title": "https://www.snice.gob.mx/cs/avi/snice/f.c.indic.int.html",
+      "source_type": "official_portal",
+      "url": "https://www.snice.gob.mx/cs/avi/snice/f.c.indic.int.html",
+      "link_basis": "shown_literal_in_notebook",
+      "review_status": "link_identified_not_full_text_audited",
+      "content_copied": false
+    },
+    {
+      "order": 40,
+      "title": "Instituto Nacional de Estadística y Geografía (INEGI)",
+      "source_type": "statistical_source",
+      "url": "https://www.inegi.org.mx/",
+      "link_basis": "public_reference_suggested_not_original_url",
+      "review_status": "reference_not_verified_as_original",
+      "content_copied": false
+    },
+    {
+      "order": 41,
+      "title": "International Business",
+      "source_type": "unverified_nonpublic_or_secondary",
+      "url": null,
+      "link_basis": "unknown",
+      "review_status": "reference_not_verified_as_original",
+      "content_copied": false
+    },
+    {
+      "order": 42,
+      "title": "Ruta Logística MX - YouTube",
+      "source_type": "educational_video_index",
+      "url": null,
+      "link_basis": "unknown",
+      "review_status": "reference_not_verified_as_original",
+      "content_copied": false
+    }
+  ]
+}
