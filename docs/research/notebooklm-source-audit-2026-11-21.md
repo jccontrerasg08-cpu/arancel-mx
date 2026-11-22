@@ -23,6 +23,8 @@ Se cotejaron las **fuentes críticas** con índices y páginas oficiales mediant
 | INEGI BCMM | Preservar valoración FOB, cifras revisadas/ajustadas, nivel de código y marcas de confidencialidad | [Fuente](https://www.inegi.org.mx/sistemas/Olap/Proyectos/bd/continuas/comex/comex_bcmm_mensual2023.asp) |
 | TIGIE–SCIAN | Correlación estadística de versión 2025; su conteo no es una validación directa de una release arancelaria 2026 | [Fuente](https://www.inegi.org.mx/app/tigie/) |
 
+**IEPS:** el historial de la Cámara de Diputados distingue la **última reforma del 07-11-2025** del **acuerdo de actualización de cuotas del 22-12-2025** para 2026; se corrigió el metadato que mezclaba ambos eventos. [Historial oficial](https://www.diputados.gob.mx/LeyesBiblio/ref/lieps.htm).
+
 ## Decisión de arquitectura
 
 1. **No duplicar el catálogo.** Mantener las referencias generales y jurídicas en `external-trade-source-catalog.json`, la estadística en `inegi-analytics-catalog.json` y este archivo como registro de investigación de NotebookLM.
