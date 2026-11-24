@@ -62,6 +62,8 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 - CLI: `arancel-mx data diff --format markdown` renders the comparison report as a readable Spanish summary (not-a-legal-event notice, verification state, counts by change, a before/after table per code, auxiliary tables). A value that disappears is written as "sin valor", never 0, and release text is escaped. Release-diff RFC (#308).
 
+- Explorer: the words of the search are marked in each result description (accents and case ignored, as search compares them; one-letter words skipped). The description text is unchanged and rendered as text, never as HTML. Search UX phase of RFC #312.
+
 - CLI: `arancel-mx data export --to sqlite` writes the public views into one `arancel_mx.sqlite` (a table per view) with an `_export_columns` table recording each DuckDB → SQLite type mapping: text and NULL kept, booleans as 0/1, DECIMAL as its exact text, DATE/TIMESTAMP as ISO 8601. The manifest records the database SHA-256. Second phase of the SDK and exports RFC (#310).
 
 - CLI: `arancel-mx nom <code>` lists the NOM rows that Annex 2.4.1 in the release gives for a fraction or NICO, with the same states as the record page (`listed`, `not_listed`, `not_listed_carried`, `unavailable`, `unknown`, `not_a_fraction`). A missing answer is never reported as "no NOM"; for a NICO each row says whether its NICO list names it. Next phase of the RRNA/NOM RFC (#302).
