@@ -60,6 +60,8 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Added
 
+- Record page: «Imprimir o guardar PDF» prints only the record (header, footer, tabs, filters and buttons hidden), opens collapsed sections such as the National Notes for the printout, writes link targets next to their text, and adds a footer with the page URL, the release and a not-official notice. Phase 2 of the record export RFC (#311).
+
 - CLI: `arancel-mx data diff --format markdown` renders the comparison report as a readable Spanish summary (not-a-legal-event notice, verification state, counts by change, a before/after table per code, auxiliary tables). A value that disappears is written as "sin valor", never 0, and release text is escaped. Release-diff RFC (#308).
 
 - Explorer: the words of the search are marked in each result description (accents and case ignored, as search compares them; one-letter words skipped). The description text is unchanged and rendered as text, never as HTML. Search UX phase of RFC #312.

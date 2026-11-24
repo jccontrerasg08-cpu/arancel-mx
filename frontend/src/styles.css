@@ -493,3 +493,15 @@ h1,h2,h3 { text-wrap:balance; }
 .national-notes__meta { display:flex; flex-wrap:wrap; gap:.5rem; align-items:center; margin:0 0 .2rem; }
 .national-notes__badge { border-radius:999px; background:color-mix(in srgb,var(--brand) 14%,var(--panel)); color:var(--brand); padding:.05rem .55rem; font-size:.78rem; font-weight:700; }
 .national-notes__text { margin:0; white-space:pre-line; overflow-wrap:anywhere; }
+/* Record printout (Print / Save as PDF): only the record, its sources and the notice. */
+.print-only { display:none; }
+@media print {
+  .skip-link,.site-header,.site-footer,.palette-backdrop,.record-actions,.snapshot-list,.record-jump,.record-page button,.text-button,#record-hierarchy > label,#record-hierarchy > .field-hint,#record-hierarchy > .inline-form,#record-hierarchy > [data-testid="tree-filter-status"] { display:none !important; }
+  body,.record-page { background:#fff !important; color:#000 !important; }
+  .record-page { box-shadow:none !important; }
+  .record-page a { color:#000; text-decoration:underline; }
+  .record-page a[href^="http"]::after { content:" (" attr(href) ")"; font-size:.8em; word-break:break-all; }
+  .record-page .is-clamped { display:block !important; -webkit-line-clamp:unset !important; line-clamp:unset !important; overflow:visible !important; }
+  .record-page section,.record-page article,.record-page li,.record-page tr { break-inside:avoid; }
+  .print-only { display:block; margin-top:1.5rem; border-top:1px solid #000; padding-top:.5rem; font-size:.85rem; }
+}

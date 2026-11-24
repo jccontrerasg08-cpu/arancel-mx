@@ -821,3 +821,35 @@ test('marks the searched words in result descriptions without changing the text'
   const words = (await marks.allTextContents()).map((word) => word.toLowerCase());
   expect(words).toEqual(['teléfonos', 'inteligentes']);
 });
+
+test('prints only the record, opens collapsed sections and adds the source and notice', async ({ page }) => {
+  await serveStaticRecords(page, [{ code: '85171301', description: 'Teléfonos móviles.', igi: 'Ex.' }]);
+  await page.route('**/data/v1/sections.json', (route) => route.fulfill({ json: [{ numeral: 'XVI', title: 'Máquinas y aparatos', chapter_from: '84', chapter_to: '85' }] }));
+  await page.route('**/data/v1/national-notes/85.json', (route) => route.fulfill({ json: [
+    { chapter: '85', note_number: '1', text: 'Nota del capítulo 85.', source_document_id: 'notes', scope_type: 'chapter', scope_value: '85' },
+  ] }));
+  await page.addInitScript(() => { window.__printCalls = 0; window.print = () => { window.__printCalls += 1; }; });
+  await page.goto('/app/record/85171301');
+  await page.getByTestId('print-ficha').click();
+  expect(await page.evaluate(() => window.__printCalls)).toBe(1);
+
+  await expect(page.getByTestId('print-source')).toBeHidden();
+  await page.emulateMedia({ media: 'print' });
+  await expect(page.locator('.site-header')).toBeHidden();
+  await expect(page.locator('.site-footer')).toBeHidden();
+  await expect(page.getByTestId('print-ficha')).toBeHidden();
+  await expect(page.locator('.record-jump')).toBeHidden();
+  await expect(page.locator('#tree-query')).toBeHidden();
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  const source = page.getByTestId('print-source');
+  await expect(source).toBeVisible();
+  await expect(source).toContainText('/app/record/85171301');
+  await expect(source).toContainText('no es una clasificación oficial');
+
+  const notes = page.locator('.record-page details').first();
+  await expect(notes).not.toHaveAttribute('open', '');
+  await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
+  await expect(notes).toHaveAttribute('open', '');
+  await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
+  await expect(notes).not.toHaveAttribute('open', '');
+});
