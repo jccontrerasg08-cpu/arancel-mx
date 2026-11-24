@@ -60,6 +60,8 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Added
 
+- Record page: «Imprimir o guardar PDF» prints only the record (header, footer, tabs, filters and buttons hidden), opens collapsed sections such as the National Notes for the printout, writes link targets next to their text, and adds a footer with the page URL, the release and a not-official notice. Phase 2 of the record export RFC (#311).
+
 - Explorer: the words of the search are marked in each result description (accents and case ignored, as search compares them; one-letter words skipped). The description text is unchanged and rendered as text, never as HTML. Search UX phase of RFC #312.
 
 - CLI: `arancel-mx data export --to sqlite` writes the public views into one `arancel_mx.sqlite` (a table per view) with an `_export_columns` table recording each DuckDB → SQLite type mapping: text and NULL kept, booleans as 0/1, DECIMAL as its exact text, DATE/TIMESTAMP as ISO 8601. The manifest records the database SHA-256. Second phase of the SDK and exports RFC (#310).
