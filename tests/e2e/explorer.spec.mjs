@@ -810,3 +810,14 @@ test('hides the citation button when the release identity cannot be read', async
   await expect(page.getByTestId('download-ficha-md')).toBeVisible();
   await expect(page.getByTestId('copy-citation')).toHaveCount(0);
 });
+
+test('marks the searched words in result descriptions without changing the text', async ({ page }) => {
+  await serveStaticRecords(page, [{ code: '85171301', description: 'Teléfonos inteligentes <b>y</b> móviles.', level: 'fraccion8', dataset_version: '2026.11.20' }]);
+  await page.goto('/app?q=telefonos%20inteligentes');
+  const description = page.getByTestId('result-description').first();
+  await expect(description).toHaveText('Teléfonos inteligentes <b>y</b> móviles.');
+  const marks = description.locator('mark');
+  await expect(marks.first()).toBeVisible();
+  const words = (await marks.allTextContents()).map((word) => word.toLowerCase());
+  expect(words).toEqual(['teléfonos', 'inteligentes']);
+});
