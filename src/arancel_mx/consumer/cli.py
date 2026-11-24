@@ -19,6 +19,7 @@ from arancel_mx.consumer.nom_report import nom_report
 from arancel_mx.benchmark.search_selfcheck import SelfcheckRecord, run_selfcheck
 from arancel_mx.consumer.output import CsvSchema, render, render_json
 from arancel_mx.consumer.query import SCORER_VERSION, nom_annex_status, nom_requirements, search as query_search
+from arancel_mx.consumer.release_diff_markdown import release_diff_markdown
 from arancel_mx.consumer.release_diff import LEVELS, auxiliary_rows, current_rows, release_diff_report
 from arancel_mx.consumer.wco_support import cite_chapter, cite_gir, download_chapter, download_gir
 from arancel_mx.domain.nico_lag import classify_missing_nico
@@ -211,6 +212,10 @@ def register_consumer_commands(
     )
     _add_offline(diff)
     _add_output_format(diff)
+    for action in diff._actions:
+        if "--format" in action.option_strings:
+            action.choices = (*_OUTPUT_FORMATS, "markdown")
+            action.help = "Output format (default: table); markdown writes a readable summary in Spanish"
     diff.set_defaults(consumer_action="data_diff")
 
     export = data_subparsers.add_parser(
@@ -632,6 +637,8 @@ def _run_data_diff(namespace: argparse.Namespace) -> int:
         raise QueryError(str(exc)) from exc
     if namespace.format == "json":
         _emit(report, format_name="json")
+    elif namespace.format == "markdown":
+        sys.stdout.write(release_diff_markdown(report))
     else:
         _emit(report["changes"], format_name=namespace.format)
     return 0

@@ -98,6 +98,7 @@ arancel-mx data diff --from data-2026.08.15 --to data-2026.11.20
 arancel-mx data diff --from data-2026.08.15 --to data-2026.11.20 --format json
 arancel-mx data diff --from data-2026.08.15 --to data-2026.11.20 --level fraccion8 --format csv
 arancel-mx data diff --from viejo.duckdb --to nuevo.duckdb --format json
+arancel-mx data diff --from data-2026.08.15 --to data-2026.11.20 --format markdown > cambios.md
 ```
 
 Compara fila por fila los registros vigentes de dos releases y reporta un evento por cada diferencia: `row_added`, `row_removed`, `description_changed`, `igi_changed`, `ige_changed`, `unit_changed` y `hierarchy_changed`. Un código puede tener varios eventos. Los valores se comparan literalmente (un acento corregido sí es un cambio) y un valor que pasa a vacío queda como `null`, nunca como cero.
@@ -124,6 +125,8 @@ arancel-mx data export --dataset data-2026.11.20 --out ./sqlite --to sqlite
 SQLite no tiene tipos de fecha ni decimales exactos, así que la conversión es explícita y queda escrita dentro del archivo, en la tabla `_export_columns` (vista, columna, tipo DuckDB, tipo SQLite): el texto y los `NULL` se conservan, enteros y booleanos quedan como `INTEGER` (0/1), los `DECIMAL` como su texto exacto (`10.000000`, nunca un flotante) y `DATE`/`TIMESTAMP` como texto ISO 8601. El manifiesto agrega `format` y el SHA-256 de la base en `database`.
 
 El directorio debe no existir o estar vacío, para no mezclar archivos de dos releases. La exportación es una **copia derivada local**: no es uno de los seis assets de la release ni los sustituye. Para auditar, verifica la release (`data verify --bundle`) y compara el `sha256` de `source`.
+
+`--format markdown` escribe un resumen legible en español con la misma información: el aviso de que no son eventos legales, el estado de verificación de cada release, los conteos por tipo de cambio, una tabla código por código (con `Antes` y `Después`; un valor que desaparece se escribe «sin valor», nunca 0) y el estado de las tablas auxiliares. El texto de la release se escapa para que no agregue enlaces, HTML ni columnas.
 
 Usa `--format json` para automatización estructurada y `--format csv` para intercambio por filas. `data path` imprime a propósito sólo la ruta del DuckDB local seleccionado, para que los scripts la consuman directamente.
 
