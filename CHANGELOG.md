@@ -60,6 +60,8 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Added
 
+- Static data API: the pages build now compares the release it publishes with the previous published release and adds `diffs/index.json` and `diffs/<from>--<to>.json` (the same report as `arancel-mx data diff --format json`) to `/data/v1`, listed and hashed in the static manifest. Both releases must pass verification; if the previous one cannot be resolved the index records the reason and no diff is published, and data publication is never blocked. Decision 0005; release-diff RFC (#308).
+
 - Explorer: the words of the search are marked in each result description (accents and case ignored, as search compares them; one-letter words skipped). The description text is unchanged and rendered as text, never as HTML. Search UX phase of RFC #312.
 
 - CLI: `arancel-mx data export --to sqlite` writes the public views into one `arancel_mx.sqlite` (a table per view) with an `_export_columns` table recording each DuckDB → SQLite type mapping: text and NULL kept, booleans as 0/1, DECIMAL as its exact text, DATE/TIMESTAMP as ISO 8601. The manifest records the database SHA-256. Second phase of the SDK and exports RFC (#310).
