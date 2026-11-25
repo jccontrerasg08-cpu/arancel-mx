@@ -1,0 +1,1095 @@
+{
+  "schema_version": "1.0.0",
+  "review_date": "2026-11-21",
+  "repo": "jccontrerasg08-cpu/arancel-mx",
+  "notebook_visible_entries": 42,
+  "notebook_unique_titles": 41,
+  "scope": "visible notebook conversation + title/link inventory; not 6 Studio contents or individual videos; 25 unique legal PDF covers sampled, not all articles",
+  "features": [
+    {
+      "id": "01",
+      "pr_number": 302,
+      "pr_url": "https://github.com/jccontrerasg08-cpu/arancel-mx/pull/302",
+      "title": "RRNA/NOM/PEC y autoridades",
+      "priority": "P0",
+      "rfc_path": "docs/rfcs/notebooklm-2026/01-rrna-nom-pec.md",
+      "status": "draft_specification_no_code",
+      "capabilities": [
+        "NOM/RRNA por fracción y NICO con acotación, vigencia, autoridad y tipo de fuente",
+        "PEC, OEC, inspección/muestreo, equivalencia y reconocimiento mutuo con evidencia",
+        "Derechos por trámites reguladores solo desde fuente aplicable",
+        "Diferenciar anexo disponible, ausente y carried_forward"
+      ]
+    },
+    {
+      "id": "02",
+      "pr_number": 303,
+      "pr_url": "https://github.com/jccontrerasg08-cpu/arancel-mx/pull/303",
+      "title": "Escenarios de impuestos y valoración",
+      "priority": "P0",
+      "rfc_path": "docs/rfcs/notebooklm-2026/02-calculadora-tributaria.md",
+      "status": "draft_specification_no_code",
+      "capabilities": [
+        "Valor en aduana e incrementables y métodos alternativos",
+        "IGI, DTA, IVA, IEPS por caso y base legal",
+        "INPC, actualizaciones, recargos y garantías por precios estimados",
+        "Regímenes fiscales con inputs declarados y resultado orientativo"
+      ]
+    },
+    {
+      "id": "03",
+      "pr_number": 304,
+      "pr_url": "https://github.com/jccontrerasg08-cpu/arancel-mx/pull/304",
+      "title": "Notas y criterios SAT",
+      "priority": "P1",
+      "rfc_path": "docs/rfcs/notebooklm-2026/03-notas-criterios-sat.md",
+      "status": "draft_specification_no_code",
+      "capabilities": [
+        "Visor notas de sección, capítulo y notas nacionales",
+        "Índice de criterios SAT, consultas y precedentes judiciales distinguidos por tipo"
+      ]
+    },
+    {
+      "id": "04",
+      "pr_number": 306,
+      "pr_url": "https://github.com/jccontrerasg08-cpu/arancel-mx/pull/306",
+      "title": "Matriz de TLC y origen",
+      "priority": "P1",
+      "rfc_path": "docs/rfcs/notebooklm-2026/04-tlc-arancel-preferencial.md",
+      "status": "draft_specification_no_code",
+      "capabilities": [
+        "Comparación de IGI general contra tasas preferenciales oficiales por fecha y acuerdo",
+        "Reglas de origen, resoluciones, instrumentos y comprobación documental sin decidir elegibilidad"
+      ]
+    },
+    {
+      "id": "05",
+      "pr_number": 307,
+      "pr_url": "https://github.com/jccontrerasg08-cpu/arancel-mx/pull/307",
+      "title": "Análisis INEGI BCMM / TIGIE-SCIAN",
+      "priority": "P1",
+      "rfc_path": "docs/rfcs/notebooklm-2026/05-inegi-tigie-scian-bcmm.md",
+      "status": "draft_specification_no_code",
+      "capabilities": [
+        "Correlación TIGIE/NICO con SCIAN con versión/cardenalidad",
+        "BCMM y BIE por periodo, flujo, país, producto, valor FOB, confidencialidad y vintage",
+        "Balanza/crecimiento/consumo aparente solo con producción nacional comparable"
+      ]
+    },
+    {
+      "id": "06",
+      "pr_number": 308,
+      "pr_url": "https://github.com/jccontrerasg08-cpu/arancel-mx/pull/308",
+      "title": "Cambios DOF y diff de releases",
+      "priority": "P1",
+      "rfc_path": "docs/rfcs/notebooklm-2026/06-diff-releases-cambios-dof.md",
+      "status": "draft_specification_no_code",
+      "capabilities": [
+        "Comparador entre versiones inmutables por código, NICO, tasa, descripción, notas y fechas",
+        "Reuso del watcher DOF, feed de cambios y triage humano, sin duplicar bot"
+      ]
+    },
+    {
+      "id": "07",
+      "pr_number": 309,
+      "pr_url": "https://github.com/jccontrerasg08-cpu/arancel-mx/pull/309",
+      "title": "DuckDB WASM en navegador",
+      "priority": "P2",
+      "rfc_path": "docs/rfcs/notebooklm-2026/07-duckdb-wasm-analitica-local.md",
+      "status": "draft_specification_no_code",
+      "capabilities": [
+        "Consultas SQL locales opt-in, worker, SHA de release, caché y benchmarks reales"
+      ]
+    },
+    {
+      "id": "08",
+      "pr_number": 310,
+      "pr_url": "https://github.com/jccontrerasg08-cpu/arancel-mx/pull/310",
+      "title": "SDK JS/Go y derivados abiertos",
+      "priority": "P2",
+      "rfc_path": "docs/rfcs/notebooklm-2026/08-sdk-typescript-go-exportaciones.md",
+      "status": "draft_specification_no_code",
+      "capabilities": [
+        "SDKs TypeScript y Go con paridad Python/CLI, API estática y release fija",
+        "Descargas Parquet, SQLite y JSON-LD como derivados opcionales separados de seis assets"
+      ]
+    },
+    {
+      "id": "09",
+      "pr_number": 311,
+      "pr_url": "https://github.com/jccontrerasg08-cpu/arancel-mx/pull/311",
+      "title": "Ficha PDF/Markdown",
+      "priority": "P1",
+      "rfc_path": "docs/rfcs/notebooklm-2026/09-ficha-export-pdf-markdown.md",
+      "status": "draft_specification_no_code",
+      "capabilities": [
+        "Exportar ficha imprimible de fracción/NICO con versión, notas, fuentes y secciones referenciales de NOM/TLC/impuestos"
+      ]
+    },
+    {
+      "id": "10",
+      "pr_number": 312,
+      "pr_url": "https://github.com/jccontrerasg08-cpu/arancel-mx/pull/312",
+      "title": "Búsqueda híbrida/IA responsable",
+      "priority": "P2",
+      "rfc_path": "docs/rfcs/notebooklm-2026/10-busqueda-asistida-hibrida.md",
+      "status": "draft_specification_no_code",
+      "capabilities": [
+        "Recuperación semántica de candidatos, evaluación de calidad y abstención, nunca clasificación jurídica"
+      ]
+    },
+    {
+      "id": "11",
+      "pr_number": 313,
+      "pr_url": "https://github.com/jccontrerasg08-cpu/arancel-mx/pull/313",
+      "title": "MOA/régimen y documentación",
+      "priority": "P1",
+      "rfc_path": "docs/rfcs/notebooklm-2026/11-moa-regimenes-despacho.md",
+      "status": "draft_specification_no_code",
+      "capabilities": [
+        "Guías por regímenes definitivos, temporales, depósito, tránsito, recintos e IMMEX",
+        "Mapa de COVE, transmisión y prevalidación, Anexo 22 y autoridad",
+        "Checklists orientativos sin credenciales, trámites ni pedimento"
+      ]
+    },
+    {
+      "id": "12",
+      "pr_number": 314,
+      "pr_url": "https://github.com/jccontrerasg08-cpu/arancel-mx/pull/314",
+      "title": "Módulo 8 y Studio / Ruta Logística",
+      "priority": "P2",
+      "rfc_path": "docs/rfcs/notebooklm-2026/12-modulo-8-formacion-studio.md",
+      "status": "draft_specification_no_code",
+      "capabilities": [
+        "Cinco unidades educativas propias sobre fuentes, regulación, cálculo, industria y notas",
+        "Seis creaciones Studio identificadas con contenido aún no inspeccionado",
+        "Once videos/cápsulas citados por Gemini y pendientes de verificación individual"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "id": "01.1",
+      "description": "NOM/RRNA por fracción y NICO con acotación, vigencia, autoridad y tipo de fuente",
+      "feature_id": "01",
+      "implementation_status": "specified_not_built"
+    },
+    {
+      "id": "01.2",
+      "description": "PEC, OEC, inspección/muestreo, equivalencia y reconocimiento mutuo con evidencia",
+      "feature_id": "01",
+      "implementation_status": "specified_not_built"
+    },
+    {
+      "id": "01.3",
+      "description": "Derechos por trámites reguladores solo desde fuente aplicable",
+      "feature_id": "01",
+      "implementation_status": "specified_not_built"
+    },
+    {
+      "id": "01.4",
+      "description": "Diferenciar anexo disponible, ausente y carried_forward",
+      "feature_id": "01",
+      "implementation_status": "specified_not_built"
+    },
+    {
+      "id": "02.1",
+      "description": "Valor en aduana e incrementables y métodos alternativos",
+      "feature_id": "02",
+      "implementation_status": "specified_not_built"
+    },
+    {
+      "id": "02.2",
+      "description": "IGI, DTA, IVA, IEPS por caso y base legal",
+      "feature_id": "02",
+      "implementation_status": "specified_not_built"
+    },
+    {
+      "id": "02.3",
+      "description": "INPC, actualizaciones, recargos y garantías por precios estimados",
+      "feature_id": "02",
+      "implementation_status": "specified_not_built"
+    },
+    {
+      "id": "02.4",
+      "description": "Regímenes fiscales con inputs declarados y resultado orientativo",
+      "feature_id": "02",
+      "implementation_status": "specified_not_built"
+    },
+    {
+      "id": "03.1",
+      "description": "Visor notas de sección, capítulo y notas nacionales",
+      "feature_id": "03",
+      "implementation_status": "specified_not_built"
+    },
+    {
+      "id": "03.2",
+      "description": "Índice de criterios SAT, consultas y precedentes judiciales distinguidos por tipo",
+      "feature_id": "03",
+      "implementation_status": "specified_not_built"
+    },
+    {
+      "id": "04.1",
+      "description": "Comparación de IGI general contra tasas preferenciales oficiales por fecha y acuerdo",
+      "feature_id": "04",
+      "implementation_status": "specified_not_built"
+    },
+    {
+      "id": "04.2",
+      "description": "Reglas de origen, resoluciones, instrumentos y comprobación documental sin decidir elegibilidad",
+      "feature_id": "04",
+      "implementation_status": "specified_not_built"
+    },
+    {
+      "id": "05.1",
+      "description": "Correlación TIGIE/NICO con SCIAN con versión/cardenalidad",
+      "feature_id": "05",
+      "implementation_status": "specified_not_built"
+    },
+    {
+      "id": "05.2",
+      "description": "BCMM y BIE por periodo, flujo, país, producto, valor FOB, confidencialidad y vintage",
+      "feature_id": "05",
+      "implementation_status": "specified_not_built"
+    },
+    {
+      "id": "05.3",
+      "description": "Balanza/crecimiento/consumo aparente solo con producción nacional comparable",
+      "feature_id": "05",
+      "implementation_status": "specified_not_built"
+    },
+    {
+      "id": "06.1",
+      "description": "Comparador entre versiones inmutables por código, NICO, tasa, descripción, notas y fechas",
+      "feature_id": "06",
+      "implementation_status": "specified_not_built"
+    },
+    {
+      "id": "06.2",
+      "description": "Reuso del watcher DOF, feed de cambios y triage humano, sin duplicar bot",
+      "feature_id": "06",
+      "implementation_status": "specified_not_built"
+    },
+    {
+      "id": "07.1",
+      "description": "Consultas SQL locales opt-in, worker, SHA de release, caché y benchmarks reales",
+      "feature_id": "07",
+      "implementation_status": "specified_not_built"
+    },
+    {
+      "id": "08.1",
+      "description": "SDKs TypeScript y Go con paridad Python/CLI, API estática y release fija",
+      "feature_id": "08",
+      "implementation_status": "specified_not_built"
+    },
+    {
+      "id": "08.2",
+      "description": "Descargas Parquet, SQLite y JSON-LD como derivados opcionales separados de seis assets",
+      "feature_id": "08",
+      "implementation_status": "specified_not_built"
+    },
+    {
+      "id": "09.1",
+      "description": "Exportar ficha imprimible de fracción/NICO con versión, notas, fuentes y secciones referenciales de NOM/TLC/impuestos",
+      "feature_id": "09",
+      "implementation_status": "specified_not_built"
+    },
+    {
+      "id": "10.1",
+      "description": "Recuperación semántica de candidatos, evaluación de calidad y abstención, nunca clasificación jurídica",
+      "feature_id": "10",
+      "implementation_status": "specified_not_built"
+    },
+    {
+      "id": "11.1",
+      "description": "Guías por regímenes definitivos, temporales, depósito, tránsito, recintos e IMMEX",
+      "feature_id": "11",
+      "implementation_status": "specified_not_built"
+    },
+    {
+      "id": "11.2",
+      "description": "Mapa de COVE, transmisión y prevalidación, Anexo 22 y autoridad",
+      "feature_id": "11",
+      "implementation_status": "specified_not_built"
+    },
+    {
+      "id": "11.3",
+      "description": "Checklists orientativos sin credenciales, trámites ni pedimento",
+      "feature_id": "11",
+      "implementation_status": "specified_not_built"
+    },
+    {
+      "id": "12.1",
+      "description": "Cinco unidades educativas propias sobre fuentes, regulación, cálculo, industria y notas",
+      "feature_id": "12",
+      "implementation_status": "specified_not_built"
+    },
+    {
+      "id": "12.2",
+      "description": "Seis creaciones Studio identificadas con contenido aún no inspeccionado",
+      "feature_id": "12",
+      "implementation_status": "specified_not_built"
+    },
+    {
+      "id": "12.3",
+      "description": "Once videos/cápsulas citados por Gemini y pendientes de verificación individual",
+      "feature_id": "12",
+      "implementation_status": "specified_not_built"
+    }
+  ],
+  "source_bindings": [
+    {
+      "entry_id": 1,
+      "title": "Datos Arancelarios MX",
+      "notebook_original_url_known": false,
+      "link": null,
+      "link_basis": "unknown",
+      "pdf_header_last_reform": null,
+      "feature_ids": [
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 2,
+      "title": "arancel-mx — Consulta el arancel de México, con su evidencia.",
+      "notebook_original_url_known": false,
+      "link": null,
+      "link_basis": "unknown",
+      "pdf_header_last_reform": null,
+      "feature_ids": [
+        "01",
+        "03",
+        "05",
+        "06",
+        "09",
+        "10"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 3,
+      "title": "arancel-mx — Manual de Operación Aduanera, en contexto.",
+      "notebook_original_url_known": false,
+      "link": null,
+      "link_basis": "unknown",
+      "pdf_header_last_reform": null,
+      "feature_ids": [
+        "11",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 4,
+      "title": "Balanza",
+      "notebook_original_url_known": false,
+      "link": "https://www.inegi.org.mx/temas/balanza/",
+      "link_basis": "public_reference_suggested_not_original_url",
+      "pdf_header_last_reform": null,
+      "feature_ids": [
+        "05",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 5,
+      "title": "Balanza comercial",
+      "notebook_original_url_known": false,
+      "link": "https://www.inegi.org.mx/temas/balanza/",
+      "link_basis": "public_reference_suggested_not_original_url",
+      "pdf_header_last_reform": null,
+      "feature_ids": [
+        "05",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 6,
+      "title": "Balanza Comercial de Mercancías de México (BCMM)",
+      "notebook_original_url_known": false,
+      "link": "https://www.inegi.org.mx/programas/comext/default.html",
+      "link_basis": "public_reference_suggested_not_original_url",
+      "pdf_header_last_reform": null,
+      "feature_ids": [
+        "05",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 7,
+      "title": "Clasificadores - Catálogo TIGIE - SCIAN",
+      "notebook_original_url_known": false,
+      "link": "https://www.inegi.org.mx/app/tigie/",
+      "link_basis": "public_reference_suggested_not_original_url",
+      "pdf_header_last_reform": null,
+      "feature_ids": [
+        "05",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 8,
+      "title": "Cuéntame de México",
+      "notebook_original_url_known": false,
+      "link": "https://cuentame.inegi.org.mx/",
+      "link_basis": "public_reference_suggested_not_original_url",
+      "pdf_header_last_reform": null,
+      "feature_ids": [
+        "05",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 9,
+      "title": "DOF - Diario Oficial de la Federación",
+      "notebook_original_url_known": false,
+      "link": "https://www.dof.gob.mx/",
+      "link_basis": "public_reference_suggested_not_original_url",
+      "pdf_header_last_reform": null,
+      "feature_ids": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "06",
+        "11"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 10,
+      "title": "GitHub - jccontrerasg08-cpu/arancel-mx: Open-source tools and traceable public data for Mexico's LIGIE, NICO, and tariff analysis · GitHub",
+      "notebook_original_url_known": false,
+      "link": "https://github.com/jccontrerasg08-cpu/arancel-mx",
+      "link_basis": "public_reference_suggested_not_original_url",
+      "pdf_header_last_reform": null,
+      "feature_ids": [
+        "06",
+        "07",
+        "08",
+        "09",
+        "10"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 11,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/65_071220.pdf",
+      "notebook_original_url_known": true,
+      "link": "https://www.diputados.gob.mx/LeyesBiblio/pdf/65_071220.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "pdf_header_last_reform": "2020-12-07",
+      "feature_ids": [
+        "11",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 12,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/207.pdf",
+      "notebook_original_url_known": true,
+      "link": "https://www.diputados.gob.mx/LeyesBiblio/pdf/207.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "pdf_header_last_reform": "2012-04-09",
+      "feature_ids": [
+        "01",
+        "11",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 13,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/CFF.pdf",
+      "notebook_original_url_known": true,
+      "link": "https://www.diputados.gob.mx/LeyesBiblio/pdf/CFF.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "pdf_header_last_reform": "2026-04-09",
+      "feature_ids": [
+        "02",
+        "11",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 14,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LAdua.pdf",
+      "notebook_original_url_known": true,
+      "link": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LAdua.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "pdf_header_last_reform": "2025-11-19",
+      "feature_ids": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "11",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 15,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LCPAF.pdf",
+      "notebook_original_url_known": true,
+      "link": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LCPAF.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "pdf_header_last_reform": "2025-11-14",
+      "feature_ids": [
+        "11",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 16,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFAFE.pdf",
+      "notebook_original_url_known": true,
+      "link": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFAFE.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "pdf_header_last_reform": "2025-05-29",
+      "feature_ids": [
+        "01",
+        "11",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 17,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFCPQ.pdf",
+      "notebook_original_url_known": true,
+      "link": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFCPQ.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "pdf_header_last_reform": "2023-05-03",
+      "feature_ids": [
+        "01",
+        "11",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 18,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFD.pdf",
+      "notebook_original_url_known": true,
+      "link": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFD.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "pdf_header_last_reform": "2025-11-07",
+      "feature_ids": [
+        "01",
+        "02",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 19,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFISAN.pdf",
+      "notebook_original_url_known": true,
+      "link": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFISAN.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "pdf_header_last_reform": "2021-11-12",
+      "feature_ids": [
+        "02",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 20,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFMZAAH.pdf",
+      "notebook_original_url_known": true,
+      "link": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFMZAAH.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "pdf_header_last_reform": "2025-11-14",
+      "feature_ids": [
+        "01",
+        "11",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 21,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFSA.pdf",
+      "notebook_original_url_known": true,
+      "link": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFSA.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "pdf_header_last_reform": "2024-05-21",
+      "feature_ids": [
+        "01",
+        "11",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 22,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFSV.pdf",
+      "notebook_original_url_known": true,
+      "link": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFSV.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "pdf_header_last_reform": "2022-05-11",
+      "feature_ids": [
+        "01",
+        "11",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 23,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFZEE.pdf",
+      "notebook_original_url_known": true,
+      "link": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFZEE.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "pdf_header_last_reform": "2024-04-01",
+      "feature_ids": [
+        "11",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 24,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LGEEPA.pdf",
+      "notebook_original_url_known": true,
+      "link": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LGEEPA.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "pdf_header_last_reform": "2026-01-19",
+      "feature_ids": [
+        "01",
+        "11",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 25,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LGOAAC.pdf",
+      "notebook_original_url_known": true,
+      "link": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LGOAAC.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "pdf_header_last_reform": "2025-11-14",
+      "feature_ids": [
+        "02",
+        "11",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 26,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LGPAS.pdf",
+      "notebook_original_url_known": true,
+      "link": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LGPAS.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "pdf_header_last_reform": "2024-04-01",
+      "feature_ids": [
+        "01",
+        "11",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 27,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LGS.pdf",
+      "notebook_original_url_known": true,
+      "link": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LGS.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "pdf_header_last_reform": null,
+      "feature_ids": [
+        "01",
+        "11",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 28,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LGTOC.pdf",
+      "notebook_original_url_known": true,
+      "link": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LGTOC.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "pdf_header_last_reform": "2024-03-26",
+      "feature_ids": [
+        "11",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 29,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LGVS.pdf",
+      "notebook_original_url_known": true,
+      "link": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LGVS.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "pdf_header_last_reform": "2025-07-16",
+      "feature_ids": [
+        "01",
+        "11",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 30,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LICal_010720.pdf",
+      "notebook_original_url_known": true,
+      "link": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LICal_010720.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "pdf_header_last_reform": null,
+      "feature_ids": [
+        "01",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 31,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LIEPS.pdf",
+      "notebook_original_url_known": true,
+      "link": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LIEPS.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "pdf_header_last_reform": "2025-11-07",
+      "feature_ids": [
+        "02",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 32,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LISR.pdf",
+      "notebook_original_url_known": true,
+      "link": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LISR.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "pdf_header_last_reform": "2024-04-01",
+      "feature_ids": [
+        "02",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 33,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LIVA.pdf",
+      "notebook_original_url_known": true,
+      "link": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LIVA.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "pdf_header_last_reform": "2021-11-12",
+      "feature_ids": [
+        "02",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 34,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LNCM.pdf",
+      "notebook_original_url_known": true,
+      "link": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LNCM.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "pdf_header_last_reform": "2025-11-14",
+      "feature_ids": [
+        "11",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 35,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LSH.pdf",
+      "notebook_original_url_known": true,
+      "link": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LSH.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "pdf_header_last_reform": null,
+      "feature_ids": [
+        "01",
+        "11",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 36,
+      "title": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LSH.pdf",
+      "notebook_original_url_known": true,
+      "link": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LSH.pdf",
+      "link_basis": "shown_literal_in_notebook",
+      "pdf_header_last_reform": null,
+      "feature_ids": [
+        "01",
+        "11",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 37,
+      "title": "https://www.snice.gob.mx/cs/avi/snice/biblioteca.juridica.tasas.html",
+      "notebook_original_url_known": true,
+      "link": "https://www.snice.gob.mx/cs/avi/snice/biblioteca.juridica.tasas.html",
+      "link_basis": "shown_literal_in_notebook",
+      "pdf_header_last_reform": null,
+      "feature_ids": [
+        "04",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 38,
+      "title": "https://www.snice.gob.mx/cs/avi/snice/biblioteca.juridica.tlc.html",
+      "notebook_original_url_known": true,
+      "link": "https://www.snice.gob.mx/cs/avi/snice/biblioteca.juridica.tlc.html",
+      "link_basis": "shown_literal_in_notebook",
+      "pdf_header_last_reform": null,
+      "feature_ids": [
+        "04",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 39,
+      "title": "https://www.snice.gob.mx/cs/avi/snice/f.c.indic.int.html",
+      "notebook_original_url_known": true,
+      "link": "https://www.snice.gob.mx/cs/avi/snice/f.c.indic.int.html",
+      "link_basis": "shown_literal_in_notebook",
+      "pdf_header_last_reform": null,
+      "feature_ids": [
+        "05",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 40,
+      "title": "Instituto Nacional de Estadística y Geografía (INEGI)",
+      "notebook_original_url_known": false,
+      "link": "https://www.inegi.org.mx/",
+      "link_basis": "public_reference_suggested_not_original_url",
+      "pdf_header_last_reform": null,
+      "feature_ids": [
+        "05",
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 41,
+      "title": "International Business",
+      "notebook_original_url_known": false,
+      "link": null,
+      "link_basis": "unknown",
+      "pdf_header_last_reform": null,
+      "feature_ids": [
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    },
+    {
+      "entry_id": 42,
+      "title": "Ruta Logística MX - YouTube",
+      "notebook_original_url_known": false,
+      "link": null,
+      "link_basis": "unknown",
+      "pdf_header_last_reform": null,
+      "feature_ids": [
+        "12"
+      ],
+      "relation": "thematic_cross_reference_not_legal_applicability"
+    }
+  ],
+  "studio_assets": [
+    {
+      "title": "Estrategia Transnacional Global",
+      "type": "slides",
+      "sources_shown": 40,
+      "internal_content_reviewed": false,
+      "editorial_owner": "RFC 12"
+    },
+    {
+      "title": "Balanza Comercial de México 2024",
+      "type": "infographic",
+      "sources_shown": 40,
+      "internal_content_reviewed": false,
+      "editorial_owner": "RFC 12"
+    },
+    {
+      "title": "Comercio Exterior Cuestionario",
+      "type": "quiz",
+      "sources_shown": 40,
+      "internal_content_reviewed": false,
+      "editorial_owner": "RFC 12"
+    },
+    {
+      "title": "Derecho Aduanero Tarjetas",
+      "type": "flashcards",
+      "sources_shown": 40,
+      "internal_content_reviewed": false,
+      "editorial_owner": "RFC 12"
+    },
+    {
+      "title": "Dependencias Gubernamentales Mapa Mental",
+      "type": "mindmap",
+      "sources_shown": 40,
+      "internal_content_reviewed": false,
+      "editorial_owner": "RFC 12"
+    },
+    {
+      "title": "Navegando el Comercio Internacional y la Regulación Jurídica en México",
+      "type": "report",
+      "sources_shown": 41,
+      "internal_content_reviewed": false,
+      "editorial_owner": "RFC 12"
+    }
+  ],
+  "video_claims": [
+    {
+      "title_claimed_by_gemini": "Módulo 1: Contexto y Fundamentos de la Reforma Aduanera",
+      "duration_claimed_by_gemini": "3 h 31 min",
+      "video_url_verified": false,
+      "full_video_reviewed": false,
+      "editorial_owner": "RFC 12"
+    },
+    {
+      "title_claimed_by_gemini": "Módulo 2: Actores y Atribuciones de la Reforma Aduanera",
+      "duration_claimed_by_gemini": "3 h 27 min",
+      "video_url_verified": false,
+      "full_video_reviewed": false,
+      "editorial_owner": "RFC 12"
+    },
+    {
+      "title_claimed_by_gemini": "Módulo 3: Procesos Operativos del Despacho Aduanero",
+      "duration_claimed_by_gemini": "3 h 35 min",
+      "video_url_verified": false,
+      "full_video_reviewed": false,
+      "editorial_owner": "RFC 12"
+    },
+    {
+      "title_claimed_by_gemini": "Módulo 4: Fiscalización y Cumplimiento Aduanero",
+      "duration_claimed_by_gemini": "3 h 18 min",
+      "video_url_verified": false,
+      "full_video_reviewed": false,
+      "editorial_owner": "RFC 12"
+    },
+    {
+      "title_claimed_by_gemini": "Módulo 5: Digitalización y Facilitación Comercial",
+      "duration_claimed_by_gemini": "2 h 23 min",
+      "video_url_verified": false,
+      "full_video_reviewed": false,
+      "editorial_owner": "RFC 12"
+    },
+    {
+      "title_claimed_by_gemini": "Módulo 6: Aplicación Práctica y Visión Estratégica ante la Reforma",
+      "duration_claimed_by_gemini": "2 h 26 min",
+      "video_url_verified": false,
+      "full_video_reviewed": false,
+      "editorial_owner": "RFC 12"
+    },
+    {
+      "title_claimed_by_gemini": "Viernes: De la Operación Reactiva a la Logística Inteligente",
+      "duration_claimed_by_gemini": "1 h 58 min",
+      "video_url_verified": false,
+      "full_video_reviewed": false,
+      "editorial_owner": "RFC 12"
+    },
+    {
+      "title_claimed_by_gemini": "Viernes: Innovación Logística - Control de Inventarios",
+      "duration_claimed_by_gemini": "1 h 57 min",
+      "video_url_verified": false,
+      "full_video_reviewed": false,
+      "editorial_owner": "RFC 12"
+    },
+    {
+      "title_claimed_by_gemini": "Viernes: ¿Cómo andamos con la Mensajería y Paquetería?",
+      "duration_claimed_by_gemini": "1 h 02 min",
+      "video_url_verified": false,
+      "full_video_reviewed": false,
+      "editorial_owner": "RFC 12"
+    },
+    {
+      "title_claimed_by_gemini": "Viernes: El Nuevo Pasaporte del Talento",
+      "duration_claimed_by_gemini": "1 h 35 min",
+      "video_url_verified": false,
+      "full_video_reviewed": false,
+      "editorial_owner": "RFC 12"
+    },
+    {
+      "title_claimed_by_gemini": "Cápsula: Logística en México: Datos, Retos y Oportunidades",
+      "duration_claimed_by_gemini": "6 min 26 s",
+      "video_url_verified": false,
+      "full_video_reviewed": false,
+      "editorial_owner": "RFC 12"
+    }
+  ],
+  "gemini_claims_requiring_correction": [
+    {
+      "claim": "8,183 fracciones y 11,507 NICO",
+      "disposition": "Conteo atribuido por Gemini al proyecto; cotejar con manifest y tag concreto.",
+      "feature_id": "06",
+      "accepted_as_verified_fact": false
+    },
+    {
+      "claim": "8,177 fracciones, 11,507 NICO, 1,086 clases SCIAN",
+      "disposition": "Corte atribuido a la correlación INEGI 2025, no idéntico al inventario LIGIE 2026.",
+      "feature_id": "05",
+      "accepted_as_verified_fact": false
+    },
+    {
+      "claim": "DuckDB-WASM 0 ms de latencia",
+      "disposition": "Afirmación técnicamente incorrecta; definir benchmark de descarga, startup y SQL.",
+      "feature_id": "07",
+      "accepted_as_verified_fact": false
+    },
+    {
+      "claim": "Módulo 8 de Ruta Logística = tecnología y datos abiertos",
+      "disposition": "Título editorial propuesto por Gemini; no atribuir a programa oficial.",
+      "feature_id": "12",
+      "accepted_as_verified_fact": false
+    },
+    {
+      "claim": "Una tasa IVA/DTA/IEPS aplica universalmente a la importación",
+      "disposition": "Depende de supuestos y vigencia de instrumentos; requiere revisión especialista.",
+      "feature_id": "02",
+      "accepted_as_verified_fact": false
+    },
+    {
+      "claim": "Fracción/NICO determina automáticamente NOM aplicable y cumplimiento",
+      "disposition": "Es señal de revisión, no acredita cumplimiento específico.",
+      "feature_id": "01",
+      "accepted_as_verified_fact": false
+    },
+    {
+      "claim": "País de origen determina por sí solo una preferencia TLC",
+      "disposition": "No sustituye prueba ni regla específica del tratado.",
+      "feature_id": "04",
+      "accepted_as_verified_fact": false
+    },
+    {
+      "claim": "Puntaje semántico de IA equivale a probabilidad de clasificación legal",
+      "disposition": "No demostrar sin evaluación/calibración; no presentarlo como precisión legal.",
+      "feature_id": "10",
+      "accepted_as_verified_fact": false
+    }
+  ],
+  "gates": [
+    "No alterar LIGIE/NICO canónicos sin ADR y evidencia.",
+    "Registrar instrumento, publicación, fecha efectiva, fuente primaria, SHA/manifest y estado.",
+    "Separar dato oficial, referencia, declarado y orientativo.",
+    "CI, fixture offline, tests, rendimiento, privacidad, i18n, accesibilidad y rollback.",
+    "Revisión del propietario antes del merge y de nuevas releases/despliegues."
+  ]
+}
