@@ -10,7 +10,7 @@ charset-normalizer==3.5.2
 coverage==7.17.0
 duckdb==2.0.0
 et-xmlfile==2.0.0
-fastapi==0.162.6
+fastapi==0.163.1
 filelock==4.2.10
 httpx2==2.16.0
 idna==3.20
