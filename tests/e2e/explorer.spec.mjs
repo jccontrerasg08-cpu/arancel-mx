@@ -693,6 +693,8 @@ test('opens the MOA and the standalone estimator through quick commands', async 
   await expect(dialog.getByRole('option', { name: /guía moa/i })).toBeVisible();
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/[/]moa$/);
+  await expect(page.getByRole('heading', { name: /manual de operación aduanera/i })).toBeVisible();
+  await expect(dialog).toHaveCount(0);
 
   await page.keyboard.press('Control+k');
   await dialog.getByRole('combobox').fill('calculadora');
