@@ -133,6 +133,8 @@ function renderEstimate(estimate, customsValue) {
     <p class="trade-result__caption">Contribuciones estimadas; costo orientativo total: <strong>${money.format(estimate.landedCost)}</strong></p>
     <p class="trade-result__caption">Base ${customsValue.method === 'direct_value' ? 'directa declarada' : `por componentes ${customsValue.incoterm}`}: <strong>${money.format(customsValue.customsValueMxn)}</strong>${customsValue.currency === 'USD' ? ` · capturada en USD a ${customsValue.exchangeRate} MXN por USD` : ''}</p>
     <div class="trade-breakdown">${rows}</div>
+    ${estimate.iepsBase !== null ? `<p class="trade-result__caption">Base del IEPS ad valorem: <strong>${money.format(estimate.iepsBase)}</strong> · ${sourceLink(TRADE_SOURCES.importIeps)}</p>` : ''}
+    <p class="trade-result__caption">Base del IVA: <strong>${money.format(estimate.ivaBase)}</strong></p>
     <p class="trade-disclaimer">${estimate.disclaimer}</p>
   `;
 }
@@ -463,7 +465,7 @@ function buildLocalTraceability() {
       total_contributions: estimate.totalContributions,
       landed_cost: estimate.landedCost,
     }),
-    sources: Object.freeze([TRADE_SOURCES.costs, TRADE_SOURCES.classification]),
+    sources: estimate.sources,
     review_references: Object.freeze({
       tmec: Object.freeze({
         url: value('tmec-reference-url'),
