@@ -144,7 +144,7 @@ def test_cli_builds_and_verifies(tmp_path: Path, capsys) -> None:
     )
     assert json.loads(capsys.readouterr().out) == {
         "dataset_tag": "data-2026.08.11",
-        "files": 8,
+        "files": 9,
         "record_count": 5,
     }
     assert main(["static-api", "verify", "--root", str(out)]) == 0
