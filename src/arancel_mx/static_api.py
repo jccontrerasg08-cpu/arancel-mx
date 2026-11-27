@@ -179,6 +179,7 @@ def build_static_api(
 
         chapters = sorted(by_chapter)
         annex = _annex_status(connection)
+        nom_index: dict[str, set[str]] = defaultdict(set)
         for chapter in chapters:
             files[f"records/{chapter}.json"] = _dump(by_chapter[chapter])
             files[f"provenance/{chapter}.json"] = _dump(
@@ -190,9 +191,21 @@ def build_static_api(
                     for note in national_notes(connection, chapter)
                 ]
             )
-            files[f"regulations/{chapter}.json"] = _dump(
-                _regulations(connection, chapter, annex)
-            )
+            regulations = _regulations(connection, chapter, annex)
+            files[f"regulations/{chapter}.json"] = _dump(regulations)
+            for requirement in regulations["requirements"]:
+                nom_index[requirement["nom"].upper()].add(requirement["fraction8"])
+
+    files["nom-index.json"] = _dump(
+        {
+            "dataset_tag": dataset_tag,
+            "annex": annex,
+            "entries": [
+                {"nom": nom, "fractions": sorted(fractions)}
+                for nom, fractions in sorted(nom_index.items())
+            ],
+        }
+    )
 
     files["chapters.json"] = _dump(
         [
