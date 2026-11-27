@@ -60,6 +60,8 @@ All notable changes to the Python package are documented here. Dataset releases 
 
 ### Added
 
+- Static data API: the pages build now compares the release it publishes with the previous published release and adds `diffs/index.json` and `diffs/<from>--<to>.json` (the same report as `arancel-mx data diff --format json`) to `/data/v1`, listed and hashed in the static manifest. Both releases must pass verification; if the previous one cannot be resolved the index records the reason and no diff is published, and data publication is never blocked. Decision 0005; release-diff RFC (#308).
+
 - CLI: `arancel-mx data diff --format markdown` renders the comparison report as a readable Spanish summary (not-a-legal-event notice, verification state, counts by change, a before/after table per code, auxiliary tables). A value that disappears is written as "sin valor", never 0, and release text is escaped. Release-diff RFC (#308).
 
 - Explorer: the words of the search are marked in each result description (accents and case ignored, as search compares them; one-letter words skipped). The description text is unchanged and rendered as text, never as HTML. Search UX phase of RFC #312.
