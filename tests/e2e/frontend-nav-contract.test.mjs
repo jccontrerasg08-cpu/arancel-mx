@@ -10,7 +10,10 @@ test('every page in the navigation is reachable from a header group, a header ac
   const { NAV_GROUPS, NAVIGATION, HEADER_ACTIONS, FOOTER_ONLY, FOOTER_GROUPS } = await import(pathToFileURL(path.join(root, 'frontend/src/content.js')).href);
   const grouped = NAV_GROUPS.flatMap((group) => group.href ? [group.href] : group.items);
 
-  assert.equal(NAV_GROUPS.length, 4);
+  assert.deepEqual(NAV_GROUPS.map(({ id }) => id), ['explore', 'trade', 'data', 'learn']);
+  assert.equal(NAV_GROUPS[1].href, '/trade');
+  assert.ok(NAV_GROUPS[2].items.includes('/changes'));
+  assert.ok(NAV_GROUPS[3].items.includes('/moa'));
   assert.equal(new Set(grouped).size, grouped.length, 'a page appears in two groups');
   for (const [, href] of NAVIGATION) {
     const reachable = grouped.includes(href) || HEADER_ACTIONS.includes(href) || FOOTER_ONLY.includes(href);
