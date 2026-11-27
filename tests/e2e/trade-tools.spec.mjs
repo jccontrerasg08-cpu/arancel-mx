@@ -78,6 +78,19 @@ test('includes applicable duties and declared compensatory quotas in the ad valo
   assert.ok(estimate.sources.includes(TRADE_SOURCES.importIeps));
 });
 
+test('calculates only the declared Article 49 DTA scenario', () => {
+  const input = { customsValueMxn: 100000, igiRatePercent: 0, ivaRatePercent: 16 };
+  const general = calculateImportEstimate({ ...input, dtaScenario: 'general', dtaRatePercent: 99 });
+  const assets = calculateImportEstimate({ ...input, dtaScenario: 'immex_fixed_assets', dtaRatePercent: 99 });
+  const other = calculateImportEstimate({ ...input, dtaScenario: 'immex_other', dtaFixedMxn: 345 });
+  assert.equal(general.items.find((item) => item.key === 'dta').amount, 800);
+  assert.equal(assets.items.find((item) => item.key === 'dta').amount, 176);
+  assert.equal(other.items.find((item) => item.key === 'dta').amount, 345);
+  assert.ok(assets.sources.includes(TRADE_SOURCES.dta));
+  assert.throws(() => calculateImportEstimate({ ...input, dtaScenario: 'immex_other' }), /cuota fija vigente/);
+  assert.throws(() => calculateImportEstimate({ ...input, dtaScenario: 'invalid' }), /supuesto de DTA/);
+});
+
 test('rejects a simulation when the declared customs value is not positive', () => {
   assert.throws(
     () => calculateImportEstimate({ customsValueMxn: 0 }),
@@ -132,6 +145,7 @@ test('keeps an official source record for every orientation module', () => {
     [
       'classification',
       'costs',
+      'dta',
       'importIeps',
       'pedimento',
       'rrna',

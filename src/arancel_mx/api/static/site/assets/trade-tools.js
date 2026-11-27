@@ -16,6 +16,11 @@ export const TRADE_SOURCES = Object.freeze({
     url: 'https://www.diputados.gob.mx/LeyesBiblio/pdf/LIEPS.pdf',
     updated: '2026-11-26',
   }),
+  dta: Object.freeze({
+    title: 'Ley Federal de Derechos, artículo 49 — Cámara de Diputados',
+    url: 'https://www.diputados.gob.mx/LeyesBiblio/pdf/LFD.pdf',
+    updated: '2026-11-27',
+  }),
   pedimento: Object.freeze({
     title: 'Anexo 22 de las RGCE 2026 — SAT',
     url: 'https://www.sat.gob.mx/minisitio/NormatividadRMFyRGCE/documentos2026/rgce/anexos/Anexo22delasRGCEpara2026.pdf',
@@ -161,15 +166,24 @@ export function calculateImportEstimate(input) {
   const igiRate = numberOrZero(input.igiRatePercent, 'La tasa IGI');
   const iepsRate = numberOrZero(input.iepsRatePercent, 'La tasa IEPS');
   const ivaRate = numberOrZero(input.ivaRatePercent ?? 16, 'La tasa IVA');
-  const dtaMode = input.dtaMode === 'fixed' ? 'fixed' : 'adValorem';
+  const dtaScenario = input.dtaScenario || 'manual';
+  if (!['manual', 'general', 'immex_fixed_assets', 'immex_other'].includes(dtaScenario)) {
+    throw new Error('Selecciona un supuesto de DTA válido.');
+  }
+  const dtaMode = dtaScenario === 'immex_other' ? 'fixed' : input.dtaMode === 'fixed' && dtaScenario === 'manual' ? 'fixed' : 'adValorem';
   const iepsFixed = numberOrZero(input.iepsFixedMxn, 'El IEPS de cuota fija');
   const compensatoryQuota = numberOrZero(input.compensatoryQuotaMxn, 'La cuota compensatoria');
 
   const igi = percentOf(customsValue, igiRate);
+  const dtaRate = dtaScenario === 'general' ? 0.8 : dtaScenario === 'immex_fixed_assets' ? 0.176 : numberOrZero(input.dtaRatePercent, 'La tasa DTA');
+  const fixedDta = numberOrZero(input.dtaFixedMxn, 'El DTA de cuota fija');
+  if (dtaScenario === 'immex_other' && fixedDta <= 0) {
+    throw new Error('Indica la cuota fija vigente de DTA en MXN para este supuesto.');
+  }
   const dta =
     dtaMode === 'fixed'
-      ? roundCurrency(numberOrZero(input.dtaFixedMxn, 'El DTA de cuota fija'))
-      : percentOf(customsValue, numberOrZero(input.dtaRatePercent, 'La tasa DTA'));
+      ? roundCurrency(fixedDta)
+      : percentOf(customsValue, dtaRate);
   const importBase = roundCurrency(customsValue + igi + dta + compensatoryQuota);
   const iepsAdValorem = percentOf(importBase, iepsRate);
   const ieps = roundCurrency(iepsAdValorem + iepsFixed);
@@ -194,6 +208,7 @@ export function calculateImportEstimate(input) {
   return Object.freeze({
     status: 'orientation_only',
     items: Object.freeze(items),
+    dtaScenario,
     iepsBase: iepsRate > 0 ? importBase : null,
     ivaBase,
     totalContributions,
@@ -202,6 +217,7 @@ export function calculateImportEstimate(input) {
     sources: Object.freeze([
       TRADE_SOURCES.costs,
       TRADE_SOURCES.classification,
+      ...(dtaScenario !== 'manual' ? [TRADE_SOURCES.dta] : []),
       ...(iepsRate > 0 ? [TRADE_SOURCES.importIeps] : []),
     ]),
   });

@@ -43,6 +43,17 @@ test('shows the declared import inputs in the ad valorem IEPS and IVA bases', as
   await expect(result.getByRole('link', { name: /ley del ieps, artículo 14/i })).toHaveAttribute('href', /LIEPS\.pdf$/);
 });
 
+test('uses a declared IMMEX DTA scenario and shows the official basis', async ({ page }) => {
+  await page.goto('/trade');
+  await page.getByTestId('customs-value').fill('100000');
+  await page.getByTestId('dta-scenario').selectOption('immex_fixed_assets');
+  await page.getByTestId('calculate-import').click();
+  const result = page.getByTestId('import-result');
+  await expect(result).toContainText('DTA estimado');
+  await expect(result).toContainText('$176.00');
+  await expect(result.getByRole('link', { name: /ley federal de derechos, artículo 49/i })).toHaveAttribute('href', /LFD\.pdf$/);
+});
+
 test('keeps source-cited T-MEC, RRNA and pedimento guidance accessible', async ({ page }) => {
   await page.goto('/trade');
 
