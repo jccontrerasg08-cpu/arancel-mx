@@ -6,6 +6,7 @@ import { CountUp } from './count-up.jsx';
 import { computeStats } from './data-stats.js';
 import { useLocale } from './locale.jsx';
 import { DATA_BASE } from './pages.jsx';
+import ReleaseDiffPanel from './release-diff-panel.jsx';
 import { formatCode } from './verified-examples.js';
 
 const load = (file, signal) => fetch(`${DATA_BASE}/${file}`, { signal }).then((response) => (response.ok ? response.json() : Promise.reject(new Error(file))));
@@ -67,6 +68,7 @@ export default function DataPage() {
 
   return <>
     <section className="page-hero"><p className="eyebrow">{page.eyebrow}</p><h1>{page.title}</h1><p>{page.description}</p><p className="disclaimer">{page.disclaimer}</p></section>
+    <ReleaseDiffPanel base={DATA_BASE}/>
     {state.kind === 'loading' && <><p className="status" role="status">{t('Calculando cifras de la release verificada…', 'Computing figures from the verified release…')}</p><div className="record-skeleton" aria-hidden="true"><div><span className="skeleton"/><span className="skeleton"/><span className="skeleton"/><span className="skeleton"/></div></div></>}
     {state.kind === 'error' && <section className="empty-state"><h2>{t('Las cifras no están disponibles temporalmente.', 'The figures are temporarily unavailable.')}</h2><button className="button primary" type="button" onClick={() => setAttempt((current) => current + 1)}>{t('Reintentar', 'Retry')}</button></section>}
     {stats && <>

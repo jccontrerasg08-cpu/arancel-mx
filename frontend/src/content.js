@@ -25,12 +25,12 @@ export const NAVIGATION = [
 // NAVIGATION entry belongs to exactly one group.
 export const NAV_GROUPS = [
   { id: 'explore', href: '/app' },
-  { id: 'learn', items: ['/learn', '/glossary', '/wiki', '/moa', '/trade-context'] },
+  { id: 'trade', href: '/trade' },
   { id: 'data', items: ['/data', '/trade-analytics', '/chapters', '/changes', '/releases', '/release-analytics', '/documentation'] },
-  { id: 'trust', href: '/trust' },
+  { id: 'learn', items: ['/moa', '/wiki', '/learn', '/glossary', '/trade-context'] },
 ];
-export const HEADER_ACTIONS = ['/records', '/trade'];
-export const FOOTER_ONLY = ['/features', '/community'];
+export const HEADER_ACTIONS = ['/records'];
+export const FOOTER_ONLY = ['/trust', '/features', '/community'];
 
 // The footer lists every public page once, in four columns.
 export const FOOTER_GROUPS = [
