@@ -25,6 +25,24 @@ test('serves a trade desk with an itemized import orientation', async ({ page })
   await expect(page.getByTestId('import-result')).toContainText(/orientativo/i);
 });
 
+test('shows the declared import inputs in the ad valorem IEPS and IVA bases', async ({ page }) => {
+  await page.goto('/trade');
+
+  await page.getByTestId('customs-value').fill('1000');
+  await page.getByTestId('igi-rate').fill('10');
+  await page.getByTestId('dta-rate').fill('0.8');
+  await page.getByTestId('iva-rate').fill('16');
+  await page.locator('#ieps-rate').fill('10');
+  await page.locator('#compensatory-quota').fill('32');
+  await page.getByTestId('calculate-import').click();
+
+  const result = page.getByTestId('import-result');
+  await expect(result).toContainText(/Base del IEPS ad valorem:.*1,140\.00/);
+  await expect(result).toContainText(/Base del IVA:.*1,254\.00/);
+  await expect(result).toContainText('$454.64');
+  await expect(result.getByRole('link', { name: /ley del ieps, artículo 14/i })).toHaveAttribute('href', /LIEPS\.pdf$/);
+});
+
 test('keeps source-cited T-MEC, RRNA and pedimento guidance accessible', async ({ page }) => {
   await page.goto('/trade');
 

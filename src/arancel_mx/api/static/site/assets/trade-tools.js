@@ -11,6 +11,11 @@ export const TRADE_SOURCES = Object.freeze({
     url: 'https://www.sat.gob.mx/minisitio/NormatividadRMFyRGCE/documentos2026/rgce/rgce/ReglasGeneralesComercioExteriorpara2026.pdf',
     updated: SOURCE_DATE,
   }),
+  importIeps: Object.freeze({
+    title: 'Ley del IEPS, artículo 14 — Cámara de Diputados',
+    url: 'https://www.diputados.gob.mx/LeyesBiblio/pdf/LIEPS.pdf',
+    updated: '2026-11-26',
+  }),
   pedimento: Object.freeze({
     title: 'Anexo 22 de las RGCE 2026 — SAT',
     url: 'https://www.sat.gob.mx/minisitio/NormatividadRMFyRGCE/documentos2026/rgce/anexos/Anexo22delasRGCEpara2026.pdf',
@@ -165,8 +170,10 @@ export function calculateImportEstimate(input) {
     dtaMode === 'fixed'
       ? roundCurrency(numberOrZero(input.dtaFixedMxn, 'El DTA de cuota fija'))
       : percentOf(customsValue, numberOrZero(input.dtaRatePercent, 'La tasa DTA'));
-  const ieps = roundCurrency(percentOf(customsValue, iepsRate) + iepsFixed);
-  const ivaBase = roundCurrency(customsValue + igi + dta + ieps + compensatoryQuota);
+  const importBase = roundCurrency(customsValue + igi + dta + compensatoryQuota);
+  const iepsAdValorem = percentOf(importBase, iepsRate);
+  const ieps = roundCurrency(iepsAdValorem + iepsFixed);
+  const ivaBase = roundCurrency(importBase + ieps);
   const iva = percentOf(ivaBase, ivaRate);
   const totalContributions = roundCurrency(igi + dta + ieps + compensatoryQuota + iva);
 
@@ -187,11 +194,16 @@ export function calculateImportEstimate(input) {
   return Object.freeze({
     status: 'orientation_only',
     items: Object.freeze(items),
+    iepsBase: iepsRate > 0 ? importBase : null,
     ivaBase,
     totalContributions,
     landedCost: roundCurrency(customsValue + totalContributions),
     disclaimer: ORIENTATION_DISCLAIMER,
-    sources: Object.freeze([TRADE_SOURCES.costs, TRADE_SOURCES.classification]),
+    sources: Object.freeze([
+      TRADE_SOURCES.costs,
+      TRADE_SOURCES.classification,
+      ...(iepsRate > 0 ? [TRADE_SOURCES.importIeps] : []),
+    ]),
   });
 }
 

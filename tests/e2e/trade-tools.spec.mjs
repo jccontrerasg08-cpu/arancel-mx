@@ -60,6 +60,24 @@ test('calculates an itemized import estimate from a declared customs value', () 
   assert.equal(estimate.status, 'orientation_only');
 });
 
+test('includes applicable duties and declared compensatory quotas in the ad valorem IEPS base', () => {
+  const estimate = calculateImportEstimate({
+    customsValueMxn: 1000,
+    igiRatePercent: 10,
+    dtaRatePercent: 0.8,
+    compensatoryQuotaMxn: 32,
+    iepsRatePercent: 10,
+    ivaRatePercent: 16,
+  });
+
+  assert.equal(estimate.iepsBase, 1140);
+  assert.equal(estimate.items.find((item) => item.key === 'ieps').amount, 114);
+  assert.equal(estimate.ivaBase, 1254);
+  assert.equal(estimate.items.find((item) => item.key === 'iva').amount, 200.64);
+  assert.equal(estimate.totalContributions, 454.64);
+  assert.ok(estimate.sources.includes(TRADE_SOURCES.importIeps));
+});
+
 test('rejects a simulation when the declared customs value is not positive', () => {
   assert.throws(
     () => calculateImportEstimate({ customsValueMxn: 0 }),
@@ -114,6 +132,7 @@ test('keeps an official source record for every orientation module', () => {
     [
       'classification',
       'costs',
+      'importIeps',
       'pedimento',
       'rrna',
       'tmec',
