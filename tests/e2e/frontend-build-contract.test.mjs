@@ -73,3 +73,17 @@ test('static-site sync preserves the maintained hub interactions asset', async (
 
   assert.match(interactions, /verified record/i);
 });
+
+test('published DOF views can load their shared data chunk', async () => {
+  const assetDir = path.join(root, 'src/arancel_mx/api/static/site/assets');
+  const assets = await readdir(assetDir);
+  const timeline = assets.find((name) => /^dof-changes-page-[A-Za-z0-9_-]+\.js$/.test(name));
+  assert.ok(timeline);
+  const page = await readFile(path.join(assetDir, timeline), 'utf8');
+  const helperName = page.match(/from\s*["']\.\/(dof-changes-[A-Za-z0-9_-]+\.js)["']/)?.[1];
+  assert.ok(helperName);
+  const helper = await readFile(path.join(assetDir, helperName), 'utf8');
+  const dataName = helper.match(/import\(["']\.\/(dof-changes-[A-Za-z0-9_-]+\.js)["']\)/)?.[1];
+  assert.ok(dataName);
+  assert.ok(assets.includes(dataName), `${helperName} references a missing chunk: ${dataName}`);
+});

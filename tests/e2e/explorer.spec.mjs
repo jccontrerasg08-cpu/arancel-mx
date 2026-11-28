@@ -87,9 +87,10 @@ test('keeps the global navigation state and skip link accessible', async ({ page
 test('groups the header into four destinations and keeps every page reachable', async ({ page }) => {
   await page.goto('/');
   const navigation = page.getByLabel('Navegación principal');
-  await expect(navigation.getByRole('link', { name: /^explorar$/i })).toBeVisible();
-  await expect(navigation.getByRole('link', { name: /^confianza$/i })).toHaveAttribute('href', '/trust');
-  const learn = navigation.getByRole('button', { name: /^aprender$/i });
+  await expect(navigation.getByRole('link', { name: /^tarifa y nom$/i })).toHaveAttribute('href', '/app');
+  await expect(navigation.getByRole('link', { name: /^simulador$/i })).toHaveAttribute('href', '/trade');
+  await expect(navigation.getByRole('button', { name: /^datos y cambios$/i })).toBeVisible();
+  const learn = navigation.getByRole('button', { name: /^moa y leyes$/i });
   await expect(learn).toHaveAttribute('aria-expanded', 'false');
   await learn.click();
   await expect(learn).toHaveAttribute('aria-expanded', 'true');
@@ -103,7 +104,7 @@ test('groups the header into four destinations and keeps every page reachable', 
 
 test('reaches the import estimator from the header and every page from the footer', async ({ page }) => {
   await page.goto('/');
-  const estimator = page.getByRole('banner').getByRole('link', { name: /^estimador$/i });
+  const estimator = page.getByRole('banner').getByRole('link', { name: /^simulador$/i });
   await expect(estimator).toHaveAttribute('href', '/trade');
 
   const footer = page.getByRole('contentinfo');
@@ -121,7 +122,7 @@ test('lists the estimator and the data pages in the mobile menu', async ({ page 
   await page.goto('/');
   await page.getByRole('button', { name: /abrir menú de navegación/i }).click();
   const navigation = page.getByLabel('Navegación principal');
-  await expect(navigation.getByRole('link', { name: /^estimador$/i })).toHaveAttribute('href', '/trade');
+  await expect(navigation.getByRole('link', { name: /^simulador$/i })).toHaveAttribute('href', '/trade');
   await expect(navigation.getByRole('link', { name: /^releases$/i })).toHaveAttribute('href', '/releases');
   await expect(navigation.getByRole('link', { name: /^análisis de releases$/i })).toHaveAttribute('href', '/release-analytics');
 });
@@ -129,7 +130,7 @@ test('lists the estimator and the data pages in the mobile menu', async ({ page 
 test('teaches how to read a code from the Learn menu', async ({ page }) => {
   await page.goto('/');
   const navigation = page.getByLabel('Navegación principal');
-  await navigation.getByRole('button', { name: /^aprender$/i }).click();
+  await navigation.getByRole('button', { name: /^moa y leyes$/i }).click();
   await navigation.getByRole('link', { name: /^guía para empezar$/i }).click();
   await expect(page).toHaveURL(/[/]learn$/);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(/aprende a leer el arancel de méxico/i);
@@ -684,6 +685,26 @@ test('opens the quick search with Ctrl+K, offers verified paths and opens a reco
   await expect(page.getByRole('dialog')).toHaveCount(0);
 });
 
+test('opens the MOA and the standalone estimator through quick commands', async ({ page }) => {
+  await page.goto('/data');
+  await page.keyboard.press('Control+k');
+  const dialog = page.getByRole('dialog', { name: /búsqueda rápida/i });
+  await dialog.getByRole('combobox').fill('manual aduanera');
+  await expect(dialog.getByRole('option', { name: /guía moa/i })).toBeVisible();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/[/]moa$/);
+  await expect(page.getByRole('heading', { name: /manual de operación aduanera/i })).toBeVisible();
+  await expect(dialog).toHaveCount(0);
+
+  await page.keyboard.press('Control+k');
+  await dialog.getByRole('combobox').fill('calculadora');
+  await expect(dialog.getByRole('option', { name: /estimador/i })).toBeVisible();
+  const document = page.waitForRequest((request) => request.isNavigationRequest() && new URL(request.url()).pathname === '/trade');
+  await page.keyboard.press('Enter');
+  await document;
+  await expect(page).toHaveURL(/[/]trade$/);
+});
+
 test('closes the quick search with Escape and returns focus to its trigger', async ({ page }) => {
   await page.goto('/');
   const trigger = page.getByRole('button', { name: /abrir búsqueda rápida/i });
@@ -719,7 +740,7 @@ test('shows figures, fun facts and tables computed from the verified release', a
 test('reaches the figures page from the Datos menu', async ({ page }) => {
   await page.goto('/');
   const navigation = page.getByLabel('Navegación principal');
-  await navigation.getByRole('button', { name: /^datos$/i }).click();
+  await navigation.getByRole('button', { name: /^datos y cambios$/i }).click();
   await navigation.getByRole('link', { name: /^cifras$/i }).click();
   await expect(page).toHaveURL(/\/data$/);
 });
