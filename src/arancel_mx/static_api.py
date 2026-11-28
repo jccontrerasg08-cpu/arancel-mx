@@ -11,6 +11,7 @@ check (decision 0002).
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Mapping
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -136,8 +137,13 @@ def build_static_api(
     dataset_tag: str,
     release_verified: bool,
     generated_at: datetime | None = None,
+    extra_files: Mapping[str, bytes] | None = None,
 ) -> dict[str, Any]:
-    """Write the static API for one release and return its manifest."""
+    """Write the static API for one release and return its manifest.
+
+    ``extra_files`` (for example the precomputed ``diffs/``) are written and listed in
+    the manifest like every other file, so ``verify_static_api`` covers them too.
+    """
 
     dataset = Dataset.open(dataset_path)
     info = dataset.info
@@ -234,6 +240,11 @@ def build_static_api(
             "static_format": STATIC_FORMAT,
         }
     )
+
+    for name, content in (extra_files or {}).items():
+        if name in files:
+            raise ValueError(f"extra static file would replace {name}")
+        files[name] = content
 
     out_dir.mkdir(parents=True, exist_ok=True)
     for name, content in files.items():
