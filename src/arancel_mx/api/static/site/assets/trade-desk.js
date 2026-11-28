@@ -18,6 +18,12 @@ const money = new Intl.NumberFormat('es-MX', {
   maximumFractionDigits: 2,
 });
 
+const DTA_SCENARIO_LABELS = Object.freeze({
+  general: 'Regla general, artículo 49 fracción I (8 al millar)',
+  immex_fixed_assets: 'Activo fijo temporal IMMEX, fracción II (1.76 al millar)',
+  immex_other: 'Otros bienes temporales IMMEX, fracción III (cuota vigente capturada)',
+});
+
 const DRAFT_STORAGE_KEY = 'arancel-mx-trade-draft';
 const LOCAL_FORM_FIELD_IDS = Object.freeze([
   'tariff-code', 'incoterm', 'product-value', 'freight-value', 'insurance-value',
@@ -133,7 +139,7 @@ function renderEstimate(estimate, customsValue) {
     <p class="trade-result__caption">Contribuciones estimadas; costo orientativo total: <strong>${money.format(estimate.landedCost)}</strong></p>
     <p class="trade-result__caption">Base ${customsValue.method === 'direct_value' ? 'directa declarada' : `por componentes ${customsValue.incoterm}`}: <strong>${money.format(customsValue.customsValueMxn)}</strong>${customsValue.currency === 'USD' ? ` · capturada en USD a ${customsValue.exchangeRate} MXN por USD` : ''}</p>
     <div class="trade-breakdown">${rows}</div>
-    ${estimate.dtaScenario !== 'manual' ? `<p class="trade-result__caption">DTA según supuesto declarado: <strong>${byId('dta-scenario').selectedOptions[0].textContent}</strong> · ${sourceLink(TRADE_SOURCES.dta)}</p>` : ''}
+    ${estimate.dtaScenario !== 'manual' ? `<p class="trade-result__caption">DTA según supuesto declarado: <strong>${DTA_SCENARIO_LABELS[estimate.dtaScenario]}</strong> · ${sourceLink(TRADE_SOURCES.dta)}</p>` : ''}
     ${estimate.iepsBase !== null ? `<p class="trade-result__caption">Base del IEPS ad valorem: <strong>${money.format(estimate.iepsBase)}</strong> · ${sourceLink(TRADE_SOURCES.importIeps)}</p>` : ''}
     <p class="trade-result__caption">Base del IVA: <strong>${money.format(estimate.ivaBase)}</strong></p>
     <p class="trade-disclaimer">${estimate.disclaimer}</p>
