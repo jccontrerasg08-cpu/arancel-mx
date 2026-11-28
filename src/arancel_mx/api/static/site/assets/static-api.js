@@ -127,6 +127,16 @@ export function createStaticApi({ base = DEFAULT_DATA_BASE, fetchImpl = globalTh
     return { requirements, sources, annex: data.annex ?? null };
   };
 
+  // Search the Annex 2.4.1 reverse index from the same dataset release.
+  const nomLookup = async (name, signal) => {
+    const canonical = String(name ?? '').trim().toUpperCase();
+    if (!/^NOM-[A-Z0-9/-]+$/u.test(canonical)) throw new StaticApiError(422, 'invalid NOM identifier');
+    const index = await json('nom-index.json', signal);
+    if (!index) return { annex: { status: 'not_included' }, fractions: [], dataset_tag: null };
+    const item = index.entries.find((entry) => entry.nom === canonical);
+    return { annex: index.annex, fractions: item?.fractions ?? [], dataset_tag: index.dataset_tag };
+  };
+
   const provenance = async (code, signal) => {
     const record = await lookup(code, signal);
     const data = (await json(`provenance/${record.code.slice(0, 2)}.json`, signal)) || { sources: {}, links: {} };
@@ -243,5 +253,5 @@ export function createStaticApi({ base = DEFAULT_DATA_BASE, fetchImpl = globalTh
     throw new StaticApiError(404, `unknown path: ${path}`);
   };
 
-  return { request, lookup, ficha, parent, children, siblings, regulations, provenance, nationalNotes, search, suggest };
+  return { request, lookup, ficha, parent, children, siblings, regulations, nomLookup, provenance, nationalNotes, search, suggest };
 }
