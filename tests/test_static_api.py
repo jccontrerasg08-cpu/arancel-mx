@@ -56,6 +56,7 @@ def test_manifest_lists_every_file_with_matching_hashes(
         "chapters.json",
         "meta.json",
         "national-notes/01.json",
+        "nom-index.json",
         "provenance/01.json",
         "records/01.json",
         "regulations/01.json",
@@ -143,7 +144,7 @@ def test_cli_builds_and_verifies(tmp_path: Path, capsys) -> None:
     )
     assert json.loads(capsys.readouterr().out) == {
         "dataset_tag": "data-2026.08.11",
-        "files": 8,
+        "files": 9,
         "record_count": 5,
     }
     assert main(["static-api", "verify", "--root", str(out)]) == 0
@@ -259,6 +260,12 @@ def test_regulations_file_carries_requirements_scope_and_source(tmp_path: Path) 
     assert set(payload["sources"]) == {source_id}
     assert payload["sources"][source_id]["sha256"]
     assert verify_static_api(tmp_path / "static") == []
+    index = json.loads((tmp_path / "static/nom-index.json").read_text(encoding="utf-8"))
+    assert index == {
+        "dataset_tag": "data-2026.08.11",
+        "annex": {"status": "not_included"},
+        "entries": [{"nom": "NOM-EM-004-SAG/ZOO-2020", "fractions": ["01012101"]}],
+    }
 
 
 @pytest.mark.parametrize(
