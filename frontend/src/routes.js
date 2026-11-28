@@ -25,3 +25,6 @@ export const PUBLIC_ROUTES = Object.freeze([
 
 // Old addresses that now redirect permanently (vercel.json and the local app) to the page that replaced them.
 export const ROUTE_ALIASES = Object.freeze({ '/product': '/app', '/moa-guide': '/moa' });
+
+// The estimator has its own HTML entry point and needs document navigation.
+export const STANDALONE_ROUTES = new Set(['/trade']);
